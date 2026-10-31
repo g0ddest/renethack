@@ -37,6 +37,13 @@ pub struct Cell {
     /// before the hero is on the next).
     pub saddled: bool,
     pub over_saddled: bool,
+    /// What the engine told of the monster `over` shows besides its
+    /// saddle (a peaceful one stepping into the cell the hero leaves, a
+    /// swap's: 5.0 draws it before the hero is on the next cell): the
+    /// cell's own once it shows that monster.
+    pub over_sensed: bool,
+    pub over_wields: Option<Glyph>,
+    pub over_peaceful: bool,
     /// The monster `glyph` shows is sensed, not seen (telepathy,
     /// detection).
     pub sensed: bool,
@@ -361,12 +368,18 @@ impl MapState {
         if passes {
             cell.over = Some(g.clone());
             cell.over_saddled = saddled;
+            cell.over_sensed = sensed;
+            cell.over_wields = wields.cloned();
+            cell.over_peaceful = peaceful;
         } else {
             cell.glyph = Some(g.clone());
             cell.over = None;
             cell.rider = rider.cloned();
             cell.saddled = saddled;
             cell.over_saddled = false;
+            cell.over_sensed = false;
+            cell.over_wields = None;
+            cell.over_peaceful = false;
             cell.sensed = sensed;
             cell.wields = wields.cloned();
             cell.peaceful = peaceful;
@@ -464,6 +477,9 @@ impl MapState {
         cell.glyph = cell.over.take();
         cell.rider = None;
         cell.saddled = std::mem::take(&mut cell.over_saddled);
+        cell.sensed = std::mem::take(&mut cell.over_sensed);
+        cell.wields = cell.over_wields.take();
+        cell.peaceful = std::mem::take(&mut cell.over_peaceful);
     }
 
     /// clear_nhwindow on the map window: nothing is known any more.
@@ -808,6 +824,60 @@ pub(crate) mod tests {
         // angered: drawn again, the same glyph, not peaceful
         map.print(10, 5, &gnome, None);
         assert!(!map.cell(10, 5).unwrap().peaceful);
+    }
+
+    #[test]
+    fn a_peaceful_swapped_with_stays_peaceful_whichever_way() {
+        // 5.0's flush_screen draws the map row by row: stepping S, SE, SW
+        // or E the hero's old cell, the peaceful's now, comes first, while
+        // the hero is still on it; N, NE, NW or W the hero's new cell does
+        let told = Told {
+            peaceful: true,
+            sensed: false,
+            wields: Some(&glyph(GlyphKind::Obj, ')')),
+            ..Told::default()
+        };
+        let watchman = monster(270, 0);
+        for (dx, dy) in [
+            (0, 1),
+            (1, 1),
+            (-1, 1),
+            (1, 0),
+            (0, -1),
+            (1, -1),
+            (-1, -1),
+            (-1, 0),
+        ] {
+            let mut map = MapState::new();
+            for y in 4..7 {
+                for x in 9..12 {
+                    map.print(x, y, &floor(), None);
+                }
+            }
+            let (to_x, to_y) = (10 + dx, 5 + dy);
+            map.print(10, 5, &monster(0, mg::HERO), None);
+            map.print_with(to_x, to_y, &watchman, None, told);
+            map.take_dirty();
+            // the swap, in flush_screen's order
+            let old_first = (dy, dx) > (0, 0);
+            if old_first {
+                map.print_with(10, 5, &watchman, None, told);
+                map.print(to_x, to_y, &monster(0, mg::HERO), None);
+            } else {
+                map.print(to_x, to_y, &monster(0, mg::HERO), None);
+                map.print_with(10, 5, &watchman, None, told);
+            }
+            let cell = map.cell(10, 5).unwrap();
+            let way = (dx, dy);
+            assert_eq!(cell.glyph.as_ref(), Some(&watchman), "{way:?}");
+            assert!(cell.peaceful, "{way:?}: the peaceful shows hostile");
+            assert_eq!(
+                cell.wields.as_ref(),
+                Some(&glyph(GlyphKind::Obj, ')')),
+                "{way:?}"
+            );
+            assert_eq!(map.hero(), Some((to_x, to_y)), "{way:?}");
+        }
     }
 
     #[test]

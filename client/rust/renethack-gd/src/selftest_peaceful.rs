@@ -4,12 +4,14 @@
 //! NetHack's move does, with no `F` (whose blow 5.0 deals without the
 //! question): with the pet option that swaps places off, the engine asks
 //! "Really attack the watchman?", No, and he stays peaceful and unhurt.
-//! `peaceful-swap`: with it on (the default), a click swaps places with
-//! him or is refused, and he stays peaceful.
+//! `peaceful-swap`: with it on (the default), the hero in a room's corner
+//! with the watchman east or south of them: a click swaps places with him
+//! (5.0 draws him on the hero's old cell before the hero is on the new),
+//! he stays told peaceful, and the next click swaps back, no blow.
 
 use std::sync::Mutex;
 
-use nh_world::Prompt;
+use nh_world::{Key, KeyInput, Prompt};
 
 use super::{DialogEvent, Step, command, ctrl_key, idle_command, key, logged, quit, start, tap};
 use crate::game::RenethackGame;
@@ -121,18 +123,137 @@ pub(super) fn peaceful() -> Vec<Step> {
     steps
 }
 
-pub(super) fn peaceful_swap() -> Vec<Step> {
-    let mut steps = with_watchman(true);
-    steps.extend([
+/// The hero's cell before a swap.
+static HERO_WAS: Mutex<Option<(i32, i32)>> = Mutex::new(None);
+/// The room's corner the hero waits in.
+static CORNER: Mutex<Option<(i32, i32)>> = Mutex::new(None);
+
+/// The north-west corner of the hero's room: floor with wall west and
+/// north of it.
+fn room_corner(g: &RenethackGame) -> Option<(i32, i32)> {
+    let cat = g.catalog.as_deref()?;
+    let (hx, hy) = g.world.map.hero()?;
+    let terrain = |x: i32, y: i32| {
+        g.world
+            .map
+            .cell(x, y)
+            .and_then(|c| nh_world::cell_terrain(c, cat))
+    };
+    let floor = |x, y| {
+        matches!(
+            terrain(x, y),
+            Some(nh_world::Terrain::Floor | nh_world::Terrain::DarkFloor)
+        )
+    };
+    let wall = |x, y| terrain(x, y) == Some(nh_world::Terrain::Wall);
+    (hy - 8..=hy)
+        .flat_map(|y| (hx - 20..=hx).map(move |x| (x, y)))
+        .filter(|&(x, y)| floor(x, y) && wall(x - 1, y) && wall(x, y - 1))
+        .min_by_key(|&(x, y)| (hx - x).abs() + (hy - y).abs())
+}
+
+/// Steps to the corner, a key at a time.
+fn to_corner() -> Step {
+    Step::KeysUntil("the hero stepped to the room's corner", |g| {
+        if !matches!(g.pending, Some((_, Prompt::Command))) {
+            return Ok(Some(KeyInput::plain(Key::Escape)));
+        }
+        let target = CORNER
+            .lock()
+            .map_err(|e| e.to_string())?
+            .ok_or("no corner")?;
+        let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
+        if (hx, hy) == target {
+            return Ok(None);
+        }
+        let d = ((target.0 - hx).signum(), (target.1 - hy).signum());
+        let way = super::audio_tests::STEPS
+            .iter()
+            .find(|(s, _)| *s == d)
+            .ok_or("no way to the corner")?;
+        Ok(Some(KeyInput::plain(Key::Char(way.1))))
+    })
+}
+
+/// A click on the watchman: a swap (or its refusal), and he is still
+/// peaceful, unhurt; the way the hero went said.
+fn swap_steps() -> Vec<Step> {
+    vec![
+        Step::Call("the hero's cell before", |g| {
+            *HERO_WAS.lock().map_err(|e| e.to_string())? = g.world.map.hero();
+            Ok(())
+        }),
         click(),
         Step::Request("a command after the step into him", |p| {
             !really_attack(p) && command(p)
         }),
-        Step::Wait("swapped with or refused, still peaceful", |g| {
+        Step::Wait("swapped with or refused, still peaceful, unhurt", |g| {
             let said = logged(g, "swap places") || logged(g, "You stop");
             Ok(said && unhurt(g)?)
         }),
+    ]
+}
+
+pub(super) fn peaceful_swap() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode; the swap option on", |g| {
+        g.debug_mode = true;
+        g.settings.gameplay.safe_pet = true;
+        Ok(())
+    })];
+    steps.extend(start());
+    // in the room's north-west corner the watchman can only come east,
+    // south-east or south of the hero: the ways 5.0 draws him on the
+    // hero's old cell before the hero has left it
+    steps.push(Step::Wait("the room's corner", |g| {
+        let c = room_corner(g);
+        *CORNER.lock().map_err(|e| e.to_string())? = c;
+        Ok(c.is_some())
+    }));
+    steps.push(to_corner());
+    steps.extend([
+        Step::Wait("the hero in the corner", |g| {
+            let c = *CORNER.lock().map_err(|e| e.to_string())?;
+            if g.world.map.hero() == c {
+                Ok(true)
+            } else {
+                Err(format!(
+                    "the hero at {:?}, not the corner {c:?}",
+                    g.world.map.hero()
+                ))
+            }
+        }),
+        Step::Key(ctrl_key('g')),
+        Step::Request(
+            "what to create",
+            |p| matches!(p, Prompt::Text { query, .. } if query.contains("Create what")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted("peaceful watchman".into())),
+        Step::AnswerUntil('n', "a command after the creation", idle_command),
+        Step::Wait("the watchman beside the hero, peaceful", |g| {
+            let p = peaceful_beside(g);
+            *AT.lock().map_err(|e| e.to_string())? = p;
+            Ok(p.is_some())
+        }),
     ]);
+    steps.extend(swap_steps());
+    steps.push(Step::Call("the swap went east or south", |g| {
+        let was = HERO_WAS
+            .lock()
+            .map_err(|e| e.to_string())?
+            .ok_or("no cell before")?;
+        let now = g.world.map.hero().ok_or("no hero")?;
+        let way = (now.0 - was.0, now.1 - was.1);
+        godot::prelude::godot_print!("selftest: peaceful-swap: the hero went {way:?}");
+        if way == (0, 0) {
+            return Err("the watchman refused the swap".into());
+        }
+        if !(way.1 > 0 || (way.1 == 0 && way.0 > 0)) {
+            return Err(format!("the hero went {way:?}, not east or south"));
+        }
+        Ok(())
+    }));
+    // and back: the next click swaps again, no blow
+    steps.extend(swap_steps());
     steps.extend(quit());
     steps
 }
