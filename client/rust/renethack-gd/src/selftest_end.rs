@@ -766,3 +766,219 @@ pub(super) fn end_ascend() -> Vec<Step> {
     }));
     steps
 }
+
+/// The direction key (vi-keys, the scenarios' Classic keys) from the hero
+/// toward a foe beside them, if one stands there.
+fn toward_foe(g: &RenethackGame) -> Option<char> {
+    let (hx, hy) = g.world.map.hero()?;
+    let foe = (-1..=1)
+        .flat_map(|dx| (-1..=1).map(move |dy| (dx, dy)))
+        .filter(|d| *d != (0, 0))
+        .find(|(dx, dy)| {
+            g.world
+                .map
+                .cell(hx + dx, hy + dy)
+                .and_then(|c| c.glyph.as_ref())
+                .is_some_and(|gl| {
+                    gl.kind == nh_protocol::GlyphKind::Mon
+                        && gl.flags & (nh_protocol::mg::PET | nh_protocol::mg::HERO) == 0
+                })
+        })?;
+    toward((hx, hy), (hx + foe.0, hy + foe.1))
+}
+
+/// The fight prefix sent: its direction comes next.
+static FIGHT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// The tab the sheet's run shows next (0: the first).
+static NEXT_TAB: AtomicUsize = AtomicUsize::new(0);
+
+/// The frame a step of the sheet's run began on.
+static SHEET_FRAME: AtomicI64 = AtomicI64::new(0);
+
+/// A few frames after the last step of the sheet's run: laid out.
+fn sheet_settled(_: &RenethackGame) -> Result<bool, String> {
+    Ok(frames() > SHEET_FRAME.load(Ordering::Relaxed) + 4)
+}
+
+/// The next tab of the end's disclosures shown and shot: its start (the
+/// tabs at the body's top), then the body at its end (`end`; none when
+/// there are no more tabs).
+fn tab_shot(start: &'static str, end: &'static str) -> [Step; 8] {
+    [
+        Step::Call("the next tab", |_| {
+            if NEXT_TAB.fetch_add(1, Ordering::Relaxed) > 0 {
+                pad_event(PadEv::Button(PadButton::Y, true));
+                pad_event(PadEv::Button(PadButton::Y, false));
+            }
+            Ok(())
+        }),
+        Step::Wait("that tab shown", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let want = NEXT_TAB.load(Ordering::Relaxed) - 1;
+            Ok(ui
+                .screens
+                .end_section()
+                .is_some_and(|(at, n)| at == want % n.max(1)))
+        }),
+        Step::Call("the tabs at the body's top", |g| {
+            if let Some(ui) = g.ui.as_mut() {
+                ui.screens.scroll_to_sections();
+            }
+            SHEET_FRAME.store(frames(), Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::Wait("laid out", sheet_settled),
+        Step::ShotIf(start, |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let want = NEXT_TAB.load(Ordering::Relaxed) - 1;
+            Ok(ui.screens.end_section().is_some_and(|(_, n)| want < n))
+        }),
+        Step::Call("the body at its end", |_| {
+            for _ in 0..12 {
+                pad_event(PadEv::Button(PadButton::Rb, true));
+                pad_event(PadEv::Button(PadButton::Rb, false));
+            }
+            SHEET_FRAME.store(frames(), Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::Wait("scrolled", sheet_settled),
+        Step::ShotIf(end, |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let want = NEXT_TAB.load(Ordering::Relaxed) - 1;
+            Ok(ui.screens.end_section().is_some_and(|(_, n)| want < n))
+        }),
+    ]
+}
+
+/// The end's disclosures whole, for a sheet: a Rogue's sack with a potion
+/// in it, a jackal slain, newts genocided, a death; the page's top, its
+/// end (the conduct), then each tab.
+pub(super) fn end_tabs() -> Vec<Step> {
+    let mut steps = vec![set_up(true)];
+    steps.extend(super::start_as(crate::ui_events::CharacterChoice {
+        name: "Hero".into(),
+        role: "rogue".into(),
+        race: "human".into(),
+        gender: "female".into(),
+        align: "chaotic".into(),
+        profile: nh_world::KeyProfile::Classic,
+    }));
+    steps.push(earns());
+    // the potion into the sack
+    steps.extend([
+        key('a'),
+        Step::Request("what to apply", |p| !command(p)),
+        Step::KeyFrom("the sack", |g| {
+            letter_of(g, "sack")
+                .map(|c| KeyInput::plain(Key::Char(c)))
+                .ok_or_else(|| "no sack".into())
+        }),
+        Step::Request("what to do with the sack", |p| !command(p)),
+        key('i'),
+        // the potions' class, and every one of it
+        Step::Request("what type to put in", is_menu),
+        Step::KeyFrom("the potions' class", |g| {
+            let Some((_, Prompt::Menu { items, .. })) = g.pending.as_ref() else {
+                return Err("no menu".into());
+            };
+            (items.iter())
+                .find(|i| i.str.as_deref().is_some_and(|t| t.contains("Potion")))
+                .and_then(|i| u32::try_from(i.ch).ok().and_then(char::from_u32))
+                .map(|c| KeyInput::plain(Key::Char(c)))
+                .ok_or_else(|| "no potions' class".into())
+        }),
+        key('A'),
+        Step::Key(KeyInput::plain(Key::Enter)),
+        Step::AnswerUntil(' ', "a command, the potion in the sack", |g| {
+            fail_on_error_screen(g)?;
+            Ok(matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+    ]);
+    // newts genocided
+    steps.extend(wish("uncursed scroll of genocide"));
+    steps.extend([
+        key('r'),
+        Step::Request("what to read", |p| !command(p)),
+        Step::KeyFrom("the scroll", |g| {
+            letter_of(g, "genocide")
+                .or_else(|| letter_of(g, "scroll"))
+                .map(|c| KeyInput::plain(Key::Char(c)))
+                .ok_or_else(|| "no scroll".into())
+        }),
+        Step::Request("what to genocide", |p| asking(p, "genocide")),
+        Step::Dialog(DialogEvent::TextSubmitted("newt".into())),
+        Step::AnswerUntil(' ', "a command after the genocide", |g| {
+            fail_on_error_screen(g)?;
+            Ok(matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+    ]);
+    // a jackal made and slain
+    steps.extend([
+        Step::Key(ctrl_key('g')),
+        Step::Request("what to create", |p| asking(p, "Create what kind")),
+        Step::Dialog(DialogEvent::TextSubmitted("jackal".into())),
+        Step::AnswerUntil(' ', "a command, the jackal here", |g| {
+            fail_on_error_screen(g)?;
+            Ok(matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+        Step::KeysUntil("the jackal slain", |g| {
+            fail_on_error_screen(g)?;
+            // F, then its direction at the next command prompt
+            let after_f = FIGHT.swap(false, Ordering::Relaxed);
+            match g.pending.as_ref().map(|(_, p)| p) {
+                Some(Prompt::Command) if after_f => Ok(Some(KeyInput::plain(Key::Char(
+                    toward_foe(g).unwrap_or('.'),
+                )))),
+                Some(Prompt::Command) => Ok(toward_foe(g).map(|_| {
+                    FIGHT.store(true, Ordering::Relaxed);
+                    KeyInput::plain(Key::Char('F'))
+                })),
+                Some(Prompt::FreeKey {
+                    directions: true, ..
+                }) => Ok(Some(KeyInput::plain(Key::Char(
+                    toward_foe(g).unwrap_or('.'),
+                )))),
+                Some(_) => Ok(Some(KeyInput::plain(Key::Char(' ')))),
+                None => Ok(None),
+            }
+        }),
+        Step::Request("a command after the fight", command),
+    ]);
+    steps.push(in_asked_language());
+    // the hero slain by their own player
+    steps.extend([
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::ExtCmd(Some("wizkill".into()))),
+        Step::Request("the monster to slay", command),
+        key('.'),
+        Step::Request("the suicide's question", |p| asking(p, "suicide")),
+        Step::Dialog(DialogEvent::TextSubmitted("yes".into())),
+        Step::Request(
+            "Die?",
+            |p| matches!(p, Prompt::Choice { query, .. } if query.contains("Die?")),
+        ),
+        key('y'),
+        on_the_way(),
+        Step::Wait("the end page laid out", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.screens.end_section().is_some())
+        }),
+        Step::Shot("end-tabs-top"),
+    ]);
+    steps.push(Step::Call("", |_| {
+        NEXT_TAB.store(0, Ordering::Relaxed);
+        Ok(())
+    }));
+    for (start, end) in [
+        ("end-tabs-1", "end-tabs-1-end"),
+        ("end-tabs-2", "end-tabs-2-end"),
+        ("end-tabs-3", "end-tabs-3-end"),
+        ("end-tabs-4", "end-tabs-4-end"),
+        ("end-tabs-5", "end-tabs-5-end"),
+    ] {
+        steps.extend(tab_shot(start, end));
+    }
+    steps
+}

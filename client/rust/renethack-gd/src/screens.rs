@@ -698,6 +698,19 @@ impl Screens {
         self.end_sections.as_ref().map(|s| s.shown())
     }
 
+    /// The end page's body scrolled to its disclosures' tabs (self-tests:
+    /// a tab's start in a picture).
+    pub fn scroll_to_sections(&mut self) {
+        let (Some(sections), Some((scroll, _, _))) =
+            (self.end_sections.as_ref(), self.end_page.as_mut())
+        else {
+            return;
+        };
+        let top = sections.root.get_global_position().y - scroll.get_global_position().y;
+        let at = scroll.get_v_scroll() as f32 + top;
+        scroll.set_v_scroll(at.max(0.0).round() as i32);
+    }
+
     /// The end page's body `by` pixels down (up when less than 0); a
     /// screen's worth for `page`.
     fn scroll_end(&mut self, by: f32, page: bool) {

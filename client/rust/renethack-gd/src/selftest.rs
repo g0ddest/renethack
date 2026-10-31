@@ -5245,6 +5245,7 @@ impl SelfTest {
             "presets" => settings_tests::presets(),
             "layouts" => layouts_tests::layouts(),
             "end-death" => end_tests::end_death(),
+            "end-tabs" => end_tests::end_tabs(),
             "end-quit" => end_tests::end_quit(),
             "end-ascend" => end_tests::end_ascend(),
             "rim" => rim_tests::rim(),
