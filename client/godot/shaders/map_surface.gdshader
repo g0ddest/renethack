@@ -109,6 +109,9 @@ global uniform vec3 eye_pos;
 global uniform float branch_cracks;
 global uniform vec4 branch_crack_color;
 global uniform vec4 branch_chasm;
+// a cave's branch (the Gnomish Mines): its floors meet the rock as a
+// shore, not along the cells' edges
+global uniform float branch_cave;
 // the whole level framed (map_view's overview): what is remembered shows
 // nearly as it is, lit by its own faint light
 global uniform float overview;
@@ -570,11 +573,29 @@ void fragment() {
 	if (near_lava > 0.0) {
 		albedo *= mix(1.0, 0.25, near_lava);
 	}
+	// in a cave the floor meets the rock as it meets water: its edge
+	// wandering through the cell, the earth darkening into the rock's
+	// foot (lit and square, a patch of it read as a tile laid down)
+	if (edge_kind == 1.0 && branch_cave > 0.0) {
+		vec4 g = texture(ground_tex, (wpos.xz + 0.5) / FIELD);
+		float rockward = 1.0 - min(g.r + g.g + g.b + g.a, 1.0);
+		float lead = rockward + (tl2(wpos.xz * 1.7 + vec2(29.3, 3.7)) - 0.5) * 0.5
+			+ (tl2(wpos.xz * 0.42 + vec2(5.1, 21.7)) - 0.5) * 0.3;
+		albedo *= mix(1.0, 0.3, smoothstep(0.12, 0.42, lead) * branch_cave);
+	}
 
 	// remembered: the same stone, grey, cold and dark; in the overview
 	// nearly as it is, its own hue kept (cold over it all, every level
 	// read as one grey clay)
 	float seen = mix(1.0, fow.r, memory);
+	// in a cave what the hero sees of the floor meets what they remember
+	// as a shore does, wandering through the cells (the few cells a dark
+	// cave shows round the hero were a square patch of earth)
+	if (edge_kind == 1.0 && branch_cave > 0.0 && seen > 0.0 && seen < 1.0) {
+		float s = seen + (tl2(wpos.xz * 1.7 + vec2(41.3, 17.9)) - 0.5) * 0.5
+			+ (tl2(wpos.xz * 0.42 + vec2(9.7, 33.1)) - 0.5) * 0.3;
+		seen = mix(seen, smoothstep(0.3, 0.7, s), branch_cave);
+	}
 	float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
 	vec3 remembered = mix(albedo, luma * MEMORY_TINT, mix(0.8, OVERVIEW_TINT, overview))
 		* mix(0.4, 0.75, overview);

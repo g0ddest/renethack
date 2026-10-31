@@ -4991,6 +4991,10 @@ impl MapView {
         };
         RenderingServer::singleton()
             .global_shader_parameter_set("branch_chasm", &chasm.to_variant());
+        RenderingServer::singleton().global_shader_parameter_set(
+            "branch_cave",
+            &(if l.cave { 1.0f32 } else { 0.0 }).to_variant(),
+        );
         self.vfx.set_dust(l.dust, l.embers);
         self.lights_dirty = true;
         self.bedrock_dirty = true;
