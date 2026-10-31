@@ -28,7 +28,7 @@ const PARANOID_MENU: &str = "Actions requiring extra confirmation:";
 /// how the engine's windows, menus, keys and clicks come to the client.
 /// So are the status conditions (`cond_`), getpos's (`getpos`) and
 /// farlook's (`whatis_`).
-const CLIENT_OPTIONS: [&str; 33] = [
+const CLIENT_OPTIONS: [&str; 34] = [
     "name",
     "role",
     "race",
@@ -43,6 +43,8 @@ const CLIENT_OPTIONS: [&str; 33] = [
     "implicit_uncursed",
     // the host's, always off: no Unix mailbox may summon the mail daemon
     "mail",
+    // the end's disclosures, all yes: the end page shows them
+    "disclose",
     "autopickup",
     "pickup_types",
     "pickup_burden",
@@ -113,6 +115,19 @@ pub fn without_options(list: &str, own: &[String]) -> String {
         .join(",")
 }
 
+/// `option` ("!pushweapon", "disclose:+i") is one the client sets itself
+/// (`CLIENT_OPTIONS`, the conditions', getpos's, farlook's), never the
+/// player's own; a soft one turned off is the player's.
+pub fn is_client_option(option: &str) -> bool {
+    let name = option.trim().trim_start_matches('!');
+    let name = name.split(':').next().unwrap_or("").trim();
+    name.is_empty()
+        || CLIENT_OPTIONS.contains(&name)
+        || ["cond_", "getpos", "whatis_"]
+            .iter()
+            .any(|p| name.starts_with(p))
+}
+
 /// The `OPTIONS=` lines' options of an `rc` but the client's.
 fn listed_options(rc: &str) -> Vec<String> {
     rc.replace("\\\n", "")
@@ -121,15 +136,7 @@ fn listed_options(rc: &str) -> Vec<String> {
         .flat_map(|opts| opts.split(','))
         .map(str::trim)
         .filter(|o| !o.is_empty() && !o.chars().any(char::is_control))
-        .filter(|o| {
-            let name = o.trim_start_matches('!');
-            let name = name.split(':').next().unwrap_or("").trim();
-            !name.is_empty()
-                && !CLIENT_OPTIONS.contains(&name)
-                && !["cond_", "getpos", "whatis_"]
-                    .iter()
-                    .any(|p| name.starts_with(p))
-        })
+        .filter(|o| !is_client_option(o))
         .map(str::to_string)
         .collect()
 }
@@ -1060,6 +1067,7 @@ mod tests {
                   OPTIONS=playmode:debug\n\
                   OPTIONS=paranoid_confirmation:pray\n\
                   OPTIONS=whatis_menu\n\
+                  OPTIONS=disclose:+i +a +v +g +c +o\n\
                   MENUCOLOR=\"blessed\"=green\n\
                   BIND=^X:attributes\n";
         // the client's time and showexp on: its own; pushweapon missing:

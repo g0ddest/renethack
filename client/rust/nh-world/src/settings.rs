@@ -52,9 +52,24 @@ pub struct Settings {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub walk_to_stairs: bool,
     /// The player's own NetHack options (`player_options`): those `O` set
-    /// in the last game, given to every new game and restore.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// in the last game, given to every new game and restore. One of the
+    /// client's own an older profile kept (the end's `disclose`) is left
+    /// out as it is read: the client's value stands.
+    #[serde(
+        default,
+        skip_serializing_if = "Vec::is_empty",
+        deserialize_with = "own_options"
+    )]
     pub nethack_options: Vec<String>,
+}
+
+/// A profile's saved NetHack options, the client's own left out.
+fn own_options<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Vec<String>, D::Error> {
+    let saved = Vec::<String>::deserialize(d)?;
+    Ok(saved
+        .into_iter()
+        .filter(|o| !crate::is_client_option(o))
+        .collect())
 }
 
 /// How fast the client's own orders step: the tick between their actions.
@@ -648,6 +663,16 @@ mod tests {
         let text = serde_json::to_string(&quick).unwrap();
         assert!(text.contains("\"order_speed\":\"instant\""), "{text}");
         assert_eq!(serde_json::from_str::<Settings>(&text).unwrap(), quick);
+    }
+
+    #[test]
+    fn a_profile_keeps_no_option_of_the_client_s_own() {
+        // an older profile kept the end's disclose as the player's
+        let s: Settings = serde_json::from_str(
+            r#"{"nethack_options":["hitpointbar","disclose:+i +a +v +g +c +o","!pushweapon","number_pad:1"]}"#,
+        )
+        .unwrap();
+        assert_eq!(s.nethack_options, ["hitpointbar", "!pushweapon"]);
     }
 
     #[test]
