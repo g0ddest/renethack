@@ -1532,9 +1532,36 @@ mod tests {
     }
 
     #[test]
-    fn a_hero_shows_armour_only_while_wearing_it() {
-        // a role's own look is clothing: a helmet, a cloak, mail or a
-        // shield is there only with one worn in its slot
+    fn a_hero_shows_what_is_worn_only_while_it_is_worn() {
+        // a role's own look is clothing: a helmet, a cloak, mail, a shield,
+        // an amulet, a ring, a band over the eyes, gloves, boots, a bag, are
+        // there only with one worn in their slot (or carried); and a cloak
+        // worn always shows
+        const WORN: [&str; 23] = [
+            "helm_",
+            "amulet",
+            "ring",
+            "blindfold",
+            "towel",
+            "lenses",
+            "shield",
+            "gloves",
+            "boots",
+            "shoes",
+            "bag",
+            "camera",
+            "stethoscope",
+            "garment_cloak",
+            "garment_cape",
+            "garment_robe",
+            "garment_pelt",
+            "garment_mantle",
+            "garment_sode",
+            "cloak_worn",
+            "cape_worn",
+            "robe_wrap",
+            "pelt_wrap",
+        ];
         let art = manifest();
         for (name, spec) in art.models.iter().filter(|(n, _)| n.starts_with("role_")) {
             for e in &spec.extras {
@@ -1543,7 +1570,19 @@ mod tests {
                     "{name} {}: shown till something is worn",
                     e.model
                 );
+                let worn = WORN.iter().any(|w| e.model.starts_with(w)) || e.model == "tabard_worn";
+                assert!(
+                    !worn || e.with.is_some(),
+                    "{name} {}: shown though nothing is worn",
+                    e.model
+                );
             }
+            assert!(
+                spec.extras
+                    .iter()
+                    .any(|e| e.with.as_deref() == Some("cloak")),
+                "{name}: a cloak worn would not show"
+            );
             for (part, d) in &spec.dress {
                 assert!(
                     !matches!(d.material.as_str(), "chain_mail" | "plate_mail"),

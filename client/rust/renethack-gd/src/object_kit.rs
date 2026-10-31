@@ -828,6 +828,29 @@ impl Kit<'_> {
                     );
                 }
             }
+            "scarf" => {
+                // a scarf of dark cloth over the nose and mouth, the eyes
+                // free above it, its ends hanging behind
+                let dark = self.mat(Color::from_rgb(0.06, 0.055, 0.06), Finish::Matte);
+                self.part(
+                    root,
+                    torus(0.4, 0.47),
+                    &dark,
+                    [0.0, -0.06, 0.04],
+                    [-8.0, 0.0, 0.0],
+                    [1.02, 3.0, 1.25],
+                );
+                for s in [-1.0f32, 1.0] {
+                    self.part(
+                        root,
+                        cuboid(0.07, 0.3, 0.02),
+                        &dark,
+                        [s * 0.06, -0.22, -0.52],
+                        [8.0, 0.0, s * 14.0],
+                        ONE,
+                    );
+                }
+            }
             "snakes" => self.snakes(root),
             // a knight's plume alone, for a helmet already worn
             "plume" => self.plume(root),
