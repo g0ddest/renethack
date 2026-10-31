@@ -586,6 +586,10 @@ pub struct HeadSpec {
     /// Without the base's eyebrows (a face under wrappings).
     #[serde(default)]
     pub browless: bool,
+    /// All its hair goes under a helmet (a Samurai's buns): none shows
+    /// while one is worn.
+    #[serde(default)]
+    pub hair_under_helm: bool,
 }
 
 /// A PBR material: `<textures>_albedo.jpg`, `_normal.jpg` and `_arm.jpg`

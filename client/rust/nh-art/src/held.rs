@@ -498,20 +498,29 @@ impl ArtManifest {
         }
         let spec = |h: Option<HeldArt>| h.map(|h| &self.held_models[h.held].1);
         let rules = &self.held;
-        g.idle = if g.lit() {
-            rules.idle.get("light").cloned()
-        } else if g.arm_l.is_some() {
+        g.idle = if !g.lit() && g.arm_l.is_some() {
             rules.idle.get("shield").cloned()
         } else {
-            match spec(g.hand_r) {
-                Some(s) => s.idle.clone(),
-                None => rules.idle.get("bare").cloned(),
-            }
+            self.idle_shield_down(&g)
         };
         g.attack = match spec(g.hand_r) {
             Some(s) => s.attack.clone(),
             None => rules.attack.get("bare").cloned(),
         };
         g
+    }
+
+    /// The idle of `g` with its shield let down at its side (a hero shown
+    /// whole on the creation form, a shield over them from chin to knee
+    /// otherwise): a lit light's, the weapon's own, or the bare one.
+    pub fn idle_shield_down(&self, g: &Gear) -> Option<String> {
+        let rules = &self.held;
+        if g.lit() {
+            return rules.idle.get("light").cloned();
+        }
+        match g.hand_r.map(|h| &self.held_models[h.held].1) {
+            Some(s) => s.idle.clone(),
+            None => rules.idle.get("bare").cloned(),
+        }
     }
 }

@@ -6792,7 +6792,16 @@ impl MapView {
             return;
         };
         self.art.sit(m, mount, settle);
-        let lamp = self.art.equip(m, self.hero_gear.gear(), delta);
+        // shown whole behind the creation form, a shield let down at the
+        // side rather than over the body
+        let lamp = match &self.creation {
+            Some(_) => {
+                let mut gear = self.hero_gear.gear().clone();
+                gear.idle = self.art.manifest().idle_shield_down(&gear);
+                self.art.equip(m, &gear, delta)
+            }
+            None => self.art.equip(m, self.hero_gear.gear(), delta),
+        };
         if self.hero_gear.set_lamp(lamp) {
             let (color, energy, range) = if lamp {
                 (LAMP_POOL, LAMP_POOL_ENERGY, LAMP_POOL_RANGE)

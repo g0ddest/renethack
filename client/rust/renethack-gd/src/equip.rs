@@ -22,7 +22,8 @@ use godot::prelude::*;
 use nh_art::{Gear, HeldArt, LightSpec, PROC_CLIPS, Resolved, Tint};
 
 use super::{
-    Art, Finish, Model, ModelLook, NECK_SLOT, Pose, Slotted, find, set_layer_mask, transform,
+    Art, BASE_PART, Finish, HAIR_PART, Model, ModelLook, NECK_SLOT, Pose, Slotted, find,
+    set_layer_mask, transform,
 };
 use crate::meshes::sphere;
 use crate::off_hand::{GuardClips, OffHand};
@@ -323,6 +324,7 @@ impl Art {
         }
         // a role's hat, cape or shield steps aside for what is worn there,
         // and its own thing round the neck for whatever the hero carries
+        self.helm_hair(m, gear.worn.contains(&"helmet"));
         // (and what goes with a slot comes with what is worn there)
         for (slot, node) in &m.extras {
             let shown = match slot {
@@ -508,6 +510,30 @@ impl Art {
         }
     }
 
+    /// The hair of a head that goes all under a helmet (a Samurai's buns,
+    /// `HeadSpec::hair_under_helm`) hidden while one is worn.
+    fn helm_hair(&self, m: &Model, helmed: bool) {
+        let head = self.manifest.model_at(m.key.model).1.head.as_deref();
+        if !head
+            .and_then(|h| self.manifest.head(h))
+            .is_some_and(|h| h.hair_under_helm)
+        {
+            return;
+        }
+        for node in m
+            .node
+            .find_children_ex(&format!("{BASE_PART}*{HAIR_PART}"))
+            .type_("MeshInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+        {
+            if let Ok(mut mi) = node.try_cast::<MeshInstance3D>() {
+                mi.set_visible(!helmed);
+            }
+        }
+    }
+
     /// A monster's thing held in both hands (an extra on its right hand
     /// with `two`: a dwarf leader's mattock): the off hand's solver on its
     /// skeleton holds it all the time, the right arm in the guard of the
@@ -601,6 +627,7 @@ impl Art {
         }
         self.take_off(&mut worn.dressed);
         worn.gear = Gear::default();
+        self.helm_hair(m, false);
         for (slot, node) in &m.extras {
             let mut node = node.clone();
             if node.is_instance_valid() {

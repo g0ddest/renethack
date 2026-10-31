@@ -269,7 +269,8 @@ def do_pbr_zip(op, w, item, max_size):
     (ambient occlusion, roughness, metalness in R, G, B; a map the zip lacks
     is white AO, mid roughness, no metal) and _emission.jpg when there is
     one. `gain` multiplies a map's values (a true metal is dark and
-    mirror-smooth: black in a dungeon with nothing to reflect)."""
+    mirror-smooth: black in a dungeon with nothing to reflect), and `floor`
+    (0..1) keeps them from below (mail never a mirror under a torch)."""
     from PIL import Image
     ua = BROWSER_UA if item.get("browser") else None
     blob = cached(item["url"], lambda: fetch(op, item["url"], ua=ua))
@@ -286,6 +287,10 @@ def do_pbr_zip(op, w, item, max_size):
         if gain:
             img = img.convert("RGB" if key == "albedo" else "L")
             img = img.point(lambda v: min(255, round(v * gain)))
+        floor = item.get("floor", {}).get(key)
+        if floor:
+            img = img.convert("RGB" if key == "albedo" else "L")
+            img = img.point(lambda v: max(v, round(floor * 255)))
         return img
 
     base = f"{item['dest']}/{item['id']}/{item['id']}"

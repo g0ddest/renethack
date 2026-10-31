@@ -103,9 +103,11 @@ pub struct Preview {
 }
 
 impl Preview {
-    /// Something is left to chance: the hooded figure stands for the hero.
+    /// The role is left to chance: the hooded figure stands for the hero.
+    /// (A gender left to chance shows the role's hero as a man: the role's
+    /// look is what a player chooses by.)
     pub fn veiled(&self) -> bool {
-        self.role.is_none() || self.female.is_none()
+        self.role.is_none()
     }
 }
 
@@ -154,7 +156,7 @@ impl TitleScene {
 
     /// The hero of `role` in the kit NetHack starts it with, a woman's
     /// look when `female`; a role left to chance (None) carries nothing.
-    /// Either left to chance, the map draws the hooded figure in their
+    /// A role left to chance, the map draws the hooded figure in their
     /// place (`Preview::veiled`); the glyph stands for the size.
     pub fn dress(&mut self, role: Option<&str>, female: Option<bool>) {
         let cat = &self.catalog;
@@ -336,7 +338,7 @@ mod tests {
             at: 0.5,
         };
         assert!(veiled(None, Some(true)).veiled());
-        assert!(veiled(Some("Wiz"), None).veiled());
+        assert!(!veiled(Some("Wiz"), None).veiled());
         assert!(!veiled(Some("Wiz"), Some(false)).veiled());
     }
 

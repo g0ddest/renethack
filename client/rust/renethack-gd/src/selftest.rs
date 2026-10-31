@@ -74,6 +74,8 @@ mod gameplay_tests;
 mod give_up_tests;
 #[path = "selftest_guide.rs"]
 mod guide_tests;
+#[path = "selftest_helm_hair.rs"]
+mod helm_hair_tests;
 #[path = "selftest_help.rs"]
 mod help_tests;
 #[path = "selftest_hero.rs"]
@@ -5225,6 +5227,7 @@ impl SelfTest {
             "overhang" => overhang_tests::overhang(),
             "outfits" => outfits_tests::outfits(),
             "late-monsters" => late_tests::late_monsters(),
+            "helm-hair" => helm_hair_tests::helm_hair(),
             "ordinals" => ordinals_tests::ordinals(),
             "travel-words" => travel_words_tests::travel_words(),
             "features" => features_tests::features(),

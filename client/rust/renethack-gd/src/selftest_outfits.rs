@@ -4,7 +4,8 @@
 //! their look. RENETHACK_ROLES=valkyrie,samurai limits the roles. Nothing
 //! is checked but that each is drawn; with `--screenshots`, the pictures
 //! `outfit-<role>-<f|m>`, and with RENETHACK_BEHIND set each from behind
-//! as well (`-back`).
+//! as well (`-back`); RENETHACK_RANDOM leaves race and gender to chance
+//! (`outfit-<role>-r`).
 
 use std::sync::atomic::{AtomicI64, AtomicUsize, Ordering};
 
@@ -39,20 +40,24 @@ fn frames() -> i64 {
     Engine::singleton().get_process_frames() as i64
 }
 
-/// The (role, female) shot in turn.
-fn heroes() -> Vec<(String, bool)> {
+/// The (role, female) shot in turn; None: race and gender left to chance
+/// (with RENETHACK_RANDOM).
+fn heroes() -> Vec<(String, Option<bool>)> {
     let roles: Vec<String> = match std::env::var("RENETHACK_ROLES") {
         Ok(v) => v.split(',').map(|r| r.trim().to_string()).collect(),
         Err(_) => ROLES.iter().map(|r| r.to_string()).collect(),
     };
+    let random = std::env::var_os("RENETHACK_RANDOM").is_some();
     roles
         .into_iter()
         .flat_map(|r| {
             // a Valkyrie is a woman
-            let genders: &[bool] = if r == "valkyrie" {
-                &[true]
+            let genders: &[Option<bool>] = if random {
+                &[None]
+            } else if r == "valkyrie" {
+                &[Some(true)]
             } else {
-                &[true, false]
+                &[Some(true), Some(false)]
             };
             genders
                 .iter()
@@ -85,17 +90,30 @@ pub(super) fn outfits() -> Vec<Step> {
         Step::Wait("the creation form", |g| Ok(screen(g) == Some("creation"))),
     ];
     for (role, female) in heroes() {
-        let g = if female { "f" } else { "m" };
+        let g = match female {
+            Some(true) => "f",
+            Some(false) => "m",
+            None => "r",
+        };
         let shot: &'static str = Box::leak(format!("outfit-{role}-{g}").into_boxed_str());
         steps.extend([
             Step::Call("the next hero", |g| {
                 let i = NEXT.fetch_add(1, Ordering::Relaxed);
                 let (role, female) = heroes().get(i).cloned().ok_or("no more heroes")?;
+                let random = "random".to_string();
                 g.preset_creation(&CharacterChoice {
                     name: String::new(),
                     role,
-                    race: "human".into(),
-                    gender: if female { "female" } else { "male" }.into(),
+                    race: if female.is_some() {
+                        "human".into()
+                    } else {
+                        random.clone()
+                    },
+                    gender: match female {
+                        Some(true) => "female".into(),
+                        Some(false) => "male".into(),
+                        None => random,
+                    },
                     align: "random".into(),
                     profile: KeyProfile::Modern,
                 });

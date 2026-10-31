@@ -2108,9 +2108,10 @@ impl Art {
             return false;
         };
         let tag = if lean == Lean::Right { "Second" } else { "" };
-        for (i, (mesh, skin, materials)) in parts.iter().enumerate() {
+        for (i, (mesh, skin, materials, hair)) in parts.iter().enumerate() {
             let mut mi = MeshInstance3D::new_alloc();
-            mi.set_name(&format!("{BASE_PART}{region:?}{i}{tag}"));
+            let hair = if *hair { HAIR_PART } else { "" };
+            mi.set_name(&format!("{BASE_PART}{region:?}{i}{tag}{hair}"));
             mi.set_mesh(mesh);
             for (s, m) in materials.iter().enumerate() {
                 if let Some(m) = m {
@@ -2167,8 +2168,8 @@ impl Art {
                 .and_then(|parts| {
                     parts
                         .into_iter()
-                        .map(|(mesh, skin, materials)| {
-                            Some((turned(&mesh, turn)?, skin, materials))
+                        .map(|(mesh, skin, materials, hair)| {
+                            Some((turned(&mesh, turn)?, skin, materials, hair))
                         })
                         .collect()
                 }),
@@ -2254,7 +2255,7 @@ impl Art {
                 };
                 let texture = if body { skin_tex.clone() } else { None };
                 let materials = recoloured(&worn, colour, texture);
-                out.push((mesh.upcast::<Mesh>(), mi.get_skin(), materials));
+                out.push((mesh.upcast::<Mesh>(), mi.get_skin(), materials, !base));
             }
             inst.queue_free();
         }
@@ -4015,12 +4016,21 @@ type CutBody = (Gd<ArrayMesh>, Vec<usize>);
 
 /// A base head's meshes, each with its skin and the materials worn on its
 /// surfaces.
-type HeadParts = Vec<(Gd<Mesh>, Option<Gd<GdSkin>>, Vec<Option<Gd<Material>>>)>;
+/// A base head's meshes: each with its skin, its materials, and whether
+/// it is hair.
+type HeadParts = Vec<(
+    Gd<Mesh>,
+    Option<Gd<GdSkin>>,
+    Vec<Option<Gd<Material>>>,
+    bool,
+)>;
 
 /// The names of a base character's parts worn on an outfit's skeleton
 /// begin so (then the region and a number): their skin is the head's own,
 /// no outfit's dye or shade touches it.
 const BASE_PART: &str = "Base";
+/// The end of the name of a base head's hair (a `BASE_PART`).
+const HAIR_PART: &str = "Hair";
 /// How far into a sleeve a base character's hand begins.
 const TUCK: f32 = 0.012;
 
