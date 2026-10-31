@@ -391,7 +391,7 @@ void fragment() {
 		float own = edge_kind == 4.0 ? v.b : v.a;
 		near_water = (1.0 - smoothstep(0.0, 0.28, own - v.r)) * step(0.001, v.r);
 		near_lava = (1.0 - smoothstep(0.0, 0.35, own - v.g)) * step(0.001, v.g);
-		near_ice = edge_kind == 1.0 ? (1.0 - smoothstep(0.0, 0.4, own - v.b)) * step(0.001, v.b) : 0.0;
+		near_ice = edge_kind == 1.0 ? (1.0 - smoothstep(0.0, 0.2, own - v.b)) * step(0.001, v.b) : 0.0;
 	}
 	// a floor's edge where nothing is drawn beside it (the dark past what
 	// is seen, a floor NetHack leaves unmapped out of sight): frayed by the
@@ -564,7 +564,7 @@ void fragment() {
 	if (near_ice > 0.0) {
 		float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
 		vec3 frost = vec3(0.78, 0.84, 0.9) * mix(0.55, 0.95, tn2(wpos.xz * 3.1));
-		albedo = mix(albedo, frost * max(luma * 2.2, 0.35), near_ice * 0.8);
+		albedo = mix(albedo, frost * max(luma * 2.2, 0.35), near_ice * 0.5);
 		rough = mix(rough, 0.3, near_ice);
 	}
 	if (near_lava > 0.0) {

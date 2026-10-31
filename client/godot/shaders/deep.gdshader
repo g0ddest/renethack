@@ -58,7 +58,8 @@ void fragment() {
 		float fade = exp(-depth * 0.32);
 		vec2 w = at * (0.6 - fk * 0.1);
 		w += vec2(sin(w.y * 2.0 + TIME * 0.5), cos(w.x * 2.0 - TIME * 0.4)) * 0.2;
-		col += light * threads(w, TIME * (0.4 - fk * 0.07) + fk * 1.7) * 0.065 * fade;
+		// (faint: brighter, they were a white web over the deep)
+		col += light * threads(w, TIME * (0.4 - fk * 0.07) + fk * 1.7) * 0.033 * fade;
 		vec2 g = at * 1.6 + vec2(TIME * 0.05, TIME * 0.02 * (1.0 + fk));
 		vec2 h = hash2(floor(g) + fk * 7.3);
 		float speck = step(0.78, h.x) * smoothstep(0.09, 0.0, length(fract(g) - 0.5 - (h - 0.5) * 0.6));

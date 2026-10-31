@@ -80,6 +80,19 @@ vec4 ground_blur(vec2 p) {
 	return f + texelFetch(ground_tex, at, 0) * core * 0.35;
 }
 
+// how much of the ground about a point, two cells and more round it, is
+// water: a sea's or a lake's shore, not a puddle's
+float water_about(vec2 p) {
+	vec2 uv = (p + 0.5) / FIELD;
+	vec2 d = vec2(1.5) / FIELD;
+	return (texture(ground_tex, uv).r
+		+ texture(ground_tex, uv + vec2(d.x, 0.0)).r + texture(ground_tex, uv - vec2(d.x, 0.0)).r
+		+ texture(ground_tex, uv + vec2(0.0, d.y)).r + texture(ground_tex, uv - vec2(0.0, d.y)).r
+		+ texture(ground_tex, uv + d).r + texture(ground_tex, uv - d).r
+		+ texture(ground_tex, uv + vec2(d.x, -d.y)).r
+		+ texture(ground_tex, uv + vec2(-d.x, d.y)).r) / 9.0;
+}
+
 // the kinds' strengths at a point of the ground (as map_surface.gdshader
 // works them out, alike to the bit: where its kind wins, the water shows)
 vec4 ground_lead(vec2 p, vec4 f) {
@@ -157,12 +170,13 @@ void fragment() {
 	EMISSION = sheen.rgb * (fresnel * 3.0 + 0.08 + streak * 0.4) * mix(0.3, 1.0, seen)
 		+ own * overview * OVERVIEW_GLOW;
 
-	// foam lapping at the shore: a band at its very edge, its reach
-	// breathing, broken up by the noise
+	// foam lapping at the shore of a sea, a lake: a band at its very
+	// edge, its reach breathing, broken up by the noise; none round a
+	// puddle or a swamp's pools, still water (white, it ringed each one)
 	float lap = 0.5 + 0.5 * sin(t * 1.3 + wpos.x * 1.9 + wpos.z * 1.4);
 	float band = smoothstep(mix(0.45, 0.8, lap), 0.97, shore);
 	float breakup = smoothstep(0.3, 0.62, n2(wpos.xz * 2.4 + vec2(t * 0.06, -t * 0.04)) + 0.35 * shore);
-	float foam = band * breakup;
+	float foam = band * breakup * smoothstep(0.4, 0.65, water_about(wpos.xz));
 	vec3 froth = mix(luma * vec3(0.54, 0.59, 0.72) * 0.4, foam_color.rgb, seen);
 	col = mix(col, froth, foam * 0.85);
 

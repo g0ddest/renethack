@@ -62,6 +62,7 @@ void fragment() {
 	float water = texture(ground_tex, (wpos.xz + 0.5) / FIELD).r;
 	water += (textureLod(noise_tex, wpos.xz * 0.21, 0.0).r - 0.5) * 0.18;
 	float inside = smoothstep(0.62, 0.44, water);
-	ALBEDO = vec3(0.3, 0.55, 0.7) + vec3(0.55, 0.85, 1.0) * c * 0.9;
-	ALPHA = (0.26 + c * 0.35) * inside;
+	// (faint: brighter, they were a white web over the floor)
+	ALBEDO = vec3(0.3, 0.55, 0.7) + vec3(0.55, 0.85, 1.0) * c * 0.45;
+	ALPHA = (0.26 + c * 0.18) * inside;
 }
