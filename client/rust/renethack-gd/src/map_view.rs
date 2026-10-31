@@ -1102,6 +1102,8 @@ struct Around {
     beside_cut: bool,
     /// The corner south of here is cut down so.
     south_cut: bool,
+    /// Air beside, diagonals too (a bubble on the Plane of Water).
+    air: bool,
 }
 
 /// How much of a wall stands.
@@ -1156,6 +1158,11 @@ impl Around {
             far_aside_open: open(near.beyond[0]) || open(near.beyond[1]),
             beside_cut: !open(n) && ((wall(w) && open(nw)) || (wall(e) && open(ne))),
             south_cut: wall(s) && south_pier && ((wall(sw) && open(w)) || (wall(se) && open(e))),
+            air: near
+                .cells
+                .iter()
+                .flatten()
+                .any(|c| cell_terrain(c, catalog) == Some(Terrain::Air)),
         }
     }
 
@@ -2233,6 +2240,16 @@ fn terrain_base(
                 Paint::Liquid(Liquid::Deep),
                 at(0.0, DEEP_BEDROCK, 0.0),
             );
+            // beside a bubble its floor too, which shows only where the
+            // bubble's round edge reaches into the cell (its inner
+            // corners filled: a bubble is round, not its cells' cross)
+            if around.air {
+                look.ground_tile(
+                    plane(1.0, 1.0),
+                    Paint::Liquid(Liquid::Bubble),
+                    Vector3::ZERO,
+                );
+            }
             look.ground = -0.1;
             look.sunk = true;
         }
@@ -10693,7 +10710,7 @@ mod tests {
         // the deep round a bubble two cells wide: each air cell's skin (a
         // curved meniscus) on its three sides that meet the water, none
         // between them
-        let deep = level(&f.cat, &["WWWW", "WaaW", "WWWW"]);
+        let deep = level(&f.cat, &["WWWWWW", "WaaWWW", "WWWWWW"]);
         let bubble = f.look_in(&deep, at(1, 1), water);
         let skins = liquids(&bubble)
             .iter()
@@ -10701,7 +10718,13 @@ mod tests {
             .count();
         assert_eq!(liquids(&bubble)[0], Liquid::Bubble);
         assert_eq!(skins, 3 * MENISCUS.len());
-        assert_eq!(liquids(&f.look_in(&deep, at(0, 0), water)), [Liquid::Deep]);
+        // the water beside it lays its floor too (shown where the round
+        // edge reaches in), the water further off only the deep
+        assert_eq!(
+            liquids(&f.look_in(&deep, at(0, 0), water)),
+            [Liquid::Deep, Liquid::Bubble]
+        );
+        assert_eq!(liquids(&f.look_in(&deep, at(5, 1), water)), [Liquid::Deep]);
         // elsewhere the same cells as they were
         let main = f.look_in(&deep, at(1, 1), Branch::Main);
         assert!(liquids(&main).is_empty());

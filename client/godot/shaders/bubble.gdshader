@@ -47,6 +47,30 @@ float threads(vec2 p, float t) {
 	return 1.0 - smoothstep(0.0, 0.07, d2 - d1);
 }
 
+// the water about a point as the bubble's edge reads it: bilinear between
+// the cells' middles, smoothed over two cells and a half where water and
+// air each hold a share about (a bubble of a few cells reads round, not
+// as their stepped cross), an air cell's middle always its own (the same
+// in the bubble's floor and its skin)
+float bubble_water(vec2 p) {
+	vec2 uv = (p + 0.5) / FIELD;
+	float near = texture(ground_tex, uv).r;
+	vec2 d = vec2(1.0) / FIELD;
+	float wide = (near * 4.0
+		+ (texture(ground_tex, uv + vec2(d.x, 0.0)).r + texture(ground_tex, uv - vec2(d.x, 0.0)).r
+		+ texture(ground_tex, uv + vec2(0.0, d.y)).r + texture(ground_tex, uv - vec2(0.0, d.y)).r) * 2.0
+		+ texture(ground_tex, uv + d).r + texture(ground_tex, uv - d).r
+		+ texture(ground_tex, uv + vec2(d.x, -d.y)).r
+		+ texture(ground_tex, uv + vec2(-d.x, d.y)).r) / 16.0;
+	// (never eating far into the air: a bubble a cell or two across
+	// stays whole)
+	float f = min(mix(near, wide, smoothstep(0.2, 0.35, min(wide, 1.0 - wide))), near + 0.3);
+	vec2 middle = floor(p + 0.5);
+	ivec2 at = clamp(ivec2(middle), ivec2(0), ivec2(FIELD) - 1);
+	float air = 1.0 - texelFetch(ground_tex, at, 0).r;
+	return f - air * (1.0 - smoothstep(0.15, 0.45, length(p - middle))) * 0.35;
+}
+
 void vertex() {
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
@@ -59,7 +83,7 @@ void fragment() {
 		+ threads(p * 1.6 + 3.1, TIME * 0.65 + 1.3) * 0.4;
 	// how much water is about this point (half at a side meeting it, more
 	// at a corner), unevenly
-	float water = texture(ground_tex, (wpos.xz + 0.5) / FIELD).r;
+	float water = bubble_water(wpos.xz);
 	water += (textureLod(noise_tex, wpos.xz * 0.21, 0.0).r - 0.5) * 0.18;
 	float inside = smoothstep(0.62, 0.44, water);
 	// (faint: brighter, they were a white web over the floor)
