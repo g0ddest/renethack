@@ -57,6 +57,7 @@
   "dark_iron": {"color": "#4a4541", "metallic": 0.6, "roughness": 0.6},
   "runed_steel": {"textures": "cc0/ambientcg/Metal038/Metal038", "uv_scale": 6.0, "color": "#74808f", "metallic": 0.55, "roughness": 0.9, "normal_scale": 0.6, "emission": "#6fa8ff", "emission_energy": 0.5},
   "gold": {"color": "#c8983a", "metallic": 0.45, "roughness": 0.3},
+  "coin_gold": {"color": "#d4a84a", "metallic": 0.5, "roughness": 0.35},
   "glass": {"color": "#b0d0dc", "roughness": 0.03, "alpha": 0.5},
   "clear_glass": {"color": "#5c8c96", "roughness": 0.02, "metallic": 0.3, "alpha": 0.3, "rim": 0.6},
   "carved_stone": {"textures": "cc0/polyhaven/textures/stone_wall_04/stone_wall_04", "uv_scale": 0.4, "color": "#a8aaac"},
@@ -1594,7 +1595,7 @@
    {"class": "/", "exact": ["glass", "crystal"], "art": {"model": "wand", "skin": "glass"}},
    {"class": "/", "exact": ["marble"], "art": {"model": "wand", "skin": "marble"}},
    {"class": "/", "exact": ["tin", "brass", "copper", "silver", "platinum", "iridium", "zinc", "aluminum", "uranium", "iron", "steel"], "art": {"model": "wand", "skin": "metal", "tint_strength": 0.3}},
-   {"class": "$", "words": ["gold piece"], "art": {"model": "coins_heap"}}
+   {"class": "$", "words": ["gold piece"], "art": {"model": "coins_heap", "skin": "coin_gold"}}
   ],
   "classes": {
    "]": {"model": "strange", "size": 0.45},
@@ -1608,7 +1609,7 @@
    "?": {"variants": ["scroll_a", "scroll_b"]},
    "+": {"variants": ["book_a", "book_b"], "tint_strength": 0.8},
    "/": {"model": "wand"},
-   "$": {"model": "coins"},
+   "$": {"model": "coins", "skin": "coin_gold"},
    "*": {"model": "gem", "tint_strength": 0.95},
    "`": {"model": "boulder", "size": 0.6},
    "0": {"model": "ball"},

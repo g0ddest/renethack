@@ -2765,9 +2765,14 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                 pos.y += 0.1;
             }
             // (in the branch's own colours, not its grade's: Gehennom's red
-            // turned every thing pink)
+            // turned every thing pink; but gold, whose warmth the grade
+            // only deepens: against it, it went slate grey)
             let c = tint_color(r.tint, g.color);
-            let un = ungraded(&ctx.branch.grade);
+            let un = if tile.class == "$" {
+                Color::WHITE
+            } else {
+                ungraded(&ctx.branch.grade)
+            };
             let tint = Color::from_rgba(c.r * un.r, c.g * un.g, c.b * un.b, c.a);
             look.model(
                 ModelLook {
