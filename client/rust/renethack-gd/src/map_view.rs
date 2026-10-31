@@ -9776,6 +9776,8 @@ fn world_box(node: &Gd<Node3D>) -> Option<Aabb> {
         .filter_map(|n| n.try_cast::<MeshInstance3D>().ok())
         .filter(|m| m.is_visible_in_tree())
         .map(|m| m.get_global_transform() * m.get_aabb())
+        // (a mesh that failed to build has NaN bounds: no box at all)
+        .filter(|b| b.position.is_finite() && b.size.is_finite())
         .reduce(|a, b| a.merge(b))
 }
 

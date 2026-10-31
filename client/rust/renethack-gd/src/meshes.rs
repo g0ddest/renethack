@@ -118,6 +118,38 @@ pub fn ridge(w: f32) -> f32 {
 }
 
 impl MeshKey {
+    /// The key with no size under the least a mesh is built with: a
+    /// centimetre each way (a cone's tip excepted), a torus's ring a
+    /// centimetre thick, a blade at least a point. A part too small to
+    /// round to that builds no mesh, and its bounds are NaN.
+    pub fn sound(self) -> MeshKey {
+        let least = |v: u16| v.max(1);
+        match self {
+            MeshKey::Box(x, y, z) => MeshKey::Box(least(x), least(y), least(z)),
+            MeshKey::Plane(x, z) => MeshKey::Plane(least(x), least(z)),
+            MeshKey::Capsule(r, h) => {
+                let r = least(r);
+                MeshKey::Capsule(r, h.max(r.saturating_mul(2)))
+            }
+            MeshKey::Cylinder(t, b, h) => {
+                let (t, b) = if t.max(b) == 0 { (1, 1) } else { (t, b) };
+                MeshKey::Cylinder(t, b, least(h))
+            }
+            MeshKey::Sphere(r) => MeshKey::Sphere(least(r)),
+            MeshKey::Dome(r) => MeshKey::Dome(least(r)),
+            MeshKey::Facets(r, sides) => MeshKey::Facets(least(r), sides.max(3)),
+            MeshKey::Torus(i, o) => MeshKey::Torus(i, o.max(i.saturating_add(1))),
+            MeshKey::Prism(x, y, z) => MeshKey::Prism(least(x), least(y), least(z)),
+            MeshKey::Bevel(x, y, z, r) => MeshKey::Bevel(least(x), least(y), least(z), r),
+            MeshKey::Rock(x, y, z) => MeshKey::Rock(least(x), least(y), least(z)),
+            MeshKey::Blade(w, len, tip) => {
+                let tip = if len == 0 { least(tip) } else { tip };
+                MeshKey::Blade(least(w), len, tip)
+            }
+            MeshKey::Organic(o) => MeshKey::Organic(o),
+        }
+    }
+
     /// Half the height of the upright mesh.
     pub fn half_height(self) -> f32 {
         match self {
@@ -136,7 +168,7 @@ impl MeshKey {
     }
 
     pub fn build(self) -> Gd<Mesh> {
-        match self {
+        match self.sound() {
             MeshKey::Box(x, y, z) => {
                 let mut m = BoxMesh::new_gd();
                 m.set_size(Vector3::new(metres(x), metres(y), metres(z)));
@@ -432,4 +464,71 @@ fn rock_mesh(size: Vector3) -> Gd<Mesh> {
         Vector3::RIGHT,
     );
     t.done()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The size of the mesh a key builds (metres: x, y, z), as its
+    /// primitive is made; None for an organic shape.
+    fn size(key: MeshKey) -> Option<Vector3> {
+        let m = metres;
+        let v = Vector3::new;
+        Some(match key.sound() {
+            MeshKey::Box(x, y, z)
+            | MeshKey::Prism(x, y, z)
+            | MeshKey::Bevel(x, y, z, _)
+            | MeshKey::Rock(x, y, z) => v(m(x), m(y), m(z)),
+            MeshKey::Plane(x, z) => v(m(x), 0.0, m(z)),
+            MeshKey::Capsule(r, h) => v(2.0 * m(r), m(h), 2.0 * m(r)),
+            MeshKey::Cylinder(t, b, h) => {
+                let w = 2.0 * m(t.max(b));
+                v(w, m(h), w)
+            }
+            MeshKey::Sphere(r) | MeshKey::Facets(r, _) => v(2.0 * m(r), 2.0 * m(r), 2.0 * m(r)),
+            MeshKey::Dome(r) => v(2.0 * m(r), m(r), 2.0 * m(r)),
+            MeshKey::Torus(i, o) => v(2.0 * m(o), m(o) - m(i), 2.0 * m(o)),
+            MeshKey::Blade(w, len, tip) => v(m(w), 2.0 * ridge(m(w)), m(len) + m(tip)),
+            MeshKey::Organic(_) => return None,
+        })
+    }
+
+    #[test]
+    fn no_key_builds_a_mesh_of_no_size() {
+        // parts finer than a centimetre (a spear's rivets and thongs) and
+        // nothing at all
+        let keys = [
+            cuboid(0.0, 0.004, 0.0),
+            plane(0.0, 0.0),
+            capsule(0.0, 0.0),
+            cylinder(0.0, 0.0, 0.0),
+            cylinder(0.0, 0.004, 0.02),
+            sphere(0.004),
+            sphere(0.0),
+            dome(0.0),
+            facets(0.0, 0),
+            torus(0.0156, 0.0216),
+            torus(0.0, 0.0),
+            prism(0.0, 0.0, 0.0),
+            bevel(0.0, 0.0, 0.0),
+            rock(0.0, 0.0, 0.0),
+            blade(0.0, 0.0, 0.0),
+            MeshKey::Torus(3, 2),
+        ];
+        for key in keys {
+            let s = size(key).unwrap();
+            let flat = matches!(key, MeshKey::Plane(..));
+            for (axis, d) in [("x", s.x), ("y", s.y), ("z", s.z)] {
+                if flat && axis == "y" {
+                    continue;
+                }
+                assert!(d.is_finite() && d > 0.0, "{key:?} is {d} along {axis}");
+            }
+        }
+        // what was sound already stays as it was
+        assert_eq!(sphere(0.25).sound(), sphere(0.25));
+        assert_eq!(cylinder(0.0, 0.3, 1.0).sound(), cylinder(0.0, 0.3, 1.0));
+        assert_eq!(torus(0.37, 0.45).sound(), torus(0.37, 0.45));
+    }
 }
