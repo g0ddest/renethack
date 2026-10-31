@@ -277,6 +277,8 @@ const CORPSE_DARKEN: f32 = 0.45;
 
 const FLOOR_UNSEEN: Color = Color::from_rgb(0.19, 0.19, 0.21);
 const DEEP: Color = Color::from_rgb(0.02, 0.02, 0.03);
+/// A sink's bowl: pale glaze, a little grey (white, it glared).
+const SINK_GLAZE: Color = Color::from_rgb(0.62, 0.62, 0.58);
 /// Where water and lava lie: just under the floor, so that where their
 /// shore wanders into a cell of ground they lie there too, shallows over
 /// the stone (who swims or wades stands deeper).
@@ -2181,27 +2183,27 @@ fn terrain_base(
         }
         Terrain::Sink => {
             floor(look);
-            // a stone basin on a pedestal, water standing in it, a metal
-            // spout and its taps behind (it was a crate with a hole)
+            // a stone pedestal under a basin: its metal rim, its pale
+            // glazed bowl sunk under the rim, the drain dark in its middle
+            // in a ring of metal; the spout and its taps behind (it was a
+            // black bowl: dark water over the stone)
             let stone = main(SHADE_LIT);
             look.solid(cylinder(0.2, 0.25, 0.08), stone, at(0.0, 0.04, 0.0));
             look.solid(cylinder(0.11, 0.15, 0.52), stone, at(0.0, 0.34, 0.0));
-            look.solid(cylinder(0.34, 0.18, 0.18), stone, at(0.0, 0.69, 0.0));
-            look.solid(torus(0.3, 0.37), stone, at(0.0, 0.78, 0.0));
-            // dark water over the basin's closed top, under the rim's
-            // crown (the water's own surface is clear: over stone it
-            // showed the stone)
-            look.solid(
-                cylinder(0.31, 0.31, 0.01),
-                Paint::Flat(DEEP, Finish::Glossy),
-                at(0.0, 0.785, 0.0),
-            );
-            look.ground_tile(
-                cylinder(0.31, 0.31, 0.01),
-                Paint::Liquid(Liquid::Water),
-                at(0.0, 0.795, 0.0),
-            );
+            look.solid(cylinder(0.34, 0.18, 0.12), stone, at(0.0, 0.66, 0.0));
             let metal = pbr(ctx.mat("metal"), SHADE_LIT, Role::Prop, DEEP);
+            look.solid(torus(0.29, 0.36), metal, at(0.0, 0.755, 0.0));
+            look.solid(
+                cylinder(0.3, 0.3, 0.01),
+                Paint::Flat(SINK_GLAZE, Finish::Glossy),
+                at(0.0, 0.725, 0.0),
+            );
+            look.solid(
+                cylinder(0.045, 0.045, 0.006),
+                Paint::Flat(DEEP, Finish::Matte),
+                at(0.0, 0.733, 0.0),
+            );
+            look.solid(torus(0.042, 0.062), metal, at(0.0, 0.733, 0.0));
             look.solid(cylinder(0.022, 0.03, 0.26), metal, at(0.0, 0.9, -0.32));
             look.turned(
                 cylinder(0.018, 0.018, 0.16),
@@ -2212,7 +2214,7 @@ fn terrain_base(
             for x in [-0.09f32, 0.09] {
                 look.solid(sphere(0.03), metal, at(x, 0.88, -0.32));
             }
-            look.ground = 0.78;
+            look.ground = 0.73;
         }
         Terrain::Grave => {
             look.ground_tile(tile, ground(75), Vector3::ZERO);
