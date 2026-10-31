@@ -47,7 +47,7 @@ pub(super) const OVERHEAD: f32 = 1.9;
 
 /// What the face of a room's north wall shows.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Piece {
+pub(super) enum Piece {
     /// A half-column built into it.
     Pilaster,
     Banner,
@@ -69,6 +69,12 @@ fn north_piece(x: i32, y: i32, dress: &Dress) -> Option<Piece> {
     if dress.pilasters && x.rem_euclid(3) == 0 {
         return Some(Piece::Pilaster);
     }
+    north_between(x, y, dress)
+}
+
+/// What a north wall's face shows between its columns (`north_piece`), or
+/// where the level's plan sets them (a small room's).
+fn north_between(x: i32, y: i32, dress: &Dress) -> Option<Piece> {
     if torch_pattern(x, y, true) {
         return None;
     }
@@ -104,13 +110,36 @@ pub(super) fn webbed(x: i32, y: i32, sx: i32, dress: &Dress) -> bool {
         && !torch_pattern(x, y + 1, false)
 }
 
+/// What the face of the north wall at (x, y) shows: as the level's plan
+/// sets it (a small room's), or by the branch's pattern.
+fn north_face(x: i32, y: i32, dress: &Dress, volume: Option<Volume>) -> Option<Piece> {
+    match volume {
+        Some(Volume::North(Some(p))) => Some(p),
+        // (a small room's wall bare but for a banner: its niche its own)
+        Some(Volume::North(None)) => north_between(x, y, dress).filter(|&p| p != Piece::Alcove),
+        _ => north_piece(x, y, dress),
+    }
+}
+
+/// A column stands on the face of the north wall at (x, y) (a torch
+/// falling there hangs on it).
+pub(super) fn column_on(x: i32, y: i32, dress: &Dress, volume: Option<Volume>) -> bool {
+    north_face(x, y, dress, volume) == Some(Piece::Pilaster)
+}
+
 /// Something of the dressing may hang on the face of the wall at (x, y)
 /// facing `into` (the way into its room), or beside it a cobweb: a torch
-/// hung there would meet it.
-pub(super) fn hangs(x: i32, y: i32, into: (i32, i32), dress: &Dress) -> bool {
+/// hung there would meet it (`volume`: the level's plan for the cell).
+pub(super) fn hangs(
+    x: i32,
+    y: i32,
+    into: (i32, i32),
+    dress: &Dress,
+    volume: Option<Volume>,
+) -> bool {
     match into {
         (0, _) => {
-            north_piece(x, y, dress).is_some()
+            north_face(x, y, dress, volume).is_some()
                 || webbed(x - 1, y, 1, dress)
                 || webbed(x + 1, y, -1, dress)
         }
@@ -160,7 +189,7 @@ pub(super) fn wall(
         Some(Volume::Arch { west }) if around.floor[1] && !pier && !taken => Some(west),
         _ => None,
     };
-    let piece = north_piece(ctx.x, ctx.y, dress)
+    let piece = north_face(ctx.x, ctx.y, dress, ctx.volume)
         .filter(|_| around.floor[1] && !pier && !taken && arch.is_none());
     // (what has mass casts a shadow: it reads as standing out by it)
     let mut massive = Vec::new();
@@ -212,7 +241,9 @@ pub(super) fn wall(
         _ => None,
     };
     let standing = !around.aside_open && !around.far_aside_open;
-    if let Some(sx) = room.filter(|_| standing && pier_here(ctx.x, ctx.y, dress)) {
+    let pier_planned = ctx.volume == Some(Volume::Pier);
+    if let Some(sx) = room.filter(|_| standing && (pier_planned || pier_here(ctx.x, ctx.y, dress)))
+    {
         let a = look.solids.len();
         corner_pier(look, ctx, top, sx as f32);
         massive.push(a..look.solids.len());
@@ -851,12 +882,22 @@ pub(super) enum Volume {
         n: u8,
         corner: Option<[f32; 2]>,
     },
+    /// The face of a small room's north wall: as set (a pair of columns,
+    /// a niche between), or (None) as the pattern sets it but for its
+    /// columns.
+    North(Option<Piece>),
+    /// A pier built into a small room's corner.
+    Pier,
 }
 
 /// The least run of north wall over a room's floor that has arches, the
 /// least room (wide, deep) that has a band inlaid, and the least that has
 /// a lozenge in its middle too.
 const ARCADE_LEAST: i32 = 7;
+/// The widest room that is small: its north wall dressed as a whole (a
+/// pair of columns, or a niche between two), its corners piers, rather
+/// than by the pattern (which may leave one bare).
+const SMALL_MOST: i32 = 6;
 const BAND_LEAST: (i32, i32) = (5, 4);
 const LOZENGE_LEAST: (i32, i32) = (9, 5);
 /// A band's width, how far inside its cells' outer edges it runs (to its
@@ -937,57 +978,107 @@ pub(super) fn plan(
             }
         }
     }
+    // (a room's rectangle takes in what stands in it: stairs, an
+    // altar, a fountain, a pool)
+    let inside = |x: i32, y: i32| {
+        cell(x, y).held
+            || matches!(
+                t(x, y),
+                Some(
+                    Terrain::Floor
+                        | Terrain::DarkFloor
+                        | Terrain::StairsUp
+                        | Terrain::StairsDown
+                        | Terrain::LadderUp
+                        | Terrain::LadderDown
+                        | Terrain::Altar
+                        | Terrain::Grave
+                        | Terrain::Throne
+                        | Terrain::Sink
+                        | Terrain::Fountain
+                        | Terrain::Trap
+                        | Terrain::Tree
+                        | Terrain::Pool
+                        | Terrain::Water
+                        | Terrain::Ice
+                        | Terrain::Lava
+                )
+            )
+    };
+    // (what bounds a room: a dark one's floor seen in part is a
+    // rectangle too, its edge no wall)
+    let bound = |x: i32, y: i32| {
+        matches!(
+            t(x, y),
+            Some(
+                Terrain::Wall
+                    | Terrain::Doorway
+                    | Terrain::OpenDoor
+                    | Terrain::ClosedDoor
+                    | Terrain::BrokenDoor
+                    | Terrain::IronBars
+            )
+        )
+    };
+    // the rooms known whole, their walls seen all round (a dark one's
+    // floor seen in part is a rectangle too, its edge no wall)
+    let rooms: Vec<(i32, i32, i32, i32)> =
+        if dress.inlay.is_some() || dress.pilasters || dress.piers {
+            rooms(&inside)
+                .into_iter()
+                .filter(|&(x0, y0, x1, y1)| {
+                    (x0 - 1..=x1 + 1).all(|x| bound(x, y0 - 1) && bound(x, y1 + 1))
+                        && (y0..=y1).all(|y| bound(x0 - 1, y) && bound(x1 + 1, y))
+                })
+                .collect()
+        } else {
+            Vec::new()
+        };
+    // a small room's north wall dressed as a whole: a niche in its middle
+    // with a column either side, or a pair of columns; piers in its
+    // corners (by the pattern a room of a few cells got none)
+    for &(x0, y0, x1, _) in rooms.iter().filter(|r| r.2 - r.0 < SMALL_MOST) {
+        let (y, w) = (y0 - 1, x1 - x0 + 1);
+        if dress.piers {
+            for cx in [x0 - 1, x1 + 1] {
+                if plain(cx, y) {
+                    out.insert((cx, y), Volume::Pier);
+                }
+            }
+        }
+        if !dress.pilasters {
+            continue;
+        }
+        for x in x0..=x1 {
+            out.entry((x, y)).or_insert(Volume::North(None));
+        }
+        let mid = x0 + (w - 1) / 2;
+        let pieces = if w % 2 == 1 {
+            let niche = w >= 3 && dress.alcoves && !torch_pattern(mid, y, true);
+            [
+                niche.then_some((mid, Piece::Alcove)),
+                (w >= 5).then_some((mid - 1, Piece::Pilaster)),
+                (w >= 5).then_some((mid + 1, Piece::Pilaster)),
+            ]
+        } else {
+            [
+                Some((mid, Piece::Pilaster)),
+                Some((mid + 1, Piece::Pilaster)),
+                None,
+            ]
+        };
+        for (x, piece) in pieces.into_iter().flatten() {
+            if plain(x, y) {
+                out.insert((x, y), Volume::North(Some(piece)));
+            }
+        }
+    }
     if dress.inlay.is_some() {
         let mut lines: HashMap<(i32, i32), Vec<[f32; 5]>> = HashMap::new();
         let mut corners = HashMap::new();
-        // (a room's rectangle takes in what stands in it: stairs, an
-        // altar, a fountain, a pool)
-        let inside = |x: i32, y: i32| {
-            cell(x, y).held
-                || matches!(
-                    t(x, y),
-                    Some(
-                        Terrain::Floor
-                            | Terrain::DarkFloor
-                            | Terrain::StairsUp
-                            | Terrain::StairsDown
-                            | Terrain::LadderUp
-                            | Terrain::LadderDown
-                            | Terrain::Altar
-                            | Terrain::Grave
-                            | Terrain::Throne
-                            | Terrain::Sink
-                            | Terrain::Fountain
-                            | Terrain::Trap
-                            | Terrain::Tree
-                            | Terrain::Pool
-                            | Terrain::Water
-                            | Terrain::Ice
-                            | Terrain::Lava
-                    )
-                )
-        };
-        // (what bounds a room: a dark one's floor seen in part is a
-        // rectangle too, its edge no wall)
-        let bound = |x: i32, y: i32| {
-            matches!(
-                t(x, y),
-                Some(
-                    Terrain::Wall
-                        | Terrain::Doorway
-                        | Terrain::OpenDoor
-                        | Terrain::ClosedDoor
-                        | Terrain::BrokenDoor
-                        | Terrain::IronBars
-                )
-            )
-        };
-        for room in rooms(&inside) {
-            let (x0, y0, x1, y1) = room;
+        for &(x0, y0, x1, y1) in &rooms {
             let (w, h) = (x1 - x0 + 1, y1 - y0 + 1);
-            let walled = (x0 - 1..=x1 + 1).all(|x| bound(x, y0 - 1) && bound(x, y1 + 1))
-                && (y0..=y1).all(|y| bound(x0 - 1, y) && bound(x1 + 1, y));
-            if !walled || w < BAND_LEAST.0 || h < BAND_LEAST.1 {
+            if w < BAND_LEAST.0 || h < BAND_LEAST.1 {
                 continue;
             }
             // the band just inside the cells a cell in from the walls,

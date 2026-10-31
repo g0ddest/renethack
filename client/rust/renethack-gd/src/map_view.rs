@@ -5256,7 +5256,9 @@ impl MapView {
             sconces.extend(torch_walls(
                 area,
                 |x, y| self.cells.get(&(x, y)).is_some_and(|n| n.look.wall),
-                |&((x, y), into)| dressing::hangs(x, y, into, &dress),
+                |&((x, y), into)| {
+                    dressing::hangs(x, y, into, &dress, self.volume.get(&(x, y)).copied())
+                },
             ));
         }
         for (cx, cy, reach, energy) in fills {
@@ -5398,7 +5400,13 @@ impl MapView {
             }
             let (fx, fz) = (dx as f32, dz as f32);
             // on the wall's face towards the room, or on a column's there
-            let column = dx == 0 && self.branch_look.dress.pilasters && x.rem_euclid(3) == 0;
+            let column = dx == 0
+                && dressing::column_on(
+                    x,
+                    y,
+                    &self.branch_look.dress,
+                    self.volume.get(&(x, y)).copied(),
+                );
             let out = 0.5 + if column { dressing::REACH } else { 0.0 };
             let face = Vector3::new(x as f32 + fx * out, 0.0, y as f32 + fz * out);
             let t = &mut self.torches[i];
@@ -10475,6 +10483,10 @@ mod tests {
                     lines += n as usize;
                     corners += usize::from(corner.is_some());
                 }
+                // a small room's: there is none in the hall
+                dressing::Volume::North(_) | dressing::Volume::Pier => {
+                    panic!("{x},{y}: {v:?} in a hall")
+                }
             }
         }
         assert!(
@@ -10483,6 +10495,60 @@ mod tests {
         );
         // a branch that dresses none of it
         let sokoban = crate::branch_look::look_of(Branch::Sokoban).dress;
+        assert!(dressing::plan(|x, y| plan_cell(&map, &f.cat, x, y), &sokoban).is_empty());
+    }
+
+    #[test]
+    fn a_small_rooms_north_wall_is_dressed_whole_and_its_corners_are_piers() {
+        let f = Fixture::new();
+        let dress = crate::branch_look::look_of(Branch::Main).dress;
+        let plan_of = |rows: &[&str]| {
+            let map = level(&f.cat, rows);
+            dressing::plan(|x, y| plan_cell(&map, &f.cat, x, y), &dress)
+        };
+        let at = |c: i32, r: i32| (PICTURE_AT.0 + c, PICTURE_AT.1 + r);
+        use dressing::{Piece, Volume};
+        // five wide: a niche between two columns, piers in both corners
+        let plan = plan_of(&["r-----7", "|.....|", "|.....|", "|.....|", "L-----J"]);
+        assert_eq!(plan.get(&at(0, 0)), Some(&Volume::Pier));
+        assert_eq!(plan.get(&at(6, 0)), Some(&Volume::Pier));
+        assert_eq!(
+            plan.get(&at(3, 0)),
+            Some(&Volume::North(Some(Piece::Alcove)))
+        );
+        assert_eq!(
+            plan.get(&at(2, 0)),
+            Some(&Volume::North(Some(Piece::Pilaster)))
+        );
+        assert_eq!(
+            plan.get(&at(4, 0)),
+            Some(&Volume::North(Some(Piece::Pilaster)))
+        );
+        assert_eq!(plan.get(&at(1, 0)), Some(&Volume::North(None)));
+        // four wide: a pair of columns in the middle
+        let plan = plan_of(&["r----7", "|....|", "|....|", "L----J"]);
+        assert_eq!(
+            plan.get(&at(2, 0)),
+            Some(&Volume::North(Some(Piece::Pilaster)))
+        );
+        assert_eq!(
+            plan.get(&at(3, 0)),
+            Some(&Volume::North(Some(Piece::Pilaster)))
+        );
+        // a door beside the corner and in the north wall: nothing round them
+        let plan = plan_of(&["r-+---7", "|.....|", "|.....+", "L-----J"]);
+        assert_eq!(plan.get(&at(0, 0)), Some(&Volume::Pier));
+        for c in 1..=3 {
+            assert!(
+                !matches!(plan.get(&at(c, 0)), Some(Volume::North(Some(_)))),
+                "{c}"
+            );
+        }
+        // a room seen in part (its south wall not yet): nothing
+        assert!(plan_of(&["r-----7", "|.....|", "|.....|"]).is_empty());
+        // a branch that builds none of it
+        let sokoban = crate::branch_look::look_of(Branch::Sokoban).dress;
+        let map = level(&f.cat, &["r-----7", "|.....|", "|.....|", "L-----J"]);
         assert!(dressing::plan(|x, y| plan_cell(&map, &f.cat, x, y), &sokoban).is_empty());
     }
 
@@ -10561,8 +10627,8 @@ mod tests {
                 // on the faces beside its corner no torch by the pattern,
                 // nor one a room gets off it
                 assert!(!torch_pattern(x + sx, y, true) && !torch_pattern(x, y + 1, false));
-                assert!(dressing::hangs(x + sx, y, (0, 1), &dress));
-                assert!(dressing::hangs(x, y + 1, (sx, 0), &dress));
+                assert!(dressing::hangs(x + sx, y, (0, 1), &dress, None));
+                assert!(dressing::hangs(x, y + 1, (sx, 0), &dress, None));
             }
         }
         assert!(webs > 0);
