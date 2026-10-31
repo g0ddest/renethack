@@ -643,7 +643,7 @@ fn honour(s: &EndSummary, rank: Option<&str>) -> Gd<Control> {
     for (side, px) in [
         (Side::LEFT, 26.0),
         (Side::RIGHT, 26.0),
-        (Side::TOP, 44.0),
+        (Side::TOP, 64.0),
         (Side::BOTTOM, 30.0),
     ] {
         sb.set_content_margin(side, px);
@@ -651,13 +651,13 @@ fn honour(s: &EndSummary, rank: Option<&str>) -> Gd<Control> {
     page.add_theme_stylebox_override("panel", &sb);
     let mut col = VBoxContainer::new_alloc();
     col.set_alignment(AlignmentMode::CENTER);
-    col.add_theme_constant_override("separation", 10);
+    col.add_theme_constant_override("separation", 14);
     col.set_mouse_filter(MouseFilter::IGNORE);
     let mut icon = TextureRect::new_alloc();
     icon.set_mouse_filter(MouseFilter::IGNORE);
     icon.set_expand_mode(ExpandMode::IGNORE_SIZE);
     icon.set_stretch_mode(StretchMode::KEEP_ASPECT_CENTERED);
-    icon.set_custom_minimum_size(Vector2::new(92.0, 92.0));
+    icon.set_custom_minimum_size(Vector2::new(120.0, 120.0));
     icon.set_h_size_flags(SizeFlags::SHRINK_CENTER);
     icon.set_texture(&icons::emblem(if ascended {
         Glyph::Ascension
@@ -685,9 +685,10 @@ fn honour(s: &EndSummary, rank: Option<&str>) -> Gd<Control> {
     if let Some(r) = rank {
         words.push((r.to_string(), Face::Title, 18, theme::TEXT_DIM));
     }
-    words.push((deed, Face::Body, 18, theme::TEXT));
+    // the page's one face, the stone's (small capitals)
+    words.push((deed, Face::Title, 22, theme::TEXT));
     if let Some(g) = s.numbers().gold {
-        words.push((tr!("rip-gold", gold = g), Face::Body, 16, theme::GOLD));
+        words.push((tr!("rip-gold", gold = g), Face::Title, 19, theme::GOLD));
     }
     words.push((s.year.to_string(), Face::Title, 22, theme::TEXT_DIM));
     for (text, face, size, color) in words {
