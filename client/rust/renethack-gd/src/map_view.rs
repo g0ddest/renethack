@@ -994,15 +994,17 @@ fn tint_color(tint: Tint, glyph_color: i32) -> Color {
 /// How much light a thing on the floor gives, by what it is (its
 /// appearance): none for a boulder (big enough to read without); the full
 /// pool and glint for what a player stoops for (wands, rings, amulets,
-/// gems, potions, scrolls, books, gold); a faint pool for the rest, the
-/// heavy things, and a rock or a gray stone (unlit, a rock was all but
-/// lost on a dark floor, and a gray stone may be a luckstone).
+/// gems, potions, scrolls, books; gold its coins' own glints); a faint
+/// pool for the rest, the heavy things, and a rock or a gray stone
+/// (unlit, a rock was all but lost on a dark floor, and a gray stone may
+/// be a luckstone).
 fn sheen_of(tile: &ObjectTile) -> crate::art::Sheen {
     use crate::art::Sheen;
     match tile.class.as_str() {
         "`" => Sheen::None,
         "*" if matches!(tile.appearance.as_str(), "rock" | "gray") => Sheen::Faint,
-        "/" | "=" | "\"" | "*" | "!" | "?" | "+" | "$" => Sheen::Full,
+        "$" => Sheen::Coins,
+        "/" | "=" | "\"" | "*" | "!" | "?" | "+" => Sheen::Full,
         _ => Sheen::Faint,
     }
 }
@@ -10842,6 +10844,8 @@ mod tests {
         assert_eq!(sheen("*", "gray"), Sheen::Faint);
         assert_eq!(sheen("*", "red"), Sheen::Full);
         assert_eq!(sheen("0", "heavy iron ball"), Sheen::Faint);
+        let gold = cat.object_tiles.iter().find(|t| t.class == "$").unwrap();
+        assert_eq!(sheen_of(gold), Sheen::Coins);
         for class in ["/", "=", "\"", "!", "?"] {
             let t = cat.object_tiles.iter().find(|t| t.class == class).unwrap();
             assert_eq!(sheen_of(t), Sheen::Full, "{class}");

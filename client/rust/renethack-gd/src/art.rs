@@ -73,14 +73,16 @@ pub enum Pose {
 }
 
 /// How much light a thing on the floor gives (`Art::shine`): none (a
-/// boulder, a rock, a stone: Sokoban's dozen boulders each sat in a loot
-/// spotlight), a faint pool (heavy things: arms, armour, tools, food), or
-/// the full pool and its glint (the small things worth stooping for).
+/// boulder: Sokoban's dozen boulders each sat in a loot spotlight), a
+/// faint pool (heavy things: arms, armour, tools, food; rocks and stones),
+/// the full pool and its glint (the small things worth stooping for), or
+/// the full pool and coins' own glints (gold).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Sheen {
     None,
     Faint,
     Full,
+    Coins,
 }
 
 /// A living creature's rim (`Art::rim`): its strength, how much of the
@@ -138,6 +140,13 @@ const SHINE_MORE: f32 = 0.35;
 const SHINE_ENERGY: f32 = 0.9;
 /// A heavy thing's pool, this share of a small thing's (`Sheen::Faint`).
 const SHINE_FAINT: f32 = 0.35;
+/// Where a pile of gold catches the light: warm glints over its coins
+/// (shares of its reach across and along, and metres up), each flaring at
+/// its own moment (by where it lies), as big as a small thing's one.
+const COIN_GLINTS: [(f32, f32, f32); 3] =
+    [(-0.28, -0.2, 0.09), (0.3, 0.05, 0.07), (-0.02, 0.3, 0.11)];
+const COIN_GLINT_SIZE: f32 = 0.26;
+const COIN_GLINT: Color = Color::from_rgb(1.0, 0.9, 0.62);
 
 /// A thing on the floor's model, scale and turn (the bits of the floats).
 type WareKey = (usize, u32, [u32; 3]);
@@ -462,8 +471,10 @@ pub struct Art {
     /// The pass that edges them (`EDGE_SHADER`), once loaded (None: not
     /// yet asked for; Some(None): missing).
     edge: Option<Option<Gd<Material>>>,
-    /// A thing on the floor's glint (`GLINT_SHADER`), the same way.
+    /// A thing on the floor's glint (`GLINT_SHADER`), the same way, and
+    /// gold's (warmer and smaller).
     glint: Option<Option<Gd<Material>>>,
+    coin_glint: Option<Option<Gd<Material>>>,
     /// The soft disc a contact shadow is (`ground`).
     contact: Option<Gd<Texture2D>>,
     proc_anims: HashMap<(Proc, Option<String>), Gd<AnimationLibrary>>,
@@ -572,6 +583,7 @@ impl Art {
             rimmed: HashSet::new(),
             edge: None,
             glint: None,
+            coin_glint: None,
             contact: None,
             proc_anims: HashMap::new(),
             proc_clips: None,
@@ -1677,27 +1689,48 @@ impl Art {
         d.set_normal_fade(0.5);
         d.set_position(Vector3::new(0.0, 0.1, 0.0));
         m.node.clone().add_child(&d);
-        if sheen != Sheen::Full {
+        let coins = sheen == Sheen::Coins;
+        if sheen != Sheen::Full && !coins {
             return;
         }
-        let glint = self
-            .glint
+        let slot = if coins {
+            &mut self.coin_glint
+        } else {
+            &mut self.glint
+        };
+        let glint = slot
             .get_or_insert_with(|| {
                 let shader = godot::tools::try_load::<Shader>(GLINT_SHADER).ok()?;
                 let mut mat = ShaderMaterial::new_gd();
                 mat.set_shader(&shader);
+                if coins {
+                    mat.set_shader_parameter("color", &COIN_GLINT.to_variant());
+                    mat.set_shader_parameter("size", &COIN_GLINT_SIZE.to_variant());
+                }
                 Some(mat.upcast())
             })
             .clone();
-        if let Some(mat) = glint {
+        let Some(mat) = glint else {
+            return;
+        };
+        // one over a small thing; a few over a pile of gold, on its coins
+        let at: Vec<Vector3> = if coins {
+            COIN_GLINTS
+                .iter()
+                .map(|&(x, z, y)| Vector3::new(x * w, y, z * l))
+                .collect()
+        } else {
+            vec![Vector3::new(0.0, GLINT_Y, 0.0)]
+        };
+        for (i, p) in at.into_iter().enumerate() {
             let mut quad = godot::classes::QuadMesh::new_gd();
             quad.set_size(Vector2::new(0.3, 0.3));
             let mut g = MeshInstance3D::new_alloc();
-            g.set_name("Glint");
+            g.set_name(&format!("Glint{i}"));
             g.set_mesh(&quad);
             g.set_material_override(&mat);
             g.set_cast_shadows_setting(ShadowCastingSetting::OFF);
-            g.set_position(Vector3::new(0.0, GLINT_Y, 0.0));
+            g.set_position(p);
             m.node.clone().add_child(&g);
         }
     }
