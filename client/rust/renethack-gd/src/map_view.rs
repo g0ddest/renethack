@@ -976,6 +976,21 @@ fn tint_color(tint: Tint, glyph_color: i32) -> Color {
     }
 }
 
+/// How much light a thing on the floor gives, by what it is (its
+/// appearance): none for a boulder, a rock or a stone; the full pool and
+/// glint for what a player stoops for (wands, rings, amulets, gems,
+/// potions, scrolls, books, gold); a faint pool for the rest, the heavy
+/// things.
+fn sheen_of(tile: &ObjectTile) -> crate::art::Sheen {
+    use crate::art::Sheen;
+    match tile.class.as_str() {
+        "`" => Sheen::None,
+        "*" if matches!(tile.appearance.as_str(), "rock" | "gray") => Sheen::None,
+        "/" | "=" | "\"" | "*" | "!" | "?" | "+" | "$" => Sheen::Full,
+        _ => Sheen::Faint,
+    }
+}
+
 /// What undoes a branch's grade on a thing's colours, about: the inverse
 /// of its curve's middle (between its shadows and its highlights), its
 /// strongest channel at 1 (a thing on the floor keeps its own colour).
@@ -2778,7 +2793,7 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
                 ModelLook {
                     art: r,
                     tint,
-                    pose: Pose::Ware,
+                    pose: Pose::Ware(sheen_of(tile)),
                 },
                 pos,
                 yaw,
@@ -8496,7 +8511,7 @@ impl MapView {
             // a creature on the cell (not the hero: their light rims them),
             // and the thing on top of what lies there: lit as one
             let creature = look.entity == Some(i)
-                && matches!(p.look.pose, Pose::Alive | Pose::Ghost | Pose::Ware);
+                && matches!(p.look.pose, Pose::Alive | Pose::Ghost | Pose::Ware(_));
             let mut m = match (before, reuse) {
                 (Some(b), Some(m)) if b.look == p.look => m,
                 (_, other) => {
@@ -10526,6 +10541,31 @@ mod tests {
         assert!(liquids(&main).is_empty());
     }
 
+    /// Every boulder and stone sat in a loot spotlight: what lies on the
+    /// floor gives light by what it is.
+    #[test]
+    fn a_boulder_gives_no_light_and_a_ring_its_full_glint() {
+        use crate::art::Sheen;
+        let cat = catalog();
+        let sheen = |class: &str, appearance: &str| {
+            let t = cat
+                .object_tiles
+                .iter()
+                .find(|t| t.class == class && t.appearance == appearance)
+                .unwrap_or_else(|| panic!("no {class} {appearance}"));
+            sheen_of(t)
+        };
+        assert_eq!(sheen("`", "boulder"), Sheen::None);
+        assert_eq!(sheen("*", "rock"), Sheen::None);
+        assert_eq!(sheen("*", "gray"), Sheen::None);
+        assert_eq!(sheen("*", "red"), Sheen::Full);
+        assert_eq!(sheen("0", "heavy iron ball"), Sheen::Faint);
+        for class in ["/", "=", "\"", "!", "?"] {
+            let t = cat.object_tiles.iter().find(|t| t.class == class).unwrap();
+            assert_eq!(sheen_of(t), Sheen::Full, "{class}");
+        }
+    }
+
     /// The Astral Plane was a beige square in grey nothing: its floor is
     /// slabs of marble floating over the stars, a gilded lip where
     /// nothing is beside them, and its altars are lit from above.
@@ -11444,7 +11484,7 @@ mod tests {
         let mut ways = HashSet::new();
         for x in 1..40 {
             let p = ware(x, "long poleaxe");
-            assert_eq!(p.look.pose, Pose::Ware);
+            assert!(matches!(p.look.pose, Pose::Ware(_)));
             assert!(crate::art::on_diagonal(&p.look.art));
             let off = (p.yaw - 45.0).rem_euclid(90.0);
             let off = off.min(90.0 - off);

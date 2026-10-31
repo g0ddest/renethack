@@ -68,8 +68,19 @@ pub enum Pose {
     Ghost,
     /// A thing lying on the floor: drawn within its cell, its middle on the
     /// cell's, and a long one, along the diagonal it lies on (`on_diagonal`),
-    /// no longer than the cell holds.
-    Ware,
+    /// no longer than the cell holds; in the light it gives (`Art::shine`).
+    Ware(Sheen),
+}
+
+/// How much light a thing on the floor gives (`Art::shine`): none (a
+/// boulder, a rock, a stone: Sokoban's dozen boulders each sat in a loot
+/// spotlight), a faint pool (heavy things: arms, armour, tools, food), or
+/// the full pool and its glint (the small things worth stooping for).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Sheen {
+    None,
+    Faint,
+    Full,
 }
 
 /// A living creature's rim (`Art::rim`): its strength, how much of the
@@ -123,6 +134,8 @@ const GLINT_SHADER: &str = "res://shaders/glint.gdshader";
 const GLINT_Y: f32 = 0.16;
 const SHINE: Color = Color::from_rgba(1.0, 0.88, 0.62, 0.55);
 const SHINE_MORE: f32 = 0.35;
+/// A heavy thing's pool, this share of a small thing's (`Sheen::Faint`).
+const SHINE_FAINT: f32 = 0.35;
 
 /// A thing on the floor's model, scale and turn (the bits of the floats).
 type WareKey = (usize, u32, [u32; 3]);
@@ -1420,7 +1433,7 @@ impl Art {
         if let Some(inner) = m.inner.as_mut() {
             inner.set_transform(plain);
         }
-        if look.pose == Pose::Ware {
+        if matches!(look.pose, Pose::Ware(_)) {
             self.fit_ware(m, look, plain);
         }
         let spec = self.manifest.model_at(look.art.model).1;
@@ -1546,9 +1559,9 @@ impl Art {
         // floor under it instead, and glints
         match look.pose {
             Pose::Ghost => {}
-            Pose::Ware => {
+            Pose::Ware(sheen) => {
                 creature_lit(m, true);
-                self.shine(m);
+                self.shine(m, sheen);
             }
             _ => {
                 creature_lit(m, true);
@@ -1561,11 +1574,11 @@ impl Art {
     /// warm pool on the floor under it, a little wider than it, and a glint
     /// over it now and then (`GLINT_SHADER`). Once per instance: it stays
     /// with it in the pool.
-    fn shine(&mut self, m: &Model) {
+    fn shine(&mut self, m: &Model, sheen: Sheen) {
         let Some(inner) = m.inner.as_ref() else {
             return;
         };
-        if m.node.has_node("Shine") {
+        if sheen == Sheen::None || m.node.has_node("Shine") {
             return;
         }
         let [w, l] = aabb_reach(&m.node, inner);
@@ -1582,13 +1595,19 @@ impl Art {
             .clone();
         d.set_texture(godot::classes::decal::DecalTexture::EMISSION, &tex);
         d.set_emission_energy(0.9);
-        d.set_modulate(SHINE);
+        d.set_modulate(match sheen {
+            Sheen::Faint => SHINE.with_alpha(SHINE.a * SHINE_FAINT),
+            _ => SHINE,
+        });
         d.set_cull_mask(CONTACT_LAYERS);
         d.set_upper_fade(0.3);
         d.set_lower_fade(0.3);
         d.set_normal_fade(0.5);
         d.set_position(Vector3::new(0.0, 0.1, 0.0));
         m.node.clone().add_child(&d);
+        if sheen != Sheen::Full {
+            return;
+        }
         let glint = self
             .glint
             .get_or_insert_with(|| {

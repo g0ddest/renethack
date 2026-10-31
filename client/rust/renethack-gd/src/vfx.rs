@@ -1040,6 +1040,9 @@ fn particle_textures() -> HashMap<Recipe, Gd<Texture2D>> {
 }
 /// Motes of dust around the camera's focus in the main dungeon.
 const DUST: i32 = 220;
+/// Where the dust hangs over the floor: the middle of its box and half
+/// its height (metres: from knee height up).
+const DUST_HIGH: (f32, f32) = (1.6, 0.9);
 /// The thickest dust of any branch (the Plane of Earth's).
 const DUST_MOST: f32 = 3.0;
 
@@ -2220,7 +2223,8 @@ impl Vfx {
     /// Advance everything by `delta` seconds; the dust follows `focus`.
     pub fn process(&mut self, delta: f32, focus: Vector3) {
         self.clock += delta;
-        self.dust.set_position(focus + Vector3::new(0.0, 1.2, 0.0));
+        self.dust
+            .set_position(focus + Vector3::new(0.0, DUST_HIGH.0, 0.0));
         for e in self.emitters.values_mut().flatten() {
             e.busy -= delta;
         }
@@ -2387,7 +2391,7 @@ impl Vfx {
         let (ramp, mat, rise) = if embers {
             (&self.ember_ramp, &self.ember_mat, 0.03)
         } else {
-            (&self.mote_ramp, &self.mote_mat, -0.005)
+            (&self.mote_ramp, &self.mote_mat, 0.0)
         };
         process.set_color_ramp(ramp);
         process.set_gravity(Vector3::new(0.0, rise, 0.0));
@@ -2602,19 +2606,21 @@ fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, tex: &Gd<Texture2D>) -> Em
 fn dust(root: &mut Gd<Node3D>, soft: &Gd<Texture2D>) -> Gd<GpuParticles3D> {
     let mut m = ParticleProcessMaterial::new_gd();
     m.set_emission_shape(EmissionShape::BOX);
-    m.set_emission_box_extents(Vector3::new(7.0, 1.25, 4.5));
+    // (from knee height up, cool and drifting: low and warm, still on the
+    // floor, they read as the glints of things lying there)
+    m.set_emission_box_extents(Vector3::new(7.0, DUST_HIGH.1, 4.5));
     m.set_direction(Vector3::UP);
     m.set_spread(180.0);
-    m.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 0.01);
-    m.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 0.05);
-    m.set_gravity(Vector3::new(0.0, -0.005, 0.0));
+    m.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 0.02);
+    m.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 0.08);
+    m.set_gravity(Vector3::ZERO);
     m.set_param_min(Parameter::SCALE, 0.6);
     m.set_param_max(Parameter::SCALE, 1.25);
     m.set_turbulence_enabled(true);
-    m.set_turbulence_noise_strength(0.2);
+    m.set_turbulence_noise_strength(0.35);
     m.set_turbulence_noise_scale(4.0);
     let mut g = Gradient::new_gd();
-    let c = Color::from_rgba(0.9, 0.86, 0.78, 0.35);
+    let c = Color::from_rgba(0.8, 0.83, 0.88, 0.3);
     g.set_offsets(&PackedFloat32Array::from(&[0.0, 0.2, 0.8, 1.0][..]));
     g.set_colors(&PackedColorArray::from(
         &[c.with_alpha(0.0), c, c, c.with_alpha(0.0)][..],
