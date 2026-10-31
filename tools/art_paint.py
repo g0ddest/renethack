@@ -279,3 +279,38 @@ def scales(size=512, rows=8, seed="scales"):
     rough = height.point(lambda v: round(205 - v * 0.2))
     arm = Image.merge("RGB", [ao, rough, Image.new("L", (size, size), 0)])
     return {"albedo": albedo, "normal": normals(height, 3.0), "arm": arm}
+
+
+def weave(size=512, threads=32, seed="weave"):
+    """Cloth that takes a tint: a twill of round threads, warp and weft
+    each over two and under two, a step along every row (the diagonal
+    ribs of a wool cloak), the threads a little uneven; mottled. It tiles.
+    The albedo, normal and ORM maps."""
+    rng = random.Random(seed)
+    cell = size / threads
+    # one thread's rounded rise across it (0..1), along a cell's width
+    bump = [math.sin(math.pi * (i + 0.5) / cell) ** 0.6 for i in range(int(cell))]
+    height = Image.new("L", (size, size), 0)
+    px = height.load()
+    warp = [rng.uniform(0.85, 1.0) for _ in range(threads)]
+    weft = [rng.uniform(0.85, 1.0) for _ in range(threads)]
+    for y in range(size):
+        j, v = int(y // cell), int(y % cell)
+        for x in range(size):
+            i, u = int(x // cell), int(x % cell)
+            # 2/2 twill: the warp is over where (i + j) mod 4 is 0 or 1
+            over = (i + j) % 4 < 2
+            if over:
+                h = 0.55 + 0.45 * bump[u] * warp[i]
+            else:
+                h = 0.55 + 0.45 * bump[v] * weft[j]
+            # a thread dips at the cell where it goes under
+            px[x, y] = round(255 * h * (0.75 + 0.25 * (bump[v] if over else bump[u])))
+    height = height.filter(ImageFilter.GaussianBlur(0.7))
+    mottle = noise(rng, (size, size), 8)
+    light = ImageChops.add(height.point(lambda v: round(120 + v * 0.35)), mottle.point(lambda v: v * 30 // 255))
+    albedo = Image.merge("RGB", [light, light.point(lambda v: round(v * 0.98)), light.point(lambda v: round(v * 0.95))])
+    ao = hollows(height, 3, 0.7)
+    rough = height.point(lambda v: round(235 - v * 0.08))
+    arm = Image.merge("RGB", [ao, rough, Image.new("L", (size, size), 0)])
+    return {"albedo": albedo, "normal": normals(height, 2.0), "arm": arm}

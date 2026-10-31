@@ -957,7 +957,8 @@ static DOLL_FRAMES: AtomicU64 = AtomicU64::new(0);
 /// camera and mid-blow; then the inventory's doll renders them; then the
 /// title shows the same hero in the same kit. Pictures of each with
 /// `--screenshots`. RENETHACK_ROLES=knight,priest: only those;
-/// RENETHACK_KITS_LOOK=1: pictures only.
+/// RENETHACK_KITS_LOOK=1: pictures only; RENETHACK_KIT_FAR=1: each also
+/// 7 m off, as a player sees them close in play.
 pub(super) fn kits() -> Vec<Step> {
     let mut steps = vec![Step::Call("seed 1, the first hero", |g| {
         g.seed = Some(1);
@@ -1025,6 +1026,32 @@ pub(super) fn kits() -> Vec<Step> {
             }),
             Step::Wait("a frame", |_| Ok(true)),
             Step::Shot(rest),
+        ]);
+        if std::env::var_os("RENETHACK_KIT_FAR").is_some() {
+            // as a player sees them close in play (sheets of the outfits)
+            let far: &'static str = format!("{rest}-7m").leak();
+            steps.extend([
+                Step::Call("7 m off", |g| {
+                    g.ui.as_mut().ok_or("no UI")?.map.set_distance(7.0, 0.0);
+                    Ok(())
+                }),
+                Step::Wait("the camera 7 m off", camera_settled),
+                Step::Call("where the hero is in the picture", |g| {
+                    let (x, y) = g.world.map.hero().ok_or("no hero")?;
+                    let at = Vector3::new(x as f32, 0.9, y as f32);
+                    let p = map_view(g)?.on_screen(at).ok_or("off the screen")?;
+                    godot_print!("selftest: kit: the hero 7 m off at {:.0},{:.0}", p.x, p.y);
+                    Ok(())
+                }),
+                Step::Shot(far),
+                Step::Call("close up again", |g| {
+                    g.ui.as_mut().ok_or("no UI")?.map.set_distance(2.8, 0.5);
+                    Ok(())
+                }),
+                Step::Wait("the camera close again", camera_settled),
+            ]);
+        }
+        steps.extend([
             Step::Call("mid-blow", kit_blow),
             Step::Wait("a frame", |_| Ok(true)),
             Step::Shot(blow),

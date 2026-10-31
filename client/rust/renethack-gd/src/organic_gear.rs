@@ -1,8 +1,9 @@
 //! The pieces of an outfit drawn in code (`object_kit`'s helmets and
 //! garments): a winged helmet's wings of long feathers, a fur pelt over
-//! the shoulders and down the back, a toga's drape over one shoulder. They
-//! are in the units of the kit that places them (a helmet's, a
-//! garment's), y up, z forward, the wearer's left +x.
+//! the shoulders and down the back, a toga's drape over one shoulder, a
+//! cape and a cloak of cloth. They are in the units of the kit that
+//! places them (a helmet's, a garment's), y up, z forward, the wearer's
+//! left +x.
 
 use super::*;
 
@@ -21,6 +22,13 @@ pub enum Part {
     /// folds over the left shoulder, across the chest and the back to the
     /// right hip, and its end hanging from the shoulder down the back.
     Toga,
+    /// A monk's robe worn as the toga is, broader, its end to the knees.
+    Kasaya,
+    /// A cape of cloth worn round the neck (the origin), to the hips: over
+    /// the shoulders and down the back in folds, its collar rolled.
+    Cape,
+    /// A cloak as the cape, to the calves, flared clear of the legs.
+    Cloak,
 }
 
 const UP: Vector3 = Vector3::UP;
@@ -43,7 +51,10 @@ pub(super) fn build(m: &mut Merge, part: Part) {
     match part {
         Part::Wing => wing(m),
         Part::Pelt => pelt(m),
-        Part::Toga => toga(m),
+        Part::Toga => toga(m, &TOGA_WRAP),
+        Part::Kasaya => toga(m, &KASAYA),
+        Part::Cape => cloth(m, &CAPE),
+        Part::Cloak => cloth(m, &CLOAK),
     }
 }
 
@@ -108,24 +119,105 @@ fn feather(m: &mut Merge, x: f32, a: f32, len: f32, half_width: f32) {
     );
 }
 
-/// The pelt's cape: `s` from the neck (0) to the hem (1), `t` round it
+/// How a drape over the shoulders hangs: how high its top lies on the
+/// neck, where its hem is (below the
+/// neck), how far out it flares there, and how much further behind (clear
+/// of the legs as they swing); how deep its folds are and how many round
+/// it; how ragged its hem; between which shares of its length it narrows
+/// from all round the shoulders to behind them.
+struct Hang {
+    top: f32,
+    hem: f32,
+    flare: f32,
+    back: f32,
+    folds: f32,
+    fold_count: f32,
+    rag: f32,
+    narrows: (f32, f32),
+}
+
+/// A pelt, to the waist.
+const PELT: Hang = Hang {
+    top: 0.2,
+    hem: -1.0,
+    flare: 0.56,
+    back: 0.12,
+    folds: 0.06,
+    fold_count: 6.0,
+    rag: 0.05,
+    narrows: (0.12, 0.42),
+};
+
+/// A cape of cloth, to the hips.
+const CAPE: Hang = Hang {
+    top: 0.11,
+    hem: -1.35,
+    flare: 0.62,
+    back: 0.2,
+    folds: 0.06,
+    fold_count: 7.0,
+    rag: 0.01,
+    narrows: (0.09, 0.32),
+};
+
+/// A cloak of cloth, to the calves.
+const CLOAK: Hang = Hang {
+    top: 0.11,
+    hem: -2.1,
+    flare: 0.74,
+    back: 0.34,
+    folds: 0.07,
+    fold_count: 8.0,
+    rag: 0.012,
+    narrows: (0.06, 0.22),
+};
+
+/// A drape hung so: `s` from the neck (0) to the hem (1), `t` round it
 /// from one edge (0) to the other (1).
-fn cape(s: f32, t: f32) -> Vector3 {
+fn drape(h: &Hang, s: f32, t: f32) -> Vector3 {
     // its profile, out from the middle and down: over the shoulder in a
     // curve, then hanging down the back
-    let (a, b, c, d) = ((0.22f32, 0.2f32), (0.5, 0.17), (0.5, -0.2), (0.56, -1.0));
+    // (a lower top a little wider round the neck)
+    let (a, b, c, d) = (
+        (0.22f32 + 0.2 * (0.2 - h.top), h.top),
+        (0.5, 0.17),
+        (0.5, -0.2),
+        (h.flare, h.hem),
+    );
     let k = 1.0 - s;
     let w = [k * k * k, 3.0 * k * k * s, 3.0 * k * s * s, s * s * s];
     let r = w[0] * a.0 + w[1] * b.0 + w[2] * c.0 + w[3] * d.0;
     let y = w[0] * a.1 + w[1] * b.1 + w[2] * c.1 + w[3] * d.1;
     // all the way round over the shoulders, only behind further down
-    let reach = 80.0 + 100.0 * (1.0 - smoothstep(0.12, 0.42, s));
+    let reach = 80.0 + 100.0 * (1.0 - smoothstep(h.narrows.0, h.narrows.1, s));
     let a = ((t * 2.0 - 1.0) * reach).to_radians();
-    // folds that deepen toward the hem, which hangs ragged
-    let fold = 1.0 + 0.06 * s * (a * 6.0).sin();
-    let rz = (r * 0.66 + 0.12 * s) * fold;
-    let hem = 0.05 * s.powi(3) * (a * 9.0 + 1.3).sin();
+    // folds that deepen toward the hem
+    let fold = 1.0 + h.folds * s * (a * h.fold_count).sin();
+    let rz = (r * 0.66 + h.back * s) * fold;
+    let hem = h.rag * s.powi(3) * (a * 9.0 + 1.3).sin();
     v(r * fold * a.sin(), y + hem, -rz * a.cos())
+}
+
+/// The pelt's cape.
+fn cape(s: f32, t: f32) -> Vector3 {
+    drape(&PELT, s, t)
+}
+
+/// A cloak or a cape of cloth: the drape, hemmed, and a rolled collar.
+fn cloth(m: &mut Merge, h: &Hang) {
+    let at = |s: f32, t: f32| drape(h, s, t);
+    for face in [1.0f32, -1.0] {
+        sheet(m, 24, 36, &at, face);
+    }
+    // (low on the neck: a cloth's collar lies on the shoulders, under the
+    // chin)
+    let n = 32;
+    let neck = |a: f32| v(0.27 * a.sin(), 0.1 + 0.03 * a.cos(), -0.2 * a.cos());
+    let collar: Vec<Vector3> = (0..n).map(|k| neck(frac(k, n) * TAU)).collect();
+    m.sweep(&collar, |_| (0.04, 0.04), 2.0, true, UP);
+    // the hem turned up: a band of the cloth along its foot
+    let foot: Vec<Vector3> = (0..=36).map(|k| drape(h, 1.0, frac(k, 36))).collect();
+    m.sweep(&foot, |_| (0.012, 0.022), 2.0, false, UP);
 }
 
 fn pelt(m: &mut Merge) {
@@ -265,7 +357,27 @@ fn off_body(p: Vector3) -> Vector3 {
     (chest.normalized() * (1.0 - k) + shoulder.normalized() * k).normalized()
 }
 
-fn toga(m: &mut Merge) {
+/// How broad a wrap over the shoulder is (half its width across the chest)
+/// and how far its end hangs down the back.
+struct Wrap {
+    half: f32,
+    end: f32,
+}
+
+/// A toga's band, its end to the waist.
+const TOGA_WRAP: Wrap = Wrap {
+    half: 0.15,
+    end: 1.0,
+};
+
+/// A monk's robe wrapped as a kasaya: broad across the chest, its end to
+/// the knees.
+const KASAYA: Wrap = Wrap {
+    half: 0.27,
+    end: 1.7,
+};
+
+fn toga(m: &mut Merge, w: &Wrap) {
     // the band: `s` round it, `t` across it, a little off the body, in
     // folds along it; gathered narrow over the shoulder
     let band = |s: f32, t: f32| {
@@ -275,7 +387,7 @@ fn toga(m: &mut Merge) {
         let out = off_body(p);
         let across = along.cross(out).normalized();
         let shoulder = smoothstep(0.2, 0.42, p.y);
-        let half = 0.15 - 0.06 * shoulder;
+        let half = w.half * (1.0 - 0.4 * shoulder);
         let u = t * 2.0 - 1.0;
         let fold = 0.025 * (u * PI * 2.5 + s * 9.0).sin() * (1.0 - shoulder * 0.6);
         p + across * (u * half) + out * (0.05 + fold + 0.03 * (1.0 - u * u))
@@ -288,7 +400,8 @@ fn toga(m: &mut Merge) {
         let u = t * 2.0 - 1.0;
         let fold = 0.04 * s * (u * PI * 2.0).sin();
         let top = v(0.24 + 0.12 * u, 0.42, -0.08 - 0.06 * (1.0 - u * u));
-        top + v(0.06 * s, -s, -0.24 * s - fold - 0.05 * s * s)
+        let d = s * w.end;
+        top + v(0.06 * d, -d, -0.24 * d - fold - 0.05 * d * d / w.end)
     };
     for face in [1.0f32, -1.0] {
         sheet(m, 12, 8, &end, face);
