@@ -286,7 +286,7 @@ fn end_page_ok(g: &RenethackGame, how: EndHow) -> Result<bool, String> {
     let texts: Vec<String> = shown.iter().map(|(t, _)| t.clone()).collect();
     let has = |t: &str| texts.iter().any(|x| x.contains(t));
     let want = match how {
-        EndHow::Quit => tr!("end-stone-quit", female = "yes"),
+        EndHow::Quit => crate::layouts::upstart(&tr!("end-stone-quit", female = "yes")),
         EndHow::Ascended => tr!("end-ascended", female = "yes"),
         EndHow::Escaped => tr!("end-escaped", female = "yes"),
         EndHow::Died => crate::layouts::death(&s.stone().map(|t| t.death).unwrap_or_default()),
@@ -359,7 +359,7 @@ fn end_page(name: &'static str, check: super::Check) -> Vec<Step> {
             }
             let root = ui.screens.end_root().ok_or("no end page")?;
             let words = crate::pad_view::shown_words(&root);
-            let keys = words.iter().any(|w| w.contains("Esc"));
+            let keys = words.iter().any(|w| w.contains("PgUp"));
             let at = ui.screens.end_scrolled().unwrap_or(0);
             if !keys && at >= range {
                 // at the end of the body: its last words above its bottom

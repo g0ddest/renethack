@@ -306,6 +306,7 @@ end-achievements = Achievements
 end-achievements-none = None earned in this game.
 end-achievement-new = New
 end-conduct = Conduct kept
+end-conduct-about = Self-imposed challenges: what you never once did all game.
 end-conduct-none = None.
 end-conduct-foodless = Foodless
 end-conduct-vegan =
@@ -338,6 +339,7 @@ end-conduct-petless = Petless
 end-chronicle = Chronicle
 end-chronicle-none = No events.
 end-topten = Top ten
+end-possessions = Your possessions
 end-topten-none = No scores yet.
 end-topten-place = No.
 end-topten-points = Points
@@ -608,6 +610,11 @@ dlg-yes-pad = Yes
 dlg-no-pad = No
 dlg-cancel-q-pad = Cancel
 dlg-all-a-pad = All
+# an answer the question names by a word ("Which ring-finger, Right or
+# Left?"): the word, then its key
+dlg-named-answer = { $word } ({ $key })
+# how an answer's word begins in this language's question
+choice-stem = { $word }
 dlg-ok = OK
 dlg-cancel = Cancel
 dlg-count = Count: { $n } — pick an item to take that many

@@ -308,6 +308,7 @@ end-achievements = Достижения
 end-achievements-none = В этой игре — ни одного.
 end-achievement-new = Новое
 end-conduct = Выдержанные испытания
+end-conduct-about = Добровольные ограничения: чего вы ни разу не сделали за всю игру.
 end-conduct-none = Ни одного.
 end-conduct-foodless = Без еды
 end-conduct-vegan =
@@ -345,6 +346,7 @@ end-conduct-petless = Без питомца
 end-chronicle = Хроника
 end-chronicle-none = Событий нет.
 end-topten = Таблица рекордов
+end-possessions = Ваши вещи
 end-topten-none = Рекордов пока нет.
 end-topten-place = №
 end-topten-points = Очки
@@ -616,6 +618,12 @@ dlg-yes-pad = Да
 dlg-no-pad = Нет
 dlg-cancel-q-pad = Отмена
 dlg-all-a-pad = Все
+dlg-named-answer = { $word } ({ $key })
+choice-stem = { $word ->
+        [Right] прав
+        [Left] лев
+       *[other] { $word }
+    }
 dlg-ok = ОК
 dlg-cancel = Отмена
 dlg-count = Количество: { $n } — выберите предмет, чтобы взять столько
@@ -656,7 +664,7 @@ palette-also = { $cmd ->
         [down] вниз, спуститься, лестница
         [drop] положить, выложить, оставить
         [droptype] положить, выложить, оставить
-        [eat] еда, есть, съесть
+        [eat] еда, есть, съесть, пища, питаться
         [engrave] надпись, гравировка, писать, элберет
         [enhance] навыки, умения, улучшить
         [fight] атака, драться, бой

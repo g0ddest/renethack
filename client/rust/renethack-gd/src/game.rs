@@ -412,6 +412,10 @@ pub struct RenethackGame {
     /// The achievements first earned in a game: its engine start
     /// (`session_serial`) and their ids (the end screen marks them).
     earned_in_game: (u64, Vec<String>),
+    /// The end's disclosures, kept for the end page as they come (NetHack
+    /// asks none: `disclose` says yes for the player), until the farewell.
+    disclosed: Vec<crate::end_view::Disclosure>,
+    farewell_seen: bool,
     /// The client's settings, as the profile keeps them (read at start,
     /// changed on the settings page).
     pub(crate) settings: Settings,
@@ -863,6 +867,8 @@ impl INode for RenethackGame {
             legacy_hero_of: None,
             achievement_page: None,
             earned_in_game: (0, Vec::new()),
+            disclosed: Vec::new(),
+            farewell_seen: false,
             settings: Settings::default(),
             test_tick: None,
             settings_page: None,
@@ -1112,7 +1118,8 @@ impl INode for RenethackGame {
         self.guide_seen = profile.guide_seen.clone();
         // the pack as the player last chose to see it
         if let Some(ui) = self.ui.as_mut() {
-            ui.inventory.set_list(profile.pack_list);
+            ui.inventory
+                .set_list(profile.pack_list_for(self.ui_state.profile));
         }
         // the sound at the volumes the player left it at
         crate::audio::apply_volumes(&profile.volumes);
@@ -1483,6 +1490,51 @@ fn pad_ui_actions() {
 }
 
 impl RenethackGame {
+    /// A window or a menu of the end's disclosures, as the end page shows
+    /// it: what the engine shows after the game is over, before the
+    /// farewell ("Goodbye Hero the Valkyrie...").
+    fn disclosure(&mut self, prompt: &Prompt) -> Option<crate::end_view::Disclosure> {
+        if self.farewell_seen || !self.world.progress().is_some_and(|p| p.gameover) {
+            return None;
+        }
+        let bold = |attr: i32| attr & nh_world::ATR_BOLD != 0;
+        match prompt {
+            Prompt::Show { lines, .. }
+                if lines.iter().any(|l| crate::end_view::farewell(&l.text)) =>
+            {
+                self.farewell_seen = true;
+                None
+            }
+            Prompt::Show { lines, .. } => {
+                // a window the client lays out: in its layout's words
+                let texts: Vec<&str> = lines.iter().map(|l| l.text.as_str()).collect();
+                let laid = crate::dialogs::layout_words(&texts, self.catalog.as_deref());
+                Some(match laid {
+                    Some((heading, words)) => crate::end_view::Disclosure {
+                        lines: words,
+                        items: false,
+                        laid_out: Some(heading),
+                    },
+                    None => crate::end_view::Disclosure {
+                        lines: (lines.iter())
+                            .map(|l| (l.text.clone(), bold(l.attr)))
+                            .collect(),
+                        items: false,
+                        laid_out: None,
+                    },
+                })
+            }
+            Prompt::Menu { items, .. } => Some(crate::end_view::Disclosure {
+                lines: (items.iter())
+                    .filter_map(|i| i.str.clone().map(|t| (t, !i.selectable)))
+                    .collect(),
+                items: true,
+                laid_out: None,
+            }),
+            _ => None,
+        }
+    }
+
     /// A button pressed, by the mouse or the accept key: its click.
     fn hear_click(&mut self, event: &Gd<InputEvent>) {
         if !event.is_pressed() || event.is_echo() {
@@ -2067,6 +2119,14 @@ impl RenethackGame {
     }
 
     fn open_prompt(&mut self, id: u64, prompt: Prompt) {
+        // the game over: its disclosures kept for the end page, each one
+        // let go at once, until the farewell's window
+        if let Some(d) = self.disclosure(&prompt) {
+            self.disclosed.push(d);
+            self.pending = Some((id, prompt.clone()));
+            self.reply(prompt.escape_reply());
+            return;
+        }
         // the options menu driven for the settings page answers all it
         // leads to; its end, a command prompt, is the player's again
         if let Some(run) = self.options_run.as_mut() {
@@ -3601,7 +3661,7 @@ impl RenethackGame {
                     None => self.reply(Reply::Char(letter as i32)),
                 }
             }
-            Intent::View(list) => self.update_profile(|p| p.pack_list = list),
+            Intent::View(list) => self.update_profile(|p| p.pack_list = Some(list)),
             Intent::Bind { slot, binding } => {
                 self.ui_state.bar.set(slot, Some(binding));
                 self.save_ui_state();
@@ -5450,6 +5510,7 @@ impl RenethackGame {
             })
             .unwrap_or_default();
         EndSummary {
+            disclosed: self.disclosed.clone(),
             roles,
             how,
             name,
@@ -5707,6 +5768,14 @@ impl RenethackGame {
                 ui.hud.reset();
                 self.show_game(true);
                 self.ui_state = state;
+                self.disclosed.clear();
+                self.farewell_seen = false;
+                // the pack as the player chose to see it, else as the
+                // character's keys have it (Classic: the list)
+                if let Some(paths) = self.paths.as_ref() {
+                    let list = load_profile(&paths.playground).pack_list_for(self.ui_state.profile);
+                    self.ui_mut().inventory.set_list(list);
+                }
                 self.loadout_for = None;
                 self.cleared = None;
                 self.bar_key = None;

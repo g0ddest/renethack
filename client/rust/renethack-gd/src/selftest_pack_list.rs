@@ -51,7 +51,9 @@ fn wish(what: &'static str) -> Vec<Step> {
 
 /// The profile's choice, as the playground's files keep it.
 fn kept(g: &RenethackGame) -> bool {
-    crate::game::load_profile(&g.playground()).pack_list
+    crate::game::load_profile(&g.playground())
+        .pack_list
+        .unwrap_or(false)
 }
 
 /// The panel shows the list, every item once in the grid's order under
@@ -156,8 +158,18 @@ pub(super) fn pack_list() -> Vec<Step> {
             g.push_ui(UiEvent::SetLanguage(asked()));
             Ok(())
         }),
-        Step::Wait("the grid, not the list, at first", |g| {
-            Ok(!panel(g)?.list_view() && !kept(g))
+        // nothing chosen: Classic keys (the scenarios' own) show the list
+        Step::Wait("the list at first, for Classic keys, none chosen", |g| {
+            let none = crate::game::load_profile(&g.playground())
+                .pack_list
+                .is_none();
+            Ok(panel(g)?.list_view() && none)
+        }),
+        // the grid chosen, and kept
+        Step::Push(UiEvent::Inventory(InvInput::View(false))),
+        Step::Wait("the grid chosen, the profile told", |g| {
+            let chosen = crate::game::load_profile(&g.playground()).pack_list;
+            Ok(!panel(g)?.list_view() && chosen == Some(false))
         }),
         key('i'),
         Step::Wait("the panel in browse mode on the grid", |g| {

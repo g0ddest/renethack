@@ -22,11 +22,14 @@ pub const BASE_OPTIONS: &str = "time,!legacy,!tutorial,!autopickup,!tips,!implic
 /// "pushweapon" wielding a new weapon makes the old one the alternate, so
 /// an equip by drag and drop is predictable. The status conditions a player
 /// may opt into are on for the states the hero's body shows: caught in a
-/// trap, asleep, paralysed, unconscious, under water. The key profile adds
-/// its number_pad (nh-world's `KeyProfile::engine_option`); NetHack does
-/// not keep these options in the save, so a restore needs them again.
+/// trap, asleep, paralysed, unconscious, under water. The end's
+/// disclosures (the possessions, attributes, creatures vanquished and
+/// genocided, conduct, overview) come without their questions: the end
+/// page shows them. The key profile adds its number_pad (nh-world's
+/// `KeyProfile::engine_option`); NetHack does not keep these options in
+/// the save, so a restore needs them again.
 pub const CLIENT_EXTRA_OPTIONS: &str = "showexp,pushweapon,cond_trap,cond_sleep,\
-cond_paralyzed,cond_unconscious,cond_submerged";
+cond_paralyzed,cond_unconscious,cond_submerged,disclose:+i +a +v +g +c +o";
 
 /// How to start one engine process.
 #[derive(Debug, Clone)]

@@ -207,29 +207,22 @@ pub(super) fn layouts() -> Vec<Step> {
             |p| matches!(p, Prompt::Choice { query, .. } if query.contains("Die?")),
         ),
         key('y'),
-        // the end's overview: where the hero was, and lies
-        Step::AnswerUntil('n', "the question of the overview", |g| {
-            fail_on_error_screen(g)?;
-            Ok(g.pending.as_ref().is_some_and(|(_, p)| {
-                matches!(p, Prompt::Choice { query, .. } if query.contains("dungeon overview"))
-            }))
-        }),
-        key('y'),
-        Step::Request("the overview at the end", |p| {
-            matches!(p, Prompt::Show { .. } | Prompt::Menu { .. })
-        }),
-        Step::Wait("the hero's resting place laid out", |g| {
-            Ok(
-                laid_out(g, "overview", &layouts::here(layouts::Here::Were))?
-                    && laid_out(g, "overview", &layouts::resting(true))?,
-            )
-        }),
-        Step::Shot("overview-end"),
-        Step::Dialog(DialogEvent::Close),
+        // the end's overview, asked of no one (the end page shows the
+        // disclosures): where the hero was, and lies
         Step::AnswerUntil('n', "the end screen", |g| {
             fail_on_error_screen(g)?;
             Ok(screen(g) == Some("end"))
         }),
+        Step::Wait("the hero's resting place in the end's overview", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let summary = ui.screens.end_summary().ok_or("no summary")?;
+            let overview = (summary.disclosed.iter())
+                .find(|d| d.laid_out.as_deref() == Some(tr!("overview-title").as_str()))
+                .ok_or("no overview among the end's disclosures")?;
+            let said = |t: &str| overview.lines.iter().any(|(l, _)| l.contains(t));
+            Ok(said(&layouts::here(layouts::Here::Were)) && said(&layouts::resting(true)))
+        }),
+        Step::Shot("overview-end"),
         Step::Wait("the tombstone drawn", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
             let summary = ui.screens.end_summary().ok_or("no summary")?;

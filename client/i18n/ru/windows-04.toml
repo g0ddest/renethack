@@ -131,3 +131,29 @@ ru = " Вы отключили загрузку и сохранение уров
 [2ec02b02bf0a]
 en = " You have disabled loading of bones levels."
 ru = " Вы отключили загрузку уровней с костями."
+
+# ^X and the end's attributes: where the hero is, on a level of its own
+
+[a005a8fc289c]
+en = " You are in %s, on level %d, a very big room."
+ru = " Вы в {1:loc}, на уровне {2}, в очень большом зале."
+
+[1db9d6ed0738]
+en = " You were in %s, on level %d, a very big room."
+ru = " Вы были в {1:loc}, на уровне {2}, в очень большом зале."
+
+[728932a62a07]
+en = " You are in %s, on level %d, a primitive area."
+ru = " Вы в {1:loc}, на уровне {2}, в первобытном краю."
+
+[9b24e5e53954]
+en = " You were in %s, on level %d, a primitive area."
+ru = " Вы были в {1:loc}, на уровне {2}, в первобытном краю."
+
+[271a29d0e9fb]
+en = " You are in %s, on level %d, a primitive area, a very big room."
+ru = " Вы в {1:loc}, на уровне {2}, в первобытном краю, в очень большом зале."
+
+[858173d2a33d]
+en = " You were in %s, on level %d, a primitive area, a very big room."
+ru = " Вы были в {1:loc}, на уровне {2}, в первобытном краю, в очень большом зале."

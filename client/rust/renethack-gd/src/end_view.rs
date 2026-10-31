@@ -18,7 +18,8 @@ use godot::classes::text_server::AutowrapMode;
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
     Button, ColorRect, Control, GridContainer, HBoxContainer, HFlowContainer, Label,
-    MarginContainer, PanelContainer, ScrollContainer, StyleBoxFlat, TextureRect, VBoxContainer,
+    MarginContainer, PanelContainer, RichTextLabel, ScrollContainer, StyleBoxFlat, TextureRect,
+    VBoxContainer,
 };
 use godot::global::HorizontalAlignment;
 use godot::prelude::*;
@@ -108,10 +109,27 @@ pub struct EndSummary {
     pub chronicle: Vec<(i64, String)>,
     /// The achievements this game holds; true: first earned in it.
     pub achievements: Vec<(Achievement, bool)>,
+    /// What NetHack disclosed at the end, in its order (the possessions,
+    /// the attributes, the creatures vanquished and genocided, the
+    /// conduct, the overview).
+    pub disclosed: Vec<Disclosure>,
     /// The roles by their codes, as the top ten names its heroes
     /// ("Hero-Sam-Hum-Mal-Law"): the role, and the role of a heroine if
     /// it has its own.
     pub roles: Vec<(String, String, Option<String>)>,
+}
+
+/// One of the end's disclosures as NetHack wrote it: a text window's
+/// lines, or the possessions' list; true: a heading. A window the client
+/// lays out (the creatures vanquished, the overview) comes in the words
+/// of its layout, with its heading.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Disclosure {
+    pub lines: Vec<(String, bool)>,
+    /// A menu's items (the possessions), not a text window's lines.
+    pub items: bool,
+    /// The heading and the lines already in the player's language.
+    pub laid_out: Option<String>,
 }
 
 /// The numbers the page shows.
@@ -185,7 +203,7 @@ impl EndSummary {
 
 /// really_done's farewell, "Goodbye Hero the Valkyrie..." (or Farvel,
 /// Aloha, Sayonara…): the page's title says it.
-fn farewell(line: &str) -> bool {
+pub fn farewell(line: &str) -> bool {
     let l = line.trim();
     l.ends_with("...") && l.contains(" the ") && !l.starts_with("You")
 }
@@ -430,7 +448,14 @@ pub fn build(s: &EndSummary, queue: &UiQueue, canvas: Vector2, pad: Option<PadKi
     for (edge, px) in [("left", 0), ("right", 18), ("top", 6), ("bottom", 16)] {
         room.add_theme_constant_override(&format!("margin_{edge}"), px);
     }
-    room.add_child(&columns);
+    // NetHack's disclosures, under the hero's story and the records
+    let mut parts = VBoxContainer::new_alloc();
+    parts.add_theme_constant_override("separation", 22);
+    parts.add_child(&columns);
+    if let Some(told) = disclosures(s) {
+        parts.add_child(&told);
+    }
+    room.add_child(&parts);
     middle.add_child(&room);
     scroll.add_child(&middle);
     body.add_child(&scroll);
@@ -537,7 +562,7 @@ fn marker(s: &EndSummary, scale: f32) -> Gd<Control> {
     holder.set_custom_minimum_size(tombstone::SIZE * scale);
     let rank = rank_of(s);
     let mut inner = match s.how {
-        EndHow::Died | EndHow::Quit => {
+        EndHow::Died => {
             let mut stone = s.stone().unwrap_or_else(|| Tombstone {
                 name: s.name.clone(),
                 gold: s.numbers().gold.unwrap_or(0),
@@ -554,41 +579,46 @@ fn marker(s: &EndSummary, scale: f32) -> Gd<Control> {
                 stone.name = s.name.clone();
             }
             // a death's words as the stone has them, else as the
-            // chronicle ends (formatkiller's words both); a quit's ours
-            let death = match s.how {
-                EndHow::Quit => tr!("end-stone-quit", female = female(s)),
-                _ if !stone.death.is_empty() => layouts::death(&stone.death),
-                _ => s
-                    .chronicle
-                    .last()
+            // chronicle ends (formatkiller's words both)
+            let death = if !stone.death.is_empty() {
+                layouts::death(&stone.death)
+            } else {
+                (s.chronicle.last())
                     .map(|(_, t)| layouts::death(t))
-                    .unwrap_or_default(),
+                    .unwrap_or_default()
             };
             tombstone::view_with(&stone, &death, rank.as_deref())
         }
-        EndHow::Ascended | EndHow::Escaped => honour(s, rank.as_deref()),
+        // NetHack carves no stone for a quit (outrip only for a death)
+        EndHow::Ascended | EndHow::Escaped | EndHow::Quit => honour(s, rank.as_deref()),
     };
     inner.set_scale(Vector2::new(scale, scale));
     holder.add_child(&inner);
     holder.upcast()
 }
 
-/// An ascension's or an escape's page, the stone's size and shape: an
-/// emblem, the name and rank, what the hero did, the gold, the year.
+/// An ascension's, an escape's or a quit's page, the stone's size and
+/// shape: an emblem, the name and rank, what the hero did, the gold, the
+/// year. A quit's is the night's: the hero laid the quest down.
 fn honour(s: &EndSummary, rank: Option<&str>) -> Gd<Control> {
     let ascended = s.how == EndHow::Ascended;
+    let quit = s.how == EndHow::Quit;
     let mut page = PanelContainer::new_alloc();
     page.set_custom_minimum_size(tombstone::SIZE);
     page.set_size(tombstone::SIZE);
     page.set_mouse_filter(MouseFilter::IGNORE);
     let glow = if ascended {
         theme::GOLD_BRIGHT
+    } else if quit {
+        theme::TEXT_DIM
     } else {
         theme::TEXT
     };
     let mut sb = StyleBoxFlat::new_gd();
     sb.set_bg_color(if ascended {
         Color::from_rgba(0.2, 0.145, 0.06, 1.0)
+    } else if quit {
+        Color::from_rgba(0.06, 0.06, 0.075, 1.0)
     } else {
         Color::from_rgba(0.075, 0.09, 0.105, 1.0)
     });
@@ -631,6 +661,8 @@ fn honour(s: &EndSummary, rank: Option<&str>) -> Gd<Control> {
     icon.set_h_size_flags(SizeFlags::SHRINK_CENTER);
     icon.set_texture(&icons::emblem(if ascended {
         Glyph::Ascension
+    } else if quit {
+        Glyph::Moon
     } else {
         Glyph::Stairs
     }));
@@ -639,6 +671,8 @@ fn honour(s: &EndSummary, rank: Option<&str>) -> Gd<Control> {
     let width = tombstone::SIZE.x - 52.0;
     let deed = if ascended {
         tr!("end-ascended", female = female(s))
+    } else if quit {
+        layouts::upstart(&tr!("end-stone-quit", female = female(s)))
     } else {
         tr!("end-escaped", female = female(s))
     };
@@ -764,6 +798,13 @@ fn story(s: &EndSummary) -> Gd<VBoxContainer> {
     }
     // the conduct kept
     col.add_child(&section(&tr!("end-conduct")));
+    // what a conduct is, for a first game's player
+    col.add_child(&wrapped(
+        &tr!("end-conduct-about"),
+        Face::Body,
+        15,
+        theme::TEXT_DIM,
+    ));
     let conduct = if s.conduct.is_empty() {
         tr!("end-conduct-none")
     } else {
@@ -860,6 +901,71 @@ fn records(s: &EndSummary) -> Gd<VBoxContainer> {
     }
     col.add_child(&topten(s));
     col
+}
+
+/// NetHack's disclosures at the end, read-only, two to a row: the
+/// possessions identified (a list, its classes' headings bold), then each
+/// window in its own words (its first line its heading). None: none told.
+fn disclosures(s: &EndSummary) -> Option<Gd<Control>> {
+    if s.disclosed.is_empty() {
+        return None;
+    }
+    let mut grid = GridContainer::new_alloc();
+    grid.set_columns(2);
+    grid.add_theme_constant_override("h_separation", 34);
+    grid.add_theme_constant_override("v_separation", 18);
+    grid.set_h_size_flags(SizeFlags::EXPAND_FILL);
+    for d in &s.disclosed {
+        let kind = if d.items {
+            EngineKind::Menu
+        } else {
+            EngineKind::Window
+        };
+        let said = |l: &str| match d.laid_out {
+            Some(_) => l.to_string(),
+            None => i18n::engine(kind, l).into_owned(),
+        };
+        let mut lines: Vec<(String, bool)> = (d.lines.iter())
+            .filter(|(l, _)| !l.trim().is_empty())
+            // (the engine's own line, its spaces too: " You were…" is
+            // ^X's)
+            .map(|(l, bold)| (said(l).trim().to_string(), *bold))
+            .collect();
+        let heading = if let Some(h) = &d.laid_out {
+            h.clone()
+        } else if d.items {
+            tr!("end-possessions")
+        } else if lines.is_empty() {
+            continue;
+        } else {
+            let (first, _) = lines.remove(0);
+            first.trim_end_matches(':').to_string()
+        };
+        let mut col = section(&heading);
+        col.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        let mut text = RichTextLabel::new_alloc();
+        text.set_use_bbcode(true);
+        text.set_fit_content(true);
+        text.set_scroll_active(false);
+        text.set_autowrap_mode(AutowrapMode::WORD_SMART);
+        text.set_custom_minimum_size(Vector2::new(300.0, 0.0));
+        text.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        text.add_theme_font_override("normal_font", &theme::font(Face::Body));
+        text.add_theme_font_override("bold_font", &theme::font(Face::BodyBold));
+        text.add_theme_font_size_override("normal_font_size", 15);
+        text.add_theme_font_size_override("bold_font_size", 15);
+        text.add_theme_color_override("default_color", theme::TEXT);
+        let shown: Vec<String> = (lines.iter())
+            .map(|(l, bold)| {
+                let l = theme::bbcode_escape(l);
+                if *bold { format!("[b]{l}[/b]") } else { l }
+            })
+            .collect();
+        text.set_text(&shown.join("\n"));
+        col.add_child(&text);
+        grid.add_child(&col);
+    }
+    Some(grid.upcast())
 }
 
 /// The chronicle's major events: the turn, then what happened.

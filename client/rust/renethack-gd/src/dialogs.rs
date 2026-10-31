@@ -242,15 +242,51 @@ fn truncate_bytes(s: &str, max: usize) -> String {
     s[..end].to_string()
 }
 
-/// A Choice button's label: the usual answers spelled out, others as typed.
 /// #therecmdmenu's question (a click or A on a cell), and its entry
 /// that only looks (`:`) when the cell is the hero's.
 const THERE_MENU: &str = "What do you want to do?";
 const LOOK_HERE: &str = "Look at what is here";
 
-/// An answer's button: its word and its key, or with a gamepad its word
-/// alone.
-fn choice_label(c: char, pad: bool) -> String {
+/// The word the question names answer `c` by ("Which ring-finger, Right
+/// or Left? [rl]": Right for r), as the question shown says it: the shown
+/// question's word that begins as the language's stem of it does («На
+/// какую руку надеть кольцо: правую или левую?»: Правую).
+fn answer_word(c: char, english: &str, shown: &str) -> Option<String> {
+    let words = |q: &str| -> Vec<String> {
+        q.split(|ch: char| !ch.is_alphabetic())
+            .filter(|w| !w.is_empty())
+            .map(str::to_string)
+            .collect()
+    };
+    let up = c.to_ascii_uppercase();
+    let named = words(english).into_iter().skip(1).find(|w| {
+        w.chars().count() > 1 && w.starts_with(up) && w.chars().skip(1).all(char::is_lowercase)
+    })?;
+    if i18n::lang() == Lang::En {
+        return Some(named);
+    }
+    // (a word the language has no stem for finds none)
+    let stem = tr!("choice-stem", word = named.as_str()).to_lowercase();
+    let said = words(shown)
+        .into_iter()
+        .find(|w| w.to_lowercase().starts_with(&stem))?;
+    let mut chars = said.chars();
+    chars
+        .next()
+        .map(|f| f.to_uppercase().chain(chars).collect())
+}
+
+/// An answer's button: the usual answers spelled out, another as the
+/// question names it (`named`), else its letter; with its key unless a
+/// gamepad plays.
+fn named_choice(c: char, pad: bool, named: Option<&str>) -> String {
+    if let Some(w) = named {
+        return if pad {
+            w.to_string()
+        } else {
+            tr!("dlg-named-answer", word = w, key = c.to_string())
+        };
+    }
     match (c, pad) {
         ('y', false) => tr!("dlg-yes"),
         ('n', false) => tr!("dlg-no"),
@@ -718,6 +754,116 @@ impl OverviewLine {
             OverviewRow::Other(t) => detail("", i18n::engine(EngineKind::Menu, t).into_owned()),
         }
     }
+}
+
+/// A window the client lays out (#vanquished, #genocided, #overview) as
+/// words, for a page that shows it read-only (the end's disclosures): its
+/// heading and its lines in the language now, true: a heading. None: no
+/// such window.
+pub fn layout_words(
+    texts: &[&str],
+    catalog: Option<&Catalog>,
+) -> Option<(String, Vec<(String, bool)>)> {
+    let plurals = layouts::kinds_by_plural(catalog);
+    let singular = |p: &str| plurals.get(p).cloned();
+    let creature = |r: &CreatureRow| match r {
+        CreatureRow::Class(c) => (c.clone(), true),
+        CreatureRow::Kind { name, right, .. } if right.is_empty() || right == "1" => {
+            (name.clone(), false)
+        }
+        CreatureRow::Kind { name, right, .. } => (format!("{name} — {right}"), false),
+    };
+    if let Some(v) = layouts::vanquished(texts, &singular) {
+        let mut lines: Vec<(String, bool)> =
+            vanquished_rows(&v, catalog).iter().map(creature).collect();
+        lines.extend((v.total.iter()).map(|&n| (tr!("vanquished-total", count = n), false)));
+        return Some((tr!("vanquished-title"), lines));
+    }
+    if let Some(g) = layouts::genocided(texts) {
+        let mut lines: Vec<(String, bool)> = (genocided_rows(&g, &plurals, catalog).iter())
+            .map(creature)
+            .collect();
+        if let Some(n) = g.genocided {
+            lines.push((tr!("genocided-total", count = n), false));
+        }
+        if let Some(n) = g.extinct {
+            lines.push((tr!("extinct-total", count = n), false));
+        }
+        return Some((layouts::gone_heading(g.heading), lines));
+    }
+    let rows = layouts::overview(texts)?;
+    let lines = (overview_lines(&rows).into_iter())
+        .map(|l| match l {
+            OverviewLine::Dungeon { name, levels } => match levels {
+                Some(levels) => (format!("{name}: {levels}"), true),
+                None => (name, true),
+            },
+            OverviewLine::Level {
+                badge,
+                title,
+                note,
+                here,
+                ..
+            } => {
+                let mut t = format!("{badge}. {title}");
+                for more in [note, here].into_iter().flatten() {
+                    t = format!("{t} — {more}");
+                }
+                (t, false)
+            }
+            OverviewLine::Detail { mark: "", text, .. } => (text, false),
+            OverviewLine::Detail { mark, text, .. } => (format!("{mark} {text}"), false),
+        })
+        .collect();
+    Some((tr!("overview-title"), lines))
+}
+
+/// #vanquished's rows: the classes' headings, a kind a row with its count.
+fn vanquished_rows(v: &Vanquished, catalog: Option<&Catalog>) -> Vec<CreatureRow> {
+    v.rows
+        .iter()
+        .map(|r| match r {
+            KillRow::Class(c) => CreatureRow::Class(layouts::class_name(c)),
+            KillRow::Kind {
+                name,
+                count,
+                unique,
+            } => CreatureRow::Kind {
+                symbol: creature_symbol(catalog, name),
+                name: layouts::name(name),
+                unique: *unique,
+                right: count.to_string(),
+            },
+        })
+        .collect()
+}
+
+/// #genocided's rows: the classes' headings, a species a row, the extinct
+/// ones said so.
+fn genocided_rows(
+    g: &Genocided,
+    plurals: &HashMap<String, String>,
+    catalog: Option<&Catalog>,
+) -> Vec<CreatureRow> {
+    g.rows
+        .iter()
+        .map(|r| match r {
+            GoneRow::Class(c) => CreatureRow::Class(layouts::class_name(c)),
+            GoneRow::Species { plural, extinct } => CreatureRow::Kind {
+                symbol: creature_symbol(
+                    catalog,
+                    plurals.get(plural).map_or(plural.as_str(), String::as_str),
+                ),
+                name: layouts::name(plural),
+                unique: false,
+                right: if *extinct {
+                    tr!("genocided-extinct")
+                } else {
+                    String::new()
+                },
+            },
+        })
+        .collect()
 }
 
 /// The overview's rows as shown. The dead of a level come under their
@@ -1477,6 +1623,8 @@ enum Kind {
         /// The answers' buttons, and the one the d-pad is on.
         buttons: Vec<(char, Gd<Button>)>,
         focus: Option<usize>,
+        /// The answers the question names by a word ("Right"), as shown.
+        named: Vec<(char, String)>,
     },
     Text {
         edit: Gd<LineEdit>,
@@ -2738,23 +2886,7 @@ impl Dialogs {
         v: &Vanquished,
         catalog: Option<&Catalog>,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
-        let rows: Vec<CreatureRow> = v
-            .rows
-            .iter()
-            .map(|r| match r {
-                KillRow::Class(c) => CreatureRow::Class(layouts::class_name(c)),
-                KillRow::Kind {
-                    name,
-                    count,
-                    unique,
-                } => CreatureRow::Kind {
-                    symbol: creature_symbol(catalog, name),
-                    name: layouts::name(name),
-                    unique: *unique,
-                    right: count.to_string(),
-                },
-            })
-            .collect();
+        let rows = vanquished_rows(v, catalog);
         let totals: Vec<String> = v
             .total
             .iter()
@@ -2772,26 +2904,7 @@ impl Dialogs {
         plurals: &HashMap<String, String>,
         catalog: Option<&Catalog>,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
-        let rows: Vec<CreatureRow> = g
-            .rows
-            .iter()
-            .map(|r| match r {
-                GoneRow::Class(c) => CreatureRow::Class(layouts::class_name(c)),
-                GoneRow::Species { plural, extinct } => CreatureRow::Kind {
-                    symbol: creature_symbol(
-                        catalog,
-                        plurals.get(plural).map_or(plural.as_str(), String::as_str),
-                    ),
-                    name: layouts::name(plural),
-                    unique: false,
-                    right: if *extinct {
-                        tr!("genocided-extinct")
-                    } else {
-                        String::new()
-                    },
-                },
-            })
-            .collect();
+        let rows = genocided_rows(g, plurals, catalog);
         let mut totals = Vec::new();
         if let Some(n) = g.genocided {
             totals.push(tr!("genocided-total", count = n));
@@ -3944,17 +4057,27 @@ impl Dialogs {
                 {
                     col.add_child(&quit_warning(width));
                 }
+                let english = match original {
+                    Prompt::Choice { query, .. } => query.as_str(),
+                    _ => query.as_str(),
+                };
+                let named: Vec<(char, String)> = visible
+                    .iter()
+                    .filter(|c| !matches!(c, 'y' | 'n' | 'q' | 'a'))
+                    .filter_map(|&c| answer_word(c, english, query).map(|w| (c, w)))
+                    .collect();
+                let word = |c: char| named.iter().find(|(n, _)| *n == c).map(|(_, w)| w.as_str());
                 let items: Vec<(String, UiEvent)> = visible
                     .iter()
                     .map(|&c| {
                         let ev = dialog_ui(req, DialogEvent::Choice(c));
-                        (choice_label(c, self.pad), ev)
+                        (named_choice(c, self.pad, word(c)), ev)
                     })
                     .collect();
                 let buttons = self.buttons(&mut col, &items);
                 let mut hint = tr!("choice-hint");
                 if let Some(d) = *default {
-                    let answer = choice_label(d, false);
+                    let answer = named_choice(d, false, word(d));
                     hint = tr!("choice-hint-default", hint = hint, answer = answer);
                     if let Some(i) = visible.iter().position(|&c| c == d) {
                         let mut b = buttons[i].clone();
@@ -3978,6 +4101,7 @@ impl Dialogs {
                     default: *default,
                     buttons,
                     focus,
+                    named,
                 };
                 if let Kind::Choice { buttons, focus, .. } = &mut kind {
                     show_focus(buttons, *focus, &self.look);
@@ -4350,9 +4474,10 @@ impl Dialogs {
             return;
         };
         pad_view::show_key_words(&open.panel, on);
-        if let Kind::Choice { buttons, .. } = &mut open.kind {
+        if let Kind::Choice { buttons, named, .. } = &mut open.kind {
             for (c, b) in buttons.iter_mut() {
-                b.set_text(&choice_label(*c, on));
+                let word = named.iter().find(|(n, _)| n == c).map(|(_, w)| w.as_str());
+                b.set_text(&named_choice(*c, on, word));
             }
         }
         if let Kind::ExtCmd { edit, palette, .. } = &open.kind {
@@ -4700,6 +4825,7 @@ impl Dialogs {
                 default,
                 buttons,
                 focus,
+                ..
             } => {
                 // the arrows (a gamepad) move between the answers
                 let step = match nav(input) {
@@ -5527,6 +5653,16 @@ mod tests {
     }
 
     #[test]
+    fn a_word_s_start_goes_before_a_word_s_middle() {
+        let mut c = cmds(&["quaff", "eat", "dip"]);
+        c[0].also = vec!["выпить".into()];
+        c[1].also = vec!["пища".into(), "питаться".into()];
+        c[2].also = vec!["окунуть".into()];
+        // "пит", looking for food: #eat's word starts so, quaff's ends so
+        assert_eq!(names(&c, &palette_filter(&c, "пит")), ["eat", "quaff"]);
+    }
+
+    #[test]
     fn giving_up_finds_quit() {
         let mut c = cmds(&["pray", "quit", "quiver"]);
         c[1].also = vec!["give up".to_string(), "сдаться".to_string()];
@@ -5615,16 +5751,37 @@ mod tests {
     }
 
     #[test]
+    fn an_answer_the_question_names_is_its_word() {
+        // (the tests' language: English)
+        let q = "Which ring-finger, Right or Left?";
+        assert_eq!(answer_word('r', q, q).as_deref(), Some("Right"));
+        assert_eq!(answer_word('l', q, q).as_deref(), Some("Left"));
+        // the first word is the question's own, not an answer
+        assert_eq!(answer_word('w', q, q), None);
+        assert_eq!(answer_word('x', q, q), None);
+        assert_eq!(named_choice('r', false, Some("Right")), "Right (r)");
+        assert_eq!(named_choice('r', true, Some("Right")), "Right");
+        // in Russian, the shown question's word for it
+        i18n::set_lang(Lang::Ru);
+        let shown = "На какую руку надеть кольцо: правую или левую?";
+        let r = answer_word('r', q, shown);
+        let l = answer_word('l', q, shown);
+        i18n::set_lang(Lang::En);
+        assert_eq!(r.as_deref(), Some("Правую"));
+        assert_eq!(l.as_deref(), Some("Левую"));
+    }
+
+    #[test]
     fn choice_labels_spell_out_the_usual_answers() {
-        assert_eq!(choice_label('y', false), "Yes (y)");
-        assert_eq!(choice_label('n', false), "No (n)");
-        assert_eq!(choice_label('q', false), "Cancel (q)");
-        assert_eq!(choice_label('a', false), "All (a)");
-        assert_eq!(choice_label('m', false), "m");
-        assert_eq!(choice_label('?', false), "?");
+        assert_eq!(named_choice('y', false, None), "Yes (y)");
+        assert_eq!(named_choice('n', false, None), "No (n)");
+        assert_eq!(named_choice('q', false, None), "Cancel (q)");
+        assert_eq!(named_choice('a', false, None), "All (a)");
+        assert_eq!(named_choice('m', false, None), "m");
+        assert_eq!(named_choice('?', false, None), "?");
         // a gamepad has no letters to press
-        assert_eq!(choice_label('y', true), "Yes");
-        assert_eq!(choice_label('n', true), "No");
+        assert_eq!(named_choice('y', true, None), "Yes");
+        assert_eq!(named_choice('n', true, None), "No");
     }
 
     fn entry(selectable: bool, text: &str, attr: i32) -> MenuEntry {

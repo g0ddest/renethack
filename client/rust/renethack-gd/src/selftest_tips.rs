@@ -334,7 +334,14 @@ pub(super) fn hud_tips() -> Vec<Step> {
         Step::Wait("drawn", drawn),
         Step::Shot("hud-tips-orb"),
         // the inventory panel's tips: its tabs, the doll's slots, its
-        // buttons
+        // buttons, on the grid (Classic keys open on the list, whose rows
+        // below its view have tips no hover reaches)
+        Step::Call("the grid", |g| {
+            g.push_ui(crate::ui_events::UiEvent::Inventory(
+                crate::inventory_panel::InvInput::View(false),
+            ));
+            Ok(())
+        }),
         Step::Call("the tips before the inventory", before_panel),
         key('i'),
         Step::Wait("the inventory", |g| {

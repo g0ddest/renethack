@@ -615,9 +615,11 @@ pub struct Profile {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub prologue_seen: bool,
     /// The inventory shows the pack as a list, a line an item (as
-    /// NetHack's `i`), not as the grid of icons.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub pack_list: bool,
+    /// NetHack's `i`), not as the grid of icons; None until the player
+    /// chooses: the list for Classic keys, the grid for Modern
+    /// (`pack_list_for`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pack_list: Option<bool>,
     /// The last prologue's text as the engine wrote it (its English
     /// lines): what the title replays, with `legacy_hero`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -644,6 +646,13 @@ pub struct LegacyHero {
 pub const DEVICE_KEYS: [&str; 3] = ["display", "graphics", "ui_scale"];
 
 impl Profile {
+    /// Whether the inventory shows a list for a character of these keys:
+    /// the player's choice, else the list for Classic keys (a veteran's
+    /// `i`), the grid for Modern.
+    pub fn pack_list_for(&self, keys: crate::KeyProfile) -> bool {
+        self.pack_list.unwrap_or(keys == crate::KeyProfile::Classic)
+    }
+
     pub fn to_json(&self) -> String {
         serde_json::to_string_pretty(self).unwrap_or_default()
     }
@@ -1201,7 +1210,7 @@ mod tests {
             volumes: BTreeMap::from([("Music".into(), 40), ("SFX".into(), 100)]),
             guide_seen: [crate::Guide::Quest, crate::Guide::Pet].into(),
             prologue_seen: true,
-            pack_list: true,
+            pack_list: Some(false),
             legacy: vec!["It is written in the Book of Thoth:".into()],
             legacy_hero: Some(LegacyHero {
                 role: "Wiz".into(),

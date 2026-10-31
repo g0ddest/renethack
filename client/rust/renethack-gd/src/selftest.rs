@@ -962,6 +962,11 @@ fn menu_list(g: &RenethackGame) -> Option<MenuList<'_>> {
 fn dialogs() -> Vec<Step> {
     let mut steps = start();
     steps.extend([
+        // the grid (Classic keys, the scenarios' own, open on the list):
+        // its keyboard cell is what the arrows move below
+        Step::Push(UiEvent::Inventory(crate::inventory_panel::InvInput::View(
+            false,
+        ))),
         key('i'),
         Step::Wait("the inventory panel", |g| {
             Ok(g.ui.as_ref().is_some_and(|ui| ui.inventory.is_open()))

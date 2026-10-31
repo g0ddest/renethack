@@ -809,7 +809,7 @@ fn old_profile() -> Profile {
         volumes: [("Music".to_string(), 40), ("SFX".to_string(), 100)].into(),
         guide_seen: [nh_world::Guide::Quest, nh_world::Guide::Pet].into(),
         prologue_seen: false,
-        pack_list: true,
+        pack_list: Some(true),
         legacy: Vec::new(),
         legacy_hero: None,
     }
