@@ -699,11 +699,19 @@ pub fn auto_ui_scale(window: &Gd<Window>) -> u32 {
     }
 }
 
+/// The least UI scale on a Steam Deck's screen: less sets text under
+/// Valve's 9 px floor.
+pub const DECK_SCALE_FLOOR: u32 = 100;
+
 /// The player's UI scale, a percent: `RENETHACK_UI_SCALE`, else the
-/// settings page's (`chosen`), else the automatic one.
+/// settings page's (`chosen`; on a Deck's screen none under
+/// `DECK_SCALE_FLOOR`), else the automatic one.
 pub fn user_scale(window: &Gd<Window>, chosen: Option<u32>) -> u32 {
+    let (w, h) = crate::video::DECK_SCREEN;
+    let deck = crate::video::is_deck() || window.get_size() == Vector2i::new(w as i32, h as i32);
+    let floor = if deck { DECK_SCALE_FLOOR } else { 0 };
     forced_ui_scale()
-        .or(chosen.map(|p| percent(p as f32)))
+        .or(chosen.filter(|&p| p >= floor).map(|p| percent(p as f32)))
         .unwrap_or_else(|| auto_ui_scale(window))
 }
 

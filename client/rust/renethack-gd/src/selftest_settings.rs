@@ -476,10 +476,14 @@ pub(super) fn settings() -> Vec<Step> {
                 && shown(g, Field::UiScale)? == tr!("settings-percent", percent = 140))
         }),
         Step::Shot("settings-interface-140"),
-        keys!("← seven times", LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT),
-        Step::Wait("Auto again", |g| {
+        // ← back down: Auto stands where its percent would
+        Step::Wait("← until Auto again", |g| {
             let auto = page(g)?.view().ui_auto as f32 / 100.0;
-            Ok((content_scale(g)? - auto).abs() < 1e-3 && profile(g)?.settings.ui_scale.is_none())
+            if profile(g)?.settings.ui_scale.is_none() {
+                return Ok((content_scale(g)? - auto).abs() < 1e-3);
+            }
+            tap_key(GKey::LEFT);
+            Ok(false)
         }),
         keys!("↓ →", DOWN, RIGHT),
         Step::Wait("Classic keys for a new character, kept", |g| {

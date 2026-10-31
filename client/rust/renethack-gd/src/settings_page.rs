@@ -373,11 +373,34 @@ fn live(field: Field, v: &View) -> bool {
     }
 }
 
-/// The UI scales offered: Auto (None), then the percents.
-fn ui_scales() -> Vec<Option<u32>> {
-    std::iter::once(None)
-        .chain(UI_SCALES.iter().copied().map(Some))
-        .collect()
+/// The smallest UI scale offered: 100 % on a Steam Deck's screen (or a
+/// window of its size), where less sets text under Valve's 9 px floor.
+fn scale_floor(v: &View) -> u32 {
+    if v.deck || v.window == crate::video::DECK_SCREEN {
+        crate::theme::DECK_SCALE_FLOOR
+    } else {
+        UI_SCALES[0]
+    }
+}
+
+/// The UI scales offered, in order: the percents from the floor up, Auto
+/// (None) in the place of the one it means here, so that a step from it
+/// goes to its neighbour (on the Deck, from 120 to 110 or 130).
+fn ui_scales(v: &View) -> Vec<Option<u32>> {
+    let floor = scale_floor(v);
+    let below = (UI_SCALES.iter().copied())
+        .filter(|&p| p >= floor && p < v.ui_auto)
+        .map(Some);
+    let above = (UI_SCALES.iter().copied())
+        .filter(|&p| p > v.ui_auto)
+        .map(Some);
+    below.chain(std::iter::once(None)).chain(above).collect()
+}
+
+/// The UI scale chosen as it holds here: one under the floor, or the one
+/// Auto means, is Auto.
+fn ui_scale_now(v: &View) -> Option<u32> {
+    (v.settings.ui_scale).filter(|&p| p >= scale_floor(v) && p != v.ui_auto)
 }
 
 /// A level of an effect: off, or its quality.
@@ -443,7 +466,7 @@ pub fn value_text(field: Field, v: &View) -> String {
             "settings-percent",
             percent = volume_steps(v.volume(bus)) * 5
         ),
-        Field::UiScale => match (v.ui_forced, v.settings.ui_scale) {
+        Field::UiScale => match (v.ui_forced, ui_scale_now(v)) {
             (Some(p), _) | (None, Some(p)) => tr!("settings-percent", percent = p),
             (None, None) => tr!("settings-ui-scale-auto", percent = v.ui_auto),
         },
@@ -585,7 +608,7 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
             if !live(field, v) {
                 return None;
             }
-            s.ui_scale = step_through(&ui_scales(), s.ui_scale, dir, wrap);
+            s.ui_scale = step_through(&ui_scales(v), ui_scale_now(v), dir, wrap);
         }
         Field::Keys => {
             let now = s.keys.unwrap_or_default();
@@ -2252,13 +2275,48 @@ mod tests {
 
     #[test]
     fn the_ui_scale_steps_from_auto_unless_forced_and_the_keys_between_two() {
+        // Auto is 100 % here: a step is to its neighbours
         let v = view();
         let s = changed(step(Field::UiScale, &v, 1, false));
-        assert_eq!(s.ui_scale, Some(80));
+        assert_eq!(s.ui_scale, Some(110));
+        let s = changed(step(Field::UiScale, &v, -1, false));
+        assert_eq!(s.ui_scale, Some(90));
+        // a Steam Deck: Auto is 120 %, and nothing under 100 %
+        let deck = View {
+            window: (1280, 800),
+            ui_auto: 120,
+            deck: true,
+            ..view()
+        };
         assert_eq!(
-            step(Field::UiScale, &v, -1, false),
+            ui_scales(&deck),
+            [Some(100), Some(110), None, Some(130), Some(140)]
+        );
+        let s = changed(step(Field::UiScale, &deck, 1, false));
+        assert_eq!(s.ui_scale, Some(130));
+        let low = View {
+            settings: Settings {
+                ui_scale: Some(100),
+                ..Settings::default()
+            },
+            ..deck.clone()
+        };
+        assert_eq!(
+            step(Field::UiScale, &low, -1, false),
             None,
-            "Auto is the first"
+            "100 % is the Deck's least"
+        );
+        // 80 % kept from before reads as Auto on the Deck
+        let kept = View {
+            settings: Settings {
+                ui_scale: Some(80),
+                ..Settings::default()
+            },
+            ..deck.clone()
+        };
+        assert_eq!(
+            value_text(Field::UiScale, &kept),
+            value_text(Field::UiScale, &deck)
         );
         let top = View {
             settings: Settings {
@@ -2267,7 +2325,11 @@ mod tests {
             },
             ..view()
         };
-        assert_eq!(changed(step(Field::UiScale, &top, 1, true)).ui_scale, None);
+        // round: the top's next is the least
+        assert_eq!(
+            changed(step(Field::UiScale, &top, 1, true)).ui_scale,
+            Some(80)
+        );
         let forced = View {
             ui_forced: Some(120),
             ..view()
