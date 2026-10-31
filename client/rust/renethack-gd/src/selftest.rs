@@ -5184,6 +5184,7 @@ impl SelfTest {
             "mines" => world_looks::mines(),
             "lava" => world_looks::lava(),
             "overview" => world_looks::overview(),
+            "far" => world_looks::far_view(),
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),
             "corridors" => corridors::corridors(),

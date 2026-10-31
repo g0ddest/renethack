@@ -107,6 +107,11 @@ const OVERVIEW_EASE: f32 = 0.35;
 /// through as much of it at any distance as at the default one, never
 /// less than this share of it (at 22 m a lit room was a grey veil).
 const AIR_LEAST: f32 = 0.3;
+/// The exposure the camera gains as the haze thins with its distance,
+/// for the haze's own glow the far view lost (at 22 m a lit room read a
+/// third darker than at 11 m): 1 + this at twice the default distance,
+/// as the haze thins.
+const FAR_EXPOSURE: f32 = 0.3;
 /// The ambient light the overview adds.
 const OVERVIEW_AMBIENT: f32 = 0.3;
 /// The vignette's strength over the map (vignette.gdshader's own).

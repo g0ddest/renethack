@@ -433,6 +433,62 @@ fn light_visit(
     ]);
 }
 
+/// The view from far out (the critics' third pass, new 9: at 22 m a lit
+/// room had lost a third of its light to the haze thinning), for pictures
+/// before and after (not part of `make test-client`): the first level's
+/// room and Minetown, each at the game's distance and at 22 m, measured
+/// where `luma_marks` prints.
+pub(super) fn far_view() -> Vec<Step> {
+    let mut steps = vec![Step::Call(
+        "debug mode for this game",
+        |g: &mut RenethackGame| {
+            g.debug_mode = true;
+            Ok(())
+        },
+    )];
+    steps.extend(start());
+    steps.push(Step::Wait("the first level drawn", |g| {
+        drawn_in(g, Branch::Main)
+    }));
+    far_pair(&mut steps, "far-dlvl1");
+    steps.extend([
+        Step::Key(ctrl_key('v')),
+        Step::Request(
+            "to what level",
+            |p| matches!(p, Prompt::Text { query, .. } if query.contains("level")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted("?".into())),
+        Step::Request("the levels to teleport to", is_menu),
+        Step::KeyFrom("the level", |g| entry_key(g, "minetn")),
+        Step::AnswerUntil('n', "a command on the new level", at_command),
+        Step::Key(ctrl_key('f')),
+        Step::Request("a command after the map", |p| matches!(p, Prompt::Command)),
+        Step::Wait("the level drawn", drawn_here),
+    ]);
+    far_pair(&mut steps, "far-minetown");
+    steps.extend(quit());
+    steps
+}
+
+/// Pictures at the game's distance (`shot`-11) and at 22 m (`shot`-22),
+/// then the camera back.
+fn far_pair(steps: &mut Vec<Step>, shot: &'static str) {
+    let named =
+        |suffix: &str| -> &'static str { Box::leak(format!("{shot}-{suffix}").into_boxed_str()) };
+    steps.extend([
+        Step::Call("the game's distance", |g| far(g, 11.0)),
+        Step::Wait("the camera there", drawn_here),
+        Step::Call("where to measure", luma_marks),
+        Step::Shot(named("11")),
+        Step::Call("the camera far out", |g| far(g, 22.0)),
+        Step::Wait("the camera far out", drawn_here),
+        Step::Call("where to measure", luma_marks),
+        Step::Shot(named("22")),
+        Step::Call("the camera back", |g| far(g, 11.0)),
+        Step::Wait("the camera back", drawn_here),
+    ]);
+}
+
 /// The overview where the critics' third pass found it grey (new 2), for
 /// pictures before and after (not part of `make test-client`): a plain
 /// level, the Oracle, Medusa's sea, the Castle's moat, and in Gehennom the

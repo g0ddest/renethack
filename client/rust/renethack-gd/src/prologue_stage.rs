@@ -660,6 +660,16 @@ impl MapView {
         };
         self.env.set_volumetric_fog_density(density);
         self.env.set_volumetric_fog_emission_energy(glow);
+        // (and as the game's thins with the distance the hero is followed
+        // from, what its glow gave made up by the exposure: never in the
+        // overview's clear air)
+        let k = self.overview_k * self.overview_k * (3.0 - 2.0 * self.overview_k);
+        let far = (super::DISTANCE / self.distance.max(1.0)).clamp(super::AIR_LEAST, 1.0);
+        let exposure = match beat {
+            None => 1.0 + super::FAR_EXPOSURE * 2.0 * (1.0 - far) * (1.0 - k),
+            Some(_) => 1.0,
+        };
+        self.env.set_tonemap_exposure(exposure);
     }
 
     /// Which beat's scene the map draws (self-tests).
