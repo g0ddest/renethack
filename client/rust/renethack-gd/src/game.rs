@@ -5921,18 +5921,24 @@ impl RenethackGame {
         if let Some(h) = hero {
             hostiles.sort_by_key(|&(x, y)| ((x - h.0).abs().max((y - h.1).abs()), y, x));
         }
-        let heads: Vec<Vector2> = hostiles
+        // (and its feet: one in front of the hero is marked from below)
+        let heads: Vec<(Vector2, Vector2)> = hostiles
             .into_iter()
             .filter_map(|(x, y)| {
-                let head = self
+                let (feet, head) = self
                     .ui
                     .as_ref()
                     .and_then(|ui| ui.map.entity_stands(x, y))
-                    .map_or(Vector3::new(x as f32, 0.8, y as f32), |(at, tall)| {
-                        at + Vector3::new(0.0, tall, 0.0)
-                    });
+                    .map_or(
+                        (
+                            Vector3::new(x as f32, 0.0, y as f32),
+                            Vector3::new(x as f32, 0.8, y as f32),
+                        ),
+                        |(at, tall)| (at, at + Vector3::new(0.0, tall, 0.0)),
+                    );
                 let cam = camera.as_ref()?;
-                (!cam.is_position_behind(head)).then(|| cam.unproject_position(head))
+                (!cam.is_position_behind(head))
+                    .then(|| (cam.unproject_position(head), cam.unproject_position(feet)))
             })
             .collect();
         // the hero's body on screen: feet to head, a shoulder either side

@@ -542,6 +542,9 @@ const ARROW_PAD: f32 = 28.0;
 /// behind them, a sliver of it showing (pixels): its arrow goes beside
 /// them (`off_hero`).
 const OVER_HEAD: f32 = ARROW_TIP * 1.5;
+/// A hostile whose feet are this much lower on screen than the hero's
+/// stands in front of them (pixels).
+const IN_FRONT: f32 = 4.0;
 
 /// Arrows over the other hostiles at most, and their size against the
 /// nearest's (they say "here too", it says "this one first").
@@ -678,6 +681,28 @@ pub fn off_hero(
     let at = Vector2::new(x(right), p.y);
     let d = target - at;
     (at, d.y.atan2(d.x))
+}
+
+/// Where the arrow of a hostile in front of the hero goes when over its
+/// head (`head`, the arrow's place; `top`, the head itself) would be on
+/// the hero (`hero`): under its `feet`, pointing up at it, in plain sight
+/// between it and the camera. None for one that is not in front of them
+/// (its feet no lower on screen than theirs), or whose arrow is clear.
+pub fn under_feet(
+    head: Vector2,
+    top: Vector2,
+    feet: Vector2,
+    view: Vector2,
+    hero: Option<Rect2>,
+    tip: f32,
+) -> Option<Vector2> {
+    let body = hero?.grow(ARROW_PAD);
+    let on_hero = body.contains_point(head) || body.contains_point(top);
+    let in_front = feet.y > hero?.end().y + IN_FRONT;
+    (on_hero && in_front).then(|| {
+        let y = (feet.y + tip + ARROW_OVER).min(view.y - ARROW_MARGIN);
+        Vector2::new(feet.x, y)
+    })
 }
 
 /// The docked log's bottom-left corner (from the bottom centre): the action
@@ -1931,14 +1956,17 @@ impl Hud {
         self.cursor_at = at;
     }
 
-    /// The hostiles the hero sees, at `heads` on screen (each one's head,
-    /// the nearest first). In a fight each in the frame gets an arrow over
-    /// its head, pointing down and bobbing (a doorway's wall may hide it),
-    /// the nearest the larger: not on the hero it stands in front of
-    /// (beside them then), nor on the HUD's blocks. The nearest out of the
+    /// The hostiles the hero sees, at `heads` on screen (each one's head
+    /// and feet, the nearest first). In a fight each in the frame gets an
+    /// arrow over its head, pointing down and bobbing (a doorway's wall may
+    /// hide it), the nearest the larger: not on the hero, nor on the HUD's
+    /// blocks. One in front of the hero, whose arrow would hang on them,
+    /// gets it under its feet pointing up at it (in plain sight, an arrow
+    /// beside the hero pointed at their own ring); one behind them, a
+    /// sliver of it showing, beside them leaning at it (`off_hero`). The nearest out of the
     /// frame gets the arrow at the edge, pointing to it, with how many are
     /// out there beside it when more than one.
-    pub fn set_threats(&mut self, heads: &[Vector2], hero: Option<Rect2>, now: f64) {
+    pub fn set_threats(&mut self, heads: &[(Vector2, Vector2)], hero: Option<Rect2>, now: f64) {
         let view = self.root.get_viewport_rect().size;
         self.hero_box = hero;
         let fight = self.combat == Some(true);
@@ -1947,18 +1975,23 @@ impl Hud {
         let shade = Color::from_rgba(1.0, 1.0, 1.0, 0.65 + 0.35 * pulse_now(now));
         let down = std::f32::consts::FRAC_PI_2;
         // over a head in the frame, off the hero and the HUD's blocks
-        let over = |p: Vector2, tip: f32, side: &mut Option<bool>| {
+        let over = |(p, feet): (Vector2, Vector2), tip: f32, side: &mut Option<bool>| {
             let head = Vector2::new(p.x, p.y - tip - ARROW_OVER);
+            if let Some(q) = under_feet(head, p, feet, view, hero, tip) {
+                *side = None;
+                let q = Vector2::new(q.x, (q.y + bob).min(view.y - ARROW_MARGIN));
+                return off_panels(q, -down, feet, view, &panels);
+            }
             let (q, angle) = off_hero(head, down, p, view, hero, side);
             let q = Vector2::new(q.x, (q.y - bob).max(ARROW_MARGIN));
             off_panels(q, angle, p, view, &panels)
         };
         let nearest = heads.first().copied();
-        let edge = edge_arrow(nearest, view);
+        let edge = edge_arrow(nearest.map(|(head, _)| head), view);
         let mut side = self.threat_side.take();
         let placed = match (nearest, edge) {
             (Some(p), None) if fight => Some(over(p, ARROW_TIP, &mut side)),
-            (Some(p), Some((q, angle))) => Some(off_panels(q, angle, p, view, &panels)),
+            (Some((p, _)), Some((q, angle))) => Some(off_panels(q, angle, p, view, &panels)),
             _ => None,
         };
         // kept only while the arrow is beside the hero
@@ -1973,11 +2006,11 @@ impl Hud {
             None => self.threat.set_visible(false),
         }
         // the others in the frame, in a fight
-        let others: Vec<Vector2> = heads
+        let others: Vec<(Vector2, Vector2)> = heads
             .iter()
             .skip(1)
             .copied()
-            .filter(|&p| edge_arrow(Some(p), view).is_none())
+            .filter(|&(p, _)| edge_arrow(Some(p), view).is_none())
             .filter(|_| fight)
             .collect();
         for (i, mark) in self.marks.iter_mut().enumerate() {
@@ -1998,7 +2031,7 @@ impl Hud {
         // how many are out of the frame, beside the arrow at the edge
         let out = heads
             .iter()
-            .filter(|&&p| edge_arrow(Some(p), view).is_some())
+            .filter(|&&(p, _)| edge_arrow(Some(p), view).is_some())
             .count();
         match placed.filter(|_| edge.is_some() && out > 1) {
             Some((p, angle)) => {
@@ -3448,6 +3481,12 @@ mod tests {
         let mut side = None;
         let (p, a) = off_hero(head, down, target, view, Some(hero), &mut side);
         assert!(!on_hero(p) && p.y == head.y && p.x > hero.end().x, "{p:?}");
+        // standing in front of them, in plain sight: its arrow under its
+        // feet instead, pointing up at it, never at the hero's ring
+        let feet = Vector2::new(target.x, 690.0);
+        let q = under_feet(head, target, feet, view, Some(hero), ARROW_TIP)
+            .expect("one in front of the hero is marked from below");
+        assert!(!on_hero(q) && q.y > feet.y && q.x == feet.x, "{q:?}");
         assert_eq!(side, Some(true), "the side the hostile leans to");
         let d = target - p;
         assert!(
@@ -3477,6 +3516,9 @@ mod tests {
         let (mut side, target) = (None, Vector2::new(958.0, 400.0));
         let head = Vector2::new(target.x, target.y - 70.0);
         assert!(!on_hero(head) && on_hero(target));
+        // (behind them: never from below)
+        let behind = Vector2::new(target.x, 520.0);
+        assert!(under_feet(head, target, behind, view, Some(hero), ARROW_TIP).is_none());
         let (q, a) = off_hero(head, down, target, view, Some(hero), &mut side);
         assert!(
             !on_hero(q) && q.y == head.y && q.x < hero.position.x,

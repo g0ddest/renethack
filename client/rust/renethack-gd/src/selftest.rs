@@ -2608,7 +2608,9 @@ fn threat_arrow() -> Vec<Step> {
         Ok(())
     }));
     // a hostile as tall as the hero in the cell south of them stands
-    // before them: what is over its head on screen is the hero
+    // before them: what is over its head on screen is the hero, so its
+    // arrow is under its feet, pointing up at it (beside the hero, it
+    // pointed at their own ring)
     steps.extend([
         Step::Call("a hill orc in the cell south of the hero, a fight", |g| {
             let cat = g.catalog.clone().ok_or("no catalog")?;
@@ -2638,15 +2640,29 @@ fn threat_arrow() -> Vec<Step> {
             Ok(ui.hud.threat_beside().0.is_some() && ui.hud.threat_arrow().is_some())
         }),
         Step::Shot("threat-arrow-hero"),
-        Step::Call("the arrow beside the hero, not on them", |g| {
+        Step::Call("the arrow under the hill orc, not on the hero", |g| {
+            let here = g.world.map.hero().ok_or("no hero")?;
             let ui = g.ui.as_ref().ok_or("no UI")?;
             let p = ui.hud.threat_arrow().ok_or("no arrow for the hill orc")?;
             let (hero, side) = ui.hud.threat_beside();
             let hero = hero.ok_or("the hero is not on screen")?;
-            if hero.grow(8.0).contains_point(p) || side.is_none() {
+            let (at, _) = ui
+                .map
+                .entity_stands(here.0, here.1 + 1)
+                .ok_or("no hill orc's model")?;
+            let feet = ui.map.on_screen(at).ok_or("the orc is behind the camera")?;
+            if hero.grow(8.0).contains_point(p) || side.is_some() || p.y <= feet.y {
                 return Err(format!(
-                    "the threat arrow at {:.0},{:.0} is on the hero ({:.0},{:.0} {:.0}×{:.0})",
-                    p.x, p.y, hero.position.x, hero.position.y, hero.size.x, hero.size.y
+                    "the threat arrow at {:.0},{:.0} is not under the orc's feet at {:.0},{:.0} \
+                     (the hero {:.0},{:.0} {:.0}×{:.0})",
+                    p.x,
+                    p.y,
+                    feet.x,
+                    feet.y,
+                    hero.position.x,
+                    hero.position.y,
+                    hero.size.x,
+                    hero.size.y
                 ));
             }
             Ok(())
