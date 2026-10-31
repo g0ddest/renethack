@@ -164,6 +164,21 @@ impl Batches {
         }
     }
 
+    /// Free the batches that hold no solid. A batch keeps the size it
+    /// grew to, its freed slots drawn scaled to nothing: the rehearsal's
+    /// batches, grown over five branches, were drawn so in every level.
+    pub fn shed(&mut self) {
+        let dirty = &mut self.dirty;
+        self.batches.retain(|key, b| {
+            let live = b.free.len() < b.xforms.len();
+            if !live {
+                b.node.queue_free();
+                dirty.remove(key);
+            }
+            live
+        });
+    }
+
     /// Batches and the solids in them (self-tests, profiling).
     pub fn counts(&self) -> (usize, usize) {
         let solids = self

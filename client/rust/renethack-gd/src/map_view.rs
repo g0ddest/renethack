@@ -7277,6 +7277,7 @@ impl MapView {
             } else {
                 // the title scene follows it (below)
                 self.clear();
+                self.shed_rehearsal();
                 self.set_visible(self.shown);
                 if self.stats_window.is_some() {
                     godot_print!(
@@ -8136,6 +8137,41 @@ impl MapView {
     /// The process frame (a few things wait frames, not calls).
     fn frame() -> u64 {
         godot::classes::Engine::singleton().get_process_frames()
+    }
+
+    /// What the rehearsal made beyond what a game keeps: the models' spare
+    /// instances, the torches, props, lamps and lava lights in reserve, the
+    /// effects fired, one of each kept (its shader stays compiled) and the
+    /// rest freed. A first launch played with some 2,000 nodes more than a
+    /// later one, which makes them as it goes.
+    fn shed_rehearsal(&mut self) {
+        self.art.shed();
+        self.batches.shed();
+        self.vfx.shed_spares();
+        for mut t in self.torches.drain(1.min(self.torches.len())..) {
+            t.node.queue_free();
+            t.light.queue_free();
+        }
+        for props in self.spare_props.values_mut() {
+            for mut p in props.drain(1.min(props.len())..) {
+                p.queue_free();
+            }
+        }
+        let mut kinds = Vec::new();
+        self.spare_lamps.retain_mut(|l| {
+            if kinds.contains(&l.kind) {
+                l.light.queue_free();
+                if let Some(mut m) = l.mist.take() {
+                    m.queue_free();
+                }
+                return false;
+            }
+            kinds.push(l.kind);
+            true
+        });
+        for mut l in self.lava_lights.drain(1.min(self.lava_lights.len())..) {
+            l.queue_free();
+        }
     }
 
     /// A pooled thing drawn once before the camera, put away by

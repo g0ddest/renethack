@@ -2329,6 +2329,30 @@ impl Vfx {
         }
     }
 
+    /// One of each kind kept (its shader stays compiled), the rest freed:
+    /// what a rehearsal fired is no game's to keep.
+    pub fn shed_spares(&mut self) {
+        self.clear();
+        for pool in self.emitters.values_mut() {
+            for mut e in pool.drain(1.min(pool.len())..) {
+                e.node.queue_free();
+            }
+        }
+        for mut f in self.flashes.drain(1.min(self.flashes.len())..) {
+            f.light.queue_free();
+        }
+        for mut b in self.beams.drain(1.min(self.beams.len())..) {
+            b.node.queue_free();
+            b.light.queue_free();
+        }
+        for mut s in self.splats.drain(1.min(self.splats.len())..) {
+            s.decal.queue_free();
+        }
+        for mut c in self.columns.drain(1.min(self.columns.len())..) {
+            c.root.queue_free();
+        }
+    }
+
     /// Forget every effect under way (a new level, a new game).
     pub fn clear(&mut self) {
         self.pending.clear();

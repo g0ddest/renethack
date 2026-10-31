@@ -517,8 +517,10 @@ pub struct Art {
     /// A library being stripped of its root motion over several steps:
     /// its name, the source, what is stripped so far, the next animation.
     stripping: Option<(String, Gd<AnimationLibrary>, Gd<AnimationLibrary>, usize)>,
-    /// Looks built at least once (later instances are cheap).
+    /// Looks built at least once (later instances are cheap), and those
+    /// asked for ahead (`warm`).
     warmed: HashSet<PoolKey>,
+    wanted: HashSet<PoolKey>,
     /// The bounds on the floor of the things lying there, by model, scale
     /// and turn (`fit_ware`).
     ware_bounds: HashMap<WareKey, Option<Bounds>>,
@@ -596,6 +598,7 @@ impl Art {
             loaded: HashMap::new(),
             stripping: None,
             warmed: HashSet::new(),
+            wanted: HashSet::new(),
             ware_bounds: HashMap::new(),
             kept: None,
             backs: HashMap::new(),
@@ -691,6 +694,7 @@ impl Art {
                 );
             }
             q.push(Preload::Warm(*look));
+            self.wanted.insert(PoolKey::of(look));
         }
         if first {
             self.preload.extend(q.into_iter().rev());
@@ -1339,6 +1343,22 @@ impl Art {
     /// A new frame of the map: the budget for new instances starts again.
     pub fn begin_frame(&mut self) {
         self.spent = Some(std::time::Duration::ZERO);
+    }
+
+    /// One instance kept of each look asked for ahead (`warm`), the rest
+    /// freed, and the hero's dressed model: what a rehearsal drew besides
+    /// is no game's to keep (their materials, shared, stay).
+    pub fn shed(&mut self) {
+        if let Some(m) = self.kept.take() {
+            self.give_plain(m);
+        }
+        for (key, pool) in &mut self.pool {
+            let keep = usize::from(self.wanted.contains(key)).min(pool.len());
+            for mut m in pool.drain(keep..) {
+                m.node.queue_free();
+            }
+        }
+        self.pool.retain(|_, pool| !pool.is_empty());
     }
 
     /// Stand-ins not yet built.
