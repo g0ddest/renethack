@@ -612,6 +612,9 @@ enum Paint {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Liquid {
     Water,
+    /// Water standing in a feature's basin (a fountain's): never cut by
+    /// the ground round it, which is the cell's floor.
+    Basin,
     Lava,
     Haze,
     /// The air bent where something unseen is remembered.
@@ -628,8 +631,9 @@ enum Liquid {
 }
 
 impl Liquid {
-    pub const ALL: [Liquid; 8] = [
+    pub const ALL: [Liquid; 9] = [
         Liquid::Water,
+        Liquid::Basin,
         Liquid::Lava,
         Liquid::Haze,
         Liquid::Unseen,
@@ -2162,10 +2166,11 @@ fn terrain_base(
                 );
             }
             // water, rippling and glinting in the torches' light (it was
-            // a still black disc: a dry well)
+            // a still black disc: a dry well; then the ground round it,
+            // the cell's own floor, cut it away)
             look.ground_tile(
                 cylinder(0.37, 0.37, 0.01),
-                Paint::Liquid(Liquid::Water),
+                Paint::Liquid(Liquid::Basin),
                 at(0.0, 0.2, 0.0),
             );
             look.solid(bevel(0.16, 0.36, 0.16), stone, at(0.0, 0.2, 0.0));
@@ -6159,7 +6164,7 @@ impl MapView {
             return m.clone();
         }
         let path = match l {
-            Liquid::Water => "res://shaders/water.gdshader",
+            Liquid::Water | Liquid::Basin => "res://shaders/water.gdshader",
             Liquid::Lava => "res://shaders/lava.gdshader",
             Liquid::Haze => "res://shaders/heat_haze.gdshader",
             Liquid::Unseen => "res://shaders/unseen.gdshader",
@@ -6176,7 +6181,11 @@ impl MapView {
                 m.set_shader_parameter("fow_tex", &self.surfaces.fow_texture().to_variant());
                 if matches!(
                     l,
-                    Liquid::Water | Liquid::Lava | Liquid::Bubble | Liquid::Membrane
+                    Liquid::Water
+                        | Liquid::Basin
+                        | Liquid::Lava
+                        | Liquid::Bubble
+                        | Liquid::Membrane
                 ) {
                     let ground = self.surfaces.ground_texture();
                     m.set_shader_parameter("ground_tex", &ground.to_variant());
@@ -6186,6 +6195,10 @@ impl MapView {
                 }
                 if l == Liquid::Water {
                     m.set_shader_parameter("foam_amount", &self.foam_amount().to_variant());
+                }
+                if l == Liquid::Basin {
+                    m.set_shader_parameter("basin", &true.to_variant());
+                    m.set_shader_parameter("foam_amount", &0.0f32.to_variant());
                 }
                 if l == Liquid::Lava {
                     let flow = |map: &str| {
@@ -6204,7 +6217,7 @@ impl MapView {
             }
             Err(_) => {
                 let c = match l {
-                    Liquid::Water => Color::from_rgba(0.05, 0.12, 0.15, 0.85),
+                    Liquid::Water | Liquid::Basin => Color::from_rgba(0.05, 0.12, 0.15, 0.85),
                     Liquid::Lava => Color::from_rgb(1.0, 0.35, 0.05),
                     Liquid::Haze => Color::from_rgba(1.0, 1.0, 1.0, 0.0),
                     Liquid::Unseen => Color::from_rgba(0.7, 0.72, 0.8, 0.3),

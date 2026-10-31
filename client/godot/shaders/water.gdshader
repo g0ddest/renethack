@@ -12,6 +12,9 @@ uniform vec4 deep : source_color = vec4(0.015, 0.05, 0.075, 1.0);
 uniform vec4 foam_color : source_color = vec4(0.62, 0.68, 0.68, 1.0);
 // how much foam laps at its shores: none on a swamp's still water
 uniform float foam_amount = 1.0;
+// water in a feature's basin (a fountain's): all of it shows, whatever
+// the ground round it (the cell's own floor, which would cut it away)
+uniform bool basin = false;
 // the dark over the water, seen in it at a glance
 uniform vec4 sheen : source_color = vec4(0.16, 0.2, 0.26, 1.0);
 // metres of water over which it turns from shallow to deep
@@ -116,7 +119,7 @@ void fragment() {
 	// leads there, its shore
 	vec4 field = ground_blur(wpos.xz);
 	float shore = 0.0;
-	if (max(max(field.g, field.b), field.a) > 0.0) {
+	if (!basin && max(max(field.g, field.b), field.a) > 0.0) {
 		vec4 v = ground_lead(wpos.xz, field);
 		float k = ground_kind(v);
 		if (k > 0.0 && k != 2.0) {
