@@ -3466,14 +3466,20 @@ impl RenethackGame {
             match o {
                 PadOut::Key(k) => self.push_ui(UiEvent::GameKey(k)),
                 PadOut::KeyUp(k) => self.push_ui(UiEvent::KeyUp(k)),
-                // A puts the guide's card away first, as B does
+                // A puts the guide's card away first, as B does: on a card
+                // just come (the prologue taught "A: next") that is all;
+                // on one read a while, A also does what it does
                 PadOut::Activate
-                    if self.at_command()
-                        && self.ui.as_ref().is_some_and(|ui| ui.hint.shown().is_some()) =>
+                    if self.at_command() && self.ui.as_ref().is_some_and(|ui| ui.hint.fresh()) =>
                 {
                     self.ui_mut().hint.dismiss();
                 }
                 PadOut::Activate => {
+                    if self.at_command()
+                        && self.ui.as_ref().is_some_and(|ui| ui.hint.shown().is_some())
+                    {
+                        self.ui_mut().hint.dismiss();
+                    }
                     if let Some((x, y)) = self.pad_cell() {
                         self.push_ui(UiEvent::MapClick { x, y, button: 1 });
                     }

@@ -698,10 +698,19 @@ pub(super) fn pad_journey() -> Vec<Step> {
     ]);
     steps.extend(shot("journey-card"));
     steps.extend([
-        tap(PadButton::B),
-        Step::Wait("B: the card put away", |g| {
-            Ok(g.ui.as_ref().is_some_and(|ui| ui.hint.current().is_none()))
+        // A on a card read a while: the card away, and A's own deed too
+        // (on the hero's cell: what can be done here)
+        Step::Wait("the card read a while", |g| {
+            Ok(g.ui
+                .as_ref()
+                .is_some_and(|ui| ui.hint.current().is_some() && !ui.hint.fresh()))
         }),
+        tap(PadButton::A),
+        Step::Wait("A: the card away, and the hero's cell's choices", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.hint.current().is_none() && ui.dialogs.is_open())
+        }),
+        tap(PadButton::B),
         settle("the game at its command prompt"),
         // a few turns: steps with the stick, a search
         stick(1, 0),

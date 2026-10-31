@@ -36,6 +36,9 @@ const CARD_OUT: f64 = 0.3;
 /// and makes way for the next one waiting after this many seconds shown.
 pub const CARD_TURNS: i64 = 20;
 const CARD_WAITED: f64 = 8.0;
+/// A card up for less than this, in seconds, is just come: a press of the
+/// pad's A is for it (the prologue taught "A: next"), not for the game.
+const CARD_FRESH: f64 = 2.0;
 
 /// The card and the one it shows.
 pub struct HintCard {
@@ -241,6 +244,12 @@ impl HintCard {
         self.shown
             .filter(|_| self.panel.is_visible() && self.going.is_none())
             .map(|(g, _)| g)
+    }
+
+    /// A card on screen that has just come (`CARD_FRESH`): A puts it away
+    /// and does nothing more; on an older one A acts as well.
+    pub fn fresh(&self) -> bool {
+        self.shown().is_some() && self.shown.is_some_and(|(_, t)| t < CARD_FRESH)
     }
 
     /// Come in all the way, not yet going (self-tests: a shot of it).
