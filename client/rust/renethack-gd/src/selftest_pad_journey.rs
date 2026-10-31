@@ -760,8 +760,23 @@ pub(super) fn pad_journey() -> Vec<Step> {
         (GameMenuPick::Help, 7, |g| {
             Ok(g.ui.as_ref().ok_or("no UI")?.help.is_open())
         }),
+        // under a pad: no moves (the stick's), the wanted ones first
         (GameMenuPick::Commands, 8, |g| {
-            Ok(g.ui.as_ref().ok_or("no UI")?.dialogs.kind_name() == Some("extcmd"))
+            let d = &g.ui.as_ref().ok_or("no UI")?.dialogs;
+            if d.kind_name() != Some("extcmd") {
+                return Ok(false);
+            }
+            let names = d.palette_names().unwrap_or_default();
+            if let Some(m) = names
+                .iter()
+                .find(|n| n.starts_with("move") || n.starts_with("rush"))
+            {
+                return Err(format!("a move in the palette under a pad: {m}"));
+            }
+            match names.first().map(String::as_str) {
+                Some("pray") => Ok(true),
+                other => Err(format!("the palette opens on {other:?}, not #pray")),
+            }
         }),
     ];
     for (pick, down, shown) in panels {

@@ -108,6 +108,9 @@ pub struct PaletteCmd {
     /// Other words that find it ("give up" finds #quit, "молитва"
     /// #pray), lower case.
     pub also: Vec<String>,
+    /// A prefix for the key to come ("prefix: rush until…"), no command
+    /// of its own.
+    pub prefix: bool,
 }
 
 /// Does the palette list this command? Not "#" itself: choosing it would
@@ -138,6 +141,7 @@ pub fn palette_cmds(catalog: Option<&Catalog>, keymap: &nh_world::Keymap) -> Vec
                     i18n::engine(EngineKind::Menu, &e.desc).into_owned()
                 },
                 key: crate::rebind::bound_code(keymap, e.key),
+                prefix: e.desc.starts_with("prefix:"),
                 // the names it goes by in the player's language
                 also: tr!("palette-also", cmd = e.name.as_str())
                     .split(',')
@@ -1324,6 +1328,25 @@ struct Palette {
     pad: bool,
     /// The rows drawn as `pad` says (restyled only when it changes).
     drawn_pad: Option<bool>,
+    /// Its heading: "Extended command" to type one, "All commands" (the
+    /// game menu's entry) under a pad.
+    title: Option<Gd<Label>>,
+}
+
+/// The commands a pad player wants most, first in the palette under a pad
+/// in this order (after #pay while goods are owed).
+const PAD_FIRST: [&str; 12] = [
+    "pray", "pay", "chat", "loot", "offer", "sit", "force", "untrap", "dip", "enhance", "ride",
+    "jump",
+];
+
+/// A command the palette leaves out under a pad: a step or a run in a
+/// direction, which the stick does, or a prefix for a key to come.
+fn pad_leaves_out(c: &PaletteCmd) -> bool {
+    ["move", "rush", "run"]
+        .iter()
+        .any(|p| c.name.starts_with(p) && c.name.len() > p.len())
+        || c.prefix
 }
 
 impl Palette {
@@ -1331,11 +1354,18 @@ impl Palette {
         self.shown = palette_filter(&self.cmds, text);
         self.selected = (!text.trim().is_empty() && !self.shown.is_empty()).then_some(0);
         if self.pad && text.trim().is_empty() {
-            // as the rows read, after one listed first (#pay, owed)
+            // no moves (the stick's), the ones most wanted first, then as
+            // the rows read; one listed first stays first (#pay, owed)
             let cmds = &self.cmds;
+            self.shown.retain(|&i| !pad_leaves_out(&cmds[i]));
             let pinned = |i: usize| !(i == 0 && cmds[0].name == "pay");
+            let rank = |i: usize| {
+                (PAD_FIRST.iter())
+                    .position(|n| *n == cmds[i].name)
+                    .unwrap_or(PAD_FIRST.len())
+            };
             self.shown
-                .sort_by_cached_key(|&i| (pinned(i), folded(&cmds[i].desc)));
+                .sort_by_cached_key(|&i| (pinned(i), rank(i), folded(&cmds[i].desc)));
         }
     }
 }
@@ -1385,6 +1415,13 @@ fn fill_palette(palette: &Rc<RefCell<Palette>>) {
     none.set_visible(rows.is_empty());
     let mut p = palette.borrow_mut();
     if restyle {
+        if let Some(t) = p.title.as_mut() {
+            t.set_text(&if pad {
+                tr!("game-menu-commands")
+            } else {
+                tr!("palette-title")
+            });
+        }
         // under a pad the description is the row: no name, no key
         for slot in p.slots.iter_mut() {
             slot.name.set_visible(!pad);
@@ -2310,6 +2347,7 @@ impl Dialogs {
             } = pool;
             pooled.set(req);
             edit.set_text("");
+            pad_view::show_key_words(&panel, self.pad);
             palette.borrow_mut().pad = self.pad;
             palette.borrow_mut().refilter("");
             fill_palette(&palette);
@@ -2366,6 +2404,8 @@ impl Dialogs {
                 push(&q, UiEvent::Dialog { req: c.get(), ev });
             });
         edit.set_placeholder(&tr!("palette-placeholder"));
+        // a pad types no command: it picks a row
+        pad_view::key_words(&edit, self.pad);
         col.add_child(&edit);
         let mut rows_box = VBoxContainer::new_alloc();
         rows_box.add_theme_constant_override("separation", 0);
@@ -2416,7 +2456,10 @@ impl Dialogs {
             push(&q, UiEvent::Dialog { req: c.get(), ev });
         });
         row.add_child(&cancel);
+        // a pad's B cancels (its strip says so)
+        pad_view::key_words(&row, self.pad);
         col.add_child(&row);
+        let title = col.get_child(0).and_then(|c| c.try_cast::<Label>().ok());
         let palette = Rc::new(RefCell::new(Palette {
             shown: Vec::new(),
             cmds,
@@ -2428,6 +2471,7 @@ impl Dialogs {
             look,
             pad: self.pad,
             drawn_pad: None,
+            title,
         }));
         palette.borrow_mut().refilter("");
         fill_palette(&palette);
@@ -5625,6 +5669,7 @@ mod tests {
                 desc: String::new(),
                 key: String::new(),
                 also: Vec::new(),
+                prefix: false,
             })
             .collect()
     }
