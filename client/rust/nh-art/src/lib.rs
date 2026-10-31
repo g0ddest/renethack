@@ -2823,17 +2823,30 @@ mod tests {
             inv(&cat, 'b', "[", "old gloves", vec![], false),
         ]);
         assert_eq!((armour, gloves), (None, None));
-        // every metal body armour has its look, leather keeps the outfit's
+        // every metal or leather body armour has its look (a leather cloak
+        // or hat is no body armour)
         for t in cat.object_tiles.iter().filter(|t| t.class == "[") {
             let a = t.appearance.as_str();
             let metal = a.ends_with(" mail") || a.contains("mithril") || a.contains("dragon");
-            let leather = a.contains("leather");
-            if !metal && !leather {
+            let leather = matches!(
+                a,
+                "leather jacket" | "leather armor" | "studded leather armor"
+            );
+            if !metal && !a.contains("leather") {
                 continue;
             }
             let (armour, _) = worn(vec![inv(&cat, 'a', "[", a, vec![Slot::Body], false)]);
-            assert_eq!(armour.is_some(), metal, "{a}");
+            assert_eq!(armour.is_some(), metal || leather, "{a}");
         }
+        let (jacket, _) = worn(vec![inv(
+            &cat,
+            'a',
+            "[",
+            "leather jacket",
+            vec![Slot::Body],
+            false,
+        )]);
+        assert_eq!(material(jacket, &rules.armour).as_deref(), Some("leather"));
         let tint = |a: &str| {
             worn(vec![inv(&cat, 'a', "[", a, vec![Slot::Body], false)])
                 .0
