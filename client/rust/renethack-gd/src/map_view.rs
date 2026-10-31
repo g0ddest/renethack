@@ -586,7 +586,7 @@ const BACK: (Vector3, Color, f32) = (
 const EMBER_BACK: (Vector3, Color, f32) = (
     Vector3::new(6.0, 0.0, 0.0),
     Color::from_rgb(1.0, 0.5, 0.3),
-    0.55,
+    0.95,
 );
 /// Depth fog and the background: never pure black.
 const DARKNESS: Color = Color::from_rgb(0.008, 0.009, 0.013);

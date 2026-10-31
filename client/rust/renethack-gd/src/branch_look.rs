@@ -370,7 +370,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
             torch_energy: 2.8,
             // (further: its walls and floors are dark stone)
             torch_range: 7.0,
-            hero_light: 2.1,
+            hero_light: 1.6,
             under: Under::Chasm,
             fill: rgb(1.0, 0.45, 0.25),
             fill_scale: 1.5,
