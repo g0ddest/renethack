@@ -1203,7 +1203,7 @@ mod tests {
                     ..crate::Gameplay::default()
                 },
                 prologue: crate::PrologueWhen::EveryGame,
-                order_speed: crate::OrderSpeed::Fast,
+                order_speed: Some(crate::OrderSpeed::Fast),
                 walk_to_stairs: true,
                 nethack_options: vec!["hitpointbar".into(), "fruit:kumquat".into()],
             },

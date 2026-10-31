@@ -203,7 +203,7 @@ fn instant_walk() -> Vec<Step> {
         Step::Wait("the player's turn", idle_command),
         Step::Call("the orders' speed at Instant", |g| {
             let mut s = g.settings.clone();
-            s.order_speed = nh_world::OrderSpeed::Instant;
+            s.order_speed = Some(nh_world::OrderSpeed::Instant);
             g.set_settings(s);
             if g.driver.tick() != Duration::ZERO {
                 return Err(format!("the tick is {:?}", g.driver.tick()));
@@ -237,7 +237,7 @@ fn instant_walk() -> Vec<Step> {
         }),
         Step::Call("the orders' speed back at Normal", |g| {
             let mut s = g.settings.clone();
-            s.order_speed = nh_world::OrderSpeed::Normal;
+            s.order_speed = Some(nh_world::OrderSpeed::Normal);
             g.set_settings(s);
             Ok(())
         }),

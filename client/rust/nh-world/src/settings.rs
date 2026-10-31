@@ -44,9 +44,10 @@ pub struct Settings {
     /// game.
     #[serde(default, skip_serializing_if = "PrologueWhen::is_default")]
     pub prologue: PrologueWhen,
-    /// How fast the client's own orders step (a walk, a held key, a rest).
-    #[serde(default, skip_serializing_if = "OrderSpeed::is_default")]
-    pub order_speed: OrderSpeed,
+    /// How fast the client's own orders step (a walk, a held key, a rest):
+    /// the player's choice, else the keys profile's (`order_speed_for`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub order_speed: Option<OrderSpeed>,
     /// `<` and `>` off the stairs walk to the known stairs and take them;
     /// off, they are NetHack's ("You can't go down here.").
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -61,6 +62,18 @@ pub struct Settings {
         deserialize_with = "own_options"
     )]
     pub nethack_options: Vec<String>,
+}
+
+impl Settings {
+    /// How fast orders step with keys of `keys`: the player's choice, else
+    /// Fast with Classic keys (a veteran's held keys and walks), Normal
+    /// with Modern ones.
+    pub fn order_speed_for(&self, keys: crate::KeyProfile) -> OrderSpeed {
+        self.order_speed.unwrap_or(match keys {
+            crate::KeyProfile::Classic => OrderSpeed::Fast,
+            crate::KeyProfile::Modern => OrderSpeed::Normal,
+        })
+    }
 }
 
 /// A profile's saved NetHack options, the client's own left out.
@@ -656,7 +669,7 @@ mod tests {
             "{plain}"
         );
         let quick = Settings {
-            order_speed: OrderSpeed::Instant,
+            order_speed: Some(OrderSpeed::Instant),
             walk_to_stairs: true,
             ..Settings::default()
         };
@@ -673,6 +686,22 @@ mod tests {
         )
         .unwrap();
         assert_eq!(s.nethack_options, ["hitpointbar", "!pushweapon"]);
+    }
+
+    #[test]
+    fn classic_keys_order_fast_unless_the_player_chose() {
+        use crate::KeyProfile::{Classic, Modern};
+        let s = Settings::default();
+        assert_eq!(s.order_speed_for(Classic), OrderSpeed::Fast);
+        assert_eq!(s.order_speed_for(Modern), OrderSpeed::Normal);
+        let chosen = Settings {
+            order_speed: Some(OrderSpeed::Normal),
+            ..Settings::default()
+        };
+        assert_eq!(chosen.order_speed_for(Classic), OrderSpeed::Normal);
+        // a choice is kept, even Normal
+        let text = serde_json::to_string(&chosen).unwrap();
+        assert!(text.contains("\"order_speed\":\"normal\""), "{text}");
     }
 
     #[test]

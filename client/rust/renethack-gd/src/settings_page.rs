@@ -339,6 +339,13 @@ impl View {
     }
 }
 
+/// The orders' speed the row shows and steps from: the player's, else
+/// that of the keys of the game played (Modern's outside one).
+fn order_speed(v: &View) -> OrderSpeed {
+    v.settings
+        .order_speed_for(v.playing_keys.unwrap_or(nh_world::KeyProfile::Modern))
+}
+
 /// The Gameplay options the page shows: the game's over a game (None
 /// until it has told them), else the profile's, for a new game.
 fn gameplay(v: &View) -> Option<&Gameplay> {
@@ -487,7 +494,7 @@ pub fn value_text(field: Field, v: &View) -> String {
         // the game has not told them yet
         Field::Game(_) if gameplay(v).is_none() => "…".to_string(),
         Field::Game(o) => gameplay(v).map(|g| game_value(o, g)).unwrap_or_default(),
-        Field::OrderSpeed => match v.settings.order_speed {
+        Field::OrderSpeed => match order_speed(v) {
             OrderSpeed::Instant => tr!("settings-order-speed-instant"),
             OrderSpeed::Fast => tr!("settings-order-speed-fast"),
             OrderSpeed::Normal => tr!("settings-order-speed-normal"),
@@ -641,7 +648,7 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
             return (next != *now).then_some(Change::Gameplay(o, next));
         }
         Field::OrderSpeed => {
-            s.order_speed = step_through(&OrderSpeed::ALL, s.order_speed, dir, wrap);
+            s.order_speed = Some(step_through(&OrderSpeed::ALL, order_speed(v), dir, wrap));
         }
         Field::StairsWalk => {
             s.walk_to_stairs = step_through(&[false, true], s.walk_to_stairs, dir, wrap);
@@ -2199,10 +2206,18 @@ mod tests {
             tr!("settings-order-speed-normal")
         );
         let fast = changed(step(Field::OrderSpeed, &v, -1, false));
-        assert_eq!(fast.order_speed, OrderSpeed::Fast);
+        assert_eq!(fast.order_speed, Some(OrderSpeed::Fast));
         v.settings = fast;
         let instant = changed(step(Field::OrderSpeed, &v, -1, false));
-        assert_eq!(instant.order_speed, OrderSpeed::Instant);
+        assert_eq!(instant.order_speed, Some(OrderSpeed::Instant));
+        // a game with Classic keys: Fast until the player chooses
+        let mut classic = v.clone();
+        classic.settings.order_speed = None;
+        classic.playing_keys = Some(nh_world::KeyProfile::Classic);
+        assert_eq!(
+            value_text(Field::OrderSpeed, &classic),
+            tr!("settings-order-speed-fast")
+        );
         // the stairs: off (NetHack's answer), then on
         assert_eq!(step(Field::StairsWalk, &v, -1, false), None);
         assert!(changed(step(Field::StairsWalk, &v, 1, false)).walk_to_stairs);

@@ -4093,8 +4093,11 @@ impl RenethackGame {
             .flatten()
             .and_then(|v| u64::try_from(v).ok());
         let normal = setting.unwrap_or(nh_world::DEFAULT_TICK_MS);
-        let ms = env_number::<u64>("RENETHACK_TICK_MS")
-            .unwrap_or_else(|| self.settings.order_speed.tick_ms(normal));
+        let ms = env_number::<u64>("RENETHACK_TICK_MS").unwrap_or_else(|| {
+            self.settings
+                .order_speed_for(self.ui_state.profile)
+                .tick_ms(normal)
+        });
         self.driver.set_tick_ms(ms);
     }
 
@@ -5791,6 +5794,8 @@ impl RenethackGame {
                 ui.hud.reset();
                 self.show_game(true);
                 self.ui_state = state;
+                // the order speed of these keys, unless the player chose one
+                self.set_tick(None);
                 self.disclosed.clear();
                 self.farewell_seen = false;
                 // the pack as the player chose to see it, else as the

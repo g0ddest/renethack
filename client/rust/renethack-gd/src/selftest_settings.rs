@@ -806,7 +806,7 @@ fn old_profile() -> Profile {
                 ..nh_world::Gameplay::default()
             },
             prologue: nh_world::PrologueWhen::default(),
-            order_speed: nh_world::OrderSpeed::Fast,
+            order_speed: Some(nh_world::OrderSpeed::Fast),
             walk_to_stairs: true,
             nethack_options: vec!["hitpointbar".into()],
         },

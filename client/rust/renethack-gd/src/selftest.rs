@@ -340,6 +340,17 @@ fn smoke() -> Vec<Step> {
             Ok(g.world.branch() == nh_world::Branch::Main && g.world.depth() == Some(1))
         }),
         Step::Wait("the welcome agreeing with the heroine", welcome_agrees),
+        Step::Wait("Classic keys: orders at Fast, none chosen", |g| {
+            if g.settings.order_speed.is_some() {
+                return Ok(true);
+            }
+            let fast = std::time::Duration::from_millis(nh_world::OrderSpeed::Fast.tick_ms(0));
+            if g.driver.tick() == fast {
+                Ok(true)
+            } else {
+                Err(format!("the tick is {:?}, not Fast's", g.driver.tick()))
+            }
+        }),
         Step::Wait("the starting pack's curse status known, every item", |g| {
             // !implicit_uncursed: "an uncursed +1 spear", not "a +1 spear"
             let items = g.world.inventory.items();
