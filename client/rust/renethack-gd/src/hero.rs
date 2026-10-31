@@ -5,7 +5,7 @@
 use godot::classes::{MeshInstance3D, SphereMesh};
 use godot::prelude::*;
 use nh_art::{ArtManifest, Gear};
-use nh_protocol::{Catalog, InvItem, ObjectTile};
+use nh_protocol::{Catalog, InvItem, ObjectTile, Slot};
 use nh_world::{ItemUse, Pack, UseKind};
 
 use crate::vfx::{Vfx, VfxKind, beam_color};
@@ -267,13 +267,17 @@ impl HeroFx {
                 // stone at arm's length: no room for rings to spread, it
                 // flashes where it strikes
                 if struck && (at - from).dot(way) < POINT_BLANK {
-                    vfx.impact(beam_color(kind), at, at - way);
+                    match kind {
+                        VfxKind::Shock(c) => vfx.burst(VfxKind::Force(c, true), at - way * 0.2),
+                        _ => vfx.impact(beam_color(kind), at, at - way),
+                    }
                     return;
                 }
                 vfx.beam(kind, from, to);
                 if let Some(kind) = impact {
                     let kind = match kind {
                         VfxKind::Zap(c) if struck => VfxKind::Impact(c),
+                        VfxKind::Force(c, _) => VfxKind::Force(c, struck),
                         k => k,
                     };
                     self.after(
@@ -338,6 +342,96 @@ pub fn healed(text: &str) -> bool {
         text,
         "You feel better." | "You feel much better." | "You feel completely healed."
     )
+}
+
+/// A lit field round the hero (a scroll's or a spell's of light): said
+/// only when the hero sees it (blind, NetHack says nothing).
+pub fn lit_field(text: &str) -> bool {
+    text == "A lit field surrounds you!"
+}
+
+/// A curse lifted from what the hero has (a scroll of remove curse's
+/// line); felt even blind, so the map shows it only to a hero who sees.
+pub fn helped(text: &str) -> bool {
+    text == "You feel like someone is helping you."
+}
+
+/// What of the body an item glowing is on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GlowOn {
+    Head,
+    Body,
+    Hands,
+    Feet,
+    Shield,
+    Weapon,
+}
+
+/// An item of the hero's glowing (a scroll of enchant armour's or enchant
+/// weapon's line, "Your leather armor glows silver for a moment."): where
+/// on the body, found by the worn or wielded item the line names, and the
+/// glow's colour as the line says it. Blind, the line says the item
+/// vibrates or feels warm: nothing glows.
+pub fn glowing(text: &str, pack: &[InvItem]) -> Option<(GlowOn, Color)> {
+    if text == "Your skin glows then fades." {
+        return Some((GlowOn::Body, glow_color("silver")));
+    }
+    let rest = text.strip_prefix("Your ")?;
+    let at = rest.find(" glow")?;
+    let (name, after) = rest.split_at(at);
+    let name = name
+        .strip_suffix(" violently")
+        .or_else(|| name.strip_suffix(" faintly"))
+        .unwrap_or(name);
+    // "glows silver for a moment", "glow blue for a while"
+    let word = after
+        .split_whitespace()
+        .nth(1)
+        .filter(|w| *w != "for" && *w != "then")
+        .unwrap_or("white");
+    if !after.contains(" for a ") {
+        return None;
+    }
+    let on = pack
+        .iter()
+        .filter(|i| !i.slots.is_empty() && i.text.contains(name))
+        .find_map(|i| i.slots.iter().find_map(glow_on))
+        .or_else(|| {
+            // a weapon named its own way: the one in hand
+            pack.iter()
+                .any(|i| i.slots.contains(&Slot::Weapon) && name.contains(i.text.as_str()))
+                .then_some(GlowOn::Weapon)
+        })
+        .unwrap_or(GlowOn::Body);
+    Some((on, glow_color(word.trim_end_matches(['.', ',']))))
+}
+
+fn glow_on(slot: &Slot) -> Option<GlowOn> {
+    Some(match slot {
+        Slot::Helmet => GlowOn::Head,
+        Slot::Body | Slot::Cloak | Slot::Shirt => GlowOn::Body,
+        Slot::Gloves => GlowOn::Hands,
+        Slot::Boots => GlowOn::Feet,
+        Slot::Shield => GlowOn::Shield,
+        Slot::Weapon => GlowOn::Weapon,
+        _ => return None,
+    })
+}
+
+/// A glow's colour by NetHack's word for it (hcolor's; a hallucinating
+/// hero's own words come out pale).
+fn glow_color(word: &str) -> Color {
+    let rgb = Color::from_rgb;
+    match word {
+        "silver" | "silvery" => rgb(0.85, 0.9, 1.0),
+        "blue" => rgb(0.4, 0.62, 1.0),
+        "black" => rgb(0.45, 0.25, 0.6),
+        "gold" | "golden" | "amber" => rgb(1.0, 0.78, 0.35),
+        "red" => rgb(1.0, 0.35, 0.3),
+        "green" => rgb(0.45, 1.0, 0.45),
+        "white" => rgb(1.0, 1.0, 1.0),
+        _ => rgb(0.9, 0.9, 1.0),
+    }
 }
 
 /// Where an anchor is now, else `at`.
@@ -462,14 +556,16 @@ pub fn use_effects(
         // a wand or a spell whose way the engine draws no ray along
         // (striking, force bolt, the rest that strike what is there) sends
         // rings of force; a ray's own look is the map's (`Fx::Beam`)
+        // what it strikes takes the force: dust thrown up, and chips of
+        // stone flung where it is a wall or a door
         UseKind::Zap => {
             let mut v = vec![(0.35, burst("zap", VfxKind::Zap(color), hand))];
-            v.extend(beam(VfxKind::Shock(color), VfxKind::Zap(color)));
+            v.extend(beam(VfxKind::Shock(color), VfxKind::Force(color, false)));
             v
         }
         UseKind::Cast => {
             let mut v = vec![(0.3, burst("cast", VfxKind::Cast(color), hand))];
-            v.extend(beam(VfxKind::Shock(color), VfxKind::Zap(color)));
+            v.extend(beam(VfxKind::Shock(color), VfxKind::Force(color, false)));
             v
         }
         UseKind::Apply => vec![(0.4, burst("apply", VfxKind::Sparkle, hand))],
@@ -489,6 +585,56 @@ pub fn use_effects(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Light, an item's glow and a curse lifted are told by NetHack's own
+    /// lines, and only the ones a seeing hero gets (blind, an item
+    /// vibrates, feels warm: nothing glows); the glow is where the item
+    /// the line names is worn or held.
+    #[test]
+    fn magic_is_shown_as_its_lines_tell_it() {
+        assert!(lit_field("A lit field surrounds you!"));
+        assert!(!lit_field("A lit field briefly surrounds you!"));
+        assert!(helped("You feel like someone is helping you."));
+        let item = |text: &str, slot: &str| InvItem {
+            letter: 'a',
+            class: '[',
+            tile: 0,
+            quan: 1,
+            slots: vec![Slot::from(slot.to_string())],
+            lit: false,
+            text: text.into(),
+        };
+        let pack = [
+            item("a +1 long sword (weapon in hand)", "weapon"),
+            item("a +3 small shield (being worn)", "shield"),
+            item("a +0 pair of leather gloves (being worn)", "gloves"),
+            item("an uncursed +0 elven leather helm (being worn)", "helmet"),
+        ];
+        let on = |line: &str| glowing(line, &pack).map(|(on, _)| on);
+        assert_eq!(
+            on("Your small shield glows silver for a moment."),
+            Some(GlowOn::Shield)
+        );
+        assert_eq!(
+            on("Your long sword glows blue for a while."),
+            Some(GlowOn::Weapon)
+        );
+        assert_eq!(
+            on("Your leather gloves glow silver for a moment."),
+            Some(GlowOn::Hands)
+        );
+        assert_eq!(
+            on("Your elven leather helm violently glows silver for a while, then evaporates."),
+            Some(GlowOn::Head)
+        );
+        assert_eq!(on("Your skin glows then fades."), Some(GlowOn::Body));
+        // blind, or no glow of an enchanting
+        assert_eq!(on("Your small shield vibrates for a moment."), None);
+        assert_eq!(on("Your weapon feels warm for a moment."), None);
+        assert_eq!(on("Your hands begin to glow red."), None);
+        let blue = glowing("Your long sword glows blue for a moment.", &pack).map(|(_, c)| c);
+        assert!(blue.is_some_and(|c| c.b > c.r));
+    }
 
     /// Drinking and reading show on the body too, after what shows in
     /// the hand; healing is told by the lines a potion, a spell or a

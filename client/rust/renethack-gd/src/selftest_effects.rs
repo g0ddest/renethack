@@ -6,8 +6,12 @@
 //! into the dark, remembered. `rays`: a ray of every kind the engine draws
 //! across the lit room, cell by cell. `blasts`: an explosion of every kind
 //! in it, a scroll of fire's about the hero. `engulfed`: the hero inside
-//! each of NetHack's engulfers. Pictures only (`--screenshots`): not part
-//! of `make test-client`.
+//! each of NetHack's engulfers. `magic`: the magic a first hour shows
+//! worked on the hero in the corridors' west room, as its lines tell it: a
+//! scroll of light read in the dark, enchant armour on the shield, enchant
+//! weapon on the spear in hand, a curse lifted, a bolt of force cast at
+//! the wall. Pictures only (`--screenshots`): not part of `make
+//! test-client`.
 
 use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
@@ -528,6 +532,108 @@ pub(super) fn engulfed() -> Vec<Step> {
         Step::Wait("nothing of it left", |g| {
             Ok(drawn_now(g) && map_view(g)?.engulfed_inside().is_none())
         }),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
+/// The west room of the corridors, the hero in its middle two cells from
+/// its north wall (a bolt cast north strikes it).
+const MAGIC_SCENE: CorridorScene = CorridorScene {
+    name: "magic",
+    hero: (6, 3),
+    others: &[],
+};
+
+/// When the last line of magic was told (seconds; steps are plain
+/// functions).
+static TOLD_AT: AtomicU32 = AtomicU32::new(0);
+
+fn clock() -> f32 {
+    use godot::obj::Singleton;
+    godot::classes::Time::singleton().get_ticks_msec() as f32 / 1000.0
+}
+
+/// Tell a line as the engine would, and note when.
+fn tell(g: &mut RenethackGame, line: &str) {
+    let turn = g.world.turn();
+    g.world.log.push(line.into(), 0, turn, false);
+    TOLD_AT.store(clock().to_bits(), Ordering::Relaxed);
+}
+
+/// `secs` since the last line told.
+fn told_since(secs: f32) -> bool {
+    clock() - f32::from_bits(TOLD_AT.load(Ordering::Relaxed)) >= secs
+}
+
+fn lay_out_magic(g: &mut RenethackGame, unlit: bool) -> Result<(), String> {
+    let cat = g.catalog.clone().ok_or("no catalog")?;
+    lay_out_scene(&mut g.world, &cat, &MAGIC_SCENE, unlit)?;
+    ui_map(g)?.set_showcase(false);
+    Ok(())
+}
+
+fn drawn(g: &RenethackGame) -> Result<bool, String> {
+    let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+    Ok(drawn == Some(g.world.map.generation()) && camera_settled(g)?)
+}
+
+pub(super) fn magic() -> Vec<Step> {
+    let mut steps = start();
+    steps.extend([
+        Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
+        // read in the dark, the room lit by it
+        Step::Call("the room dark", |g| lay_out_magic(g, true)),
+        Step::Wait("the room drawn", drawn),
+        Step::Shot("magic-dark"),
+        Step::Call("a scroll of light read", |g| {
+            tell(g, "A lit field surrounds you!");
+            lay_out_magic(g, false)
+        }),
+        Step::Wait("its light at its brightest", |_| Ok(told_since(0.75))),
+        Step::Shot("magic-light"),
+        Step::Wait("its light settled", |_| Ok(told_since(2.4))),
+        Step::Shot("magic-light-settled"),
+        Step::Call("enchant armour: the shield", |g| {
+            tell(g, "Your small shield glows silver for a moment.");
+            Ok(())
+        }),
+        Step::Wait("its glow", |_| Ok(told_since(1.2))),
+        Step::Shot("magic-enchant-armor"),
+        Step::Call("enchant weapon: the spear in hand", |g| {
+            tell(g, "Your spear glows blue for a moment.");
+            Ok(())
+        }),
+        Step::Wait("its glow", |_| Ok(told_since(1.2))),
+        Step::Shot("magic-enchant-weapon"),
+        Step::Call("a curse lifted", |g| {
+            tell(g, "You feel like someone is helping you.");
+            Ok(())
+        }),
+        Step::Wait("its glow", |_| Ok(told_since(1.4))),
+        Step::Shot("magic-remove-curse"),
+        Step::Call("a bolt of force cast at the north wall", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let u = nh_world::ItemUse {
+                kind: nh_world::UseKind::Cast,
+                letter: None,
+                tile: None,
+                class: None,
+                dir: Some((0, -1)),
+                vertical: None,
+                spot: None,
+                prayer: None,
+                spell: Some("force bolt  1 attack  0%  100%".into()),
+            };
+            let world = g.world.clone();
+            ui_map(g)?.show_use(&u, &cat, &world);
+            TOLD_AT.store(clock().to_bits(), Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::Wait("the bolt striking", |_| Ok(told_since(0.75))),
+        Step::Shot("magic-force-bolt"),
+        Step::Wait("its dust", |_| Ok(told_since(1.2))),
+        Step::Shot("magic-force-bolt-dust"),
     ]);
     steps.extend(quit());
     steps

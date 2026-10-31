@@ -420,6 +420,18 @@ const CREATURE_LIGHT_ENERGY: f32 = 0.6;
 /// When a healing's glow rises round the hero after the line telling of
 /// it (seconds): after a potion's own glow (`hero::DRUNK_AT`).
 const HEALED_AT: f32 = 1.15;
+/// When a lit field bursts from the hero after its line, and when an
+/// item's glow or a curse lifted shows: after the page's runes rise
+/// (`hero::READ_AT`).
+const LIT_AT: f32 = 0.6;
+/// A lit field spreading from the hero (`wave_k`): how fast it goes
+/// (metres a second), how long a light takes to come up, how far over its
+/// own it bursts as it comes, and how far it reaches at most.
+const WAVE_SPEED: f32 = 9.0;
+const WAVE_RISE: f32 = 0.25;
+const WAVE_SWELL: f32 = 0.8;
+const WAVE_REACH: f32 = 12.0;
+const GLOW_AT: f32 = 0.9;
 /// Which of `HERO_STUDIO`'s lights reach a ridden steed: the fills (all
 /// of them made its brown coat a pale tan).
 const STEED_STUDIO: [bool; 5] = [false, true, false, true, false];
@@ -3500,6 +3512,12 @@ pub struct MapView {
     rider_view: Gd<Node3D>,
     /// Fill lights over the parts of the level in view.
     room_lights: Vec<Gd<OmniLight3D>>,
+    /// Their energies as the room has them.
+    room_energy: Vec<f32>,
+    /// A lit field spreading from the hero (`show_lit`): where from and
+    /// since when (`clock`); the room's lights and torches come up as it
+    /// reaches them.
+    light_wave: Option<(Vector3, f64)>,
     /// Lava's own light, over each pool of it known (`place_lava_lights`).
     lava_lights: Vec<Gd<OmniLight3D>>,
     torches: Vec<Torch>,
@@ -4298,6 +4316,8 @@ impl MapView {
             big_faded: Vec::new(),
             rider_view,
             room_lights: Vec::new(),
+            room_energy: Vec::new(),
+            light_wave: None,
             lava_lights: Vec::new(),
             torches: Vec::new(),
             torch_scene,
@@ -5340,15 +5360,19 @@ impl MapView {
                 self.root.add_child(&l);
                 self.room_lights.push(l);
             }
+            let showcase = if self.showcase { GALLERY_FILL } else { 1.0 };
+            let base = energy * self.branch_look.fill_scale * showcase;
+            let at = Vector3::new(cx, 2.6, cy);
+            let wave = self.wave_k(at);
+            if self.room_energy.len() <= used {
+                self.room_energy.resize(used + 1, 0.0);
+            }
+            self.room_energy[used] = base;
             let l = &mut self.room_lights[used];
             used += 1;
-            l.set_position(Vector3::new(cx, 2.6, cy));
+            l.set_position(at);
             l.set_param(Param::RANGE, reach);
-            let showcase = if self.showcase { GALLERY_FILL } else { 1.0 };
-            l.set_param(
-                Param::ENERGY,
-                energy * self.branch_look.fill_scale * showcase,
-            );
+            l.set_param(Param::ENERGY, base * wave);
             l.set_color(self.branch_look.fill);
             l.set_visible(true);
         }
@@ -5674,13 +5698,16 @@ impl MapView {
         let shadowed: HashSet<usize> = near.iter().take(shadows).map(|&(_, i)| i).collect();
         let clock = self.clock;
         let (color, energy) = (self.branch_look.torch, self.branch_look.torch_energy);
+        self.spread_light();
+        let waves: Vec<f32> = self.torches.iter().map(|t| self.wave_k(t.at)).collect();
         for (i, t) in self.torches.iter_mut().enumerate() {
             if !t.light.is_visible() {
                 continue;
             }
             let time = clock + t.phase;
             t.light.set_color(color);
-            t.light.set_param(Param::ENERGY, energy * flicker(time));
+            t.light
+                .set_param(Param::ENERGY, energy * flicker(time) * waves[i]);
             t.light.set_position(t.at + sway(time));
             let shadow = shadowed.contains(&i);
             if shadow != t.shadow {
@@ -9174,6 +9201,120 @@ impl MapView {
         );
     }
 
+    /// A lit field round the hero: light bursting from them over the
+    /// floor and settling, as the engine lights the cells about them.
+    fn show_lit(&mut self) {
+        let Some((feet, _)) = self.hero_stands() else {
+            return;
+        };
+        self.hero_fx.after(
+            LIT_AT,
+            crate::hero::Fx::Burst {
+                name: "lit",
+                kind: VfxKind::Lit,
+                at: feet,
+                anchor: None,
+            },
+        );
+        // and the room's own lights come up from them outward
+        self.light_wave = Some((feet, self.clock));
+    }
+
+    /// How far a lit field spreading from the hero has brought the light
+    /// at `at` up (0 to 1, a little over as it comes): 1 with none
+    /// spreading.
+    fn wave_k(&self, at: Vector3) -> f32 {
+        let Some((from, since)) = self.light_wave else {
+            return 1.0;
+        };
+        let d = Vector2::new(at.x - from.x, at.z - from.z).length();
+        let t = (self.clock - since) as f32 - LIT_AT - d / WAVE_SPEED;
+        let up = (t / WAVE_RISE).clamp(0.0, 1.0);
+        let up = up * up * (3.0 - 2.0 * up);
+        // the burst it comes in with, settling
+        let swell = if t > 0.0 {
+            WAVE_SWELL * (-(t - WAVE_RISE).max(0.0) * 2.5).exp() * up
+        } else {
+            0.0
+        };
+        up + swell
+    }
+
+    /// The room's lights as a lit field spreading reaches them; once it
+    /// has reached them all and settled, as the room has them.
+    fn spread_light(&mut self) {
+        let Some((_, since)) = self.light_wave else {
+            return;
+        };
+        let done = (self.clock - since) as f32 > LIT_AT + WAVE_REACH / WAVE_SPEED + WAVE_RISE + 2.0;
+        if done {
+            self.light_wave = None;
+        }
+        let ks: Vec<f32> = self
+            .room_lights
+            .iter()
+            .map(|l| self.wave_k(l.get_position()))
+            .collect();
+        for ((l, &base), k) in self.room_lights.iter_mut().zip(&self.room_energy).zip(ks) {
+            if l.is_visible() {
+                l.set_param(Param::ENERGY, base * k);
+            }
+        }
+    }
+
+    /// An item of the hero's glowing where it is worn or held: the head,
+    /// the body, the hands, the feet, the shield's arm or the weapon's.
+    fn show_glow(&mut self, on: crate::hero::GlowOn, color: Color) {
+        use crate::hero::GlowOn;
+        let Some((feet, tall)) = self.hero_stands() else {
+            return;
+        };
+        let node = self.hero_model().map(|m| m.node.clone());
+        let bone = |name: &str| node.as_ref().and_then(|n| crate::art::bone_at(n, name));
+        let up = |share: f32| feet + Vector3::UP * tall * share;
+        let places = match on {
+            GlowOn::Head => vec![up(0.92)],
+            GlowOn::Body => vec![up(0.6)],
+            GlowOn::Hands => vec![
+                bone("hand_r").unwrap_or(up(0.5)),
+                bone("hand_l").unwrap_or(up(0.5)),
+            ],
+            GlowOn::Feet => vec![up(0.08)],
+            GlowOn::Shield => vec![bone("hand_l").unwrap_or(up(0.5))],
+            // along the blade or the haft from the hand
+            GlowOn::Weapon => vec![bone("hand_r").map_or(up(0.6), |h| h + Vector3::UP * 0.3)],
+        };
+        for at in places {
+            self.hero_fx.after(
+                GLOW_AT,
+                crate::hero::Fx::Burst {
+                    name: "gleam",
+                    kind: VfxKind::Gleam(color),
+                    at,
+                    anchor: None,
+                },
+            );
+        }
+    }
+
+    /// A curse lifted: a golden glow and stars round the hero.
+    fn show_blessed(&mut self) {
+        let Some((feet, tall)) = self.hero_stands() else {
+            return;
+        };
+        let node = self.hero_model().map(|m| m.node.clone());
+        self.hero_fx.after(
+            GLOW_AT,
+            crate::hero::Fx::Body {
+                name: "blessed",
+                kind: VfxKind::Bless,
+                feet,
+                tall,
+                anchor: node,
+            },
+        );
+    }
+
     /// Fights the new messages tell of: the attacker turns to its target
     /// and strikes.
     fn watch_fights(&mut self, world: &World, catalog: &Catalog) {
@@ -9210,6 +9351,23 @@ impl MapView {
             self.watch_act(&m.text, world, catalog);
             if crate::hero::healed(&m.text) {
                 self.show_healed();
+            }
+            // light, an item's glow, a curse lifted: what the lines tell
+            // of magic worked on the hero, as they see it
+            if crate::hero::lit_field(&m.text) {
+                self.show_lit();
+            }
+            if let Some((on, color)) = crate::hero::glowing(&m.text, world.inventory.items()) {
+                self.show_glow(on, color);
+            }
+            if crate::hero::helped(&m.text)
+                && !world
+                    .status
+                    .condition_names(catalog)
+                    .iter()
+                    .any(|c| c == "Blind")
+            {
+                self.show_blessed();
             }
             if let Some(a) = parse_attack(&m.text) {
                 let hit = !m.text.contains(" miss");

@@ -5191,6 +5191,7 @@ impl SelfTest {
             "doorways" => doorways::doorways(),
             "shop" => shop::shop(),
             "effects" => effects::effects(),
+            "magic" => effects::magic(),
             "prologue" => prologue_tests::prologue(),
             "prologue-skip" => prologue_tests::prologue_skip(),
             "prologue-replay" => prologue_tests::prologue_replay(),

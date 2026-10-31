@@ -69,6 +69,19 @@ pub enum VfxKind {
     /// A ray or a bolt striking a wall or rock: a flash, sparks thrown back
     /// and a burst of light, of this colour.
     Impact(Color),
+    /// A lit field round the hero (a scroll or a spell of light): a burst
+    /// of light from them, spreading over the floor and settling.
+    Lit,
+    /// An item glowing where it is worn or held (a scroll of enchant
+    /// armour's, of enchant weapon's), of its glow's colour.
+    Gleam(Color),
+    /// Force striking (a bolt of force, a wand of striking, any magic the
+    /// client cannot tell that leaves no ray): a flash and a ring of this
+    /// colour, dust thrown up, and on stone (`true`) chips of it flung.
+    Force(Color, bool),
+    /// A curse lifted (`You feel like someone is helping you`): a golden
+    /// glow and stars round the body (on the body).
+    Bless,
 }
 
 /// What a ray is of: NetHack's beam types (`ZT_*`), a wand of digging's
@@ -330,6 +343,15 @@ enum Recipe {
     Dust,
     /// Chips of rock falling.
     Grit,
+    /// A puff of dust where something strikes, at a point.
+    Puff,
+    /// Chips of stone flung from where something strikes, falling.
+    Chips,
+    /// Specks of light flung out low over the floor all round, slowing
+    /// (a lit field spreading).
+    Spread,
+    /// A soft glow round a point, lingering (an item glowing).
+    Glow,
 }
 
 struct Params {
@@ -372,8 +394,8 @@ impl Recipe {
     fn own_color(self) -> Option<Color> {
         match self {
             Recipe::Smoke => Some(Color::from_rgb(0.05, 0.03, 0.07)),
-            Recipe::Dust => Some(Color::from_rgb(0.62, 0.55, 0.47)),
-            Recipe::Grit => Some(Color::from_rgb(0.3, 0.26, 0.22)),
+            Recipe::Dust | Recipe::Puff => Some(Color::from_rgb(0.62, 0.55, 0.47)),
+            Recipe::Grit | Recipe::Chips => Some(Color::from_rgb(0.3, 0.26, 0.22)),
             _ => None,
         }
     }
@@ -415,7 +437,7 @@ impl Recipe {
     fn is_smoke(self) -> bool {
         matches!(
             self,
-            Recipe::Haze | Recipe::Smoke | Recipe::Gas | Recipe::Dust
+            Recipe::Haze | Recipe::Smoke | Recipe::Gas | Recipe::Dust | Recipe::Puff
         )
     }
 
@@ -429,7 +451,8 @@ impl Recipe {
             | Recipe::Haze
             | Recipe::Smoke
             | Recipe::Gas
-            | Recipe::Dust => Some((8, 8)),
+            | Recipe::Dust
+            | Recipe::Puff => Some((8, 8)),
             _ => None,
         }
     }
@@ -772,6 +795,57 @@ impl Recipe {
                 lit: true,
                 ..base
             },
+            Recipe::Puff => Params {
+                amount: 30,
+                life: 1.3,
+                speed: (0.35, 1.0),
+                spread: 75.0,
+                gravity: Vector3::new(0.0, 0.15, 0.0),
+                size: (0.3, 0.6),
+                radius: 0.12,
+                damping: 1.4,
+                hdr: 0.75,
+                additive: false,
+                lit: true,
+                ..base
+            },
+            Recipe::Glow => Params {
+                amount: 18,
+                life: 1.4,
+                speed: (0.05, 0.3),
+                spread: 180.0,
+                size: (0.5, 0.9),
+                radius: 0.12,
+                damping: 1.0,
+                hdr: 3.6,
+                ..base
+            },
+            Recipe::Spread => Params {
+                amount: 70,
+                life: 1.1,
+                speed: (3.0, 5.5),
+                spread: 82.0,
+                gravity: Vector3::new(0.0, -0.6, 0.0),
+                size: (0.06, 0.12),
+                radius: 0.25,
+                damping: 2.4,
+                hdr: 3.2,
+                ..base
+            },
+            Recipe::Chips => Params {
+                amount: 34,
+                life: 0.75,
+                speed: (1.6, 3.6),
+                spread: 60.0,
+                gravity: Vector3::new(0.0, -9.8, 0.0),
+                size: (0.03, 0.065),
+                radius: 0.06,
+                damping: 0.3,
+                hdr: 1.0,
+                additive: false,
+                lit: true,
+                ..base
+            },
             Recipe::Grit => Params {
                 amount: 150,
                 life: 0.7,
@@ -831,6 +905,14 @@ fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
         }
         VfxKind::Blood(c) => (Recipe::Droplets, c, None),
         VfxKind::Shock(c) => (Recipe::Ring, c, Some((c, 2.0, 0.2))),
+        // (its light its own: wide, `LIT_LIGHT`)
+        VfxKind::Lit => (Recipe::Glints, LIT, None),
+        VfxKind::Gleam(c) => (Recipe::Glow, c, Some((c, 4.5, 1.3))),
+        VfxKind::Force(c, _) => (Recipe::Flash, c, Some((c, 5.0, 0.3))),
+        VfxKind::Bless => {
+            let gold = rgb(1.0, 0.84, 0.45);
+            (Recipe::Mend, gold, Some((gold, 2.2, 1.1)))
+        }
     }
 }
 
@@ -858,6 +940,8 @@ pub fn beam_color(kind: VfxKind) -> Color {
         | VfxKind::Explosion(c)
         | VfxKind::Shock(c)
         | VfxKind::Aura(c)
+        | VfxKind::Gleam(c)
+        | VfxKind::Force(c, _)
         | VfxKind::Impact(c) => c,
         _ => rgb(0.38, 0.56, 1.0),
     }
@@ -981,6 +1065,10 @@ const IMPACT_FLASH: f32 = 2.2;
 /// A strike's flash this far off the stone it strikes (metres): half of
 /// it was buried in the wall.
 const IMPACT_OFF: f32 = 0.25;
+/// A lit field's light (`VfxKind::Lit`): its colour, its energy, how long
+/// it takes to settle (seconds) and how far it reaches (metres).
+const LIT: Color = Color::from_rgb(1.0, 0.93, 0.78);
+const LIT_LIGHT: (f32, f32, f32) = (7.0, 1.6, 9.0);
 const BEAM_SECS: f32 = 0.45;
 /// How long a whole ray's head takes to run its length, and a ray shows
 /// at its brightest once it stops growing, before it fades.
@@ -1022,13 +1110,15 @@ fn particle_textures() -> HashMap<Recipe, Gd<Texture2D>> {
         (Recipe::Ring, format!("{kenney}circle_02.png")),
         (Recipe::Rime, format!("{kenney}star_04.png")),
         (Recipe::Twinkles, format!("{kenney}star_01.png")),
+        (Recipe::Spread, format!("{kenney}star_01.png")),
         (Recipe::Tongues, format!("{books}FireBall04_8x8.png")),
         (Recipe::Pillar, format!("{books}FireBall01_8x8.png")),
         (Recipe::Blaze, format!("{books}FireBall02_8x8.png")),
         (Recipe::Haze, smoke.clone()),
         (Recipe::Smoke, smoke.clone()),
         (Recipe::Gas, smoke.clone()),
-        (Recipe::Dust, smoke),
+        (Recipe::Dust, smoke.clone()),
+        (Recipe::Puff, smoke),
     ]
     .into_iter()
     .filter_map(|(r, path)| {
@@ -1310,7 +1400,7 @@ fn ramp_of(recipe: Recipe, color: Color) -> Gd<GradientTexture1D> {
                 color.with_alpha(0.0),
             ],
         )
-    } else if recipe == Recipe::Grit {
+    } else if matches!(recipe, Recipe::Grit | Recipe::Chips) {
         (&[0.0, 0.85, 1.0], vec![color, color, color.with_alpha(0.0)])
     } else {
         return ramp(color, p.hdr);
@@ -1495,9 +1585,35 @@ impl Vfx {
             // glow, and in a healing's with its stars
             VfxKind::Halo => self.emit_by(Recipe::Aura, color, at, None, k),
             VfxKind::Aura(_) => self.emit_by(Recipe::Wisps, bright, at, None, k),
-            VfxKind::Heal => {
+            VfxKind::Heal | VfxKind::Bless => {
                 self.emit_by(Recipe::Aura, color, at, None, k);
                 self.emit_by(Recipe::Wisps, color, at, None, k);
+            }
+            // the light bursting from the hero: specks of it flung out
+            // low over the floor all round, a flare at their chest, and
+            // the light itself, bright and settling (the room's own
+            // lights come up behind it: `MapView::show_lit`)
+            VfxKind::Lit => {
+                let low = Vector3::new(at.x, at.y + 0.4, at.z);
+                self.emit_by(Recipe::Spread, LIT, low, None, k);
+                self.emit_by(Recipe::Flash, LIT, at + Vector3::UP * 1.0, None, k * 2.0);
+                let (energy, secs, range) = LIT_LIGHT;
+                self.flash(at + Vector3::UP * 1.4, LIT, energy, secs, range);
+            }
+            // an item's glow: motes swirling round it, glints and a flare
+            VfxKind::Gleam(_) => {
+                self.emit_by(Recipe::Swirl, bright, at, None, k * 0.6);
+                self.emit_by(Recipe::Glints, bright, at, None, k * 2.0);
+                self.emit_by(Recipe::Flash, bright, at, None, k * 0.8);
+            }
+            // force striking: a flare, the dust it throws up, and on stone
+            // chips of it flung back (the bolt's own rings came before)
+            VfxKind::Force(_, stone) => {
+                self.emit_by(Recipe::Flare, bright, at, None, k * 1.5);
+                self.emit_by(Recipe::Puff, color, at, dir, k * 1.4);
+                if stone {
+                    self.emit_by(Recipe::Chips, color, at, dir, k * 1.3);
+                }
             }
             _ => {}
         }
