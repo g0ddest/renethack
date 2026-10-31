@@ -861,9 +861,16 @@ fn keys() -> Vec<Step> {
         Step::Wait("the travel question on the prompt line", |g| {
             let line = g.ui.as_ref().and_then(|ui| ui.hud.prompt_line());
             let logged = g.world.log.iter().any(|m| m.text.contains("travel to"));
-            match line {
-                Some(l) if g.world.getpos && l.contains("travel to") && !logged => Ok(true),
-                other => Err(format!("prompt line {other:?}, in the log: {logged}")),
+            // the engine's question, in the player's language
+            let asked = g
+                .world
+                .getpos_goal
+                .as_deref()
+                .filter(|q| q.contains("travel to"))
+                .map(|q| i18n::engine(i18n::EngineKind::Prompt, q).into_owned());
+            match (line, asked) {
+                (Some(l), Some(q)) if g.world.getpos && l.contains(&q) && !logged => Ok(true),
+                (other, _) => Err(format!("prompt line {other:?}, in the log: {logged}")),
             }
         }),
         Step::Shot("getpos"),

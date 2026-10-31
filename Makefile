@@ -45,7 +45,7 @@ DECK_SELFTESTS := smoke inventory hud gamepad title threat-arrow threats setting
 # the same in Russian (a third longer than English), at the Deck's size and
 # at 1920×1080
 RU_DECK_SELFTESTS := smoke inventory hud dialogs gamepad pickers achievements help layouts settings gameplay credits rebind sheet spells spells-one spells-many give-up skills journal codex guide prologue hud-tips look-tip travel-words pad-screens creation pad-words pad-panels pad-play end-death end-quit end-ascend pack-list pad-journey
-RU_SELFTESTS := smoke inventory dialogs achievements settings gameplay credits rebind sheet spells spells-one give-up skills journal codex guide prologue hud-tips quest-words pad-screens pad-words pad-panels pad-play end-quit pack-list
+RU_SELFTESTS := smoke keys inventory dialogs achievements settings gameplay credits rebind sheet spells spells-one give-up skills journal codex guide prologue hud-tips quest-words pad-screens pad-words pad-panels pad-play end-quit pack-list
 # again with the engine's output read an event a frame, as a loaded machine
 # may read it in pieces: what the map shows of a line, what a line tells of
 # the map, and the cells of one drawing of it (a step, a mount) must not
