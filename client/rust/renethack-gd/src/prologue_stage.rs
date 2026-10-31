@@ -451,7 +451,9 @@ impl MapView {
             tint,
             pose: Pose::Alive,
         });
-        self.art.complete(&mut m);
+        // built now: nothing completes a figure later (a frame's budget
+        // spent on the god before would leave this one a stand-in)
+        self.art.complete_now(&mut m);
         let k = tall / height;
         m.node.set_scale(Vector3::new(k, k, k));
         m.node.set_position(at);

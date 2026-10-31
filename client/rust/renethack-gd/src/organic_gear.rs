@@ -24,6 +24,13 @@ pub enum Part {
     Toga,
     /// A monk's robe worn as the toga is, broader, its end to the knees.
     Kasaya,
+    /// The border woven along a kasaya's edges.
+    KasayaBorder,
+    /// A god's himation: a kasaya's drape in deep folds, its end to the
+    /// calves.
+    Himation,
+    /// The border woven along its edges.
+    HimationBorder,
     /// A cape of cloth worn round the neck (the origin), to the hips: over
     /// the shoulders and down the back in folds, its collar rolled.
     Cape,
@@ -57,6 +64,9 @@ pub(super) fn build(m: &mut Merge, part: Part) {
         Part::Pelt => pelt(m),
         Part::Toga => toga(m, &TOGA_WRAP),
         Part::Kasaya => toga(m, &KASAYA),
+        Part::KasayaBorder => wrap_border(m, &KASAYA),
+        Part::Himation => toga(m, &HIMATION),
+        Part::HimationBorder => wrap_border(m, &HIMATION),
         Part::Cape => cloth(m, &CAPE),
         Part::Cloak => cloth(m, &CLOAK),
         Part::Tabard => tabard(m),
@@ -367,12 +377,20 @@ fn off_body(p: Vector3) -> Vector3 {
 struct Wrap {
     half: f32,
     end: f32,
+    /// How deep its folds are along the band, and how many across it;
+    /// how many quads across (enough for its folds to stay smooth).
+    fold: f32,
+    folds: f32,
+    across: usize,
 }
 
 /// A toga's band, its end to the waist.
 const TOGA_WRAP: Wrap = Wrap {
     half: 0.15,
     end: 1.0,
+    fold: 0.025,
+    folds: 2.5,
+    across: 8,
 };
 
 /// A monk's robe wrapped as a kasaya: broad across the chest, its end to
@@ -380,37 +398,85 @@ const TOGA_WRAP: Wrap = Wrap {
 const KASAYA: Wrap = Wrap {
     half: 0.27,
     end: 1.7,
+    fold: 0.025,
+    folds: 2.5,
+    across: 10,
+};
+
+/// A god's himation: as broad as a kasaya, in deep folds, its end to the
+/// calves.
+const HIMATION: Wrap = Wrap {
+    half: 0.24,
+    end: 2.1,
+    fold: 0.06,
+    folds: 4.5,
+    across: 28,
 };
 
 fn toga(m: &mut Merge, w: &Wrap) {
     // the band: `s` round it, `t` across it, a little off the body, in
     // folds along it; gathered narrow over the shoulder
-    let band = |s: f32, t: f32| {
-        let e = 1e-3;
-        let p = round_through(&TOGA, s);
-        let along = (round_through(&TOGA, s + e) - round_through(&TOGA, s - e)).normalized();
-        let out = off_body(p);
-        let across = along.cross(out).normalized();
-        let shoulder = smoothstep(0.2, 0.42, p.y);
-        let half = w.half * (1.0 - 0.4 * shoulder);
-        let u = t * 2.0 - 1.0;
-        let fold = 0.025 * (u * PI * 2.5 + s * 9.0).sin() * (1.0 - shoulder * 0.6);
-        p + across * (u * half) + out * (0.05 + fold + 0.03 * (1.0 - u * u))
-    };
+    let band = |s: f32, t: f32| toga_band(w, s, t * 2.0 - 1.0);
+    // the cloth's weave as square on the band as on a cloak
+    let length: f32 = (0..64)
+        .map(|k| {
+            (round_through(&TOGA, frac(k + 1, 64)) - round_through(&TOGA, frac(k, 64))).length()
+        })
+        .sum();
+    let span = Vector2::new(2.0 * w.half / length, 1.0) * length;
     for face in [1.0f32, -1.0] {
-        sheet(m, 64, 8, &|s, t| band(s, t), face);
+        spanned(m, 96, w.across, &|s, t| band(s, t), face, span);
     }
-    // its end, hanging from the shoulder down the back, in folds
-    let end = |s: f32, t: f32| {
-        let u = t * 2.0 - 1.0;
-        let fold = 0.04 * s * (u * PI * 2.0).sin();
-        let top = v(0.24 + 0.12 * u, 0.42, -0.08 - 0.06 * (1.0 - u * u));
-        let d = s * w.end;
-        top + v(0.06 * d, -d, -0.24 * d - fold - 0.05 * d * d / w.end)
-    };
     for face in [1.0f32, -1.0] {
-        sheet(m, 12, 8, &end, face);
+        spanned(
+            m,
+            16,
+            w.across,
+            &|s, t| toga_end(w, s, t),
+            face,
+            Vector2::new(0.24, w.end),
+        );
     }
+}
+
+/// A toga's end, hanging from the shoulder down the back in folds: `s`
+/// down it, `t` across.
+fn toga_end(w: &Wrap, s: f32, t: f32) -> Vector3 {
+    let u = t * 2.0 - 1.0;
+    let fold = 1.6 * w.fold * s * (u * PI * w.folds * 0.8).sin();
+    let top = v(0.24 + 0.12 * u, 0.42, -0.08 - 0.06 * (1.0 - u * u));
+    let d = s * w.end;
+    top + v(0.06 * d, -d, -0.24 * d - fold - 0.05 * d * d / w.end)
+}
+
+/// A toga's band (`toga`'s), at `s` round it and `u` across (-1..1),
+/// a little off the body.
+fn toga_band(w: &Wrap, s: f32, u: f32) -> Vector3 {
+    let e = 1e-3;
+    let p = round_through(&TOGA, s);
+    let along = (round_through(&TOGA, s + e) - round_through(&TOGA, s - e)).normalized();
+    let out = off_body(p);
+    let across = along.cross(out).normalized();
+    let shoulder = smoothstep(0.2, 0.42, p.y);
+    let half = w.half * (1.0 - 0.4 * shoulder);
+    let fold = w.fold * (u * PI * w.folds + s * 9.0).sin() * (1.0 - shoulder * 0.6);
+    p + across * (u * half) + out * (0.05 + fold + 0.03 * (1.0 - u * u))
+}
+
+/// The border woven along a wrap's edges: round both edges of its band,
+/// and down both edges and along the foot of its end.
+fn wrap_border(m: &mut Merge, w: &Wrap) {
+    let n = 96;
+    for u in [-1.0f32, 1.0] {
+        let edge: Vec<Vector3> = (0..n).map(|k| toga_band(w, frac(k, n), u * 0.97)).collect();
+        m.sweep(&edge, |_| (0.022, 0.012), 2.0, true, UP);
+    }
+    for t in [0.02f32, 0.98] {
+        let side: Vec<Vector3> = (0..=16).map(|k| toga_end(w, frac(k, 16), t)).collect();
+        m.sweep(&side, |_| (0.022, 0.012), 2.0, false, ACROSS);
+    }
+    let foot: Vec<Vector3> = (0..=12).map(|k| toga_end(w, 0.99, frac(k, 12))).collect();
+    m.sweep(&foot, |_| (0.022, 0.012), 2.0, false, UP);
 }
 
 /// How far a tabard reaches: half its width, its top and its hem below
@@ -461,6 +527,19 @@ fn tabard(m: &mut Merge) {
 /// A sheet of `rows` by `cols` quads, `at(s, t)` its points (each of `s`
 /// and `t` in 0..1), its normals turned the way `face` says.
 fn sheet(m: &mut Merge, rows: usize, cols: usize, at: &impl Fn(f32, f32) -> Vector3, face: f32) {
+    spanned(m, rows, cols, at, face, Vector2::ONE);
+}
+
+/// A sheet as `sheet` lays one, its texture `span` units across (along
+/// `t`) and along (`s`): a long band's cloth as square as a cloak's.
+fn spanned(
+    m: &mut Merge,
+    rows: usize,
+    cols: usize,
+    at: &impl Fn(f32, f32) -> Vector3,
+    face: f32,
+    span: Vector2,
+) {
     let base = m.pos.len() as i32;
     let e = 1e-3;
     for i in 0..=rows {
@@ -469,7 +548,7 @@ fn sheet(m: &mut Merge, rows: usize, cols: usize, at: &impl Fn(f32, f32) -> Vect
             let ds = at((s + e).min(1.0), t) - at((s - e).max(0.0), t);
             let dt = at(s, (t + e).min(1.0)) - at(s, (t - e).max(0.0));
             let n = dt.cross(ds).normalized() * face;
-            m.vertex(at(s, t), n, Vector2::new(t, s));
+            m.vertex(at(s, t), n, Vector2::new(t * span.x, s * span.y));
         }
     }
     let c = cols as i32 + 1;

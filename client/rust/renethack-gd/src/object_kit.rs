@@ -1468,13 +1468,14 @@ impl Kit<'_> {
         let dark = self.dark();
         let shape = self.shape.clone().unwrap_or_default();
         match shape.as_str() {
-            "toga" | "kasaya" => {
-                // a toga's drape (a monk's broader), pinned at the shoulder
-                // by a gilt brooch
-                let part = if shape == "toga" {
-                    GearPart::Toga
-                } else {
-                    GearPart::Kasaya
+            "toga" | "kasaya" | "himation" => {
+                // a toga's drape (a monk's broader, its border woven a
+                // shade darker; a god's, its border gilt), pinned at the
+                // shoulder by a gilt brooch
+                let (part, border) = match shape.as_str() {
+                    "toga" => (GearPart::Toga, None),
+                    "himation" => (GearPart::Himation, Some(GearPart::HimationBorder)),
+                    _ => (GearPart::Kasaya, Some(GearPart::KasayaBorder)),
                 };
                 self.part(
                     root,
@@ -1485,6 +1486,21 @@ impl Kit<'_> {
                     ONE,
                 );
                 let brooch = self.plain("gilded", Color::from_rgb(0.7, 0.55, 0.2));
+                if let Some(edge) = border {
+                    let border = if shape == "himation" {
+                        brooch.clone()
+                    } else {
+                        dark.clone()
+                    };
+                    self.part(
+                        root,
+                        MeshKey::Organic(Organic::Gear(edge)),
+                        &border,
+                        [0.0, 0.0, 0.0],
+                        FLAT,
+                        ONE,
+                    );
+                }
                 self.part(
                     root,
                     cylinder(0.06, 0.06, 0.025),
