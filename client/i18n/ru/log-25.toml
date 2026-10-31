@@ -64,3 +64,33 @@ ru = "{1:sg|Один|Одна|Одно} из {1:gen} затупляется."
 [17ca25416ff2]
 en = "%s gets dull."
 ru = "{1} {1:num|затупляется|затупляются}."
+
+# #autopickup (`@`) tells what it does now (options.c)
+
+[4e6e7afa68d9]
+en = "Autopickup: OFF."
+ru = "Автоподбор: выключен."
+
+[0eecc1253c26]
+en = "Autopickup: ON, for all objects."
+ru = "Автоподбор: включён, для всех предметов."
+
+[7ee57377eb27]
+en = "Autopickup: ON, for all objects, with one exception."
+ru = "Автоподбор: включён, для всех предметов, с одним исключением."
+
+[23cdeaa98819]
+en = "Autopickup: ON, for all objects, with some exceptions."
+ru = "Автоподбор: включён, для всех предметов, с несколькими исключениями."
+
+[d8c02d7c42e9]
+en = "Autopickup: ON, for %s objects."
+ru = "Автоподбор: включён, для предметов {1}."
+
+[c1aeeb32c19b]
+en = "Autopickup: ON, for %s objects, with one exception."
+ru = "Автоподбор: включён, для предметов {1}, с одним исключением."
+
+[37bba0847d14]
+en = "Autopickup: ON, for %s objects, with some exceptions."
+ru = "Автоподбор: включён, для предметов {1}, с несколькими исключениями."
