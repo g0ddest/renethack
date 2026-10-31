@@ -68,7 +68,8 @@ const KEY_STEMS: [&str; 5] = ["щелч", "щёлк", "Щелч", "клавиш"
 const KEY_PHRASES: [&str; 3] = ["any key", "(y)", "(n)"];
 
 /// A label that is a key alone, as a keyboard's hint prints it: a control
-/// key ("^X"), a meta key ("M-a"), an extended command ("#twoweapon"). A
+/// key ("^X"), a meta key ("M-a", "Alt+a", "⌥a"), an extended command
+/// ("#twoweapon"). A
 /// letter alone is a menu's or the pack's letter as often as a key: a key
 /// hint marked as the keyboard's (`pad_view::key_words`) is caught by its
 /// mark.
@@ -79,6 +80,8 @@ fn is_a_key(text: &str) -> bool {
     match (chars.next(), t.chars().count()) {
         (Some('^'), 2) => one(chars.next()),
         (Some('M'), 3) => chars.next() == Some('-') && one(chars.next()),
+        (Some('⌥'), 2) => one(chars.next()),
+        (Some('A'), 5) => t.starts_with("Alt+") && one(t.chars().nth(4)),
         (Some('#'), n) if n > 2 => chars.all(|c| c.is_ascii_lowercase()),
         _ => false,
     }
@@ -324,9 +327,10 @@ fn name_keys(g: &RenethackGame) -> bool {
 /// What the journey types on the name's keyboard, `n` letters: its first
 /// key in the interface's letters (Cyrillic for Russian), then Y's.
 fn typed(n: usize) -> String {
+    // (a name's first letter a capital)
     let (first, then) = match i18n::lang() {
-        Lang::En => ("q", "й"),
-        _ => ("й", "q"),
+        Lang::En => ("Q", "й"),
+        _ => ("Й", "q"),
     };
     [first, then][..n].concat()
 }

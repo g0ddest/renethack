@@ -5492,7 +5492,7 @@ pub(crate) const OSK: &str = "on_screen_keyboard";
 
 /// The keyboard's rows: digits and letters by layout, then the controls.
 const OSK_LATIN: [&str; 4] = ["1234567890", "qwertyuiop", "asdfghjkl'", "zxcvbnm,.-"];
-const OSK_CYRILLIC: [&str; 4] = ["1234567890", "йцукенгшщзх", "фывапролджэ", "ячсмитьбю.ё"];
+const OSK_CYRILLIC: [&str; 4] = ["1234567890", "йцукенгшщзхъ", "фывапролджэ", "ячсмитьбю.ё"];
 
 /// The on-screen keyboard of a text question or the hero's name, driven
 /// by a gamepad (or the mouse): the d-pad moves, A types, Y switches Latin
@@ -5530,7 +5530,7 @@ impl Osk {
             line.add_theme_constant_override("separation", 4);
             let mut keys = Vec::new();
             let row: Vec<(OskKey, String)> = if r < 4 {
-                (0..11)
+                (0..12)
                     .map(|_| (OskKey::Char(String::new()), String::new()))
                     .collect()
             } else {
@@ -5791,7 +5791,8 @@ mod tests {
         let none = nh_world::Keymap::default();
         assert_eq!(crate::rebind::bound_code(&none, 0), "");
         assert_eq!(crate::rebind::bound_code(&none, 4), "^D");
-        assert_eq!(crate::rebind::bound_code(&none, 0x80 | 'p' as i32), "M-p");
+        // Alt as the player presses it, not NetHack's "M-p"
+        assert!(!crate::rebind::bound_code(&none, 0x80 | 'p' as i32).starts_with("M-"));
         assert_eq!(crate::rebind::bound_code(&none, '#' as i32), "#");
     }
 

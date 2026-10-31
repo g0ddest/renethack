@@ -955,7 +955,8 @@ impl Screens {
         panel.set_v_grow_direction(GrowDirection::BEGIN);
         let mut col = VBoxContainer::new_alloc();
         col.add_theme_constant_override("separation", 8);
-        let mut shown = theme::styled_label("", Face::Title, 26, theme::ACCENT);
+        // the field's own face, as the name is typed (no small capitals)
+        let mut shown = theme::styled_label("", Face::BodyBold, 26, theme::ACCENT);
         shown.set_horizontal_alignment(HorizontalAlignment::CENTER);
         // a name: the same in every language
         i18n::verbatim(&shown);
@@ -1050,6 +1051,8 @@ impl Screens {
             NavInput::Back if text.is_empty() => return self.close_name_keys(),
             NavInput::Back => erased,
             NavInput::Accept => match keys.osk.current() {
+                // a name begins with a capital
+                OskKey::Char(c) if text.is_empty() => c.to_uppercase(),
                 OskKey::Char(c) => format!("{text}{c}"),
                 OskKey::Space => format!("{text} "),
                 OskKey::Back => erased,

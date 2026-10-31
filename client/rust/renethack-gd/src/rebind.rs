@@ -82,7 +82,21 @@ pub fn slot_command(profile: KeyProfile, i: usize) -> KeyInput {
 /// A bar slot's key as NetHack's hints write it ("1", Classic's "M-1"),
 /// for [`bound_hint`].
 pub fn slot_hint(profile: KeyProfile, i: usize) -> String {
-    short_name(&slot_command(profile, i))
+    let k = norm(slot_command(profile, i));
+    match k.key {
+        Key::Char(c) if k.mods.alt => format!("M-{c}"),
+        _ => short_name(&k),
+    }
+}
+
+/// Alt with a key as the player presses it: "⌥1" on a Mac (its Option
+/// key), "Alt+1" elsewhere; NetHack's hints write "M-1" (Meta).
+fn alt_name(c: char) -> String {
+    if cfg!(target_os = "macos") {
+        format!("⌥{c}")
+    } else {
+        format!("Alt+{c}")
+    }
 }
 
 /// The eight steps' keys, west first, round by north (as the catalog
@@ -286,14 +300,14 @@ pub fn taken(
     }
 }
 
-/// A key as NetHack's hints write it: "^D" Ctrl, "M-p" Alt, "F5", a
+/// A key as the player reads it: "^D" Ctrl, "Alt+p" (a Mac's "⌥p"), "F5", a
 /// character as itself; others by their names ("PgUp").
 pub fn short_name(k: &KeyInput) -> String {
     let k = norm(*k);
     let m = k.mods;
     match k.key {
         Key::Char(c) if m.ctrl && !m.alt && !m.shift => format!("^{}", c.to_ascii_uppercase()),
-        Key::Char(c) if m.alt && !m.ctrl && !m.shift => format!("M-{c}"),
+        Key::Char(c) if m.alt && !m.ctrl && !m.shift => alt_name(c),
         Key::Char(c) if !m.ctrl && !m.alt && c != ' ' => c.to_string(),
         _ => nh_world::key_name(&k),
     }
@@ -396,7 +410,8 @@ mod tests {
         assert_eq!(bound_code(&map, 'e' as i32), "e");
         assert_eq!(hint_key("M-p"), Some(alt('p')));
         assert_eq!(hint_key("F5"), Some(plain(Key::F(5))));
-        assert_eq!(short_name(&alt('p')), "M-p");
+        assert_eq!(short_name(&alt('p')), alt_name('p'));
+        assert!(alt_name('p').ends_with('p') && !alt_name('p').starts_with("M-"));
     }
 
     #[test]
