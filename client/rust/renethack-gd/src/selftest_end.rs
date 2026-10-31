@@ -394,6 +394,33 @@ fn end_page(name: &'static str, check: super::Check) -> Vec<Step> {
                 .and_then(|ui| ui.screens.end_scrolled())
                 .is_some_and(|at| at > 0))
         }),
+        // the disclosures a part at a time: Y the next, X the one before
+        Step::Wait("the disclosures on their first tab", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            match ui.screens.end_section() {
+                Some((0, n)) if n >= 2 => Ok(true),
+                other => Err(format!("the disclosures' tabs: {other:?}")),
+            }
+        }),
+        Step::Call("Y: the next tab", |_| {
+            pad_event(PadEv::Button(PadButton::Y, true));
+            pad_event(PadEv::Button(PadButton::Y, false));
+            Ok(())
+        }),
+        Step::Wait("the second tab", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.screens.end_section().is_some_and(|(at, _)| at == 1))
+        }),
+        Step::Shot(name_tab(name)),
+        Step::Call("X: back", |_| {
+            pad_event(PadEv::Button(PadButton::X, true));
+            pad_event(PadEv::Button(PadButton::X, false));
+            Ok(())
+        }),
+        Step::Wait("the first tab again", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.screens.end_section().is_some_and(|(at, _)| at == 0))
+        }),
         Step::Call("back to the top", |_| {
             for _ in 0..8 {
                 pad_event(PadEv::Button(PadButton::Lb, true));
@@ -409,6 +436,15 @@ fn end_page(name: &'static str, check: super::Check) -> Vec<Step> {
                 && ui.screens.nav_focused().as_deref() == Some(tr!("end-new-game").as_str()))
         }),
     ]
+}
+
+fn name_tab(name: &'static str) -> &'static str {
+    match name {
+        "end-death" => "end-death-tab",
+        "end-quit" => "end-quit-tab",
+        "end-escape" => "end-escape-tab",
+        _ => "end-ascend-tab",
+    }
 }
 
 fn name_scrolled(name: &'static str) -> &'static str {

@@ -56,6 +56,8 @@ pub struct Screens {
     /// The end page's body (the keys and the pad scroll it) and its
     /// hints.
     end_page: Option<(Gd<ScrollContainer>, Gd<HBoxContainer>, Gd<PanelContainer>)>,
+    /// The end page's disclosures, a part a tab (X and Y, [ and ]).
+    end_sections: Option<end_view::Sections>,
     /// A gamepad gives the input: the hints are its buttons.
     pad: Option<PadKind>,
     /// The creation form's on-screen keyboard, typing the hero's name.
@@ -92,8 +94,10 @@ pub enum NavInput {
     /// PgUp and PgDn, the bumpers: the end page's body a screen along.
     PageUp,
     PageDown,
-    /// Y: the on-screen keyboard's other letters (Latin, Cyrillic).
-    Layout,
+    /// X and Y: the end page's disclosures, the tab before and the
+    /// next; Y on the on-screen keyboard: its other letters.
+    X,
+    Y,
 }
 
 /// A page's controls in their order, the one the focus is on, what going
@@ -319,6 +323,7 @@ impl Screens {
             scene_drawn: false,
             nav: Nav::default(),
             end_page: None,
+            end_sections: None,
             pad: None,
             name_keys: None,
         }
@@ -647,6 +652,7 @@ impl Screens {
         self.bg.set_color(theme::BG);
         self.root.set_visible(true);
         self.end_page = Some((page.scroll, page.foot, page.panel));
+        self.end_sections = page.sections;
         // Start: a new game; Esc or B: the title
         self.set_nav(page.buttons, 0, Some(UiEvent::BackToTitle), Some(0));
     }
@@ -668,8 +674,9 @@ impl Screens {
             return;
         }
         self.pad = pad;
+        let sections = self.end_sections.is_some();
         if let Some((_, foot, _)) = self.end_page.as_mut() {
-            end_view::show_hints(foot, pad);
+            end_view::show_hints(foot, pad, sections);
         }
         if let Some(form) = self.form.as_mut() {
             form.set_pad(pad.is_some());
@@ -684,6 +691,11 @@ impl Screens {
                 self.nav_step(1);
             }
         }
+    }
+
+    /// The end's disclosure shown and how many there are (self-tests).
+    pub fn end_section(&self) -> Option<(usize, usize)> {
+        self.end_sections.as_ref().map(|s| s.shown())
     }
 
     /// The end page's body `by` pixels down (up when less than 0); a
@@ -937,7 +949,15 @@ impl Screens {
                 None => return false,
             },
             NavInput::Start => self.nav_take(self.nav.start.unwrap_or(self.nav.at)),
-            NavInput::Layout => return false,
+            // the end's disclosures: the tab before, the next
+            NavInput::X | NavInput::Y if end => {
+                let by = if input == NavInput::X { -1 } else { 1 };
+                match self.end_sections.as_ref() {
+                    Some(s) => s.step(by),
+                    None => return false,
+                }
+            }
+            NavInput::X | NavInput::Y => return false,
         }
         true
     }
@@ -1046,7 +1066,7 @@ impl Screens {
             NavInput::Down => return keys.osk.step(0, 1),
             NavInput::Left => return keys.osk.step(-1, 0),
             NavInput::Right => return keys.osk.step(1, 0),
-            NavInput::Layout => return keys.osk.switch(),
+            NavInput::Y => return keys.osk.switch(),
             NavInput::Start => return self.close_name_keys(),
             NavInput::Back if text.is_empty() => return self.close_name_keys(),
             NavInput::Back => erased,
@@ -1184,6 +1204,7 @@ impl Screens {
             c.queue_free();
         }
         self.end_page = None;
+        self.end_sections = None;
         self.name_keys = None;
         self.nav = Nav::default();
         self.current = None;

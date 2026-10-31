@@ -1512,24 +1512,34 @@ impl RenethackGame {
                 Some(match laid {
                     Some((heading, words)) => crate::end_view::Disclosure {
                         lines: words,
-                        items: false,
                         laid_out: Some(heading),
+                        ..Default::default()
                     },
                     None => crate::end_view::Disclosure {
                         lines: (lines.iter())
                             .map(|l| (l.text.clone(), bold(l.attr)))
                             .collect(),
-                        items: false,
-                        laid_out: None,
+                        ..Default::default()
                     },
                 })
             }
             Prompt::Menu { items, .. } => Some(crate::end_view::Disclosure {
-                lines: (items.iter())
-                    .filter_map(|i| i.str.clone().map(|t| (t, !i.selectable)))
+                items: (items.iter())
+                    .filter_map(|i| {
+                        let text = i.str.clone()?;
+                        let letter = u32::try_from(i.ch).ok().and_then(char::from_u32);
+                        Some(crate::end_view::DisclosedItem {
+                            letter: letter.filter(|c| i.selectable && c.is_ascii_graphic()),
+                            look: (i.glyph.as_ref()).map(|g| {
+                                let class = u32::try_from(g.ch).ok().and_then(char::from_u32);
+                                (g.tile, class.unwrap_or('?'))
+                            }),
+                            text,
+                            heading: !i.selectable,
+                        })
+                    })
                     .collect(),
-                items: true,
-                laid_out: None,
+                ..Default::default()
             }),
             _ => None,
         }
@@ -4749,7 +4759,8 @@ impl RenethackGame {
                 Some(PadButton::Start) => NavInput::Start,
                 Some(PadButton::Lb) => NavInput::PageUp,
                 Some(PadButton::Rb) => NavInput::PageDown,
-                Some(PadButton::Y) => NavInput::Layout,
+                Some(PadButton::X) => NavInput::X,
+                Some(PadButton::Y) => NavInput::Y,
                 _ => return true,
             }
         } else if let Ok(m) = event.clone().try_cast::<InputEventJoypadMotion>() {
@@ -4804,6 +4815,9 @@ impl RenethackGame {
                 GKey::TAB => NavInput::Next,
                 GKey::PAGEUP => NavInput::PageUp,
                 GKey::PAGEDOWN => NavInput::PageDown,
+                // the end's disclosures, a tab along
+                GKey::BRACKETLEFT => NavInput::X,
+                GKey::BRACKETRIGHT => NavInput::Y,
                 // a name being typed keeps the rest
                 _ if typing && key.get_keycode() != GKey::ESCAPE => return false,
                 GKey::LEFT => NavInput::Left,

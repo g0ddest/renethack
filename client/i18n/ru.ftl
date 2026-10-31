@@ -283,6 +283,8 @@ end-new-game = Новая игра
 end-to-title = В меню
 end-quit = Выход
 end-hint = ↑↓ PgUp PgDn: прокрутка · ←→ Tab: выбор · Enter: нажать · Esc: в меню
+end-hint-sections = [ ]: раздел
+end-attributes = Свойства
 end-stone-quit =
     { $female ->
         [yes] сдалась

@@ -1398,6 +1398,10 @@
   =    Вы победили Медузу.
  You delivered the Amulet of Yendor.  [52a85fc60ad4]
   =    Вы доставили Амулет Йендора.
+ You did not violate any of the special Sokoban rules.  [0b940499f955]
+  =    Вы не нарушили ни одного из особых правил Сокобана.
+ You did not wish for any artifacts.  [4965a307728b]
+  =    Вы не загадали ни одного артефакта.
  You didn't encounter any bones levels.  [107e1e4f6775]
   =    Вы не встретили ни одного уровня с костями.
  You died from food poisoning.  [fb0c24c3f4df]
@@ -2013,6 +2017,16 @@
   =    Вы были вегетарианцем.
  You have both energy points (spell power).  [3982b084a7bd]
   =    Энергия: 2 из 2.
+ You have changed form %ld time.  [949b8a824511]
+  m    Вы меняли облик 1 раз.
+  f    Вы меняли облик 3 раза.
+  n    Вы меняли облик 5 раз.
+  pl   Вы меняли облик 21 раз.
+ You have changed form %ld times.  [f13f79d950ea]
+  m    Вы меняли облик 1 раз.
+  f    Вы меняли облик 3 раза.
+  n    Вы меняли облик 5 раз.
+  pl   Вы меняли облик 21 раз.
  You have disabled loading and storing of bones levels.  [a2a4fd5f113b]
   =    Вы отключили загрузку и сохранение уровней с костями.
  You have disabled loading of bones levels.  [2ec02b02bf0a]
@@ -2041,8 +2055,28 @@
   f    У вас свобода действийкрыса.
   n    У вас свобода действийкопьё.
   pl   У вас свобода действий3 стрелы.
+ You have genocided %d type of monster.  [215aeff6e1b3]
+  m    Вы истребили 1 вид монстров.
+  f    Вы истребили 3 вида монстров.
+  n    Вы истребили 5 видов монстров.
+  pl   Вы истребили 21 вид монстров.
+ You have genocided %d types of monsters.  [c22dfb21530b]
+  m    Вы истребили 1 вид монстров.
+  f    Вы истребили 3 вида монстров.
+  n    Вы истребили 5 видов монстров.
+  pl   Вы истребили 21 вид монстров.
  You have gone without food.  [57db573a340e]
   =    Вы обходились без еды.
+ You have hit with a wielded weapon %ld time.  [c17c4f1cfaf4]
+  m    Вы 1 раз ударили оружием.
+  f    Вы 3 раза ударили оружием.
+  n    Вы 5 раз ударили оружием.
+  pl   Вы 21 раз ударили оружием.
+ You have hit with a wielded weapon %ld times.  [6f3c10c0ac76]
+  m    Вы 1 раз ударили оружием.
+  f    Вы 3 раза ударили оружием.
+  n    Вы 5 раз ударили оружием.
+  pl   Вы 21 раз ударили оружием.
  You have infravision%s.  [83133754d781]
   m    У вас инфразрениетритон.
   f    У вас инфразрениекрыса.
@@ -2054,6 +2088,8 @@
   =    Вы ни разу не меняли облик.
  You have never genocided any monsters.  [38ba0fc988a0]
   =    Вы не истребили ни одного вида монстров.
+ You have never had a pet.  [081c97d072aa]
+  =    У вас никогда не было питомца.
  You have never hit with a wielded weapon.  [79f7ed1ef3b3]
   =    Вы ни разу не ударили оружием.
  You have never polymorphed an object.  [bb2b509937fb]
@@ -2067,6 +2103,26 @@
   f    Вы управляете превращениямикрыса.
   n    Вы управляете превращениямикопьё.
   pl   Вы управляете превращениями3 стрелы.
+ You have polymorphed %ld item.  [1c3119f0be2b]
+  m    Вы превратили 1 предмет.
+  f    Вы превратили 3 предмета.
+  n    Вы превратили 5 предметов.
+  pl   Вы превратили 21 предмет.
+ You have polymorphed %ld items.  [61b26043f976]
+  m    Вы превратили 1 предмет.
+  f    Вы превратили 3 предмета.
+  n    Вы превратили 5 предметов.
+  pl   Вы превратили 21 предмет.
+ You have read items or engraved %ld time.  [2ac1bfbef425]
+  m    Вы 1 раз читали или писали.
+  f    Вы 3 раза читали или писали.
+  n    Вы 5 раз читали или писали.
+  pl   Вы 21 раз читали или писали.
+ You have read items or engraved %ld times.  [fcf820dd0308]
+  m    Вы 1 раз читали или писали.
+  f    Вы 3 раза читали или писали.
+  n    Вы 5 раз читали или писали.
+  pl   Вы 21 раз читали или писали.
  You have reduced luck.  [dc69ddbcafe9]
   =    У вас пониженная удача.
  You have reflection%s.  [d4d38f0e2f25]
@@ -2110,6 +2166,11 @@
   =    Вы преступили закон своего бога.
  You have used no wishes.  [d2e844bfb72b]
   =    Вы не использовали ни одного желания.
+ You have violated the special Sokoban rules %s.  [1cd760910e36]
+  m    Вы нарушили особые правила Сокобана тритон.
+  f    Вы нарушили особые правила Сокобана крыса.
+  n    Вы нарушили особые правила Сокобана копьё.
+  pl   Вы нарушили особые правила Сокобана 3 стрелы.
  You have wounded %s.  [7fbbd161f409]
   m    У вас ранен тритон.
   f    У вас ранена крыса.
@@ -2117,6 +2178,10 @@
   pl   У вас ранены 3 стрелы.
  You haven't encountered any bones levels.  [ee8ad8fd6c64]
   =    Вы пока не встречали уровней с костями.
+ You haven't violated any of the special Sokoban rules.  [d914a24ed7ed]
+  =    Вы пока не нарушили ни одного из особых правил Сокобана.
+ You haven't wished for any artifacts.  [73ecbe698f44]
+  =    Вы пока не загадали ни одного артефакта.
  You hit with a wielded weapon %ld time.  [0f902c32ff06]
   m    Вы 1 раз ударили оружием.
   f    Вы 3 раза ударили оружием.
@@ -2365,6 +2430,11 @@
   pl   Вы использовали 21 желание.
  You used no wishes.  [aadd2bb55ec3]
   =    Вы не использовали ни одного желания.
+ You violated the special Sokoban rules %s.  [417af073be3e]
+  m    Вы нарушили особые правила Сокобана тритон.
+  f    Вы нарушили особые правила Сокобана крыса.
+  n    Вы нарушили особые правила Сокобана копьё.
+  pl   Вы нарушили особые правила Сокобана 3 стрелы.
  You went without any armor.  [7aca9fdcffbf]
   =    Вы обходились без доспехов.
  You went without food.  [b19cdd4b1c77]

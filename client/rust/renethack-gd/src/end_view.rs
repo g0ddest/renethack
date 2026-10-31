@@ -18,13 +18,13 @@ use godot::classes::text_server::AutowrapMode;
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
     Button, ColorRect, Control, GridContainer, HBoxContainer, HFlowContainer, Label,
-    MarginContainer, PanelContainer, RichTextLabel, ScrollContainer, StyleBoxFlat, TextureRect,
-    VBoxContainer,
+    MarginContainer, PanelContainer, ScrollContainer, StyleBoxFlat, TextureRect, VBoxContainer,
 };
 use godot::global::HorizontalAlignment;
 use godot::prelude::*;
 use nh_world::achievements::Achievement;
 
+use crate::end_disclosed;
 use crate::gamepad::{PadButton, PadKind};
 use crate::i18n::{self, EngineKind, Lang};
 use crate::icons::{self, Glyph};
@@ -119,18 +119,7 @@ pub struct EndSummary {
     pub roles: Vec<(String, String, Option<String>)>,
 }
 
-/// One of the end's disclosures as NetHack wrote it: a text window's
-/// lines, or the possessions' list; true: a heading. A window the client
-/// lays out (the creatures vanquished, the overview) comes in the words
-/// of its layout, with its heading.
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct Disclosure {
-    pub lines: Vec<(String, bool)>,
-    /// A menu's items (the possessions), not a text window's lines.
-    pub items: bool,
-    /// The heading and the lines already in the player's language.
-    pub laid_out: Option<String>,
-}
+pub use crate::end_disclosed::{DisclosedItem, Disclosure, Sections};
 
 /// The numbers the page shows.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -380,6 +369,9 @@ pub fn conduct_kept(conduct: &BTreeMap<String, i64>, sokoban: bool) -> Vec<&'sta
 /// The page at most this wide, in design pixels; its margins at least.
 const MAX_WIDTH: f32 = 1720.0;
 const MARGIN: f32 = 28.0;
+/// The records' column's width to the story's (the disclosures' columns
+/// below keep it).
+const RECORDS_RATIO: f32 = 1.15;
 /// The canvas's height the page needs besides its body: margins, the
 /// title, the buttons and their hints.
 const CHROME: f32 = 280.0;
@@ -395,6 +387,8 @@ pub struct EndPage {
     pub scroll: Gd<ScrollContainer>,
     /// Where the hints go, the keys' or the pad's.
     pub foot: Gd<HBoxContainer>,
+    /// NetHack's disclosures, a part a tab.
+    pub sections: Option<end_disclosed::Sections>,
 }
 
 /// The end page for `s` on a canvas of `canvas`, its hints for `pad`.
@@ -441,19 +435,21 @@ pub fn build(s: &EndSummary, queue: &UiQueue, canvas: Vector2, pad: Option<PadKi
     story.set_stretch_ratio(1.0);
     columns.add_child(&story);
     let mut records = records(s);
-    records.set_stretch_ratio(1.15);
+    records.set_stretch_ratio(RECORDS_RATIO);
     columns.add_child(&records);
     // clear of the scroll bar, the last line above the body's bottom
     let mut room = MarginContainer::new_alloc();
     for (edge, px) in [("left", 0), ("right", 18), ("top", 6), ("bottom", 16)] {
         room.add_theme_constant_override(&format!("margin_{edge}"), px);
     }
-    // NetHack's disclosures, under the hero's story and the records
+    // NetHack's disclosures, under the hero's story and the records, a
+    // part at a time, its columns as theirs
     let mut parts = VBoxContainer::new_alloc();
     parts.add_theme_constant_override("separation", 22);
     parts.add_child(&columns);
-    if let Some(told) = disclosures(s) {
-        parts.add_child(&told);
+    let sections = end_disclosed::sections(&s.disclosed, RECORDS_RATIO);
+    if let Some(told) = sections.as_ref() {
+        parts.add_child(&told.root);
     }
     room.add_child(&parts);
     middle.add_child(&room);
@@ -479,7 +475,7 @@ pub fn build(s: &EndSummary, queue: &UiQueue, canvas: Vector2, pad: Option<PadKi
     let mut foot = HBoxContainer::new_alloc();
     foot.set_alignment(AlignmentMode::CENTER);
     foot.set_mouse_filter(MouseFilter::IGNORE);
-    show_hints(&mut foot, pad);
+    show_hints(&mut foot, pad, sections.is_some());
     col.add_child(&foot);
     panel.add_child(&col);
     root.add_child(&panel);
@@ -489,11 +485,13 @@ pub fn build(s: &EndSummary, queue: &UiQueue, canvas: Vector2, pad: Option<PadKi
         buttons: made,
         scroll,
         foot,
+        sections,
     }
 }
 
-/// The hints under the buttons, the keys' or the pad's.
-pub fn show_hints(foot: &mut Gd<HBoxContainer>, pad: Option<PadKind>) {
+/// The hints under the buttons, the keys' or the pad's; with `sections`,
+/// how to go through the disclosures' tabs.
+pub fn show_hints(foot: &mut Gd<HBoxContainer>, pad: Option<PadKind>, sections: bool) {
     for mut c in foot.get_children().iter_shared() {
         foot.remove_child(&c);
         c.queue_free();
@@ -501,21 +499,23 @@ pub fn show_hints(foot: &mut Gd<HBoxContainer>, pad: Option<PadKind>) {
     match pad {
         Some(kind) => {
             use PadButton::*;
-            let parts: [(&[PadButton], String); 4] = [
+            let mut parts: Vec<(&[PadButton], String)> = vec![
                 (&[Up, Down, Lb, Rb], tr!("hint-scroll")),
                 (&[Left, Right], tr!("hint-choose")),
-                (&[A], tr!("hint-ok")),
-                (&[B], tr!("end-to-title")),
             ];
+            if sections {
+                parts.push((&[X, Y], tr!("hint-section")));
+            }
+            parts.extend([(&[A][..], tr!("hint-ok")), (&[B], tr!("end-to-title"))]);
             foot.add_child(&pad_view::buttons_row(kind, &parts, 15));
         }
         None => {
-            let mut l = theme::styled_label(
-                &i18n::whole_parts(&tr!("end-hint")),
-                Face::Body,
-                15,
-                theme::TEXT_DIM,
-            );
+            let mut hint = tr!("end-hint");
+            if sections {
+                hint = format!("{hint} · {}", tr!("end-hint-sections"));
+            }
+            let mut l =
+                theme::styled_label(&i18n::whole_parts(&hint), Face::Body, 15, theme::TEXT_DIM);
             l.set_horizontal_alignment(HorizontalAlignment::CENTER);
             foot.add_child(&l);
         }
@@ -797,7 +797,15 @@ fn story(s: &EndSummary) -> Gd<VBoxContainer> {
         }
         col.add_child(&medals);
     }
-    // the conduct kept
+    col
+}
+
+/// The conduct kept: NetHack's own words where it told them (its
+/// achievements too), else the conduct the page reckoned; once either way.
+fn conduct(s: &EndSummary) -> Gd<VBoxContainer> {
+    let mut col = VBoxContainer::new_alloc();
+    col.add_theme_constant_override("separation", 10);
+    col.set_h_size_flags(SizeFlags::EXPAND_FILL);
     col.add_child(&section(&tr!("end-conduct")));
     // what a conduct is, for a first game's player
     col.add_child(&wrapped(
@@ -806,6 +814,21 @@ fn story(s: &EndSummary) -> Gd<VBoxContainer> {
         15,
         theme::TEXT_DIM,
     ));
+    if let Some(lines) = end_disclosed::conduct_lines(&s.disclosed) {
+        let mut list = VBoxContainer::new_alloc();
+        list.add_theme_constant_override("separation", 3);
+        for (text, heading) in lines {
+            let mut l = if heading {
+                theme::styled_label(text.trim_end_matches(':'), Face::Caps, 16, theme::GOLD)
+            } else {
+                wrapped(&text, Face::Body, 16, theme::TEXT)
+            };
+            l.set_autowrap_mode(AutowrapMode::WORD_SMART);
+            list.add_child(&l);
+        }
+        col.add_child(&list);
+        return col;
+    }
     let conduct = if s.conduct.is_empty() {
         tr!("end-conduct-none")
     } else {
@@ -901,72 +924,12 @@ fn records(s: &EndSummary) -> Gd<VBoxContainer> {
         col.add_child(&wrapped(&words, Face::Body, 15, theme::TEXT_DIM));
     }
     col.add_child(&topten(s));
+    // the conduct beside the story, the page's two columns of a length
+    let mut gap = Control::new_alloc();
+    gap.set_custom_minimum_size(Vector2::new(0.0, 6.0));
+    col.add_child(&gap);
+    col.add_child(&conduct(s));
     col
-}
-
-/// NetHack's disclosures at the end, read-only, two to a row: the
-/// possessions identified (a list, its classes' headings bold), then each
-/// window in its own words (its first line its heading). None: none told.
-fn disclosures(s: &EndSummary) -> Option<Gd<Control>> {
-    if s.disclosed.is_empty() {
-        return None;
-    }
-    let mut grid = GridContainer::new_alloc();
-    grid.set_columns(2);
-    grid.add_theme_constant_override("h_separation", 34);
-    grid.add_theme_constant_override("v_separation", 18);
-    grid.set_h_size_flags(SizeFlags::EXPAND_FILL);
-    for d in &s.disclosed {
-        let kind = if d.items {
-            EngineKind::Menu
-        } else {
-            EngineKind::Window
-        };
-        let said = |l: &str| match d.laid_out {
-            Some(_) => l.to_string(),
-            None => i18n::engine(kind, l).into_owned(),
-        };
-        let mut lines: Vec<(String, bool)> = (d.lines.iter())
-            .filter(|(l, _)| !l.trim().is_empty())
-            // (the engine's own line, its spaces too: " You were…" is
-            // ^X's)
-            .map(|(l, bold)| (said(l).trim().to_string(), *bold))
-            .collect();
-        let heading = if let Some(h) = &d.laid_out {
-            h.clone()
-        } else if d.items {
-            tr!("end-possessions")
-        } else if lines.is_empty() {
-            continue;
-        } else {
-            let (first, _) = lines.remove(0);
-            first.trim_end_matches(':').to_string()
-        };
-        let mut col = section(&heading);
-        col.set_h_size_flags(SizeFlags::EXPAND_FILL);
-        let mut text = RichTextLabel::new_alloc();
-        text.set_use_bbcode(true);
-        text.set_fit_content(true);
-        text.set_scroll_active(false);
-        text.set_autowrap_mode(AutowrapMode::WORD_SMART);
-        text.set_custom_minimum_size(Vector2::new(300.0, 0.0));
-        text.set_h_size_flags(SizeFlags::EXPAND_FILL);
-        text.add_theme_font_override("normal_font", &theme::font(Face::Body));
-        text.add_theme_font_override("bold_font", &theme::font(Face::BodyBold));
-        text.add_theme_font_size_override("normal_font_size", 15);
-        text.add_theme_font_size_override("bold_font_size", 15);
-        text.add_theme_color_override("default_color", theme::TEXT);
-        let shown: Vec<String> = (lines.iter())
-            .map(|(l, bold)| {
-                let l = theme::bbcode_escape(l);
-                if *bold { format!("[b]{l}[/b]") } else { l }
-            })
-            .collect();
-        text.set_text(&shown.join("\n"));
-        col.add_child(&text);
-        grid.add_child(&col);
-    }
-    Some(grid.upcast())
 }
 
 /// The chronicle's major events: the turn, then what happened.

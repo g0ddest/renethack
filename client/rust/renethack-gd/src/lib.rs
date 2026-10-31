@@ -19,6 +19,7 @@ mod credits;
 mod credits_page;
 mod cues;
 mod dialogs;
+mod end_disclosed;
 mod end_view;
 mod engine_text;
 mod engulf;

@@ -283,6 +283,8 @@ end-new-game = New game
 end-to-title = Title
 end-quit = Quit
 end-hint = ↑↓ PgUp PgDn: scroll · ←→ Tab: choose · Enter: take · Esc: title
+end-hint-sections = [ ]: section
+end-attributes = Attributes
 end-stone-quit =
     { $female ->
        *[other] gave up

@@ -157,3 +157,74 @@ ru = " Вы в {1:loc}, на уровне {2}, в первобытном кра�
 [858173d2a33d]
 en = " You were in %s, on level %d, a primitive area, a very big room."
 ru = " Вы были в {1:loc}, на уровне {2}, в первобытном краю, в очень большом зале."
+
+# #conduct while the game goes on, and the end's: the lines the end's
+# wording had but this one lacked
+
+[c17c4f1cfaf4]
+en = " You have hit with a wielded weapon %ld time."
+ru = " Вы {1} {1:plural|раз|раза|раз} ударили оружием."
+
+[6f3c10c0ac76]
+en = " You have hit with a wielded weapon %ld times."
+ru = " Вы {1} {1:plural|раз|раза|раз} ударили оружием."
+
+[2ac1bfbef425]
+en = " You have read items or engraved %ld time."
+ru = " Вы {1} {1:plural|раз|раза|раз} читали или писали."
+
+[fcf820dd0308]
+en = " You have read items or engraved %ld times."
+ru = " Вы {1} {1:plural|раз|раза|раз} читали или писали."
+
+[081c97d072aa]
+en = " You have never had a pet."
+ru = " У вас никогда не было питомца."
+
+[215aeff6e1b3]
+en = " You have genocided %d type of monster."
+ru = " Вы истребили {1} {1:plural|вид|вида|видов} монстров."
+
+[c22dfb21530b]
+en = " You have genocided %d types of monsters."
+ru = " Вы истребили {1} {1:plural|вид|вида|видов} монстров."
+
+[1c3119f0be2b]
+en = " You have polymorphed %ld item."
+ru = " Вы превратили {1} {1:plural|предмет|предмета|предметов}."
+
+[61b26043f976]
+en = " You have polymorphed %ld items."
+ru = " Вы превратили {1} {1:plural|предмет|предмета|предметов}."
+
+[949b8a824511]
+en = " You have changed form %ld time."
+ru = " Вы меняли облик {1} {1:plural|раз|раза|раз}."
+
+[f13f79d950ea]
+en = " You have changed form %ld times."
+ru = " Вы меняли облик {1} {1:plural|раз|раза|раз}."
+
+[4965a307728b]
+en = " You did not wish for any artifacts."
+ru = " Вы не загадали ни одного артефакта."
+
+[73ecbe698f44]
+en = " You haven't wished for any artifacts."
+ru = " Вы пока не загадали ни одного артефакта."
+
+[0b940499f955]
+en = " You did not violate any of the special Sokoban rules."
+ru = " Вы не нарушили ни одного из особых правил Сокобана."
+
+[d914a24ed7ed]
+en = " You haven't violated any of the special Sokoban rules."
+ru = " Вы пока не нарушили ни одного из особых правил Сокобана."
+
+[417af073be3e]
+en = " You violated the special Sokoban rules %s."
+ru = " Вы нарушили особые правила Сокобана {1}."
+
+[1cd760910e36]
+en = " You have violated the special Sokoban rules %s."
+ru = " Вы нарушили особые правила Сокобана {1}."

@@ -770,20 +770,46 @@ pub fn layout_words(
 ) -> Option<(String, Vec<(String, bool)>)> {
     let plurals = layouts::kinds_by_plural(catalog);
     let singular = |p: &str| plurals.get(p).cloned();
+    // a kind as NetHack's list says one: a common name small ("тритон",
+    // as "a newt"), a unique one as it is
     let creature = |r: &CreatureRow| match r {
         CreatureRow::Class(c) => (c.clone(), true),
-        CreatureRow::Kind { name, right, .. } if right.is_empty() || right == "1" => {
-            (name.clone(), false)
+        CreatureRow::Kind {
+            name,
+            right,
+            unique,
+            ..
+        } => {
+            let name = if *unique { name.clone() } else { lowered(name) };
+            match right.as_str() {
+                "" | "1" => (name, false),
+                n => (format!("{name} — {n}"), false),
+            }
         }
-        CreatureRow::Kind { name, right, .. } => (format!("{name} — {right}"), false),
     };
+    // in English NetHack's own lines ("a newt", "2 jackals"), its heading
+    // the page's
+    let own = |texts: &[&str]| -> Vec<(String, bool)> {
+        (texts.iter().skip(1))
+            .map(|l| l.trim())
+            .filter(|l| !l.is_empty())
+            .map(|l| (l.to_string(), l.ends_with(':')))
+            .collect()
+    };
+    let english = i18n::lang() == Lang::En;
     if let Some(v) = layouts::vanquished(texts, &singular) {
+        if english {
+            return Some((tr!("vanquished-title"), own(texts)));
+        }
         let mut lines: Vec<(String, bool)> =
             vanquished_rows(&v, catalog).iter().map(creature).collect();
         lines.extend((v.total.iter()).map(|&n| (tr!("vanquished-total", count = n), false)));
         return Some((tr!("vanquished-title"), lines));
     }
     if let Some(g) = layouts::genocided(texts) {
+        if english {
+            return Some((layouts::gone_heading(g.heading), own(texts)));
+        }
         let mut lines: Vec<(String, bool)> = (genocided_rows(&g, &plurals, catalog).iter())
             .map(creature)
             .collect();
@@ -820,6 +846,15 @@ pub fn layout_words(
         })
         .collect();
     Some((tr!("overview-title"), lines))
+}
+
+/// `s` with its first letter lower-cased.
+fn lowered(s: &str) -> String {
+    let mut chars = s.chars();
+    chars
+        .next()
+        .map(|c| c.to_lowercase().chain(chars).collect())
+        .unwrap_or_default()
 }
 
 /// #vanquished's rows: the classes' headings, a kind a row with its count.
