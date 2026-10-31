@@ -351,6 +351,10 @@ const HERO_LIGHT_RANGE: f32 = 5.5;
 /// hero's form, this far over its head when that is higher (a flying
 /// dragon's face lit from a hand away came out pink).
 const HERO_LIGHT_HEIGHT: f32 = 2.4;
+/// How dark the shadows of that light are: the hero's own, from a light
+/// so little over their head, ran two cells to a door as a hard black
+/// wedge (a Samurai's helm and shoulder guards).
+const HERO_SHADOW: f32 = 0.5;
 const FORM_LIGHT_OVER: f32 = 0.7;
 const RIM_HEIGHT: f32 = 2.0;
 const FORM_RIM_OVER: f32 = 0.3;
@@ -4127,6 +4131,7 @@ impl MapView {
         hero_light.set_param(Param::SHADOW_BIAS, 0.03);
         hero_light.set_param(Param::SHADOW_NORMAL_BIAS, 1.2);
         hero_light.set_param(Param::SHADOW_BLUR, 2.0);
+        hero_light.set_param(Param::SHADOW_OPACITY, HERO_SHADOW);
         hero_light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
         hero_light.set_shadow(true);
         hero_light.set_visible(false);
