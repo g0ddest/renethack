@@ -4216,12 +4216,14 @@ impl RenethackGame {
         if !matches!(self.pending, Some((_, Prompt::Command))) || self.world.getpos {
             return;
         }
-        // no rest with a foe in sight: said in the client's words, not
-        // NetHack's refusal of a counted search beside a monster
+        // no rest with a foe beside the hero: said in the client's words,
+        // not NetHack's refusal of a counted search beside a monster; one
+        // farther off (a mold across the room, a foe held off by Elbereth)
+        // leaves it to NetHack's own count to stop
         let foe = self
             .catalog
             .as_deref()
-            .is_some_and(|cat| !nh_world::threats(&self.world, cat).is_empty());
+            .is_some_and(|cat| nh_world::engaged(&self.world, cat));
         if foe {
             self.stop_note = Some((tr!("rest-foe"), Instant::now()));
             return;
