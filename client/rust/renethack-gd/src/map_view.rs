@@ -8881,6 +8881,16 @@ impl MapView {
         }
     }
 
+    /// The hero's model is on the hero's own layer (`RIM_LAYER`, the one
+    /// the portrait's and the doll's cameras see): it is put there once
+    /// the level is drawn.
+    pub fn hero_on_layer(&self) -> bool {
+        match (&self.rim_model, self.hero_model()) {
+            (Some(rim), Some(hero)) => rim.instance_id() == hero.node.instance_id(),
+            _ => false,
+        }
+    }
+
     /// Whether a model's meshes are on the layer the hero's key and fills
     /// light besides their own: a ridden steed's (self-tests).
     pub fn on_steed_layer(node: &Gd<Node3D>) -> bool {

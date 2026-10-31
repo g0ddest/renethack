@@ -3850,8 +3850,11 @@ impl RenethackGame {
         let hero = ui.map.hero_view().filter(|_| !loading);
         ui.inventory.set_hero(hero.clone());
         ui.inventory.set_form(self.world.status.polymorphed());
+        // the portrait's camera sees the hero's layer: none to render
+        // until the map has put the model on it (not while a level is
+        // drawn, which a big one takes longer to than the portrait waits)
         ui.hud.sync_portrait(
-            hero,
+            hero.filter(|_| ui.map.hero_on_layer()),
             ui.map.hero_gear_shown(),
             self.world.status.polymorphed(),
         );

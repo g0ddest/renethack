@@ -56,8 +56,9 @@ pub struct PortraitView {
     aimed: Option<Vector3>,
     /// The model's bounds in its own frame, measured once a model.
     bounds: Option<(InstanceId, Aabb)>,
-    /// Renders made, and whether one was made last frame (self-tests).
+    /// Renders made, and the frame of the last (self-tests).
     renders: u32,
+    rendered_at: u64,
 }
 
 impl PortraitView {
@@ -91,6 +92,7 @@ impl PortraitView {
             aimed: None,
             bounds: None,
             renders: 0,
+            rendered_at: 0,
         }
     }
 
@@ -156,6 +158,7 @@ impl PortraitView {
         }
         self.viewport.set_update_mode(UpdateMode::ONCE);
         self.renders += 1;
+        self.rendered_at = godot::classes::Engine::singleton().get_process_frames();
     }
 
     /// Aim at the hero's head and shoulders, a little round from straight
@@ -206,6 +209,14 @@ impl PortraitView {
     /// not every frame).
     pub fn renders(&self) -> u32 {
         self.renders
+    }
+
+    /// The hero as they are now rendered, its pixels in the texture
+    /// (self-tests).
+    pub fn settled(&self) -> bool {
+        self.wanted.is_some()
+            && self.wanted == self.shown
+            && godot::classes::Engine::singleton().get_process_frames() > self.rendered_at + 2
     }
 
     /// The box round what the render draws, in shares of its side from

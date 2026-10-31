@@ -1885,6 +1885,11 @@ impl Hud {
         self.portrait.drawn_box()
     }
 
+    /// The portrait has rendered the hero as they are now (self-tests).
+    pub fn portrait_settled(&self) -> bool {
+        self.portrait.settled()
+    }
+
     /// The action bar's slots (their bindings drive it).
     pub fn action_bar(&mut self) -> &mut ActionBar {
         &mut self.bar

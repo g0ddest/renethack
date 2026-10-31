@@ -269,11 +269,31 @@ fn luma_marks(g: &mut RenethackGame) -> Result<(), String> {
     Ok(())
 }
 
-/// A picture close on the north wall of the room nearest the hero
-/// (`shot`-wall), then the camera back on the hero.
+/// The HUD's portrait has rendered the hero as they now are, and draws
+/// them (the render came out empty on a big level: the map put the hero's
+/// model on the layer the portrait sees only once the level was drawn).
+/// Its pixels need a window.
+fn portrait_drawn(g: &RenethackGame) -> Result<bool, String> {
+    let hud = &g.ui.as_ref().ok_or("no UI")?.hud;
+    if !hud.portrait_settled() {
+        return Ok(false);
+    }
+    if godot::classes::DisplayServer::singleton().get_name() == "headless" {
+        return Ok(true);
+    }
+    match hud.portrait_drawn_box() {
+        Some(_) => Ok(true),
+        None => Err("the portrait renders nothing of the hero".into()),
+    }
+}
+
+/// The portrait drawing the hero, a picture close on the north wall of
+/// the room nearest the hero (`shot`-wall), then the camera back on the
+/// hero.
 fn close_on_wall(steps: &mut Vec<Step>, shot: &'static str) {
     let wall_shot: &'static str = Box::leak(format!("{shot}-wall").into_boxed_str());
     steps.extend([
+        Step::Wait("the portrait drawing the hero", portrait_drawn),
         Step::Call("the view on a room's north wall", view_north_wall),
         Step::Wait("the camera on the wall", drawn_here),
         Step::Call("where to measure", luma_marks),
