@@ -39,6 +39,15 @@ const REST_COUNT: u32 = 20;
 /// What the engine says when it ends a count at full HP or Pw: a rest
 /// goes on while the other is not full.
 const REST_FULL: [&str; 2] = ["You are in full health.", "You feel full of energy."];
+/// 5.0's refusal of a search with a foe beside the hero
+/// (`cmd_safety_prevention`, by `monster_nearby()`: not one that is
+/// peaceful, has no attacks or is scared): the message catalog's
+/// 2d2cbe062bc2, and 4e9a5544b54b with its hint of the prefix key.
+const SEARCH_REFUSED: &str = "You already found a monster.";
+const SEARCH_REFUSED_HINT: (&str, &str) = (
+    "You already found a monster.  Use '",
+    "' prefix to force another search.",
+);
 /// The highest count a prefix takes (NetHack's LARGEST_INT).
 const MAX_COUNT: u32 = 32767;
 
@@ -132,6 +141,8 @@ pub enum Stop {
     Question,
     /// A hostile came beside the hero.
     Hostile,
+    /// The engine would not rest: a foe beside the hero (`search_refused`).
+    FoeBeside,
     HpLost,
     Hunger,
     /// A new condition (confusion, blindness...).
@@ -170,6 +181,7 @@ impl Stop {
             Stop::Focus => "Stopped: the window lost focus".into(),
             Stop::Question => "Stopped: a question".into(),
             Stop::Hostile => "Stopped: a hostile beside you".into(),
+            Stop::FoeBeside => "No rest with a foe beside you".into(),
             Stop::HpLost => "Stopped: you are hurt".into(),
             Stop::Hunger => "Stopped: hunger changed".into(),
             Stop::Condition => "Stopped: your condition changed".into(),
@@ -256,6 +268,17 @@ pub fn engaged(world: &World, catalog: &Catalog) -> bool {
             .into_iter()
             .any(|t| chebyshev(h, t) <= 1)
     })
+}
+
+/// The engine's refusal of a search with a foe beside the hero (one
+/// without a count, or a count's last): NetHack's words, not a rest's.
+pub fn search_refused(text: &str) -> bool {
+    let (head, tail) = SEARCH_REFUSED_HINT;
+    text == SEARCH_REFUSED
+        || text
+            .strip_prefix(head)
+            .and_then(|t| t.strip_suffix(tail))
+            .is_some_and(|key| !key.is_empty() && key.len() <= 4)
 }
 
 /// Cells with a threat on them.
@@ -696,6 +719,11 @@ impl TickDriver {
         self.stop.take()
     }
 
+    /// Why the last order ended, not yet taken.
+    pub fn stop(&self) -> Option<&Stop> {
+        self.stop.as_ref()
+    }
+
     fn end(&mut self, why: Stop) -> Option<Action> {
         self.interrupt(why);
         None
@@ -951,6 +979,9 @@ impl TickDriver {
         let rest = matches!(active.order, Order::Rest);
         for n in news.iter().filter(|n| n.seq > before.seq) {
             let items = ITEMS_HERE.iter().any(|h| n.text.starts_with(h));
+            if rest && search_refused(&n.text) {
+                return Some(Stop::FoeBeside);
+            }
             let full = rest && REST_FULL.contains(&n.text.as_str());
             if n.urgent || !(n.harmless || (items && at_goal) || full) {
                 return Some(Stop::Message(n.text.clone()));
@@ -1472,10 +1503,41 @@ mod tests {
         d.observe(&w, &cat);
         assert_eq!(d.next(&w, &cat), None);
         assert_eq!(d.take_stop(), Some(Stop::OneAction));
+        // the engine refuses the search beside the foe: no rest, in the
+        // client's words
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
+        say(
+            &mut w,
+            "You already found a monster.  Use 'm' prefix to force another search.",
+        );
+        d.observe(&w, &cat);
+        assert_eq!(d.next(&w, &cat), None);
+        assert_eq!(d.take_stop(), Some(Stop::FoeBeside));
         // holding a key goes on
         d.start(Order::Hold { key: 's' }, &w, &cat).unwrap();
         d.observe(&w, &cat);
         assert_eq!(keys(&d.next(&w, &cat).unwrap()), "s");
+    }
+
+    #[test]
+    fn search_refusal_is_the_catalogs() {
+        // the formats the message catalog has under these ids
+        let catalog = include_str!("../../../i18n/catalog.en.json");
+        let fmt_of = |id: &str| {
+            let line = catalog
+                .lines()
+                .find(|l| l.contains(&format!("\"id\": \"{id}\"")))?;
+            let v: serde_json::Value = serde_json::from_str(line.trim_end_matches(',')).ok()?;
+            v["fmt"].as_str().map(String::from)
+        };
+        let plain = fmt_of("2d2cbe062bc2").expect("2d2cbe062bc2 in the catalog");
+        let hint = fmt_of("4e9a5544b54b").expect("4e9a5544b54b in the catalog");
+        assert!(search_refused(&plain));
+        assert!(search_refused(&hint.replace("%s", "m")));
+        // a wait's refusal is no search's, nor is a search's find
+        let wait = fmt_of("ea201191aaec").expect("ea201191aaec in the catalog");
+        assert!(!search_refused(&wait.replace("%s", "m")));
+        assert!(!search_refused("You find a hidden door."));
     }
 
     #[test]

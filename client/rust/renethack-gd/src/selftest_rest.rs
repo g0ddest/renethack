@@ -4,9 +4,9 @@
 //! a time and ends them itself at full HP ("You are in full health."):
 //! a hundred turns pass in a few seconds, not one a tick. F5 at full says
 //! so and sends nothing. A brown mold in sight across the room lets her
-//! rest (NetHack's count stops for a foe beside her only); a jackal beside
-//! her makes F5 refuse in the client's words, never NetHack's "use the 'm'
-//! prefix".
+//! rest; beside a jackal NetHack refuses the search (`monster_nearby()`,
+//! which leaves a scared foe or one without attacks be), and the client
+//! says so in its own words, never NetHack's "use the 'm' prefix".
 
 use std::sync::Mutex;
 use std::time::Instant;
@@ -39,7 +39,7 @@ pub(super) fn rest() -> Vec<Step> {
         Ok(())
     })];
     steps.extend(start());
-    steps.extend(wish("3 potions of sickness"));
+    steps.extend(wish("4 potions of sickness"));
     steps.extend(drink());
     steps.extend([
         Step::Wait("no hostile in sight", |g| {
@@ -99,8 +99,11 @@ pub(super) fn rest() -> Vec<Step> {
             }
             rested(g, 2)
         }),
-        // a foe beside her: no rest, said in the client's words, not
-        // NetHack's refusal of a counted search beside a monster
+    ]);
+    // a foe beside her, HP short: NetHack refuses the search, the client
+    // says so in its own words (no "use the 'm' prefix")
+    steps.extend(drink());
+    steps.extend([
         Step::Key(ctrl_key('g')),
         Step::Request(
             "what to create",
@@ -113,10 +116,35 @@ pub(super) fn rest() -> Vec<Step> {
             Ok(())
         }),
         Step::Key(KeyInput::plain(Key::F(5))),
-        Step::Wait("F5 beside the jackal: no rest, the client's words", |g| {
-            if logged(g, "'m' prefix") {
-                return Err("NetHack's refusal of a counted search".into());
-            }
+        Step::Wait(
+            "F5 beside the jackal: the engine refuses, the client's words",
+            |g| {
+                if logged(g, "already found a monster") {
+                    return Err("NetHack's refusal of a search left in the log".into());
+                }
+                let ui = g.ui.as_ref().ok_or("no UI")?;
+                if ui.hud.mode_view().1.as_deref() != Some(tr!("rest-foe").as_str()) {
+                    return Ok(false);
+                }
+                let before = SENT.lock().map_err(|e| e.to_string())?.clone();
+                if g.sent.back().cloned() == before {
+                    return Err("F5 sent nothing: the client refused, not the engine".into());
+                }
+                Ok(true)
+            },
+        ),
+        // again at once: NetHack would not repeat itself (Norep), the client
+        // does, sending nothing
+        Step::Call("what was sent so far", |g| {
+            *SENT.lock().map_err(|e| e.to_string())? = g.sent.back().cloned();
+            Ok(())
+        }),
+        Step::Call("the line cleared", |g| {
+            g.stop_note = None;
+            Ok(())
+        }),
+        Step::Key(KeyInput::plain(Key::F(5))),
+        Step::Wait("F5 again beside the jackal: the same words", |g| {
             said(g, &tr!("rest-foe"))
         }),
     ]);

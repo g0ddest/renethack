@@ -341,6 +341,7 @@ fn stop_text(stop: &Stop) -> String {
         Stop::Focus => tr!("stop-focus"),
         Stop::Question => tr!("stop-question"),
         Stop::Hostile => tr!("stop-hostile"),
+        Stop::FoeBeside => tr!("rest-foe"),
         Stop::HpLost => tr!("stop-hurt"),
         Stop::Hunger => tr!("stop-hunger"),
         Stop::Condition => tr!("stop-condition"),
@@ -541,7 +542,7 @@ pub struct RenethackGame {
     /// The one card a self-test stages: other occasions are passed by.
     pub(crate) hint_only: Option<nh_world::Guide>,
     /// Why the last order stopped, shown until then.
-    stop_note: Option<(String, Instant)>,
+    pub(crate) stop_note: Option<(String, Instant)>,
     /// The engine's answer about the cell the player looked at.
     look_tip: Option<LookTip>,
     /// What the way preview was drawn for.
@@ -552,6 +553,8 @@ pub struct RenethackGame {
     pub(crate) order_actions: u64,
     /// Why the last order ended (self-tests).
     pub(crate) last_stop: Option<Stop>,
+    /// When the engine last refused a rest (`moment`).
+    rest_refused: Option<(i64, (i32, i32))>,
     /// A cell the self-test hovers instead of the mouse.
     pub(crate) test_hover: Option<(i32, i32)>,
     /// What the hero uses, from the keys and letters sent (decision 8).
@@ -954,6 +957,7 @@ impl INode for RenethackGame {
             order_log: std::collections::VecDeque::new(),
             order_actions: 0,
             last_stop: None,
+            rest_refused: None,
             test_hover: None,
             uses: nh_world::UseTracker::new(),
             ui_state: UiState::new(KeyProfile::Modern),
@@ -2308,6 +2312,7 @@ impl RenethackGame {
                 if let Some(mode) = self.driver.observe(&self.world, &cat) {
                     self.ui_mut().hud.set_mode(mode == Mode::Combat, true);
                 }
+                self.refused_rest();
                 self.check_hints();
                 // the player's own NetHack options as the game has them
                 // (what `O` set): kept for the next games
@@ -4210,21 +4215,37 @@ impl RenethackGame {
         }
     }
 
+    /// The turn and the hero's cell: no time has passed while it is the
+    /// same.
+    fn moment(&self) -> Option<(i64, (i32, i32))> {
+        Some((self.world.turn()?, self.world.hero()?))
+    }
+
+    /// The engine refused the rest's search, a foe beside the hero: its
+    /// words ("use the 'm' prefix", which a newcomer never asked for) go
+    /// from the log, the client's say why (`stop_text`).
+    fn refused_rest(&mut self) {
+        if self.driver.stop() != Some(&Stop::FoeBeside) {
+            return;
+        }
+        let newest = self.world.log.iter().next_back();
+        if newest.is_some_and(|m| nh_world::search_refused(&m.text)) {
+            self.world.log.retract_newest();
+        }
+        self.rest_refused = self.moment();
+    }
+
     /// Rest until HP and Pw are full (F5), at a command prompt.
     fn rest(&mut self) {
         self.driver.interrupt(Stop::Key);
         if !matches!(self.pending, Some((_, Prompt::Command))) || self.world.getpos {
             return;
         }
-        // no rest with a foe beside the hero: said in the client's words,
-        // not NetHack's refusal of a counted search beside a monster; one
-        // farther off (a mold across the room, a foe held off by Elbereth)
-        // leaves it to NetHack's own count to stop
-        let foe = self
-            .catalog
-            .as_deref()
-            .is_some_and(|cat| nh_world::engaged(&self.world, cat));
-        if foe {
+        // whether a foe beside the hero forbids it is the engine's to say
+        // (one scared or without attacks does not): its refusal comes
+        // back in the client's words (`refused_rest`). It says it once
+        // (Norep): F5 again at the same moment gets the same answer here.
+        if self.rest_refused.is_some() && self.rest_refused == self.moment() {
             self.stop_note = Some((tr!("rest-foe"), Instant::now()));
             return;
         }
