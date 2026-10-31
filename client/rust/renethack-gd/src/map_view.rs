@@ -988,15 +988,16 @@ fn tint_color(tint: Tint, glyph_color: i32) -> Color {
 }
 
 /// How much light a thing on the floor gives, by what it is (its
-/// appearance): none for a boulder, a rock or a stone; the full pool and
-/// glint for what a player stoops for (wands, rings, amulets, gems,
-/// potions, scrolls, books, gold); a faint pool for the rest, the heavy
-/// things.
+/// appearance): none for a boulder (big enough to read without); the full
+/// pool and glint for what a player stoops for (wands, rings, amulets,
+/// gems, potions, scrolls, books, gold); a faint pool for the rest, the
+/// heavy things, and a rock or a gray stone (unlit, a rock was all but
+/// lost on a dark floor, and a gray stone may be a luckstone).
 fn sheen_of(tile: &ObjectTile) -> crate::art::Sheen {
     use crate::art::Sheen;
     match tile.class.as_str() {
         "`" => Sheen::None,
-        "*" if matches!(tile.appearance.as_str(), "rock" | "gray") => Sheen::None,
+        "*" if matches!(tile.appearance.as_str(), "rock" | "gray") => Sheen::Faint,
         "/" | "=" | "\"" | "*" | "!" | "?" | "+" | "$" => Sheen::Full,
         _ => Sheen::Faint,
     }
@@ -10820,7 +10821,7 @@ mod tests {
     /// Every boulder and stone sat in a loot spotlight: what lies on the
     /// floor gives light by what it is.
     #[test]
-    fn a_boulder_gives_no_light_and_a_ring_its_full_glint() {
+    fn a_boulder_gives_no_light_a_stone_a_faint_one_and_a_ring_its_full_glint() {
         use crate::art::Sheen;
         let cat = catalog();
         let sheen = |class: &str, appearance: &str| {
@@ -10832,8 +10833,8 @@ mod tests {
             sheen_of(t)
         };
         assert_eq!(sheen("`", "boulder"), Sheen::None);
-        assert_eq!(sheen("*", "rock"), Sheen::None);
-        assert_eq!(sheen("*", "gray"), Sheen::None);
+        assert_eq!(sheen("*", "rock"), Sheen::Faint);
+        assert_eq!(sheen("*", "gray"), Sheen::Faint);
         assert_eq!(sheen("*", "red"), Sheen::Full);
         assert_eq!(sheen("0", "heavy iron ball"), Sheen::Faint);
         for class in ["/", "=", "\"", "!", "?"] {
