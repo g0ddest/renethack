@@ -219,7 +219,11 @@ vec4 ground_blur(vec2 p) {
 	vec2 middle = floor(p + 0.5);
 	ivec2 at = clamp(ivec2(middle), ivec2(0), ivec2(FIELD) - 1);
 	float core = 1.0 - smoothstep(0.15, 0.45, length(p - middle));
-	return f + texelFetch(ground_tex, at, 0) * core * 0.35;
+	// and wherever the cells round a point are all of one kind (between
+	// two cells of a line of water, the middle of a field) that kind,
+	// whatever the noise: a stream a cell wide never breaks into puddles
+	vec4 whole = smoothstep(vec4(0.75), vec4(0.95), near);
+	return f + texelFetch(ground_tex, at, 0) * core * 0.35 + whole;
 }
 
 vec4 ground_field(vec2 p) {

@@ -417,6 +417,155 @@ pub fn lay_out_features(
     Ok((cx, cy))
 }
 
+/// What a cell of a liquids scene (`LIQUIDS`) should show at a point of
+/// it: its kind, and where in the cell to look (its own metres from the
+/// middle; off it where something stands there).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Shows {
+    Floor,
+    Water,
+    Lava,
+    Ice,
+    /// A bubble's floor on the Plane of Water.
+    Bubble,
+    /// The deep round it.
+    Deep,
+}
+
+/// A cell of a liquids scene, where in it to look (its own metres from
+/// its middle) and what it should show there.
+pub type LiquidCheck = ((i32, i32), (f32, f32), Shows);
+
+/// A scene of every liquid and feature a player meets on water, lava and
+/// ice, for the `features` self-test (`lay_out_liquids`): `.` a lit
+/// floor, `,` a dark one (what lies by it only remembered), `P` a pool,
+/// `M` a moat, `L` lava, `I` ice, `F` a fountain, `K` a sink, `d` an open
+/// drawbridge over the moat, `u` a raised one, `B` a boulder over a pool
+/// (in a line of them), `T` a bear trap on a lone cell of ice, `@` the
+/// hero wading in a pool (in a line of them); on the Plane of
+/// Water `A` air and `W` its water. Each kind alone, two side by side, a
+/// line, a line down and a field: a pool, lava and ice, each well apart
+/// (lava's light reddened the pools beside it); then the features, a
+/// swamp's pattern, and a field of pools seen in part.
+pub const LIQUIDS: [&str; 12] = [
+    "..........................................................................",
+    ".P..PP..PPPP..P..PPP.......L..LL..LLLL..L..LLL.......I..II..IIII..I..III..",
+    "..............P..PPP....................L..LLL....................I..III..",
+    "..............P..PPP....................L..LLL....................I..III..",
+    "..........................................................................",
+    "..........................................................................",
+    ".F..K..MMdMM.PBP.T.P@P..,,,,,,............................................",
+    "........................PPPP,,............................................",
+    ".......MMuMM..P.P.P.....PPPP,,............................................",
+    "...............P.P......,,,,,,............................................",
+    "..............P.P.P.....,,,,,,............................................",
+    "..........................................................................",
+];
+
+/// The Plane of Water's bubbles: one cell of air, two, a field.
+pub const BUBBLES: [&str; 5] = [
+    "WWWWWWWWWWWWWWW",
+    "WAWWAAWWAAAWWWW",
+    "WWWWWWWWAAAWWWW",
+    "WWWWWWWWAAAWWWW",
+    "WWWWWWWWWWWWWWW",
+];
+
+/// Where `LIQUIDS` and `BUBBLES` lie on the map.
+pub const LIQUIDS_AT: (i32, i32) = (2, 1);
+
+/// Lay out `rows` (`LIQUIDS`' legend) in place of the level, the hero on
+/// the `@` (or, with none, on the cell `hero`), the view on `view` (by
+/// column and row); what each cell should show at the points the
+/// self-test looks at, on the map.
+pub fn lay_out_liquids(
+    world: &mut World,
+    cat: &Catalog,
+    rows: &[&str],
+    hero: (i32, i32),
+    view: (i32, i32),
+) -> Result<Vec<LiquidCheck>, String> {
+    let map = &mut world.map;
+    map.clear();
+    let (ox, oy) = LIQUIDS_AT;
+    let floor = cmap(cat, "S_room")?;
+    let pool = cmap(cat, "S_pool")?;
+    let ice = cmap(cat, "S_ice")?;
+    let mut checks = Vec::new();
+    let mut hero_at = (ox + hero.0, oy + hero.1);
+    for (r, line) in rows.iter().enumerate() {
+        for (c, ch) in line.chars().enumerate() {
+            let (x, y) = (ox + c as i32, oy + r as i32);
+            let mut check = |shows: Shows, off: (f32, f32)| checks.push(((x, y), off, shows));
+            match ch {
+                '.' => map.print(x, y, &floor, None),
+                ',' => map.print(x, y, &cmap(cat, "S_darkroom")?, None),
+                'P' => {
+                    map.print(x, y, &pool, None);
+                    check(Shows::Water, (0.0, 0.0));
+                }
+                'M' => {
+                    map.print(x, y, &cmap(cat, "S_water")?, None);
+                    check(Shows::Water, (0.0, 0.0));
+                }
+                'L' => {
+                    map.print(x, y, &cmap(cat, "S_lava")?, None);
+                    check(Shows::Lava, (0.0, 0.0));
+                }
+                'I' => {
+                    map.print(x, y, &ice, None);
+                    check(Shows::Ice, (0.0, 0.0));
+                }
+                'F' => {
+                    map.print(x, y, &cmap(cat, "S_fountain")?, None);
+                    // its water, beside the spout in its middle
+                    check(Shows::Water, (0.24, 0.1));
+                }
+                'K' => map.print(x, y, &cmap(cat, "S_sink")?, None),
+                'd' => map.print(x, y, &cmap(cat, "S_vodbridge")?, None),
+                'u' => map.print(x, y, &cmap(cat, "S_vcdbridge")?, None),
+                'B' => {
+                    let boulder = object(cat, "`", "boulder", false)?;
+                    map.print(x, y, &boulder, Some(&pool));
+                    check(Shows::Water, (0.45, 0.0));
+                }
+                'T' => {
+                    map.print(x, y, &cmap(cat, "S_bear_trap")?, Some(&ice));
+                    check(Shows::Ice, (0.0, 0.3));
+                }
+                '@' => {
+                    map.print(x, y, &pool, None);
+                    hero_at = (x, y);
+                    check(Shows::Water, (0.45, 0.0));
+                }
+                'A' => {
+                    map.print(x, y, &cmap(cat, "S_air")?, None);
+                    check(Shows::Bubble, (0.0, 0.0));
+                }
+                'W' => {
+                    map.print(x, y, &cmap(cat, "S_water")?, None);
+                    check(Shows::Deep, (0.0, 0.0));
+                }
+                _ => {}
+            }
+        }
+    }
+    // the floor between them, checked where it stands alone between two
+    // kinds (a cell of it beside a lone pool and a pair)
+    for col in [2, 28, 54] {
+        if rows.get(1).and_then(|r| r.chars().nth(col)) == Some('.') {
+            checks.push(((ox + col as i32, oy + 1), (0.0, 0.0), Shows::Floor));
+        }
+    }
+    let under = map
+        .cell(hero_at.0, hero_at.1)
+        .and_then(|c| c.terrain.clone());
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(hero_at.0, hero_at.1, &hero, under.as_ref());
+    world.view_center = Some((ox + view.0, oy + view.1));
+    Ok(checks)
+}
+
 /// The monster of `lay_out_one` a cell west of where it stood: it walks
 /// there (a step stopped midway shows its legs under it).
 pub fn step_one(world: &mut World, cat: &Catalog, name: &str) -> Result<(), String> {

@@ -1357,10 +1357,25 @@ fn ground_of(t: Terrain) -> Ground {
 /// it).
 fn cell_ground(cell: &Cell, catalog: &Catalog) -> Ground {
     match cell_terrain(cell, catalog) {
+        Some(Terrain::Trap) => ground_of(under_trap(cell, catalog).map_or(Terrain::Trap, |u| u.0)),
         Some(t) => ground_of(t),
         None if cell.entity().is_some() => Ground::Land,
         None => Ground::None,
     }
+}
+
+/// What a trap lies on when it is not the floor (a bear trap on ice): the
+/// terrain the engine draws behind it, its symbol and glyph. The trap's
+/// own glyph hid the ice under it.
+fn under_trap<'a>(cell: &'a Cell, catalog: &'a Catalog) -> Option<(Terrain, &'a str, &'a Glyph)> {
+    let bk = cell.bk.as_ref().filter(|b| b.kind == GlyphKind::Cmap)?;
+    let sym = cmap_sym(bk, catalog)?;
+    let t = terrain_of(sym);
+    matches!(
+        t,
+        Terrain::Ice | Terrain::Pool | Terrain::Water | Terrain::Lava
+    )
+    .then_some((t, sym, bk))
 }
 
 /// Where another ground lies beside this cell's own (`own`), its surface
@@ -3068,7 +3083,28 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
             if terrain == Terrain::ClosedDoor && occupied(cell) {
                 terrain = Terrain::OpenDoor;
             }
-            terrain_look(&mut look, terrain, sym, t, &near, ctx);
+            match under_trap(cell, catalog).filter(|_| terrain == Terrain::Trap) {
+                // the trap over the ice (or the water) it lies on: the ice
+                // drawn as it is, the trap on it, its letter over them
+                Some((base, base_sym, bk)) => {
+                    terrain_look(&mut look, base, base_sym, bk, &near, ctx);
+                    look.opening = Opening::of(sym);
+                    trap_look(&mut look, sym, nh_color(t.color), ctx);
+                    if let Some(ch) = glyph_char(t) {
+                        look.letter(
+                            ch,
+                            lighter(nh_color(t.color), 0.25),
+                            0.45,
+                            PX_FEATURE,
+                            false,
+                        );
+                        if let Some(l) = look.letters.last_mut() {
+                            l.hint = true;
+                        }
+                    }
+                }
+                None => terrain_look(&mut look, terrain, sym, t, &near, ctx),
+            }
             if terrain == Terrain::Stone && cell.entity().is_none() {
                 rock_look(&mut look, &near, ctx);
             }

@@ -29,8 +29,8 @@ varying vec3 wpos;
 // the water about a point as the bubble's edge reads it: bilinear between
 // the cells' middles, smoothed over two cells and a half where water and
 // air each hold a share about (a bubble of a few cells reads round, not
-// as their stepped cross), an air cell's middle always its own (the same
-// in the bubble's floor and its skin)
+// as their stepped cross), a cell's middle always its own (the same in
+// the bubble's floor and its skin)
 float bubble_water(vec2 p) {
 	vec2 uv = (p + 0.5) / FIELD;
 	float near = texture(ground_tex, uv).r;
@@ -44,10 +44,14 @@ float bubble_water(vec2 p) {
 	// (never eating far into the air: a bubble a cell or two across
 	// stays whole)
 	float f = min(mix(near, wide, smoothstep(0.2, 0.35, min(wide, 1.0 - wide))), near + 0.3);
+	// every cell's middle its own, air or water, and wherever the cells
+	// round a point are all of one kind that kind (the bubble's edge
+	// never reaching the middle of a cell of water)
 	vec2 middle = floor(p + 0.5);
 	ivec2 at = clamp(ivec2(middle), ivec2(0), ivec2(FIELD) - 1);
-	float air = 1.0 - texelFetch(ground_tex, at, 0).r;
-	return f - air * (1.0 - smoothstep(0.15, 0.45, length(p - middle))) * 0.35;
+	float own = texelFetch(ground_tex, at, 0).r;
+	f += (own * 2.0 - 1.0) * (1.0 - smoothstep(0.15, 0.45, length(p - middle))) * 0.35;
+	return f + smoothstep(0.75, 0.95, near) - smoothstep(0.75, 0.95, 1.0 - near);
 }
 
 void vertex() {
