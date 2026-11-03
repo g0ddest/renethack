@@ -9,7 +9,9 @@
 //! chosen in the settings `#` opens it, and the HUD's Commands button
 //! by the button (a right click cancels). Under a pad: LT's "Commands",
 //! the stick at the common ones, A, at #pray, A: the prayer's question;
-//! B cancels.
+//! B cancels. A Wizard's: the spells' wedge before any `+` or `Z` is
+//! `Z` itself; after it, the ring of the spells known, a pick casts
+//! (Z, the spell, its direction asked with its aim shown).
 
 use std::sync::Mutex;
 use std::time::Instant;
@@ -19,7 +21,7 @@ use godot::global::{JoyAxis, Key as GKey, MouseButton};
 use godot::prelude::*;
 use nh_world::Prompt;
 
-use super::{PadEv, Step, command, quit, radial, start, tap};
+use super::{PadEv, Step, command, quit, radial, start_as, tap};
 use crate::command_menu::Section;
 use crate::command_wheel::{MOST, Ring, WheelItem};
 use crate::game::RenethackGame;
@@ -107,7 +109,7 @@ fn sections_at_mouse(g: &RenethackGame) -> Result<bool, String> {
     let want: Vec<String> = crate::command_wheel::RING_SECTIONS
         .iter()
         .map(|s| crate::i18n::tr(s.title_id()))
-        .chain(std::iter::once(tr!("wheel-all")))
+        .chain([tr!("spells-title"), tr!("wheel-all")])
         .collect();
     if ring != Ring::Sections || words != want || hover.is_some() || !held {
         return Err(format!(
@@ -168,7 +170,7 @@ pub(super) fn pad_save() -> Vec<Step> {
     steps.push(Step::Wait("LT's Commands: the wheel", |g| {
         on_ring(g, Ring::Sections, false)
     }));
-    steps.extend(aim(4, 6));
+    steps.extend(aim(4, 7));
     steps.push(Step::Wait("the stick at the game's", |g| pointed(g, 4)));
     steps.push(tap(PadButton::A));
     steps.push(Step::Wait("A: the game's ring", |g| {
@@ -180,8 +182,61 @@ pub(super) fn pad_save() -> Vec<Step> {
     steps
 }
 
+/// A Wizard: Force bolt known from the start.
+fn wizard() -> crate::ui_events::CharacterChoice {
+    crate::ui_events::CharacterChoice {
+        name: "Hero".into(),
+        role: "wizard".into(),
+        race: "human".into(),
+        gender: "female".into(),
+        align: "neutral".into(),
+        profile: nh_world::KeyProfile::Classic,
+    }
+}
+
+/// The engine asks for a direction (a spell being cast).
+fn asked_direction(g: &RenethackGame) -> bool {
+    matches!(
+        g.pending,
+        Some((
+            _,
+            Prompt::FreeKey {
+                directions: true,
+                ..
+            }
+        ))
+    )
+}
+
+/// The second spell of the spells' menu the engine waits on.
+fn second_spell(g: &RenethackGame) -> Result<String, String> {
+    let Some((_, Prompt::Menu { title, items, .. })) = g.pending.as_ref() else {
+        return Err("no spells' menu".into());
+    };
+    let book = crate::spells::spellbook(title.as_deref(), items).ok_or("no spellbook")?;
+    Ok(book.spells.get(1).ok_or("one spell known")?.name.clone())
+}
+
+/// The wheel tapped open, the arrows to its spells' wedge, Enter.
+fn to_spells() -> Vec<Step> {
+    let mut steps = vec![
+        Step::Wait("the player's turn", back),
+        Step::Call("Tab tapped", |_| {
+            key(GKey::TAB, true);
+            key(GKey::TAB, false);
+            Ok(())
+        }),
+        Step::Request("the command request", |p| *p == Prompt::ExtCmd),
+        Step::Wait("the wheel open", |g| on_ring(g, Ring::Sections, false)),
+    ];
+    steps.extend((0..6).map(|_| Step::Press(GKey::RIGHT, '\0', false)));
+    steps.push(Step::Wait("the spells' wedge", |g| pointed(g, 5)));
+    steps.push(Step::Press(GKey::ENTER, '\0', false));
+    steps
+}
+
 pub(super) fn command_wheel() -> Vec<Step> {
-    let mut steps = start();
+    let mut steps = start_as(wizard());
     steps.extend([
         Step::Wait("the player's turn", back),
         Step::Call("the mouse over the map", |g| mouse_to(g, spot(g)?)),
@@ -221,10 +276,10 @@ pub(super) fn command_wheel() -> Vec<Step> {
         }),
         Step::Request("the command request", |p| *p == Prompt::ExtCmd),
         Step::Wait("the wheel at the mouse, held", sections_at_mouse),
-        Step::Call("the mouse on \"All commands…\"", |g| mouse_on(g, 5)),
-        Step::Wait("\"All commands…\" pointed at", |g| pointed(g, 5)),
+        Step::Call("the mouse on \"All commands…\"", |g| mouse_on(g, 6)),
+        Step::Wait("\"All commands…\" pointed at", |g| pointed(g, 6)),
         Step::Call("the middle button let go", |g| {
-            let r = ui(g)?.dialogs.wheel_wedge_rect(5).ok_or("no wedge")?;
+            let r = ui(g)?.dialogs.wheel_wedge_rect(6).ok_or("no wedge")?;
             button(g, MouseButton::MIDDLE, false, r.center())
         }),
         Step::Wait("the list for the same request, every section", |g| {
@@ -306,6 +361,42 @@ pub(super) fn command_wheel() -> Vec<Step> {
         Step::Press(GKey::ESCAPE, '\0', false),
         Step::Request("Esc: a command again", command),
         Step::Wait("no wheel", back),
+    ]);
+    // the spells: none listed yet, Z's own menu; then the ring, a cast
+    steps.extend(to_spells());
+    steps.extend([
+        Step::Request(
+            "no spell listed yet: Z's menu",
+            |p| matches!(p, Prompt::Menu { title: Some(t), .. } if t.contains("spell")),
+        ),
+        Step::Press(GKey::ESCAPE, '\0', false),
+        Step::Request("a command after Z's menu", command),
+    ]);
+    steps.extend(to_spells());
+    steps.extend([
+        Step::Wait("the spells' ring: Force bolt", |g| {
+            let Some((ring, words, _, _, _)) = wheel(g)? else {
+                return Ok(false);
+            };
+            let want = crate::spells_view::spell_name("force bolt");
+            if ring != Ring::Spells || words.first() != Some(&want) {
+                return Err(format!("the spells' ring: {ring:?} {words:?}"));
+            }
+            Ok(true)
+        }),
+        Step::Press(GKey::RIGHT, '\0', false),
+        Step::Wait("Force bolt pointed at", |g| pointed(g, 0)),
+        Step::Shot("wheel-spells"),
+        Step::Press(GKey::ENTER, '\0', false),
+        Step::Wait(
+            "cast: Z, the spell, its direction asked, its aim shown",
+            |g| Ok(asked_direction(g) && ui(g)?.aim.shown()),
+        ),
+        Step::Shot("wheel-spell-aim"),
+        Step::Press(GKey::ESCAPE, '\0', false),
+        Step::Request("no direction: a command again", command),
+    ]);
+    steps.extend([
         // the settings' wheel: # opens it, and so does the Commands button
         Step::Call("the wheel chosen in the settings", |g| {
             let mut s = g.settings.clone();
@@ -357,7 +448,7 @@ pub(super) fn command_wheel() -> Vec<Step> {
     steps.push(Step::Wait("LT's Commands: the wheel in the middle", |g| {
         on_ring(g, Ring::Sections, false)
     }));
-    steps.extend(aim(0, 6));
+    steps.extend(aim(0, 7));
     steps.extend([
         Step::Wait("the stick at the common ones", |g| pointed(g, 0)),
         Step::Shot("wheel-pad"),
@@ -374,6 +465,30 @@ pub(super) fn command_wheel() -> Vec<Step> {
         ),
         tap(PadButton::B),
         Step::Request("B: not praying", command),
+    ]);
+    // the spells' panel under a pad: ↓ the second spell's card, Y puts it
+    // on the bar
+    steps.extend([
+        super::key('Z'),
+        Step::Wait("Z's panel, a pad's", |g| {
+            Ok(g.pad_ctx() == crate::gamepad::PadCtx::Spells
+                && ui(g)?.dialogs.spells_card().is_some())
+        }),
+        tap(PadButton::Down),
+        Step::Wait("↓: the second spell's card", |g| {
+            let second = second_spell(g)?;
+            Ok(ui(g)?.dialogs.spells_card() == Some(second))
+        }),
+        Step::Shot("wheel-pad-spells"),
+        tap(PadButton::Y),
+        Step::Wait("Y: the second spell on the bar", |g| {
+            let want = nh_world::SlotBinding::Spell {
+                name: second_spell(g)?,
+            };
+            Ok((0..nh_world::BAR_SLOTS).any(|i| g.ui_state.bar.get(i) == Some(&want)))
+        }),
+        tap(PadButton::B),
+        Step::Request("B: a command again", command),
     ]);
     // B cancels
     steps.extend(radial(7));

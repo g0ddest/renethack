@@ -6,6 +6,10 @@
 //! stays reachable as NetHack has it: through a ring, a "More…" or the
 //! list.
 //!
+//! The first ring has the hero's spells too, as the last `+` or `Z`
+//! listed them (none known yet: `Z` itself): a pick casts the spell as
+//! the action bar does, its aim asked after.
+//!
 //! It opens held (Tab or the middle mouse button pressed at the command
 //! prompt: letting go on a wedge picks it, in the middle cancels; a tap
 //! leaves it open) or open (`#` or the Commands button with the wheel
@@ -25,6 +29,8 @@ use crate::command_menu::{self, Section};
 use crate::dialogs::{PaletteCmd, palette_row_words};
 use crate::i18n;
 use crate::icons::{self, Glyph};
+use crate::spells::Spell;
+use crate::spells_view;
 use crate::theme::{self, Face};
 use crate::tr;
 
@@ -66,6 +72,12 @@ pub enum WheelItem {
     Cmd(usize),
     /// The list, this section alone open.
     More(Section),
+    /// The spells' ring.
+    Spells,
+    /// A spell (an index into the spells).
+    Spell(usize),
+    /// `Z`'s own menu, every spell.
+    MoreSpells,
 }
 
 /// The ring shown.
@@ -73,6 +85,7 @@ pub enum WheelItem {
 pub enum Ring {
     Sections,
     Of(Section),
+    Spells,
 }
 
 /// What a pick did.
@@ -84,18 +97,33 @@ pub enum WheelAct {
     Run(String),
     /// The list instead, with one section alone open, or all.
     List(Option<Section>),
+    /// Cast this spell (its English name), as the action bar does.
+    Cast(String),
     Cancel,
 }
 
-/// The wedges of `ring`: the sections and "All commands…", or a
-/// section's commands in the menu's order (#pay first while goods are
-/// owed), the last wedge "More…" when they do not all fit.
-pub fn ring_items(ring: Ring, cmds: &[PaletteCmd], owes: bool, pad: bool) -> Vec<WheelItem> {
+/// The wedges of `ring`: the sections, the spells and "All commands…";
+/// a section's commands in the menu's order (#pay first while goods are
+/// owed), the last wedge "More…" when they do not all fit; the spells
+/// (`spells` of them) in their letters' order, `Z`'s menu last when they
+/// do not all fit.
+pub fn ring_items(
+    ring: Ring,
+    cmds: &[PaletteCmd],
+    spells: usize,
+    owes: bool,
+    pad: bool,
+) -> Vec<WheelItem> {
     match ring {
         Ring::Sections => RING_SECTIONS
             .iter()
             .map(|&s| WheelItem::Section(s))
-            .chain(std::iter::once(WheelItem::All))
+            .chain([WheelItem::Spells, WheelItem::All])
+            .collect(),
+        Ring::Spells if spells <= MOST => (0..spells).map(WheelItem::Spell).collect(),
+        Ring::Spells => (0..MOST - 1)
+            .map(WheelItem::Spell)
+            .chain(std::iter::once(WheelItem::MoreSpells))
             .collect(),
         Ring::Of(s) => {
             let laid = command_menu::sections(cmds, owes, pad);
@@ -200,6 +228,8 @@ pub struct CommandWheel {
     title: Gd<Label>,
     hint: Gd<Label>,
     cmds: Vec<PaletteCmd>,
+    /// The spells the hero knows, as the last `+` or `Z` listed them.
+    spells: Vec<Spell>,
     owes: bool,
     pad: bool,
     ring: Ring,
@@ -213,18 +243,34 @@ pub struct CommandWheel {
     scale: f32,
 }
 
+/// What a wheel offers: the commands, the spells known, whether goods
+/// are owed (#pay first) and a pad plays (no moves), and whether a key
+/// or button holds it.
+pub struct WheelOffer {
+    pub cmds: Vec<PaletteCmd>,
+    pub spells: Vec<Spell>,
+    pub owes: bool,
+    pub pad: bool,
+    pub held: bool,
+}
+
 impl CommandWheel {
     /// The wheel in `root` (the ring's square, `RING` wide, its middle at
-    /// `centre` on the canvas), on the sections' ring.
+    /// `centre` on the canvas, `scale` of that size), on the sections'
+    /// ring.
     pub fn new(
         mut root: Gd<Control>,
         centre: Vector2,
         scale: f32,
-        cmds: Vec<PaletteCmd>,
-        owes: bool,
-        pad: bool,
-        held: bool,
+        offer: WheelOffer,
     ) -> CommandWheel {
+        let WheelOffer {
+            cmds,
+            spells,
+            owes,
+            pad,
+            held,
+        } = offer;
         root.set_mouse_filter(MouseFilter::IGNORE);
         let mut ring = ColorRect::new_alloc();
         ring.set_mouse_filter(MouseFilter::IGNORE);
@@ -291,6 +337,7 @@ impl CommandWheel {
             title,
             hint,
             cmds,
+            spells,
             owes,
             pad,
             ring: Ring::Sections,
@@ -308,7 +355,7 @@ impl CommandWheel {
     /// `ring` on the wheel, nothing pointed at.
     fn show_ring(&mut self, ring: Ring) {
         self.ring = ring;
-        self.items = ring_items(ring, &self.cmds, self.owes, self.pad);
+        self.items = ring_items(ring, &self.cmds, self.spells.len(), self.owes, self.pad);
         let n = self.items.len().max(1);
         if let Some(m) = self.material.as_mut() {
             m.set_shader_parameter("count", &(n as i32).to_variant());
@@ -323,13 +370,25 @@ impl CommandWheel {
             let a = i as f32 * std::f32::consts::TAU / n as f32;
             let c = Vector2::new(RING / 2.0, RING / 2.0) + Vector2::new(a.sin(), -a.cos()) * mid;
             cell.col.set_position(c - CELL * 0.5);
-            let (glyph, word) = match *item {
-                WheelItem::Section(s) => (section_glyph(s), i18n::tr(s.title_id())),
-                WheelItem::All => (Glyph::List, tr!("wheel-all")),
-                WheelItem::More(_) => (Glyph::List, tr!("wheel-more")),
-                WheelItem::Cmd(c) => (cmd_glyph(&self.cmds[c].name), short_name(&self.cmds[c])),
+            let (icon, word) = match *item {
+                WheelItem::Section(s) => (icons::emblem(section_glyph(s)), i18n::tr(s.title_id())),
+                WheelItem::All => (icons::emblem(Glyph::List), tr!("wheel-all")),
+                WheelItem::More(_) | WheelItem::MoreSpells => {
+                    (icons::emblem(Glyph::List), tr!("wheel-more"))
+                }
+                WheelItem::Spells => (icons::emblem(Glyph::Book), tr!("spells-title")),
+                WheelItem::Spell(i) => {
+                    let s = &self.spells[i];
+                    let icon = icons::spell_icon(&s.name)
+                        .unwrap_or_else(|| icons::emblem(spells_view::school_glyph(s.school)));
+                    (icon, spells_view::spell_name(&s.name))
+                }
+                WheelItem::Cmd(c) => (
+                    icons::emblem(cmd_glyph(&self.cmds[c].name)),
+                    short_name(&self.cmds[c]),
+                ),
             };
-            cell.icon.set_texture(&icons::emblem(glyph));
+            cell.icon.set_texture(&icon);
             cell.word.set_text(&word);
             cell.col.set_visible(true);
         }
@@ -360,7 +419,22 @@ impl CommandWheel {
             None => match self.ring {
                 Ring::Sections => (tr!("palette-title"), tr!("wheel-hint")),
                 Ring::Of(s) => (i18n::tr(s.title_id()), tr!("wheel-hint")),
+                Ring::Spells => (tr!("spells-title"), tr!("wheel-hint")),
             },
+            Some(WheelItem::Spells) => (tr!("spells-title"), tr!("wheel-spells-hint")),
+            Some(WheelItem::MoreSpells) => (tr!("wheel-more"), tr!("spells-cast-title")),
+            Some(WheelItem::Spell(i)) => {
+                let s = &self.spells[*i];
+                let hint = tr!(
+                    "wheel-spell-hint",
+                    cost = crate::spells::cost(s.level),
+                    fail = s.fail as i64
+                );
+                let what = spells_view::description(&s.name)
+                    .map(|d| format!("{d} · {hint}"))
+                    .unwrap_or(hint);
+                (spells_view::spell_name(&s.name), what)
+            }
             Some(WheelItem::Section(s)) => (i18n::tr(s.title_id()), tr!("wheel-section-hint")),
             Some(WheelItem::All) => (tr!("wheel-all"), tr!("wheel-all-hint")),
             Some(WheelItem::More(s)) => (tr!("wheel-more"), i18n::tr(s.title_id())),
@@ -435,6 +509,16 @@ impl CommandWheel {
             Some(WheelItem::All) => WheelAct::List(None),
             Some(WheelItem::More(s)) => WheelAct::List(Some(s)),
             Some(WheelItem::Cmd(c)) => WheelAct::Run(self.cmds[c].name.clone()),
+            // none listed yet this game: `Z` itself (its own answer when
+            // the hero knows none)
+            Some(WheelItem::Spells) if self.spells.is_empty() => WheelAct::Run("cast".into()),
+            Some(WheelItem::Spells) => {
+                self.held = false;
+                self.show_ring(Ring::Spells);
+                WheelAct::Stay
+            }
+            Some(WheelItem::Spell(i)) => WheelAct::Cast(self.spells[i].name.clone()),
+            Some(WheelItem::MoreSpells) => WheelAct::Run("cast".into()),
         }
     }
 
@@ -455,7 +539,7 @@ impl CommandWheel {
     pub fn back(&mut self) -> WheelAct {
         match self.ring {
             Ring::Sections => WheelAct::Cancel,
-            Ring::Of(_) => {
+            Ring::Of(_) | Ring::Spells => {
                 self.show_ring(Ring::Sections);
                 WheelAct::Stay
             }
@@ -540,10 +624,19 @@ mod tests {
     #[test]
     fn the_first_ring_is_the_sections_and_the_list() {
         let c = cmds(&["pray", "save"]);
-        let ring = ring_items(Ring::Sections, &c, false, false);
-        assert_eq!(ring.len(), 6);
+        let ring = ring_items(Ring::Sections, &c, 0, false, false);
+        assert_eq!(ring.len(), 7);
         assert_eq!(ring[0], WheelItem::Section(Section::Common));
-        assert_eq!(ring[5], WheelItem::All);
+        assert_eq!(ring[5], WheelItem::Spells);
+        assert_eq!(ring[6], WheelItem::All);
+        // the spells: all of a few, eleven and Z's menu of many
+        assert_eq!(
+            ring_items(Ring::Spells, &c, 3, false, false),
+            [0, 1, 2].map(WheelItem::Spell)
+        );
+        let many = ring_items(Ring::Spells, &c, 20, false, false);
+        assert_eq!(many.len(), MOST);
+        assert_eq!(many[MOST - 1], WheelItem::MoreSpells);
         assert!(!ring.contains(&WheelItem::Section(Section::Moves)));
     }
 
@@ -554,15 +647,15 @@ mod tests {
             "quaff", "read", "wear", "takeoff", "wield", "apply",
         ];
         let c = cmds(&names);
-        let ring = ring_items(Ring::Of(Section::Common), &c, false, false);
+        let ring = ring_items(Ring::Of(Section::Common), &c, 0, false, false);
         assert_eq!(ring.len(), MOST);
         assert_eq!(ring[MOST - 1], WheelItem::More(Section::Common));
         assert_eq!(ring[0], WheelItem::Cmd(0));
-        let owed = ring_items(Ring::Of(Section::Common), &c, true, false);
+        let owed = ring_items(Ring::Of(Section::Common), &c, 0, true, false);
         assert_eq!(owed[0], WheelItem::Cmd(2));
         // a short one: all of it, no More
         let c = cmds(&["pray", "chat", "pay"]);
-        let ring = ring_items(Ring::Of(Section::Common), &c, false, false);
+        let ring = ring_items(Ring::Of(Section::Common), &c, 0, false, false);
         assert_eq!(ring, [0, 1, 2].map(WheelItem::Cmd));
     }
 

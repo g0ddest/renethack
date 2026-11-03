@@ -2083,6 +2083,9 @@ pub struct Dialogs {
     wheel_next: Option<WheelNext>,
     /// The list opening next has only this section open (a "More…").
     palette_section: Option<Section>,
+    /// The spells the hero knows, as the last `+` or `Z` listed them (the
+    /// wheel's spells' ring).
+    known_spells: Vec<spells::Spell>,
     /// The hero rendered in their gear (the inventory's doll): the
     /// character sheet's portrait.
     portrait: Option<Gd<Texture2D>>,
@@ -2214,6 +2217,7 @@ impl Dialogs {
             wheel_style: false,
             wheel_next: None,
             palette_section: None,
+            known_spells: Vec::new(),
             portrait: None,
             sheet: None,
             opening_own: None,
@@ -3054,7 +3058,15 @@ impl Dialogs {
         self.root.add_child(&panel);
         let held = next.held && !next.let_go;
         // nothing pointed at: the mouse is at its middle, or it moves next
-        let wheel = CommandWheel::new(root, centre, k, cmds, self.owes, self.pad, held);
+        let spells = self.known_spells.clone();
+        let offer = command_wheel::WheelOffer {
+            cmds,
+            spells,
+            owes: self.owes,
+            pad: self.pad,
+            held,
+        };
+        let wheel = CommandWheel::new(root, centre, k, offer);
         (Kind::Wheel(Box::new(wheel)), shade, panel)
     }
 
@@ -3068,6 +3080,11 @@ impl Dialogs {
             WheelAct::List(section) => {
                 self.wheel_to_list(section);
                 None
+            }
+            // `#` answered with nothing; the spell cast at the prompt next
+            WheelAct::Cast(name) => {
+                self.follow = Some(Follow::Cast(name));
+                Some(Reply::ExtCmd(None))
             }
         }
     }
@@ -3110,6 +3127,12 @@ impl Dialogs {
             let_go: false,
             since: std::time::Instant::now(),
         });
+    }
+
+    /// A new game: no spell known yet (the wheel's ring fills at the
+    /// first `+` or `Z`).
+    pub fn forget_spells(&mut self) {
+        self.known_spells.clear();
     }
 
     /// `#` opens the wheel rather than the list (the settings' choice).
@@ -4965,7 +4988,11 @@ impl Dialogs {
                 self.opening_cursor = (english_title == Some(THERE_MENU))
                     .then(|| texts.iter().position(|t| *t == LOOK_HERE))
                     .flatten();
-                let opened = match (spells::spellbook(english_title, english), skilled) {
+                let book = spells::spellbook(english_title, english);
+                if let Some(b) = &book {
+                    self.known_spells = b.spells.clone();
+                }
+                let opened = match (book, skilled) {
                     (Some(book), _) => Some(self.open_spells(req, *how, english, book)),
                     (None, Some(sk)) => {
                         let own = ext_key(catalog, "enhance");
@@ -5134,6 +5161,7 @@ impl Dialogs {
                     .map(|l| (l.text.clone(), l.attr & 0x0f != 0))
                     .collect();
                 if let Some((items, book)) = spells::shown(english_title, &headed) {
+                    self.known_spells = book.spells.clone();
                     // `+` with a single spell known: a menu of no choice,
                     // the spells' panel all the same (a pick casts it)
                     self.open_spells(req, PickHow::One, &items, book)

@@ -734,6 +734,8 @@ wheel-more = More…
 wheel-hint = Point at one · let go or click: pick · in the middle: cancel
 wheel-section-hint = Its commands
 wheel-all-hint = The list, every section
+wheel-spells-hint = Cast a spell you know
+wheel-spell-hint = { $cost } energy · { $fail } % fail
 # the command wheel: a command's word on a wedge, by its name; "-": none
 # (its description shows)
 wheel-cmd = { $cmd ->
@@ -1092,6 +1094,8 @@ hint-section = Section
 hint-answer = Answer
 hint-run = Run
 hint-fold = Fold
+hint-cast = Cast
+hint-to-bar = To the bar
 radial-title = Actions
 radial-hint = Point a stick at one · let go in the middle: nothing
 radial-let-go = Let go of { $lt } to do it

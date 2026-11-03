@@ -3782,6 +3782,9 @@ impl RenethackGame {
         }
         if ui.dialogs.is_open() {
             return match ui.dialogs.kind_name() {
+                // the spells' panel to cast from: Y puts the card's spell on
+                // the bar
+                Some("menu") if ui.dialogs.spells_card().is_some() => PadCtx::Spells,
                 Some("menu") if !ui.dialogs.menu_picks() => PadCtx::Read,
                 Some("menu") => PadCtx::Menu {
                     any: ui.dialogs.menu_any(),
@@ -3894,6 +3897,9 @@ impl RenethackGame {
                 PadOut::Osk(op) => self.osk(op),
                 PadOut::Pick(op) => self.pick_op(op),
                 PadOut::Aim(x, y) => self.ui_mut().dialogs.wheel_aim(x, y),
+                PadOut::SpellToBar => {
+                    self.ui_mut().dialogs.press_spells_to_bar();
+                }
             }
         }
     }
@@ -6273,6 +6279,7 @@ impl RenethackGame {
                 ui.screens.hide();
                 ui.map.clear();
                 ui.hud.reset();
+                ui.dialogs.forget_spells();
                 if let Some(picture) = saved_portrait {
                     ui.hud.show_saved_portrait(picture.upcast());
                 }

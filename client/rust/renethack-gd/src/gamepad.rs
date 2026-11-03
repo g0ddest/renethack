@@ -293,6 +293,9 @@ pub enum PadCtx {
     Palette,
     /// The command wheel: a stick points at a wedge, A picks it.
     Wheel,
+    /// The spells' panel with its card: a menu, Y puts the card's spell
+    /// on the bar.
+    Spells,
     /// The codex: its tabs on the bumpers.
     Codex,
     /// The inventory panel: browse, a question, or a menu of items.
@@ -359,6 +362,8 @@ pub enum PadOut {
     /// A stick pushed this far (each axis -1..1) where the command wheel
     /// points at what it is pushed toward.
     Aim(f32, f32),
+    /// The spells' card's spell put on the action bar.
+    SpellToBar,
     Osk(OskOp),
     Pick(PickOp),
 }
@@ -547,7 +552,8 @@ impl Pad {
                     | PadCtx::Other
                     | PadCtx::Help
                     | PadCtx::Read
-                    | PadCtx::Palette => {
+                    | PadCtx::Palette
+                    | PadCtx::Spells => {
                         out.push(PadOut::Key(key(if b == Lb {
                             Key::PageUp
                         } else {
@@ -587,6 +593,7 @@ impl Pad {
             (X, _) => return out,
             (Y, PadCtx::World) => PadOut::Key(ch('i')),
             (Y, PadCtx::PanelBrowse) => PadOut::Carry,
+            (Y, PadCtx::Spells) => PadOut::SpellToBar,
             (Y, PadCtx::Text) => PadOut::Osk(OskOp::Layout),
             (Y, PadCtx::Picker { wish: true }) => PadOut::Pick(PickOp::Ench),
             (Y, _) => return out,

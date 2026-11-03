@@ -743,6 +743,8 @@ wheel-more = Ещё…
 wheel-hint = Наведите на одну · отпустите или щёлкните: выбрать · в центре: отмена
 wheel-section-hint = Команды раздела
 wheel-all-hint = Список, все разделы
+wheel-spells-hint = Произнести известное заклинание
+wheel-spell-hint = энергия { $cost } · провал { $fail } %
 # the command wheel: a command's word on a wedge, by its name; "-": none
 # (тогда — описание команды)
 wheel-cmd = { $cmd ->
@@ -1190,6 +1192,8 @@ hint-section = Раздел
 hint-answer = Ответить
 hint-run = Выполнить
 hint-fold = Свернуть
+hint-cast = Произнести
+hint-to-bar = На панель
 radial-title = Действия
 radial-hint = Наведите стик на действие · отпустите в центре: ничего
 radial-let-go = Отпустите { $lt }, чтобы выполнить

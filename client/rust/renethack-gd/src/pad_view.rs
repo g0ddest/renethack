@@ -207,6 +207,12 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
             (vec![Lb, Rb], "hint-page"),
             (vec![B], "hint-cancel"),
         ],
+        PadCtx::Spells => vec![
+            (vec![Up, Down], "hint-choose"),
+            (vec![A], "hint-cast"),
+            (vec![Y], "hint-to-bar"),
+            (vec![B], "hint-cancel"),
+        ],
         PadCtx::Wheel => vec![
             (vec![Left, Right], "hint-choose"),
             (vec![A], "hint-ok"),
