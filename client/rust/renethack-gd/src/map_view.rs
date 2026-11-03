@@ -59,7 +59,7 @@ use crate::meshes::{
 };
 use crate::seated::Mount;
 use crate::surface::{
-    Fow, FowCell, Ground, GroundField, Role, Seen, StandField, Surfaces, cell_index, sight,
+    Fow, FowCell, Ground, GroundField, Role, Seen, Sight, StandField, Surfaces, cell_index, sight,
 };
 use crate::theme::{self, nh_color};
 use crate::vfx::{Blast, Ray, Vfx, VfxKind};
@@ -194,6 +194,14 @@ fn build_order(hero: Option<(i32, i32)>) -> Vec<(i32, i32)> {
         .collect();
     cells.sort_by_key(|&(x, y)| std::cmp::Reverse((x - hx).pow(2) + (y - hy).pow(2)));
     cells
+}
+
+/// A cell the hero does not see now (remembered, or not yet worked out):
+/// what lies there reads as remembered (`Art::set_matte`).
+fn out_of_sight(sight: &[Sight], x: i32, y: i32) -> bool {
+    cell_index(x, y)
+        .and_then(|i| sight.get(i))
+        .is_some_and(|&s| s != Sight::Seen)
 }
 
 /// Seconds a new level takes to come up out of black.
@@ -3556,6 +3564,9 @@ pub struct MapView {
     fow: Fow,
     /// A cell's sight changed, or the hero moved: work the fog out again.
     fow_dirty: bool,
+    /// What the hero sees of each cell now (`see`): the things out of
+    /// sight take their matte twins (`Art::set_matte`).
+    sight: Vec<Sight>,
     /// The ground of every cell, which the ground's shaders blend.
     ground: GroundField,
     /// Where something stands or lies (the fire's cracks keep clear).
@@ -4378,6 +4389,7 @@ impl MapView {
             surfaces,
             fow,
             fow_dirty: true,
+            sight: Vec::new(),
             ground,
             standing,
             vfx,
@@ -5253,6 +5265,14 @@ impl MapView {
         }
         let fow: Vec<FowCell> = sight(&cells, &walls, hero);
         self.fow.set(&fow, snap);
+        self.sight = fow.iter().map(|c| c.sight).collect();
+        // what lies out of sight reads as remembered: no metal glints there
+        for (&(x, y), nodes) in &self.cells {
+            let matte = out_of_sight(&self.sight, x, y);
+            for m in &nodes.models {
+                self.art.set_matte(m, matte);
+            }
+        }
     }
 
     /// Effects: a burst on a cell (at the height of a body standing there).
@@ -7960,7 +7980,7 @@ impl MapView {
                 self.rim_model = None;
             }
         }
-        for nodes in self.cells.values_mut() {
+        for (&(x, y), nodes) in self.cells.iter_mut() {
             for (i, m) in nodes.models.iter_mut().enumerate() {
                 if !m.is_pending() {
                     continue;
@@ -7968,6 +7988,8 @@ impl MapView {
                 if !self.art.complete(m) {
                     return;
                 }
+                // built out of sight: in its matte twins
+                self.art.set_matte(m, out_of_sight(&self.sight, x, y));
                 // the hero's rim light takes the meshes now there
                 if Some(m.node.instance_id()) == rim {
                     self.rim_model = None;
@@ -8897,6 +8919,11 @@ impl MapView {
             self.art.give(c.model);
         }
         nodes.models = kept;
+        // out of sight as the fog last had it (`see` again when it changes)
+        let matte = out_of_sight(&self.sight, x, y);
+        for m in &nodes.models {
+            self.art.set_matte(m, matte);
+        }
         // what a monster holds, taken in hand once its body is built
         if (look.wields.is_some() || old.wields.is_some()) && !self.to_arm.contains(&(x, y)) {
             self.to_arm.push((x, y));
@@ -10324,6 +10351,18 @@ mod tests {
     use nh_protocol::{EngineMsg, parse_line};
 
     use super::*;
+
+    #[test]
+    fn a_thing_out_of_sight_reads_as_remembered() {
+        let mut sight = vec![Sight::Seen; (COLNO * ROWNO) as usize];
+        sight[cell_index(3, 4).unwrap()] = Sight::Remembered;
+        sight[cell_index(5, 4).unwrap()] = Sight::Unknown;
+        assert!(out_of_sight(&sight, 3, 4));
+        assert!(out_of_sight(&sight, 5, 4));
+        assert!(!out_of_sight(&sight, 4, 4));
+        // before the fog is first worked out, all is as seen
+        assert!(!out_of_sight(&[], 3, 4));
+    }
 
     fn catalog() -> Catalog {
         let line = include_str!("../../nh-world/tests/data/catalog.jsonl");

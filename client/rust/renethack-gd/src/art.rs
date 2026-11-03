@@ -484,6 +484,12 @@ pub struct Art {
     /// much of it the level mirrors now (`set_mirror`).
     metals: Vec<(InstanceId, f32)>,
     mirror: f32,
+    /// A metal material's matte twin (`set_matte`), by the lit one's id,
+    /// the lit one kept beside it; and the lit one's id by the twin's.
+    twins: HashMap<InstanceId, (Gd<Material>, Gd<Material>)>,
+    untwin: HashMap<InstanceId, InstanceId>,
+    /// The models in their twins now (out of sight), by node.
+    matte: HashSet<InstanceId>,
     /// The pass that edges them (`EDGE_SHADER`), once loaded (None: not
     /// yet asked for; Some(None): missing).
     edge: Option<Option<Gd<Material>>>,
@@ -599,6 +605,9 @@ impl Art {
             rimmed: HashSet::new(),
             metals: Vec::new(),
             mirror: 1.0,
+            twins: HashMap::new(),
+            untwin: HashMap::new(),
+            matte: HashSet::new(),
             edge: None,
             glint: None,
             coin_glint: None,
@@ -1188,6 +1197,14 @@ impl Art {
             return;
         }
         self.mirror = k;
+        // (the twins of materials nothing else holds: let them go)
+        self.twins.retain(|_, (lit, twin)| {
+            let used = lit.get_reference_count() > 1 || twin.get_reference_count() > 1;
+            if !used {
+                self.untwin.remove(&twin.instance_id());
+            }
+            used
+        });
         self.metals.retain(
             |&(id, lit)| match Gd::<BaseMaterial3D>::try_from_instance_id(id) {
                 Ok(mut m) => {
@@ -1197,6 +1214,77 @@ impl Art {
                 Err(_) => false,
             },
         );
+    }
+
+    /// A thing out of sight (on a remembered cell) reads as remembered:
+    /// its metal in a matte twin that mirrors nothing (the sky knows
+    /// nothing of what is out of sight: gold five steps off in a dark
+    /// corridor glinted as if seen), the lit one back on sight. A stand-in
+    /// waits until it is built (the map asks again then).
+    pub fn set_matte(&mut self, m: &Model, matte: bool) {
+        let id = m.node.instance_id();
+        if m.is_pending() || self.matte.contains(&id) == matte {
+            return;
+        }
+        if matte {
+            self.matte.insert(id);
+        } else {
+            self.matte.remove(&id);
+        }
+        for node in m
+            .node
+            .find_children_ex("*")
+            .type_("MeshInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+        {
+            let Ok(mut mi) = node.try_cast::<MeshInstance3D>() else {
+                continue;
+            };
+            let n = mi.get_mesh().map_or(0, |mesh| mesh.get_surface_count());
+            for i in 0..n {
+                let Some(now) = mi.get_active_material(i) else {
+                    continue;
+                };
+                let swap = if matte {
+                    self.matte_twin(&now)
+                } else {
+                    self.untwin
+                        .get(&now.instance_id())
+                        .and_then(|lit| self.twins.get(lit))
+                        .map(|(lit, _)| lit.clone())
+                };
+                if let Some(swap) = swap {
+                    mi.set_surface_override_material(i, &swap);
+                }
+            }
+        }
+    }
+
+    /// The matte twin of a metal material (`keep_metal`'s): no metal at
+    /// all, so it mirrors nothing, its colour darkened to the share of it
+    /// a metal's diffuse kept before it mirrored anything (1 -
+    /// `DULL_METALLIC`): remembered gold reads as it did then, dim and
+    /// without glints. The same shader (only its values differ).
+    fn matte_twin(&mut self, lit: &Gd<Material>) -> Option<Gd<Material>> {
+        if !lit.has_meta(METAL_LIT) || self.untwin.contains_key(&lit.instance_id()) {
+            return None;
+        }
+        if let Some((_, twin)) = self.twins.get(&lit.instance_id()) {
+            return Some(twin.clone());
+        }
+        let mut twin = lit.duplicate_resource().try_cast::<BaseMaterial3D>().ok()?;
+        twin.remove_meta(METAL_LIT);
+        twin.set_metallic(0.0);
+        let a = twin.get_albedo();
+        let k = 1.0 - DULL_METALLIC;
+        twin.set_albedo(Color::from_rgba(a.r * k, a.g * k, a.b * k, a.a));
+        let twin = twin.upcast::<Material>();
+        self.untwin.insert(twin.instance_id(), lit.instance_id());
+        self.twins
+            .insert(lit.instance_id(), (lit.clone(), twin.clone()));
+        Some(twin)
     }
 
     /// `m`, just made (a copy of `from`'s, if so), kept to be dulled with
@@ -1453,6 +1541,8 @@ impl Art {
     /// keeps their gear on (the next level shows them as they were).
     pub fn give(&mut self, mut m: Model) {
         self.live = self.live.saturating_sub(1);
+        // (back in its lit materials: the pool's next cell may be in sight)
+        self.set_matte(&m, false);
         if m.pending.is_some() {
             self.pending = self.pending.saturating_sub(1);
             m.node.queue_free();
