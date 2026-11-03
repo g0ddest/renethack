@@ -10,6 +10,7 @@
 //! he stays told peaceful, and the next click swaps back, no blow.
 
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use nh_world::{Key, KeyInput, Prompt};
 
@@ -20,6 +21,8 @@ use crate::ui_events::UiEvent;
 
 /// The watchman's cell.
 static AT: Mutex<Option<(i32, i32)>> = Mutex::new(None);
+/// When he was found beside the hero.
+static SINCE: Mutex<Option<Instant>> = Mutex::new(None);
 
 fn at() -> Result<(i32, i32), String> {
     AT.lock()
@@ -86,6 +89,17 @@ fn with_watchman(swap: bool) -> Vec<Step> {
             *AT.lock().map_err(|e| e.to_string())? = p;
             Ok(p.is_some())
         }),
+        // the minimap's mark for him (no hostile's red), once it has been
+        // drawn again (a quarter second at most)
+        Step::Call("now", |_| {
+            *SINCE.lock().map_err(|e| e.to_string())? = Some(Instant::now());
+            Ok(())
+        }),
+        Step::Wait("the minimap drawn again", |_| {
+            let since = SINCE.lock().map_err(|e| e.to_string())?;
+            Ok(since.is_some_and(|t| t.elapsed() >= Duration::from_millis(400)))
+        }),
+        Step::Shot("peaceful-beside"),
     ]);
     steps
 }

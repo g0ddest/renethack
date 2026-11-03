@@ -26,6 +26,10 @@ type Rgba = [u8; 4];
 const HERO: Rgba = [0xe7, 0xc2, 0x7a, 255];
 const PET: Rgba = [0xf0, 0x8c, 0xc8, 255];
 const HOSTILE: Rgba = [0xff, 0x3b, 0x24, 255];
+/// A peaceful creature, as the engine tells it (the watch, a shopkeeper, a
+/// priest): pale, neither a pet's pink nor a hostile's red, as the map
+/// view gives it no red ring.
+const PEACEFUL: Rgba = [0xe6, 0xe1, 0xd6, 255];
 const OBJECT: Rgba = [0xc9, 0xb4, 0x8a, 255];
 const STAIRS: Rgba = [0xff, 0xe2, 0x9a, 255];
 const FLOOR: Rgba = [0x5c, 0x4f, 0x3f, 240];
@@ -60,6 +64,7 @@ pub fn terrain_color(t: Terrain) -> Option<Rgba> {
 enum Mark {
     Hero,
     Pet,
+    Peaceful,
     Hostile,
     Object,
     Up,
@@ -69,7 +74,9 @@ enum Mark {
 /// A 5×5 mark: rows top to bottom, bit 4 the leftmost pixel.
 fn mark_bits(m: Mark) -> [u8; 5] {
     match m {
-        Mark::Hero | Mark::Pet | Mark::Hostile => [0b01110, 0b11111, 0b11111, 0b11111, 0b01110],
+        Mark::Hero | Mark::Pet | Mark::Peaceful | Mark::Hostile => {
+            [0b01110, 0b11111, 0b11111, 0b11111, 0b01110]
+        }
         Mark::Object => [0b00000, 0b00100, 0b01110, 0b00100, 0b00000],
         // chevrons
         Mark::Up => [0b00100, 0b01110, 0b11011, 0b10001, 0b00000],
@@ -166,6 +173,7 @@ pub fn pixels(map: &MapState, catalog: &Catalog) -> Vec<u8> {
                 (Some(g), _) if g.kind == GlyphKind::Mon && g.flags & mg::PET != 0 => {
                     Some(Mark::Pet)
                 }
+                (Some(g), _) if g.kind == GlyphKind::Mon && cell.peaceful => Some(Mark::Peaceful),
                 (Some(g), _) if g.kind == GlyphKind::Mon => Some(Mark::Hostile),
                 (Some(g), _) if matches!(g.kind, GlyphKind::Obj | GlyphKind::Body) => {
                     Some(Mark::Object)
@@ -196,6 +204,7 @@ fn stamp(put: &mut impl FnMut(i32, i32, Rgba), ox: i32, oy: i32, m: Mark) {
     let color = match m {
         Mark::Hero => HERO,
         Mark::Pet => PET,
+        Mark::Peaceful => PEACEFUL,
         Mark::Hostile => HOSTILE,
         Mark::Object => OBJECT,
         Mark::Up | Mark::Down => STAIRS,
@@ -359,6 +368,61 @@ mod tests {
         assert!(x == 0 && y == 0 && w <= COLNO && h <= ROWNO);
         // everything known: the whole map
         assert_eq!(view(Some((1, 0, 79, 20))), (0, 0, COLNO, ROWNO));
+    }
+
+    fn catalog() -> Catalog {
+        use nh_protocol::{EngineMsg, parse_line};
+        let line = include_str!("../../nh-world/tests/data/catalog.jsonl");
+        match parse_line(line).unwrap() {
+            EngineMsg::Catalog(c) => *c,
+            other => panic!("{other:?}"),
+        }
+    }
+
+    /// The colour at the middle of a cell's mark.
+    fn mark_at(px: &[u8], (x, y): (i32, i32)) -> Rgba {
+        let (cx, cy) = (x * CELL + CELL / 2, y * CELL + CELL / 2);
+        let i = ((cy * WIDTH + cx) * 4) as usize;
+        [px[i], px[i + 1], px[i + 2], px[i + 3]]
+    }
+
+    #[test]
+    fn a_peaceful_creature_is_no_hostile_red() {
+        use nh_protocol::Glyph;
+        use nh_world::Told;
+        let cat = catalog();
+        let mut map = MapState::new();
+        let mon = |name: &str, flags: u32| {
+            let i = cat.monsters.iter().position(|m| m.name == name).unwrap() as i32;
+            Glyph {
+                glyph: None,
+                ch: 'd' as i32,
+                color: 0,
+                flags,
+                tile: 0,
+                kind: GlyphKind::Mon,
+                mon: Some(i),
+                cmap: None,
+                level: None,
+            }
+        };
+        let watchman = mon("watchman", 0);
+        let jackal = mon("jackal", 0);
+        let dog = mon("little dog", mg::PET);
+        let peaceful = Told {
+            peaceful: true,
+            ..Told::default()
+        };
+        map.print_with(10, 5, &watchman, None, peaceful);
+        map.print(12, 5, &jackal, None);
+        map.print(14, 5, &dog, None);
+        let px = pixels(&map, &cat);
+        assert_eq!(mark_at(&px, (10, 5)), PEACEFUL);
+        assert_eq!(mark_at(&px, (12, 5)), HOSTILE);
+        assert_eq!(mark_at(&px, (14, 5)), PET);
+        // a peaceful one turned hostile is drawn red again
+        map.print(10, 5, &watchman, None);
+        assert_eq!(mark_at(&pixels(&map, &cat), (10, 5)), HOSTILE);
     }
 
     #[test]
