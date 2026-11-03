@@ -16,11 +16,12 @@ use godot::classes::scroll_container::ScrollMode;
 use godot::classes::text_server::{AutowrapMode, OverrunBehavior};
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
 use godot::classes::{
-    Button, CanvasLayer, ColorRect, Control, DisplayServer, Font, HBoxContainer, Label, LineEdit,
-    MarginContainer, OptionButton, PanelContainer, RichTextLabel, ScrollContainer, StyleBox,
-    StyleBoxEmpty, StyleBoxFlat, Texture2D, TextureRect, VBoxContainer,
+    Button, CanvasLayer, ColorRect, Control, DisplayServer, Font, HBoxContainer, InputEvent,
+    InputEventMouseButton, Label, LineEdit, MarginContainer, OptionButton, PanelContainer,
+    RichTextLabel, ScrollContainer, StyleBox, StyleBoxEmpty, StyleBoxFlat, Texture2D, TextureRect,
+    VBoxContainer,
 };
-use godot::global::{HorizontalAlignment, VerticalAlignment};
+use godot::global::{HorizontalAlignment, MouseButton, VerticalAlignment};
 use godot::prelude::*;
 use nh_protocol::{Catalog, ESC, PickHow, Reply};
 use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLine, choice_answer};
@@ -29,6 +30,7 @@ use nh_i18n::lexicon::Lexicon;
 
 use crate::codex;
 use crate::codex_view;
+use crate::command_menu::{self, Section};
 use crate::i18n::{self, EngineKind, Lang};
 use crate::journal;
 use crate::journal_view::{self, JournalView};
@@ -87,8 +89,16 @@ const TEXT_CHROME: f32 = 220.0;
 const REFERENCE_SCREEN: Vector2 = theme::DESIGN;
 /// Space kept free left and right of a dialog.
 const SIDE_MARGIN: f32 = 80.0;
-/// Rows the palette shows at once.
-const PALETTE_ROWS: f32 = 12.0;
+/// Rows the palette shows at once: the common commands and their heading
+/// whole, the next heading under them.
+const PALETTE_ROWS: f32 = 18.0;
+/// A command's name beside its words, and the palette's gap above the
+/// HUD's Commands button it hangs from.
+const NAME_SIZE: i32 = 14;
+const PALETTE_GAP: f32 = 8.0;
+/// The fewest rows the palette hung from the button shows (else it opens
+/// centred).
+const PALETTE_LEAST_ROWS: f32 = 6.0;
 /// Rows a picker of names shows at once, and the most it lists (a longer
 /// list says how many more a search would narrow).
 const PICKER_ROWS: f32 = 10.0;
@@ -1336,7 +1346,7 @@ impl MenuView {
     }
 }
 
-/// One palette row; rows are slots showing the filtered commands in order.
+/// One command's row; rows are slots showing the commands in order.
 #[derive(Clone)]
 struct PaletteSlot {
     button: Gd<Button>,
@@ -1345,109 +1355,343 @@ struct PaletteSlot {
     desc: Gd<Label>,
 }
 
+/// A section's heading: its fold mark, its title, how many it holds.
+#[derive(Clone)]
+struct HeadSlot {
+    button: Gd<Button>,
+    mark: Gd<TextureRect>,
+    title: Gd<Label>,
+    count: Gd<Label>,
+}
+
+/// A row shown: a section's heading (an index into `groups`) or a
+/// command's slot (into `slots`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PaletteLine {
+    Head(usize),
+    Slot(usize),
+}
+
+/// What Enter or A does on the row highlighted.
+enum PalettePick {
+    Cmd(String),
+    Head(usize),
+}
+
+/// A section as the palette lays it out: its heading, then the slots for
+/// as many commands as it holds; the commands in them now, and whether
+/// they are folded away.
+struct PaletteGroup {
+    section: Section,
+    head: HeadSlot,
+    slots: std::ops::Range<usize>,
+    cmds: Vec<usize>,
+    folded: bool,
+}
+
+/// The command menu (`#`): every extended command in its section, each
+/// section folded or not; typed text lists the matches alone, the best
+/// first, no headings.
 struct Palette {
     cmds: Vec<PaletteCmd>,
-    /// Indexes into `cmds`, in the order shown.
-    shown: Vec<usize>,
-    /// Position in `shown` that Enter runs.
+    groups: Vec<PaletteGroup>,
+    /// The rows shown, top down, each `ROW_H` tall.
+    lines: Vec<PaletteLine>,
+    /// The command each slot shows (an index into `cmds`).
+    slot_cmd: Vec<Option<usize>>,
+    /// Typed text filters the list: the matches in one list.
+    filtered: bool,
+    /// The row highlighted (an index into `lines`): Enter runs it.
     selected: Option<usize>,
     slots: Vec<PaletteSlot>,
-    /// The slot styled as the highlighted one: restyling every row is a
+    /// The row styled as the highlighted one: restyling every row is a
     /// theme change each, too slow to do on every keystroke.
-    styled: Option<usize>,
+    styled: Option<PaletteLine>,
     list: Scroller,
     none: Gd<Label>,
     look: Look,
-    /// A gamepad plays: each row reads as what it does, in the player's
-    /// language, no name to type nor key; the rows in that order.
+    /// A gamepad plays: each row reads as what it does, no name to type
+    /// nor key, and no moves (the stick's).
     pad: bool,
+    /// Goods not paid for: #pay first.
+    owes: bool,
     /// The rows drawn as `pad` says (restyled only when it changes).
     drawn_pad: Option<bool>,
-    /// Its heading: "Extended command" to type one, "All commands" (the
-    /// game menu's entry) under a pad.
+    /// Its heading: "Commands", or "All commands" (the game menu's entry)
+    /// under a pad.
     title: Option<Gd<Label>>,
-}
-
-/// The commands a pad player wants most, first in the palette under a pad
-/// in this order (after #pay while goods are owed).
-const PAD_FIRST: [&str; 12] = [
-    "pray", "pay", "chat", "loot", "offer", "sit", "force", "untrap", "dip", "enhance", "ride",
-    "jump",
-];
-
-/// A command the palette leaves out under a pad: a step or a run in a
-/// direction, which the stick does, or a prefix for a key to come.
-fn pad_leaves_out(c: &PaletteCmd) -> bool {
-    ["move", "rush", "run"]
-        .iter()
-        .any(|p| c.name.starts_with(p) && c.name.len() > p.len())
-        || c.prefix
+    /// The fold marks: a section folded (▸), open (▾).
+    marks: [Gd<Texture2D>; 2],
+    /// Its width, and whether it hangs from the HUD's Commands button (no
+    /// Cancel, nothing dimmed; a click beside it closes it).
+    width: f32,
+    dropdown: bool,
+    cancel_row: Gd<VBoxContainer>,
+    /// Its list's height centred; hung from the button, it may show fewer
+    /// rows.
+    full_h: f32,
 }
 
 impl Palette {
+    /// The commands shown for `text`: the sections, or the matches alone.
     fn refilter(&mut self, text: &str) {
-        self.shown = palette_filter(&self.cmds, text);
-        self.selected = (!text.trim().is_empty() && !self.shown.is_empty()).then_some(0);
-        if self.pad && text.trim().is_empty() {
-            // no moves (the stick's), the ones most wanted first, then as
-            // the rows read; one listed first stays first (#pay, owed)
-            let cmds = &self.cmds;
-            self.shown.retain(|&i| !pad_leaves_out(&cmds[i]));
-            let pinned = |i: usize| !(i == 0 && cmds[0].name == "pay");
-            let rank = |i: usize| {
-                (PAD_FIRST.iter())
-                    .position(|n| *n == cmds[i].name)
-                    .unwrap_or(PAD_FIRST.len())
-            };
-            self.shown
-                .sort_by_cached_key(|&i| (pinned(i), rank(i), folded(&cmds[i].desc)));
+        let text = text.trim();
+        self.filtered = !text.is_empty();
+        self.slot_cmd.iter_mut().for_each(|s| *s = None);
+        if self.filtered {
+            let hits = palette_filter(&self.cmds, text);
+            for (slot, c) in self.slot_cmd.iter_mut().zip(hits) {
+                *slot = Some(c);
+            }
+        } else {
+            let laid = command_menu::sections(&self.cmds, self.owes, self.pad);
+            for (g, (_, idx)) in self.groups.iter_mut().zip(laid) {
+                g.cmds = idx;
+                g.cmds.truncate(g.slots.len());
+                for (k, &c) in g.cmds.iter().enumerate() {
+                    self.slot_cmd[g.slots.start + k] = Some(c);
+                }
+            }
+        }
+        self.relines();
+        // the best match is Enter's; a pad's focus starts on the first
+        // command (its A runs it); the keys' on none until an arrow
+        self.selected = if self.filtered {
+            (!self.lines.is_empty()).then_some(0)
+        } else if self.pad {
+            self.lines
+                .iter()
+                .position(|l| matches!(l, PaletteLine::Slot(_)))
+        } else {
+            None
+        };
+    }
+
+    /// The rows shown, as the sections are folded now.
+    fn relines(&mut self) {
+        self.lines.clear();
+        if self.filtered {
+            let shown = self.slot_cmd.iter().enumerate();
+            let shown = shown.filter(|(_, c)| c.is_some()).map(|(s, _)| s);
+            self.lines.extend(shown.map(PaletteLine::Slot));
+            return;
+        }
+        for (gi, g) in self.groups.iter().enumerate() {
+            if g.cmds.is_empty() {
+                continue;
+            }
+            self.lines.push(PaletteLine::Head(gi));
+            if !g.folded {
+                let rows = g.slots.start..g.slots.start + g.cmds.len();
+                self.lines.extend(rows.map(PaletteLine::Slot));
+            }
         }
     }
+
+    /// The section of the row highlighted (none while filtering).
+    fn selected_group(&self) -> Option<usize> {
+        if self.filtered {
+            return None;
+        }
+        match self.lines.get(self.selected?)? {
+            PaletteLine::Head(g) => Some(*g),
+            PaletteLine::Slot(s) => self.groups.iter().position(|g| g.slots.contains(s)),
+        }
+    }
+
+    /// Fold section `g` (`fold`), or unfold it, or (None) the other way
+    /// round; the highlight stays on its row, or goes to the heading of
+    /// the rows it was on. False when nothing changed.
+    fn fold(&mut self, g: usize, fold: Option<bool>) -> bool {
+        if self.filtered {
+            return false;
+        }
+        let Some(group) = self.groups.get_mut(g) else {
+            return false;
+        };
+        let fold = fold.unwrap_or(!group.folded);
+        if group.folded == fold {
+            return false;
+        }
+        group.folded = fold;
+        let was = self.selected.and_then(|i| self.lines.get(i)).copied();
+        self.relines();
+        let at = |l: PaletteLine| self.lines.iter().position(|&m| m == l);
+        self.selected = was.and_then(|l| at(l).or_else(|| at(PaletteLine::Head(g))));
+        true
+    }
+
+    /// What the row highlighted does.
+    fn picked(&self) -> Option<PalettePick> {
+        match *self.lines.get(self.selected?)? {
+            PaletteLine::Head(g) => Some(PalettePick::Head(g)),
+            PaletteLine::Slot(s) => {
+                let c = self.slot_cmd.get(s).copied().flatten()?;
+                Some(PalettePick::Cmd(self.cmds[c].name.clone()))
+            }
+        }
+    }
+
+    /// The highlight `step` rows on, kept within the list.
+    fn step(&mut self, step: i64) {
+        let n = self.lines.len() as i64;
+        if n == 0 {
+            return;
+        }
+        let cur = self.selected.map_or(-1, |s| s as i64);
+        let next = if cur < 0 && step < 0 {
+            n - 1
+        } else {
+            (cur + step).clamp(0, n - 1)
+        };
+        self.selected = Some(next as usize);
+    }
+}
+
+/// The commands' names the palette lists, top down, a folded section's
+/// too (self-tests).
+fn listed_names(p: &Palette) -> Vec<String> {
+    (p.slot_cmd.iter().flatten())
+        .map(|&c| p.cmds[c].name.clone())
+        .collect()
+}
+
+/// A command's row as it reads: what it does, its first letter a capital.
+pub fn palette_row_words(desc: &str) -> String {
+    capitalized(desc)
+}
+
+/// A small solid triangle, white (the row tints it), pointing right (a
+/// section folded) or down (open).
+fn fold_mark(down: bool) -> Gd<Texture2D> {
+    const S: usize = 14;
+    const SS: usize = 4;
+    let mut px = vec![0u8; S * S * 4];
+    let s = S as f32;
+    for y in 0..S {
+        for x in 0..S {
+            let mut inside = 0;
+            for sy in 0..SS {
+                for sx in 0..SS {
+                    let fx = x as f32 + (sx as f32 + 0.5) / SS as f32;
+                    let fy = y as f32 + (sy as f32 + 0.5) / SS as f32;
+                    // along the point's way (u) and across it (v)
+                    let (u, v) = if down { (fy, fx) } else { (fx, fy) };
+                    let u = (u - 0.2 * s) / (0.6 * s);
+                    if (0.0..=1.0).contains(&u) && (v - s / 2.0).abs() <= (1.0 - u) * 0.42 * s {
+                        inside += 1;
+                    }
+                }
+            }
+            let i = (y * S + x) * 4;
+            px[i..i + 4].copy_from_slice(&[255, 255, 255, (inside * 255 / (SS * SS)) as u8]);
+        }
+    }
+    godot::classes::Image::create_from_data(
+        S as i32,
+        S as i32,
+        false,
+        godot::classes::image::Format::RGBA8,
+        &PackedByteArray::from(px.as_slice()),
+    )
+    .and_then(|image| godot::classes::ImageTexture::create_from_image(&image))
+    .map_or_else(
+        || godot::classes::ImageTexture::new_gd().upcast(),
+        |t| t.upcast(),
+    )
 }
 
 /// Show the palette's rows. The borrow is released before Godot is called.
 fn fill_palette(palette: &Rc<RefCell<Palette>>) {
+    struct Head {
+        node: HeadSlot,
+        shown: bool,
+        folded: bool,
+        count: usize,
+        title: String,
+    }
     let (pad, restyle) = {
         let p = palette.borrow();
         (p.pad, p.drawn_pad != Some(p.pad))
     };
-    let (rows, selected, styled, slots, look, mut none) = {
+    let (rows, heads, selected, styled, slots, look, marks, mut none) = {
         let p = palette.borrow();
-        let rows: Vec<(String, String, String)> = p
-            .shown
-            .iter()
-            .map(|&i| {
-                let c = &p.cmds[i];
-                (c.name.clone(), c.key.clone(), c.desc.clone())
+        let mut shown = vec![false; p.slots.len()];
+        let mut head_shown = vec![false; p.groups.len()];
+        for l in &p.lines {
+            match *l {
+                PaletteLine::Head(g) => head_shown[g] = true,
+                PaletteLine::Slot(s) => shown[s] = true,
+            }
+        }
+        let rows: Vec<Option<(String, String, String, bool)>> = (p.slot_cmd.iter().zip(&shown))
+            .map(|(c, &shown)| {
+                c.map(|c| {
+                    let c = &p.cmds[c];
+                    (
+                        format!("#{}", c.name),
+                        c.key.clone(),
+                        palette_row_words(&c.desc),
+                        shown,
+                    )
+                })
             })
             .collect();
+        let heads: Vec<Head> = (p.groups.iter().zip(head_shown))
+            .map(|(g, shown)| Head {
+                node: g.head.clone(),
+                shown,
+                folded: g.folded,
+                count: g.cmds.len(),
+                title: i18n::tr(g.section.title_id()),
+            })
+            .collect();
+        let line = |i: Option<usize>| i.and_then(|i| p.lines.get(i)).copied();
         (
             rows,
-            p.selected,
+            heads,
+            line(p.selected),
             p.styled,
             p.slots.clone(),
             p.look.clone(),
+            p.marks.clone(),
             p.none.clone(),
         )
     };
     for (i, mut slot) in slots.into_iter().enumerate() {
-        let Some((name, key, desc)) = rows.get(i) else {
+        let Some(Some((name, key, desc, shown))) = rows.get(i) else {
             slot.button.set_visible(false);
             continue;
         };
         slot.name.set_text(name);
         slot.key.set_text(key);
-        if pad {
-            slot.desc.set_text(&capitalized(desc));
-        } else {
-            slot.desc.set_text(desc);
-        }
-        if (selected == Some(i)) != (styled == Some(i)) {
-            look.style_row(&mut slot.button, false, selected == Some(i));
-        }
-        slot.button.set_visible(true);
+        slot.desc.set_text(desc);
+        slot.button.set_visible(*shown);
     }
-    none.set_visible(rows.is_empty());
+    for mut h in heads {
+        h.node.button.set_visible(h.shown);
+        h.node.title.set_text(&h.title);
+        h.node.count.set_text(&h.count.to_string());
+        h.node.mark.set_texture(&marks[usize::from(!h.folded)]);
+    }
+    // the highlight moved: the row it left plain again, the new one lit
+    let button = |l: PaletteLine| {
+        let p = palette.borrow();
+        match l {
+            PaletteLine::Head(g) => p.groups.get(g).map(|g| g.head.button.clone()),
+            PaletteLine::Slot(s) => p.slots.get(s).map(|s| s.button.clone()),
+        }
+    };
+    if styled != selected {
+        if let Some(mut b) = styled.and_then(button) {
+            look.style_row(&mut b, false, false);
+        }
+        if let Some(mut b) = selected.and_then(button) {
+            look.style_row(&mut b, false, true);
+        }
+    }
+    let empty = rows.iter().all(|r| r.as_ref().is_none_or(|r| !r.3)) && palette.borrow().filtered;
+    none.set_visible(empty);
     let mut p = palette.borrow_mut();
     if restyle {
         if let Some(t) = p.title.as_mut() {
@@ -1461,13 +1705,11 @@ fn fill_palette(palette: &Rc<RefCell<Palette>>) {
         for slot in p.slots.iter_mut() {
             slot.name.set_visible(!pad);
             slot.key.set_visible(!pad);
-            let color = if pad { theme::TEXT } else { theme::TEXT_DIM };
-            slot.desc.add_theme_color_override("font_color", color);
         }
         p.drawn_pad = Some(pad);
     }
     p.styled = selected;
-    match selected {
+    match p.selected {
         Some(i) => p.list.reveal(i as f32 * ROW_H, ROW_H),
         None => p.list.scroll_to(0.0),
     }
@@ -1768,6 +2010,9 @@ pub struct Dialogs {
     /// The keys the player moved: the palette shows its commands' keys as
     /// they are pressed now.
     keymap: nh_world::Keymap,
+    /// The HUD's Commands button pressed, and when: the palette opening
+    /// next hangs from it.
+    palette_anchor: Option<(Rect2, std::time::Instant)>,
     /// The hero rendered in their gear (the inventory's doll): the
     /// character sheet's portrait.
     portrait: Option<Gd<Texture2D>>,
@@ -1871,6 +2116,7 @@ impl Dialogs {
             warming: false,
             palette_pool: None,
             keymap: nh_world::Keymap::default(),
+            palette_anchor: None,
             portrait: None,
             sheet: None,
             opening_own: None,
@@ -2352,15 +2598,12 @@ impl Dialogs {
         req: u64,
         catalog: Option<&Catalog>,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
-        let mut cmds = palette_cmds(catalog, &self.keymap);
-        // goods not paid for: #pay first (a shop card sends a pad player
-        // here to pay)
-        if self.owes
-            && let Some(i) = cmds.iter().position(|c| c.name == "pay")
-        {
-            let pay = cmds.remove(i);
-            cmds.insert(0, pay);
-        }
+        let cmds = palette_cmds(catalog, &self.keymap);
+        // hung from the HUD's Commands button just pressed (not one long
+        // gone: a `#` it never opened)
+        let anchor = (self.palette_anchor.take())
+            .filter(|(_, at)| at.elapsed().as_secs_f32() < 2.0)
+            .map(|(r, _)| r);
         // the palette put away serves again only if it reads the same: the
         // engine's translator may have loaded since it was made, or the
         // language be another
@@ -2382,19 +2625,18 @@ impl Dialogs {
             } = pool;
             pooled.set(req);
             edit.set_text("");
+            edit.release_focus();
             pad_view::show_key_words(&panel, self.pad);
-            palette.borrow_mut().pad = self.pad;
-            palette.borrow_mut().refilter("");
+            {
+                let mut p = palette.borrow_mut();
+                p.pad = self.pad;
+                p.owes = self.owes;
+                p.refilter("");
+            }
             fill_palette(&palette);
-            // as tall as its rows again: a panel grows to what it holds
-            // and never shrinks by itself
-            panel.set_offset(godot::builtin::Side::TOP, -40.0);
-            panel.set_offset(godot::builtin::Side::BOTTOM, 40.0);
+            self.place_palette(&mut panel, &mut shade, &palette, anchor);
             shade.set_visible(true);
             panel.set_visible(true);
-            if !self.warming {
-                edit.call_deferred("grab_focus", &[]);
-            }
             return (
                 Kind::ExtCmd {
                     edit,
@@ -2409,8 +2651,8 @@ impl Dialogs {
         let look = self.look.clone();
         let name_w = cmds
             .iter()
-            .map(|c| look.text_w(&c.name, &look.body_bold, BODY_SIZE))
-            .fold(120.0f32, f32::max)
+            .map(|c| look.text_w(&format!("#{}", c.name), &look.body, NAME_SIZE))
+            .fold(80.0f32, f32::max)
             + 8.0;
         let key_w = look.chars(4);
         let longest = cmds
@@ -2424,10 +2666,12 @@ impl Dialogs {
         let width = (desc_w + name_w + key_w + 16.0 + 30.0 + 20.0).clamp(480.0, max_w.min(820.0));
         let max_h = (self.screen().y - LIST_CHROME).max(ROW_H * 4.0);
         // a fixed height, so the dialog does not jump while filtering
-        let view_h = (cmds.len() as f32 * ROW_H).clamp(ROW_H, max_h.min(PALETTE_ROWS * ROW_H));
+        let laid = command_menu::sections(&cmds, false, false);
+        let lines = (cmds.len() + laid.len()) as f32;
+        let view_h = (lines * ROW_H).clamp(ROW_H, max_h.min(PALETTE_ROWS * ROW_H));
         let list = Scroller::new(width, view_h, false);
 
-        let (shade, panel, mut col) = self.frame(width, Some(&tr!("palette-title")));
+        let (mut shade, mut panel, mut col) = self.frame(width, Some(&tr!("palette-title")));
         let mut edit = LineEdit::new_alloc();
         edit.set_max_length(MAX_TEXT_BYTES as i32);
         edit.set_keep_editing_on_text_submit(true);
@@ -2445,30 +2689,46 @@ impl Dialogs {
         let mut rows_box = VBoxContainer::new_alloc();
         rows_box.add_theme_constant_override("separation", 0);
         rows_box.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        let marks = [fold_mark(false), fold_mark(true)];
         let mut slots = Vec::with_capacity(cmds.len());
-        for i in 0..cmds.len() {
-            let mut name = cell("", theme::TEXT, Some(&look.body_bold), Some(name_w));
-            name.add_theme_font_size_override("font_size", BODY_SIZE);
-            let mut key = cell("", theme::ACCENT, None, Some(key_w));
-            key.add_theme_font_size_override("font_size", 14);
-            // the command and its key as the player types them
-            i18n::verbatim(&name);
-            i18n::verbatim(&key);
-            let mut desc = cell("", theme::TEXT_DIM, Some(&look.body), None);
-            desc.add_theme_font_size_override("font_size", BODY_SIZE - 1);
-            // the palette is reused: its rows answer the request it is open
-            // for now
-            let button = self.row_button_at(
-                req_cell.clone(),
-                i,
-                &[name.clone(), key.clone(), desc.clone()],
-            );
-            rows_box.add_child(&button);
-            slots.push(PaletteSlot {
-                button,
-                name,
-                key,
-                desc,
+        let mut groups = Vec::with_capacity(laid.len());
+        for (section, idx) in &laid {
+            let head = self.palette_head(&marks[1]);
+            rows_box.add_child(&head.button);
+            let start = slots.len();
+            for _ in idx {
+                let i = slots.len();
+                let mut desc = cell("", theme::TEXT, Some(&look.body), None);
+                desc.add_theme_font_size_override("font_size", BODY_SIZE);
+                let mut name = cell("", theme::TEXT_DIM, Some(&look.body), Some(name_w));
+                name.add_theme_font_size_override("font_size", NAME_SIZE);
+                let mut key = cell("", theme::ACCENT, None, Some(key_w));
+                key.add_theme_font_size_override("font_size", 14);
+                key.set_horizontal_alignment(HorizontalAlignment::RIGHT);
+                // the command and its key as the player types them
+                i18n::verbatim(&name);
+                i18n::verbatim(&key);
+                // the palette is reused: its rows answer the request it is
+                // open for now
+                let button = self.row_button_at(
+                    req_cell.clone(),
+                    i,
+                    &[desc.clone(), name.clone(), key.clone()],
+                );
+                rows_box.add_child(&button);
+                slots.push(PaletteSlot {
+                    button,
+                    name,
+                    key,
+                    desc,
+                });
+            }
+            groups.push(PaletteGroup {
+                section: *section,
+                head,
+                slots: start..slots.len(),
+                cmds: Vec::new(),
+                folded: section.folded_at_first(),
             });
         }
         let mut scroll = list.scroll.clone();
@@ -2491,13 +2751,35 @@ impl Dialogs {
             push(&q, UiEvent::Dialog { req: c.get(), ev });
         });
         row.add_child(&cancel);
-        // a pad's B cancels (its strip says so)
+        // a pad's B cancels (its strip says so); hung from the button, a
+        // click beside it does (its holder hidden)
         pad_view::key_words(&row, self.pad);
-        col.add_child(&row);
+        let mut cancel_row = VBoxContainer::new_alloc();
+        cancel_row.add_child(&row);
+        col.add_child(&cancel_row);
+        // hung from the Commands button, a click beside it puts it away
+        // (the shade takes the mouse only then)
+        let (q, c) = (self.queue.clone(), req_cell.clone());
+        shade
+            .signals()
+            .gui_input()
+            .connect(move |e: Gd<InputEvent>| {
+                if let Ok(b) = e.try_cast::<InputEventMouseButton>()
+                    && b.is_pressed()
+                    && b.get_button_index() == MouseButton::LEFT
+                {
+                    let ev = DialogEvent::ExtCmd(None);
+                    push(&q, UiEvent::Dialog { req: c.get(), ev });
+                }
+            });
         let title = col.get_child(0).and_then(|c| c.try_cast::<Label>().ok());
+        let n = slots.len();
         let palette = Rc::new(RefCell::new(Palette {
-            shown: Vec::new(),
             cmds,
+            groups,
+            lines: Vec::new(),
+            slot_cmd: vec![None; n],
+            filtered: false,
             selected: None,
             slots,
             styled: None,
@@ -2505,9 +2787,31 @@ impl Dialogs {
             none,
             look,
             pad: self.pad,
+            owes: self.owes,
             drawn_pad: None,
             title,
+            marks,
+            width,
+            full_h: view_h,
+            dropdown: false,
+            cancel_row,
         }));
+        // a heading clicked folds its section or unfolds it, and is the
+        // row highlighted: local to the palette, it never touches the game
+        let heads: Vec<Gd<Button>> = (palette.borrow().groups.iter())
+            .map(|g| g.head.button.clone())
+            .collect();
+        for (g, b) in heads.into_iter().enumerate() {
+            let p = palette.clone();
+            b.signals().pressed().connect(move || {
+                {
+                    let mut p = p.borrow_mut();
+                    p.fold(g, None);
+                    p.selected = p.lines.iter().position(|&l| l == PaletteLine::Head(g));
+                }
+                fill_palette(&p);
+            });
+        }
         palette.borrow_mut().refilter("");
         fill_palette(&palette);
         // refiltering is local to the palette: it never touches the game
@@ -2516,9 +2820,7 @@ impl Dialogs {
             p.borrow_mut().refilter(&text.to_string());
             fill_palette(&p);
         });
-        if !self.warming {
-            edit.call_deferred("grab_focus", &[]);
-        }
+        self.place_palette(&mut panel, &mut shade, &palette, anchor);
         (
             Kind::ExtCmd {
                 edit,
@@ -2528,6 +2830,110 @@ impl Dialogs {
             shade,
             panel,
         )
+    }
+
+    /// A section's heading row: its fold mark, its title, how many it
+    /// holds (`fill_palette` writes them).
+    fn palette_head(&self, mark: &Gd<Texture2D>) -> HeadSlot {
+        let mut b = Button::new_alloc();
+        b.set_focus_mode(FocusMode::NONE);
+        b.set_custom_minimum_size(Vector2::new(0.0, ROW_H));
+        b.add_theme_stylebox_override("focus", &self.look.no_focus);
+        self.look.style_row(&mut b, false, false);
+        let mut hbox = HBoxContainer::new_alloc();
+        hbox.set_mouse_filter(MouseFilter::IGNORE);
+        hbox.add_theme_constant_override("separation", 8);
+        let mut m = TextureRect::new_alloc();
+        m.set_texture(mark);
+        m.set_expand_mode(ExpandMode::IGNORE_SIZE);
+        m.set_stretch_mode(StretchMode::KEEP_ASPECT_CENTERED);
+        m.set_custom_minimum_size(Vector2::new(12.0, 12.0));
+        m.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+        m.set_self_modulate(theme::GOLD);
+        m.set_mouse_filter(MouseFilter::IGNORE);
+        hbox.add_child(&m);
+        let title = theme::styled_label("", Face::Caps, 15, theme::GOLD_BRIGHT);
+        let mut title = title;
+        title.set_vertical_alignment(VerticalAlignment::CENTER);
+        hbox.add_child(&title);
+        let mut count = theme::styled_label("", Face::Body, 14, theme::TEXT_DIM);
+        count.set_vertical_alignment(VerticalAlignment::CENTER);
+        count.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        hbox.add_child(&count);
+        place(&hbox, [0.0, 0.0, 1.0, 1.0], [8.0, 0.0, -8.0, 0.0]);
+        b.add_child(&hbox);
+        HeadSlot {
+            button: b,
+            mark: m,
+            title,
+            count,
+        }
+    }
+
+    /// The palette where it opens: hung from the HUD's Commands button
+    /// (`anchor`), above it and its right edge at the button's, where it
+    /// has the room, no Cancel, nothing dimmed, a click beside it closing
+    /// it; else centred over the dimmed map.
+    fn place_palette(
+        &self,
+        panel: &mut Gd<PanelContainer>,
+        shade: &mut Gd<ColorRect>,
+        palette: &Rc<RefCell<Palette>>,
+        anchor: Option<Rect2>,
+    ) {
+        let mut p = palette.borrow_mut();
+        let width = p.width;
+        // as many rows as the room above the button holds (a few at least)
+        p.cancel_row.set_visible(anchor.is_none());
+        let full = p.full_h;
+        p.list
+            .scroll
+            .set_custom_minimum_size(Vector2::new(width, full));
+        let chrome = panel.get_combined_minimum_size().y - full;
+        let rows = anchor.map(|a| {
+            let room = a.position.y - PALETTE_GAP - PANEL_EDGE - chrome;
+            (room / ROW_H).floor().min(full / ROW_H)
+        });
+        let anchor = anchor.filter(|_| rows.is_some_and(|r| r >= PALETTE_LEAST_ROWS));
+        p.dropdown = anchor.is_some();
+        p.cancel_row.set_visible(anchor.is_none());
+        let view_h = match (anchor, rows) {
+            (Some(_), Some(r)) => r * ROW_H,
+            _ => full,
+        };
+        p.list.view_h = view_h;
+        p.list
+            .scroll
+            .set_custom_minimum_size(Vector2::new(width, view_h));
+        match anchor {
+            Some(a) => {
+                let screen = self.root.get_size();
+                let right = a.end().x.min(screen.x - PANEL_EDGE);
+                let bottom = a.position.y - PALETTE_GAP;
+                // its frame's margins make it wider than its column: it
+                // grows leftwards, its right edge at the button's
+                let w = panel.get_combined_minimum_size().x.max(width);
+                let left = (right - w).max(PANEL_EDGE);
+                place(panel, [0.0; 4], [left, bottom - 40.0, left + w, bottom]);
+                panel.set_v_grow_direction(GrowDirection::BEGIN);
+                panel.set_h_grow_direction(GrowDirection::BEGIN);
+                shade.set_color(Color::from_rgba(0.0, 0.0, 0.0, 0.0));
+                shade.set_mouse_filter(MouseFilter::STOP);
+            }
+            None => {
+                // as tall as its rows again: a panel grows to what it holds
+                // and never shrinks by itself
+                place(
+                    panel,
+                    [0.5, 0.5, 0.5, 0.5],
+                    [-width / 2.0, -40.0, width / 2.0, 40.0],
+                );
+                panel.set_v_grow_direction(GrowDirection::BOTH);
+                panel.set_h_grow_direction(GrowDirection::BOTH);
+                shade.set_color(Color::from_rgba(0.0, 0.0, 0.0, 0.45));
+                shade.set_mouse_filter(MouseFilter::IGNORE);
+            }
+        }
     }
 
     fn open_text(
@@ -4368,10 +4774,41 @@ impl Dialogs {
 
     /// True when a LineEdit owns the keyboard (Text, ExtCmd).
     pub fn wants_text(&self) -> bool {
-        matches!(
-            self.open.as_ref().map(|o| &o.kind),
-            Some(Kind::Text { .. } | Kind::ExtCmd { .. } | Kind::Picker { .. })
-        )
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Text { .. } | Kind::Picker { .. }) => true,
+            // the command menu's search only once typed into: before, its
+            // rows take the arrows, Enter and ← →
+            Some(Kind::ExtCmd { edit, .. }) => edit.has_focus(),
+            _ => false,
+        }
+    }
+
+    /// A letter typed with the command menu open, its search not yet
+    /// typed into: the search takes the keyboard (under a pad, shown
+    /// first), and the letter goes to it. False when no menu waits so.
+    pub fn palette_starts_typing(&mut self) -> bool {
+        let Some(Kind::ExtCmd { edit, .. }) = self.open.as_ref().map(|o| &o.kind) else {
+            return false;
+        };
+        if edit.has_focus() {
+            return false;
+        }
+        if self.pad {
+            self.set_pad(false);
+        }
+        let Some(Kind::ExtCmd { edit, .. }) = self.open.as_mut().map(|o| &mut o.kind) else {
+            return false;
+        };
+        // focused from the code a field only waits: editing, it takes keys
+        edit.grab_focus();
+        edit.edit();
+        true
+    }
+
+    /// The command menu `#` opens next hangs from the HUD's Commands
+    /// button at `button` (pressed now).
+    pub fn set_palette_anchor(&mut self, button: Option<Rect2>) {
+        self.palette_anchor = button.map(|r| (r, std::time::Instant::now()));
     }
 
     /// The request the open dialog serves.
@@ -4730,16 +5167,19 @@ impl Dialogs {
         }
     }
 
-    /// The commands the palette lists now, in order.
-    /// The open palette's rows as they read: the name and the description
-    /// of each row shown (self-tests).
+    /// The open palette's rows as they read, a folded section's too: the
+    /// name and the words of each command listed (self-tests).
     pub fn palette_rows(&self) -> Option<Vec<(String, String)>> {
         match self.open.as_ref().map(|o| &o.kind) {
             Some(Kind::ExtCmd { palette, .. }) => {
                 let p = palette.borrow();
-                let shown = p.slots.iter().filter(|s| s.button.is_visible());
+                let filled = (p.slots.iter().zip(&p.slot_cmd)).filter(|(_, c)| c.is_some());
                 let text = |l: &Gd<Label>| l.get_text().to_string();
-                Some(shown.map(|s| (text(&s.name), text(&s.desc))).collect())
+                Some(
+                    filled
+                        .map(|(s, _)| (text(&s.name), text(&s.desc)))
+                        .collect(),
+                )
             }
             _ => None,
         }
@@ -4757,14 +5197,84 @@ impl Dialogs {
         }
     }
 
+    /// The commands the open palette lists, top down, a folded section's
+    /// too (self-tests).
     pub fn palette_names(&self) -> Option<Vec<String>> {
         match self.open.as_ref().map(|o| &o.kind) {
-            Some(Kind::ExtCmd { palette, .. }) => {
-                let p = palette.borrow();
-                Some(p.shown.iter().map(|&i| p.cmds[i].name.clone()).collect())
-            }
+            Some(Kind::ExtCmd { palette, .. }) => Some(listed_names(&palette.borrow())),
             _ => None,
         }
+    }
+
+    /// The open palette's sections as shown: each heading's words,
+    /// whether it is folded, its commands; none while typed text filters
+    /// (self-tests).
+    pub fn palette_sections(&self) -> Option<Vec<(String, bool, Vec<String>)>> {
+        let Some(Kind::ExtCmd { palette, .. }) = self.open.as_ref().map(|o| &o.kind) else {
+            return None;
+        };
+        let p = palette.borrow();
+        let heads = p.lines.iter().filter_map(|l| match l {
+            PaletteLine::Head(g) => p.groups.get(*g),
+            PaletteLine::Slot(_) => None,
+        });
+        Some(
+            heads
+                .map(|g| {
+                    let names = g.cmds.iter().map(|&c| p.cmds[c].name.clone()).collect();
+                    (g.head.title.get_text().to_string(), g.folded, names)
+                })
+                .collect(),
+        )
+    }
+
+    /// The open palette's highlighted row: "#name" for a command, the
+    /// heading's words for a section (self-tests).
+    pub fn palette_highlight(&self) -> Option<String> {
+        let Some(Kind::ExtCmd { palette, .. }) = self.open.as_ref().map(|o| &o.kind) else {
+            return None;
+        };
+        let p = palette.borrow();
+        match p.picked()? {
+            PalettePick::Cmd(name) => Some(format!("#{name}")),
+            PalettePick::Head(g) => Some(p.groups[g].head.title.get_text().to_string()),
+        }
+    }
+
+    /// Where the open palette shows command `name`'s row, or section
+    /// `name`'s heading (its words), on screen, if it does (self-tests:
+    /// a click there).
+    pub fn palette_row_rect(&self, name: &str) -> Option<Rect2> {
+        let Some(Kind::ExtCmd { palette, .. }) = self.open.as_ref().map(|o| &o.kind) else {
+            return None;
+        };
+        let p = palette.borrow();
+        let button = p.lines.iter().find_map(|l| match *l {
+            PaletteLine::Head(g) => {
+                (p.groups[g].head.title.get_text() == name).then(|| p.groups[g].head.button.clone())
+            }
+            PaletteLine::Slot(s) => {
+                let c = p.slot_cmd[s]?;
+                (p.cmds[c].name == name).then(|| p.slots[s].button.clone())
+            }
+        })?;
+        button
+            .is_visible_in_tree()
+            .then(|| button.get_global_rect())
+    }
+
+    /// How far the open palette's list is scrolled (self-tests).
+    pub fn palette_top(&self) -> Option<f32> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::ExtCmd { palette, .. }) => Some(palette.borrow().list.top()),
+            _ => None,
+        }
+    }
+
+    /// The open palette hangs from the HUD's Commands button (self-tests).
+    pub fn palette_dropdown(&self) -> bool {
+        matches!(self.open.as_ref().map(|o| &o.kind),
+            Some(Kind::ExtCmd { palette, .. }) if palette.borrow().dropdown)
     }
 
     /// The text field's contents.
@@ -4960,13 +5470,32 @@ impl Dialogs {
                 let step = match input.key {
                     Key::Escape | Key::Tab if input.echo => return None,
                     Key::Escape => return Some(escape),
-                    // a gamepad's A: the highlighted command
+                    // Enter (a gamepad's A): the highlighted command runs, a
+                    // heading folds or unfolds its section
                     Key::Enter | Key::KeypadEnter if !input.echo => {
-                        let p = palette.borrow();
-                        return p
-                            .selected
-                            .and_then(|s| p.shown.get(s))
-                            .map(|&i| Reply::ExtCmd(Some(p.cmds[i].name.clone())));
+                        let picked = palette.borrow().picked();
+                        match picked {
+                            Some(PalettePick::Cmd(name)) => return Some(Reply::ExtCmd(Some(name))),
+                            Some(PalettePick::Head(g)) => {
+                                palette.borrow_mut().fold(g, None);
+                                fill_palette(palette);
+                            }
+                            None => {}
+                        }
+                        return None;
+                    }
+                    // ← folds the highlighted row's section, → unfolds it
+                    // (the field's caret takes them while typing)
+                    Key::Left | Key::Right if !edit.has_focus() => {
+                        let changed = {
+                            let mut p = palette.borrow_mut();
+                            let fold = input.key == Key::Left;
+                            p.selected_group().is_some_and(|g| p.fold(g, Some(fold)))
+                        };
+                        if changed {
+                            fill_palette(palette);
+                        }
+                        return None;
                     }
                     Key::Up => -1,
                     Key::Down => 1,
@@ -4975,6 +5504,9 @@ impl Dialogs {
                     Key::Tab => {
                         let text = edit.get_text().to_string();
                         let done = palette_complete(&palette.borrow().cmds, &text);
+                        if done.is_empty() {
+                            return None;
+                        }
                         edit.set_text(&done);
                         edit.set_caret_column(done.chars().count() as i32);
                         palette.borrow_mut().refilter(&done);
@@ -4983,19 +5515,7 @@ impl Dialogs {
                     }
                     _ => return None,
                 };
-                {
-                    let mut p = palette.borrow_mut();
-                    let n = p.shown.len() as i64;
-                    if n > 0 {
-                        let cur = p.selected.map_or(-1, |s| s as i64);
-                        let next = if cur < 0 && step < 0 {
-                            n - 1
-                        } else {
-                            (cur + step).clamp(0, n - 1)
-                        };
-                        p.selected = Some(next as usize);
-                    }
-                }
+                palette.borrow_mut().step(step);
                 fill_palette(palette);
                 None
             }
@@ -5130,20 +5650,44 @@ impl Dialogs {
             (Kind::Picker { .. }, DialogEvent::TextCancelled) => Some(escape),
             (Kind::Text { .. }, DialogEvent::TextCancelled) => Some(escape),
             (Kind::ExtCmd { palette, edit, .. }, DialogEvent::TextSubmitted(text)) => {
-                let p = palette.borrow();
-                let chosen = p
-                    .selected
-                    .and_then(|s| p.shown.get(s))
-                    .map(|&i| p.cmds[i].name.clone())
-                    .or_else(|| {
+                // the field's own Enter: the row highlighted for what it
+                // holds; a name given otherwise (a self-test's), that one
+                let given = text.trim().to_lowercase();
+                let typed = edit.get_text().to_string().trim().to_lowercase() == given;
+                let named = (!typed)
+                    .then(|| {
+                        palette
+                            .borrow()
+                            .cmds
+                            .iter()
+                            .find(|c| c.name == given)
+                            .map(|c| c.name.clone())
+                    })
+                    .flatten();
+                if let Some(name) = named {
+                    return Some(Reply::ExtCmd(Some(name)));
+                }
+                let picked = palette.borrow().picked();
+                let chosen = match picked {
+                    Some(PalettePick::Cmd(name)) => Some(name),
+                    // a heading: its section folded or unfolded, the field
+                    // kept
+                    Some(PalettePick::Head(g)) => {
+                        palette.borrow_mut().fold(g, None);
+                        fill_palette(palette);
+                        edit.call_deferred("grab_focus", &[]);
+                        return None;
+                    }
+                    None => {
                         let t = text.trim().to_lowercase();
+                        let p = palette.borrow();
                         p.cmds.iter().find(|c| c.name == t).map(|c| c.name.clone())
-                    });
+                    }
+                };
                 match chosen {
                     Some(name) => Some(Reply::ExtCmd(Some(name))),
                     None if text.trim().is_empty() => Some(Reply::ExtCmd(None)),
                     None => {
-                        drop(p);
                         edit.call_deferred("grab_focus", &[]);
                         None
                     }
@@ -5151,8 +5695,8 @@ impl Dialogs {
             }
             (Kind::ExtCmd { palette, .. }, DialogEvent::MenuClick(i)) => {
                 let p = palette.borrow();
-                let name = p.shown.get(*i).map(|&c| p.cmds[c].name.clone())?;
-                Some(Reply::ExtCmd(Some(name)))
+                let c = p.slot_cmd.get(*i).copied().flatten()?;
+                Some(Reply::ExtCmd(Some(p.cmds[c].name.clone())))
             }
             (Kind::ExtCmd { .. }, DialogEvent::ExtCmd(cmd)) => Some(Reply::ExtCmd(cmd.clone())),
             (Kind::MessageMenu { letter, pick: true }, DialogEvent::Choice(c)) => {

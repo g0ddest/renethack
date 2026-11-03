@@ -402,6 +402,41 @@ fn settle(what: &'static str) -> Step {
     })
 }
 
+/// The command menu under a pad, opened on #pray: ↓ to #chat, ← folds
+/// the common ones (their heading highlighted), → unfolds them, ↑ back
+/// on #pray, A prays (B: not after all), the game back.
+fn pad_commands() -> Vec<Step> {
+    fn on(g: &RenethackGame, want: &str) -> Result<bool, String> {
+        let d = &g.ui.as_ref().ok_or("no UI")?.dialogs;
+        Ok(d.palette_highlight().as_deref() == Some(want))
+    }
+    fn common_folded(g: &RenethackGame) -> Result<bool, String> {
+        let d = &g.ui.as_ref().ok_or("no UI")?.dialogs;
+        let s = d.palette_sections().unwrap_or_default();
+        Ok(s.first().is_some_and(|(_, folded, _)| *folded))
+    }
+    vec![
+        tap(PadButton::Down),
+        Step::Wait("↓ on #chat", |g| on(g, "#chat")),
+        tap(PadButton::Left),
+        Step::Wait("← : the common ones folded, on their heading", |g| {
+            Ok(common_folded(g)? && on(g, &tr!("cmd-section-common"))?)
+        }),
+        tap(PadButton::Right),
+        tap(PadButton::Down),
+        Step::Wait("→ ↓ : unfolded, on #pray", |g| {
+            Ok(!common_folded(g)? && on(g, "#pray")?)
+        }),
+        tap(PadButton::A),
+        Step::Wait("A: are you sure you want to pray?", |g| {
+            fail_on_error_screen(g)?;
+            Ok(matches!(&g.pending,
+                Some((_, Prompt::Choice { query, .. })) if query.contains("pray")))
+        }),
+        settle("B: not praying, the game back"),
+    ]
+}
+
 /// One pad's step `(dx, dy)` with the left stick, let go after.
 fn stick(dx: i32, dy: i32) -> Step {
     let ev = |a, v: i32| PadEv::Axis(a, v as f32);
@@ -764,7 +799,8 @@ pub(super) fn pad_journey() -> Vec<Step> {
         (GameMenuPick::Help, 7, |g| {
             Ok(g.ui.as_ref().ok_or("no UI")?.help.is_open())
         }),
-        // under a pad: no moves (the stick's), the wanted ones first
+        // under a pad: in sections, no moves (the stick's) nor their
+        // section, the focus on the first common command
         (GameMenuPick::Commands, 8, |g| {
             let d = &g.ui.as_ref().ok_or("no UI")?.dialogs;
             if d.kind_name() != Some("extcmd") {
@@ -777,8 +813,13 @@ pub(super) fn pad_journey() -> Vec<Step> {
             {
                 return Err(format!("a move in the palette under a pad: {m}"));
             }
+            let sections = d.palette_sections().unwrap_or_default();
+            let titles: Vec<&str> = sections.iter().map(|(t, _, _)| t.as_str()).collect();
+            if titles.len() != 5 || titles.contains(&tr!("cmd-section-moves").as_str()) {
+                return Err(format!("the sections under a pad: {titles:?}"));
+            }
             match names.first().map(String::as_str) {
-                Some("pray") => Ok(true),
+                Some("pray") => Ok(d.palette_highlight().as_deref() == Some("#pray")),
                 other => Err(format!("the palette opens on {other:?}, not #pray")),
             }
         }),
@@ -790,8 +831,13 @@ pub(super) fn pad_journey() -> Vec<Step> {
         match pick {
             GameMenuPick::Character => steps.extend(shot("journey-character")),
             GameMenuPick::Journal => steps.extend(shot("journey-journal")),
-            // what each command does, in the player's words, no key
-            GameMenuPick::Commands => steps.extend(shot("journey-palette")),
+            // what each command does, in the player's words, no key; the
+            // d-pad moves and folds, A runs a command
+            GameMenuPick::Commands => {
+                steps.extend(shot("journey-palette"));
+                steps.extend(pad_commands());
+                continue;
+            }
             _ => steps.extend(settled_seams()),
         }
         steps.push(tap(PadButton::B));

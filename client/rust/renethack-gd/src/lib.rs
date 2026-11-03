@@ -14,6 +14,7 @@ mod branch_look;
 mod census;
 mod codex;
 mod codex_view;
+mod command_menu;
 mod creation;
 mod credits;
 mod credits_page;

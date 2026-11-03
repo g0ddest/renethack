@@ -45,13 +45,13 @@ const LOG_W: f32 = 404.0;
 const LOG_H: f32 = 260.0;
 /// The docked log of the compact layout: on the XP bar, from the bar's
 /// left end, clear of the gamepad's hints on the right; this many lines.
-const LOG_COMPACT_W: f32 = 436.0;
+const LOG_COMPACT_W: f32 = 404.0;
 const LOG_COMPACT_LINES: f32 = 4.0;
 /// The micro-buttons over the bar's right end: how many, a button's side
-/// (its hit target) in the canvas, in a row of eight or in two rows of
-/// four beside the docked log of the compact layout, and the gap
+/// (its hit target) in the canvas, in a row of nine or in two rows (five
+/// over four) beside the docked log of the compact layout, and the gap
 /// (`hud-buttons` measures them).
-const MICRO_BUTTONS: usize = 8;
+const MICRO_BUTTONS: usize = 9;
 const MICRO_W: f32 = 48.0;
 const MICRO_GAP: i32 = 4;
 /// The least hit target in the window's pixels at any UI scale: 32, and on
@@ -61,7 +61,7 @@ pub(crate) const MICRO_LEAST: f32 = 32.0;
 pub(crate) const MICRO_TOUCH: f32 = 44.0;
 /// The docked log keeps this far left of the micro-buttons beside it, and
 /// the pad's medallion this far from them.
-const MICRO_LOG_GAP: f32 = 12.0;
+const MICRO_LOG_GAP: f32 = 8.0;
 const MICRO_PAD_GAP: i32 = 8;
 /// The micro-buttons' plate inside the hit target, and their glyph.
 const MICRO_PLATE: f32 = 0.78;
@@ -1132,22 +1132,24 @@ fn micro_room(two: bool) -> f32 {
 fn micro_side(two: bool, k: f32, window: Vector2) -> f32 {
     let handheld = window.x <= 1280.5 && window.y <= 800.5;
     let least = if handheld { MICRO_TOUCH } else { MICRO_LEAST };
-    let n = if two {
-        MICRO_BUTTONS / 2
-    } else {
-        MICRO_BUTTONS
-    } as f32;
+    let n = micro_columns(two) as f32;
     let most = (micro_room(two) - (n - 1.0) * MICRO_GAP as f32) / n;
     MICRO_W.max((least / k).ceil()).min(most.floor())
 }
 
-/// The micro-buttons' grid at `side`: its columns, its width, its height.
-fn micro_grid(two: bool, side: f32) -> (usize, f32, f32) {
-    let columns = if two {
-        MICRO_BUTTONS / 2
+/// The micro-buttons' columns: all in a row, or the half of them, the
+/// odd one in the upper row.
+fn micro_columns(two: bool) -> usize {
+    if two {
+        MICRO_BUTTONS.div_ceil(2)
     } else {
         MICRO_BUTTONS
-    };
+    }
+}
+
+/// The micro-buttons' grid at `side`: its columns, its width, its height.
+fn micro_grid(two: bool, side: f32) -> (usize, f32, f32) {
+    let columns = micro_columns(two);
     let n = columns as f32;
     let rows = MICRO_BUTTONS.div_ceil(columns) as f32;
     let gap = MICRO_GAP as f32;
@@ -1587,6 +1589,14 @@ impl Hud {
         let f = |n| KeyInput::plain(Key::F(n));
         // the buttons' tips name their keys, as the player moved them
         let buttons: [(i32, &'static str, UiEvent, Option<KeyInput>); MICRO_BUTTONS] = [
+            // every command, in sections: the way in for a player who
+            // knows no `#`
+            (
+                10,
+                "hud-commands-tip",
+                UiEvent::CommandMenu,
+                Some(KeyInput::plain(Key::Char('#'))),
+            ),
             (
                 0,
                 "hud-inventory-tip",
@@ -3251,6 +3261,13 @@ impl Hud {
         } else {
             0.0
         }
+    }
+
+    /// The Commands button on screen (the command menu hangs from it),
+    /// while it shows.
+    pub fn commands_rect(&self) -> Option<Rect2> {
+        let b = self.micro_btns.first()?;
+        b.is_visible_in_tree().then(|| b.get_global_rect())
     }
 
     /// The micro-buttons on screen: each one's rect (its hit target) and

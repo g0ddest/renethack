@@ -265,7 +265,7 @@ fn palette_first(g: &RenethackGame, name: &str) -> Result<bool, String> {
     let ui = g.ui.as_ref().ok_or("no UI")?;
     let rows = ui.dialogs.palette_rows().ok_or("no palette open")?;
     match rows.first() {
-        Some((first, _)) if first == name => Ok(true),
+        Some((first, _)) if first.trim_start_matches('#') == name => Ok(true),
         Some(_) | None if rows.len() > 30 => Ok(false),
         Some((first, desc)) => Err(format!(
             "the palette lists #{first} ({desc}) first, not #{name}"

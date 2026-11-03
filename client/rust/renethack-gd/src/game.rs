@@ -1443,6 +1443,19 @@ impl INode for RenethackGame {
             return;
         };
         self.pad.active = false;
+        // a letter typed with the command menu open and its search not yet
+        // typed into: the search takes the keyboard, and Godot gives it
+        // the letter (and the keys after it)
+        if key.is_pressed()
+            && !key.is_echo()
+            && !key.is_ctrl_pressed()
+            && !key.is_alt_pressed()
+            && !key.is_meta_pressed()
+            && char::from_u32(key.get_unicode()).is_some_and(|c| !c.is_control() && c != ' ')
+            && (self.ui.as_mut()).is_some_and(|ui| ui.dialogs.palette_starts_typing())
+        {
+            return;
+        }
         let text = self.ui.as_ref().is_some_and(|ui| {
             ui.dialogs.wants_text() || ui.inventory.wants_text() || ui.help.wants_text()
         });
@@ -3034,6 +3047,36 @@ impl RenethackGame {
         self.quest_input(input);
     }
 
+    /// The HUD's Commands button: at the command prompt, nothing else up,
+    /// the command menu hung from it (NetHack's `#`, whatever key the
+    /// player moved it to); the menu open, it goes; anywhere else `#` as
+    /// a button gives it.
+    fn command_menu(&mut self) {
+        let Some(ui) = self.ui.as_ref() else {
+            return;
+        };
+        if ui.dialogs.kind_name() == Some("extcmd")
+            && let Some(req) = ui.dialogs.open_req()
+        {
+            self.push_ui(UiEvent::Dialog {
+                req,
+                ev: crate::ui_events::DialogEvent::ExtCmd(None),
+            });
+            return;
+        }
+        let free = self.at_command()
+            && !ui.dialogs.is_open()
+            && !ui.inventory.is_open()
+            && !ui.help.is_open()
+            && !ui.game_menu.is_open()
+            && !ui.hud.full_log_open();
+        if free {
+            let button = ui.hud.commands_rect();
+            self.ui_mut().dialogs.set_palette_anchor(button);
+        }
+        self.push_ui(UiEvent::GameKey(KeyInput::plain(Key::Char('#'))));
+    }
+
     /// The game's menu, over the game at its command prompt (orders stop).
     fn open_game_menu(&mut self) {
         self.driver.interrupt(Stop::Panel);
@@ -4473,6 +4516,7 @@ impl RenethackGame {
                 self.driver.interrupt(Stop::Panel);
                 self.ui_mut().hud.toggle_full_log();
             }
+            UiEvent::CommandMenu if self.state == GameState::Playing => self.command_menu(),
             UiEvent::ToggleHelp if self.state == GameState::Playing => {
                 self.driver.interrupt(Stop::Panel);
                 let pages = self.help_guide();

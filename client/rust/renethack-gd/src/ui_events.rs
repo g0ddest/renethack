@@ -46,6 +46,9 @@ pub enum UiEvent {
     QuitApp,
     CloseRequested,
     ToggleFullLog,
+    /// The HUD's Commands button: the command menu hung from it, or put
+    /// away when it is open.
+    CommandMenu,
     /// Wheel steps: negative zooms in.
     Zoom(f32),
     /// Frame everything known of the level, or go back to the hero.

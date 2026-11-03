@@ -457,6 +457,7 @@ attr-wi = Wi
 attr-ch = Ch
 hud-attrs-tip = Attributes. Click: your character ({ $key }).
 hud-xp-tip = Experience
+hud-commands-tip = Commands ({ $key })
 hud-inventory-tip = Inventory ({ $key })
 hud-spells-tip = Spells ({ $key })
 hud-character-tip = Character ({ $key })
@@ -643,10 +644,17 @@ show-hint = ↑↓ PgUp PgDn < >: scroll · Enter, Space or Esc: close
 text-name-placeholder = a name
 text-bytes = { $len } / { $max } bytes
 text-hint = Enter: OK · Esc: cancel
-palette-title = Extended command
-palette-placeholder = type a command
+palette-title = Commands
+palette-placeholder = type to find a command
 palette-none = no command matches
-palette-hint = Enter: run the highlighted command · Tab: complete · ↑↓ PgUp PgDn: choose · Esc: cancel
+palette-hint = Type to find one · ↑↓ PgUp PgDn: choose · ← →: fold · Enter: run · Tab: complete · Esc: cancel
+# the command menu's sections
+cmd-section-common = Common
+cmd-section-items = Items
+cmd-section-actions = Actions
+cmd-section-info = Information
+cmd-section-game = Game
+cmd-section-moves = Moves and prefixes
 # the words that find an extended command in the `#` palette beside its
 # name and description, a comma between two, else its name (the
 # commands' names stay English: they are what one types)
@@ -930,6 +938,7 @@ hint-change = Change
 hint-section = Section
 hint-answer = Answer
 hint-run = Run
+hint-fold = Fold
 radial-title = Actions
 radial-hint = Point a stick at one · let go in the middle: nothing
 radial-let-go = Let go of { $lt } to do it

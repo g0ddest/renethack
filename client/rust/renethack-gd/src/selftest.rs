@@ -42,6 +42,8 @@ mod calm_tests;
 mod chords_tests;
 #[path = "selftest_codex.rs"]
 mod codex_tests;
+#[path = "selftest_command_menu.rs"]
+mod command_menu_tests;
 #[path = "selftest_conditions.rs"]
 mod conditions_tests;
 #[path = "selftest_corridors.rs"]
@@ -433,9 +435,11 @@ fn smoke() -> Vec<Step> {
         Step::Request("a command after #version", command),
         key('#'),
         Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
-        Step::Wait("the palette with the keyboard", |g| {
+        // its search waits for a letter, not taking the keyboard: the
+        // arrows and Enter are its rows'
+        Step::Wait("the palette, its search waiting", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            Ok(ui.dialogs.kind_name() == Some("extcmd") && ui.dialogs.text_has_focus())
+            Ok(ui.dialogs.kind_name() == Some("extcmd") && !ui.dialogs.text_has_focus())
         }),
         Step::Shot("palette"),
         Step::Dialog(DialogEvent::TextSubmitted("quit".into())),
@@ -885,9 +889,11 @@ fn keys() -> Vec<Step> {
         // Shift+3 types '#'
         Step::Press(GKey::KEY_3, '#', true),
         Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
-        Step::Wait("the palette with the keyboard", |g| {
+        // its search waits for a letter, not taking the keyboard: the
+        // arrows and Enter are its rows'
+        Step::Wait("the palette, its search waiting", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            Ok(ui.dialogs.kind_name() == Some("extcmd") && ui.dialogs.text_has_focus())
+            Ok(ui.dialogs.kind_name() == Some("extcmd") && !ui.dialogs.text_has_focus())
         }),
     ];
     steps.extend("quiv".chars().map(press));
@@ -1131,16 +1137,17 @@ fn dialogs() -> Vec<Step> {
         Step::Shot("dialog-question"),
         key('n'),
         Step::Request("a command after not saving", command),
-        // the palette: typed "lo", real keys into the focused field
+        // the palette: typed "lo", real keys, the first one giving its
+        // search the keyboard
         key('#'),
         Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
-        Step::Wait("the palette with the keyboard and without \"#\"", |g| {
+        Step::Wait("the palette, its search waiting, without \"#\"", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
             let names = ui.dialogs.palette_names().unwrap_or_default();
             if names.iter().any(|n| n == "#") {
                 return Err("the palette lists \"#\"".into());
             }
-            Ok(!names.is_empty() && ui.dialogs.text_has_focus())
+            Ok(!names.is_empty() && !ui.dialogs.text_has_focus())
         }),
         press('l'),
         press('o'),
@@ -2517,7 +2524,16 @@ fn palette() -> Vec<Step> {
             }
             Ok(())
         }),
+        Step::Wait("the engine's words in the language again", |g| {
+            let cmds = crate::dialogs::palette_cmds(g.catalog.as_deref(), g.keymap());
+            let russian =
+                |c: &crate::dialogs::PaletteCmd| c.desc.chars().any(|c| ('а'..='я').contains(&c));
+            Ok((i18n::lang() == Lang::Ru) == cmds.iter().any(russian))
+        }),
     ]);
+    // the command menu: from the HUD's button, by a click, by the keys,
+    // by typing
+    steps.extend(command_menu_tests::menu_steps());
     steps.extend(quit());
     steps
 }
@@ -2545,9 +2561,10 @@ fn palette_in_language(g: &mut RenethackGame) -> Result<(), String> {
         ));
     }
     for (name, desc) in &rows {
-        let cmd = cmds.iter().find(|c| c.name == *name);
+        let name = name.trim_start_matches('#');
+        let cmd = cmds.iter().find(|c| c.name == name);
         let cmd = cmd.ok_or_else(|| format!("the palette lists #{name}, the catalog does not"))?;
-        if cmd.desc != *desc {
+        if crate::dialogs::palette_row_words(&cmd.desc) != *desc {
             return Err(format!(
                 "#{name} reads \"{desc}\" in the palette, \"{}\" in the language now",
                 cmd.desc

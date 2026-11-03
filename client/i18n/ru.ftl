@@ -464,6 +464,7 @@ attr-wi = Мдр
 attr-ch = Хар
 hud-attrs-tip = Характеристики. Щелчок: ваш персонаж ({ $key }).
 hud-xp-tip = Опыт
+hud-commands-tip = Команды ({ $key })
 hud-inventory-tip = Инвентарь ({ $key })
 hud-spells-tip = Заклинания ({ $key })
 hud-character-tip = Персонаж ({ $key })
@@ -652,10 +653,17 @@ show-hint = ↑↓ PgUp PgDn < >: прокрутка · Enter, Пробел ил
 text-name-placeholder = имя
 text-bytes = { $len } / { $max } байт
 text-hint = Enter: ОК · Esc: отмена
-palette-title = Расширенная команда
-palette-placeholder = введите команду
+palette-title = Команды
+palette-placeholder = начните печатать, чтобы найти команду
 palette-none = нет такой команды
-palette-hint = Enter: выполнить выделенную команду · Tab: дополнить · ↑↓ PgUp PgDn: выбор · Esc: отмена
+palette-hint = Печатайте, чтобы найти · ↑↓ PgUp PgDn: выбор · ← →: свернуть · Enter: выполнить · Tab: дополнить · Esc: отмена
+# разделы меню команд
+cmd-section-common = Частые
+cmd-section-items = Предметы
+cmd-section-actions = Действия в мире
+cmd-section-info = Сведения
+cmd-section-game = Игра
+cmd-section-moves = Шаги и приставки
 # слова, по которым палитра `#` находит расширенную команду, кроме её
 # имени и описания, через запятую, иначе само имя (имена команд остаются
 # английскими: их и набирают)
@@ -1028,6 +1036,7 @@ hint-change = Изменить
 hint-section = Раздел
 hint-answer = Ответить
 hint-run = Выполнить
+hint-fold = Свернуть
 radial-title = Действия
 radial-hint = Наведите стик на действие · отпустите в центре: ничего
 radial-let-go = Отпустите { $lt }, чтобы выполнить
