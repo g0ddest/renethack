@@ -13,5 +13,6 @@ serde_json.workspace = true
 toml = "1.1.6"
 
 [dev-dependencies]
+nh-i18n = { path = "../nh-i18n" }
 nh-link = { path = "../nh-link" }
 tempfile = "3"

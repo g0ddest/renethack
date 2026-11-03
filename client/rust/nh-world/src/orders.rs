@@ -54,6 +54,18 @@ const SEARCH_REFUSED_HINT: (&str, &str) = (
 /// `danger_uprops()`): the catalog's 5e60c1763e17. Like the foe's, it is
 /// said only of a search without a count (`!gm.multi`).
 const SEARCH_UNSAFE: &str = "Searching doesn't feel like a good idea right now.";
+/// 5.0's lines a rest brings and the log keeps: its end at full HP or Pw,
+/// its refusals, a foe come near stopping its count. The player reads
+/// them in the log, so each has its translation (a test holds it).
+pub const REST_LINES: [&str; 6] = [
+    REST_FULL[0],
+    REST_FULL[1],
+    SEARCH_REFUSED,
+    "You already found a monster.  Use 'm' prefix to force another search.",
+    SEARCH_UNSAFE,
+    "You stop searching.",
+];
+
 /// The highest count a prefix takes (NetHack's LARGEST_INT).
 const MAX_COUNT: u32 = 32767;
 
@@ -1698,6 +1710,36 @@ mod tests {
         d.start(Order::Hold { key: 's' }, &w, &cat).unwrap();
         d.observe(&w, &cat);
         assert_eq!(keys(&d.next(&w, &cat).unwrap()), "s");
+    }
+
+    #[test]
+    fn the_lines_a_rest_brings_are_translated() {
+        struct NoNames;
+        impl nh_i18n::Names for NoNames {
+            fn parse(&self, _: nh_i18n::NameKind, _: &str) -> Option<Box<dyn nh_i18n::Phrase>> {
+                None
+            }
+        }
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../i18n");
+        let catalog = std::fs::read_to_string(dir.join("catalog.en.json")).unwrap();
+        let catalog = nh_i18n::Catalog::parse(&catalog).unwrap();
+        let russian = nh_i18n::Russian::load_dir(&dir.join("ru")).unwrap();
+        let t = nh_i18n::Translator::new(catalog, russian, Box::new(NoNames));
+        for line in REST_LINES {
+            let out = t.message(None, &[], line);
+            // (the prefix key in quotes is the player's to type)
+            let latin = out
+                .text
+                .replace("'m'", "")
+                .chars()
+                .any(|c| c.is_ascii_alphabetic());
+            assert!(
+                out.status == nh_i18n::Status::Translated && !latin,
+                "{line:?} -> {:?} ({:?})",
+                out.text,
+                out.status
+            );
+        }
     }
 
     #[test]

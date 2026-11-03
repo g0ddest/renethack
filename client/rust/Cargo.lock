@@ -427,6 +427,7 @@ dependencies = [
 name = "nh-world"
 version = "0.1.0"
 dependencies = [
+ "nh-i18n",
  "nh-link",
  "nh-protocol",
  "serde",

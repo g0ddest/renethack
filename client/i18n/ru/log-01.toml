@@ -7,6 +7,24 @@
 en = "You already found a monster.  Use '%s' prefix to force another search."
 ru = "Вы уже нашли монстра. Чтобы всё равно искать, используйте префикс '{1}'."
 
+# a rest's search refused, said again; a rest's count ended by the engine
+# at full HP or Pw (interrupt_multi), or by a foe come near
+[2d2cbe062bc2]
+en = "You already found a monster."
+ru = "Вы уже нашли монстра."
+
+[8abfb39e6911]
+en = "You are in full health."
+ru = "Вы полностью здоровы."
+
+[00bd810ce1cb]
+en = "You feel full of energy."
+ru = "Вы полны энергии."
+
+[de94f8210cfd]
+en = "searching"
+ru = "искать"
+
 [37b621a30e7f]
 en = "The '%s' prefix should be followed by a movement command."
 ru = "После префикса '{1}' нужна команда движения."
