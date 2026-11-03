@@ -1,4 +1,4 @@
-{"format": 1, "engine": "NetHack-5.0.0_Released", "count": 29602, "entries": [
+{"format": 1, "engine": "NetHack-5.0.0_Released", "count": 29603, "entries": [
 {"id": "a053ba02e4d4", "fmt": "X marks the spot.", "uses": ["engraving"], "sites": ["dat/Arc-loca.lua:90 des.engraving", "dat/Arc-loca.lua:91 des.engraving", "dat/Arc-loca.lua:92 des.engraving", "dat/Arc-loca.lua:93 des.engraving"]},
 {"id": "d5335a1468c3", "fmt": "What a strange feeling!", "uses": ["level"], "sites": ["dat/air.lua:12 des.message"]},
 {"id": "2442f1605479", "fmt": "You notice that there is no gravity here.", "uses": ["level"], "sites": ["dat/air.lua:13 des.message"]},
@@ -5451,6 +5451,7 @@
 {"id": "aaaa02511f3f", "fmt": "show version and date+time program was built", "uses": ["menu"], "sites": ["src/cmd.c:1926 extcmdlist versionshort"]},
 {"id": "c5e3affc4a03", "fmt": "show vision array", "uses": ["menu"], "sites": ["src/cmd.c:1928 extcmdlist vision"]},
 {"id": "8f7ec1adc393", "fmt": "rest one move while doing nothing", "uses": ["menu"], "sites": ["src/cmd.c:1930 extcmdlist wait"]},
+{"id": "12625ba3c14e", "fmt": "waiting", "uses": ["occupation"], "sites": ["src/cmd.c:1930 extcmdlist wait"]},
 {"id": "d854680d69c3", "fmt": "wear a piece of armor", "uses": ["menu"], "sites": ["src/cmd.c:1932 extcmdlist wear"]},
 {"id": "235e86dba15f", "fmt": "tell what a command does", "uses": ["menu"], "sites": ["src/cmd.c:1934 extcmdlist whatdoes"]},
 {"id": "ab0e3ca56765", "fmt": "show what type of thing a symbol corresponds to", "uses": ["menu"], "sites": ["src/cmd.c:1936 extcmdlist whatis"]},
@@ -28748,7 +28749,7 @@
 {"id": "751a10dbcc78", "fmt": "polymorphing", "uses": ["menu", "sprintf"], "from": ["347cd9c53ff7"], "sites": ["src/wizcmds.c:992 wiz_intrinsic", "src/wizcmds.c:993 wiz_intrinsic add_menu(win, & nul_glyphinfo, & any, 0, 0, ATR_NONE, clr, buf, MENU_ITEMFLAGS_NONE)"]},
 {"id": "9fb43df1fa70", "fmt": "protection from shape changers", "uses": ["menu", "sprintf"], "from": ["347cd9c53ff7"], "sites": ["src/wizcmds.c:992 wiz_intrinsic", "src/wizcmds.c:993 wiz_intrinsic add_menu(win, & nul_glyphinfo, & any, 0, 0, ATR_NONE, clr, buf, MENU_ITEMFLAGS_NONE)", "src/wizcmds.c:1076 wiz_intrinsic pline(\"Timeout for %s %s %d.\", propname, oldtimeout ? \"increased by\" : \"set to\", amt)"]},
 {"id": "62b3760686fd", "fmt": "reflecting", "uses": ["menu", "sprintf"], "from": ["347cd9c53ff7"], "sites": ["src/wizcmds.c:992 wiz_intrinsic", "src/wizcmds.c:993 wiz_intrinsic add_menu(win, & nul_glyphinfo, & any, 0, 0, ATR_NONE, clr, buf, MENU_ITEMFLAGS_NONE)"]},
-{"id": "de94f8210cfd", "fmt": "searching", "uses": ["menu", "sprintf"], "from": ["347cd9c53ff7"], "sites": ["src/wizcmds.c:992 wiz_intrinsic", "src/wizcmds.c:993 wiz_intrinsic add_menu(win, & nul_glyphinfo, & any, 0, 0, ATR_NONE, clr, buf, MENU_ITEMFLAGS_NONE)"]},
+{"id": "de94f8210cfd", "fmt": "searching", "uses": ["menu", "occupation", "sprintf"], "from": ["347cd9c53ff7"], "sites": ["src/wizcmds.c:992 wiz_intrinsic", "src/wizcmds.c:993 wiz_intrinsic add_menu(win, & nul_glyphinfo, & any, 0, 0, ATR_NONE, clr, buf, MENU_ITEMFLAGS_NONE)", "src/cmd.c:1846 extcmdlist search"]},
 {"id": "02f2f8c0fa62", "fmt": "shock resistance", "uses": ["menu", "sprintf"], "from": ["347cd9c53ff7"], "sites": ["src/wizcmds.c:992 wiz_intrinsic", "src/wizcmds.c:993 wiz_intrinsic add_menu(win, & nul_glyphinfo, & any, 0, 0, ATR_NONE, clr, buf, MENU_ITEMFLAGS_NONE)", "src/wizcmds.c:1076 wiz_intrinsic pline(\"Timeout for %s %s %d.\", propname, oldtimeout ? \"increased by\" : \"set to\", amt)"]},
 {"id": "5164af28892d", "fmt": "sickness resistance", "uses": ["menu", "sprintf"], "from": ["347cd9c53ff7"], "sites": ["src/wizcmds.c:992 wiz_intrinsic", "src/wizcmds.c:993 wiz_intrinsic add_menu(win, & nul_glyphinfo, & any, 0, 0, ATR_NONE, clr, buf, MENU_ITEMFLAGS_NONE)", "src/wizcmds.c:1076 wiz_intrinsic pline(\"Timeout for %s %s %d.\", propname, oldtimeout ? \"increased by\" : \"set to\", amt)"]},
 {"id": "30face30aece", "fmt": "sleep resistance", "uses": ["menu", "sprintf"], "from": ["347cd9c53ff7"], "sites": ["src/wizcmds.c:992 wiz_intrinsic", "src/wizcmds.c:993 wiz_intrinsic add_menu(win, & nul_glyphinfo, & any, 0, 0, ATR_NONE, clr, buf, MENU_ITEMFLAGS_NONE)", "src/wizcmds.c:1076 wiz_intrinsic pline(\"Timeout for %s %s %d.\", propname, oldtimeout ? \"increased by\" : \"set to\", amt)"]},

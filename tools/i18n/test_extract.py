@@ -435,6 +435,8 @@ class Formats(unittest.TestCase):
             'struct ext_func_tab extcmdlist[] = {\n'
             '    { \'#\', "#", "enter and perform an extended command", doextcmd, 0, NULL },\n'
             '    { M(\'a\'), "adjust", "adjust inventory letters", doorganize, 0, NULL },\n'
+            '    { \'s\', "search", "search for traps and secret doors",\n'
+            '      dosearch, IFBURIED | CMD_M_PREFIX, "searching" },\n'
             '    { 0, "genocided", "list monsters that have been genocided or become extinct",\n'
             '      dogenocided, 0, NULL },\n'
             '    { 0, (char *) 0, (char *) 0, donull, 0, (char *) 0 }\n'
@@ -444,10 +446,12 @@ class Formats(unittest.TestCase):
         extract.add_extcmds(cat, [unit])
         e = cat.entries
         self.assertIn("adjust inventory letters", e)
-        self.assertEqual(e[" adjust         %4s %s"].sites, ["src/cmd.c:8 doextlist adjust"])
+        self.assertEqual(e[" adjust         %4s %s"].sites, ["src/cmd.c:10 doextlist adjust"])
         self.assertIn(" #              %4s enter and perform an extended command", e)
         self.assertIn("list monsters that have been genocided", e)
-        self.assertEqual(len(e), 7)
+        # a counted search is an occupation: "You stop searching."
+        self.assertEqual(e["searching"].uses, {"occupation"})
+        self.assertEqual(len(e), 10)
 
     def test_helpers_returns_and_parameters(self):
         e = catalog_of('static const char *exclam(int d) { return d > 4 ? "!" : "."; }\n'

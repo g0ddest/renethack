@@ -30157,11 +30157,21 @@ You begin bashing monsters with your gloved %s.  [81e2b0ba7837]
   f   Вы начинаете колотить монстров крысой в перчатках.
   n   Вы начинаете колотить монстров копьём в перчатках.
   pl  Вы начинаете колотить монстров 3 стрелами в перчатках.
+You begin chipping the statue.  [54ebd1df350d]
+  =   Вы начинаете откалывать куски от статуи.
+You begin chopping at the door.  [58d93b84e210]
+  =   Вы начинаете рубить дверь.
+You begin cutting the tree.  [273e87f4b29a]
+  =   Вы начинаете рубить дерево.
+You begin digging.  [55d11c37450b]
+  =   Вы начинаете копать.
 You begin eating %s.  [dd04d67eafab]
   m   Вы начинаете есть тритона.
   f   Вы начинаете есть крысу.
   n   Вы начинаете есть копьё.
   pl  Вы начинаете есть 3 стрелы.
+You begin hitting the boulder.  [e021fd071d3d]
+  =   Вы начинаете бить по валуну.
 You begin praying to %s.  [8905cf645e12]
   m   Вы начинаете молиться тритону.
   f   Вы начинаете молиться крысе.
@@ -30182,6 +30192,8 @@ You begin striking monsters with your gloved %s.  [53ffb9be609d]
   f   Вы начинаете бить монстров крысой в перчатках.
   n   Вы начинаете бить монстров копьём в перчатках.
   pl  Вы начинаете бить монстров 3 стрелами в перчатках.
+You begin swinging.  [0435f45e9c30]
+  =   Вы начинаете замахиваться.
 You begin to memorize the runes.  [20042ac7ce40]
   =   Вы начинаете запоминать руны.
 You begin to recite the runes.  [7b64513fe8f6]
@@ -31062,10 +31074,10 @@ You consume %s %s.  [f5807fbfb44e]
 You consume the last bite of your meal.  [7d16150abb92]
   =   Вы доедаете последний кусок.
 You continue %s.  [410664c8606b]
-  m   Вы продолжаете снимать с себя снаряжение.
-  f   Вы продолжаете снимать с себя снаряжение.
-  n   Вы продолжаете снимать с себя снаряжение.
-  pl  Вы продолжаете снимать с себя снаряжение.
+  m   Вы продолжаете тритон.
+  f   Вы продолжаете крыса.
+  n   Вы продолжаете копьё.
+  pl  Вы продолжаете 3 стрелы.
 You continue chewing on the bars.  [7131cc5ea7aa]
   =   Вы продолжаете грызть решётку.
 You continue chewing on the boulder.  [1f171c1cf762]
@@ -31076,12 +31088,26 @@ You continue chewing on the rock.  [0064c36f29f9]
   =   Вы продолжаете грызть камень.
 You continue chewing on the tree.  [3500d4b4758f]
   =   Вы продолжаете грызть дерево.
+You continue chipping the statue.  [59238794c199]
+  =   Вы продолжаете откалывать куски от статуи.
+You continue chopping at the door.  [3e27749ee3e4]
+  =   Вы продолжаете рубить дверь.
+You continue chopping downward.  [dbcbf2684959]
+  =   Вы продолжаете рубить вниз.
+You continue cutting the tree.  [892485e17e64]
+  =   Вы продолжаете рубить дерево.
 You continue digging downward.  [7522d78d6574]
   =   Вы продолжаете копать вниз.
+You continue digging.  [b2598ba87d34]
+  =   Вы продолжаете копать.
 You continue disarming.  [e71e55f09bf0]
   =   Вы продолжаете убирать оружие.
 You continue disrobing.  [d95fb0d569b3]
   =   Вы продолжаете раздеваться.
+You continue hitting the boulder.  [227f378b5537]
+  =   Вы продолжаете бить по валуну.
+You continue swinging.  [005075caa1b9]
+  =   Вы продолжаете замахиваться.
 You continue your efforts to memorize the spell.  [d674af67a507]
   =   Вы продолжаете заучивать заклинание.
 You continue your efforts to read the novel.  [103d6775ad4f]
@@ -33604,10 +33630,10 @@ You find yourself standing in sight of %s.  Something\nis obviously wrong here. 
 You find yourself suspended in an air bubble surrounded by water.  [ed4e03c83e0b]
   =   Вы оказываетесь в воздушном пузыре посреди воды.
 You finish %s.  [18c2feb65720]
-  m   Вы заканчиваете снимать с себя снаряжение.
-  f   Вы заканчиваете снимать с себя снаряжение.
-  n   Вы заканчиваете снимать с себя снаряжение.
-  pl  Вы заканчиваете снимать с себя снаряжение.
+  m   Вы заканчиваете тритон.
+  f   Вы заканчиваете крыса.
+  n   Вы заканчиваете копьё.
+  pl  Вы заканчиваете 3 стрелы.
 You finish arming %s.  [dfae86548c39]
   m   Вы заканчиваете взводить тритона.
   f   Вы заканчиваете взводить крысу.
@@ -36571,17 +36597,29 @@ You start chewing on a boulder.  [76f4a3e5cd51]
   =   Вы начинаете грызть валун.
 You start chewing on a tree.  [8197079e50c1]
   =   Вы начинаете грызть дерево.
+You start chipping the statue.  [31a121b2ba03]
+  =   Вы начинаете откалывать куски от статуи.
+You start chopping at the door.  [67a4e4277140]
+  =   Вы начинаете рубить дверь.
+You start chopping downward.  [bd2bc9297395]
+  =   Вы начинаете рубить вниз.
+You start cutting the tree.  [55ad0f52882c]
+  =   Вы начинаете рубить дерево.
 You start digging downward.  [f2176d6bc4e8]
   =   Вы начинаете копать вниз.
 You start digging.  [f3d764b9f47c]
   =   Вы начинаете копать.
 You start flying.  [b48a6735c76b]
   =   Вы взлетаете.
+You start hitting the boulder.  [5c3c3dac9a0c]
+  =   Вы начинаете бить по валуну.
 You start playing %s.  [b7fb5fe95834]
   m   Вы начинаете играть на тритоне.
   f   Вы начинаете играть на крысе.
   n   Вы начинаете играть на копье.
   pl  Вы начинаете играть на 3 стрелах.
+You start swinging.  [c032aeab7a0f]
+  =   Вы начинаете замахиваться.
 You start to feel bloated.  [d22cb2c523fd]
   =   Вас начинает распирать.
 You start to float in the air!  [3b3851e31938]
@@ -43540,6 +43578,8 @@ vomiting  [54caab2e437e]
   =   Во время рвоты
 voussoir  [87f2325b8f03]
   =   Вуссуар
+waiting  [12625ba3c14e]
+  =   Ждать
 walking disk drive  [8d11f28ec990]
   =   Ходячий дисковод
 walking into a door attempts to open it  [ca0aee8d18d1]

@@ -126,6 +126,90 @@ fn messages_with_their_format() {
     assert_eq!(out.text, "Вы уже здесь.");
 }
 
+/// The lines 5.0 builds from what the hero is busy doing (`go.occtxt`,
+/// the texts it gives set_occupation(); do_wear's and lock.c's own).
+const OCCUPATION_LINES: [&str; 3] = ["You stop %s.", "You continue %s.", "You finish %s."];
+
+#[test]
+fn every_occupation_reads_in_the_lines_built_from_it() {
+    // the real lexicon: the food in "eating %s" declines
+    let t = Translator::new(
+        catalog(),
+        russian(),
+        Box::new(nh_i18n::lexicon::Lexicon::ru()),
+    );
+    let occupations: Vec<_> = (t.catalog().templates().iter())
+        .filter(|tm| tm.has_use(nh_i18n::Use::Occupation) && !tm.expanded)
+        .collect();
+    // the commands' counted occupations are in it, as set_occupation's
+    for word in ["searching", "waiting", "digging", "eating %s", "engraving"] {
+        assert!(
+            occupations.iter().any(|tm| tm.fmt == word),
+            "{word:?}: no occupation of the catalog"
+        );
+    }
+    let mut wrong = Vec::new();
+    for tm in &occupations {
+        // a sample for each conversion, by its kind
+        let mut text = tm.fmt.clone();
+        for kind in &tm.kinds {
+            let sample = match kind.as_str() {
+                "object" => "the food ration",
+                "word" => "face",
+                _ => "it",
+            };
+            text = text.replacen("%s", sample, 1);
+        }
+        for line in OCCUPATION_LINES {
+            let english = line.replace("%s", &text);
+            let out = t.message(Some(line), &[Arg::Str(text.clone())], &english);
+            let latin = out.text.chars().any(|c| c.is_ascii_alphabetic());
+            if out.status != Status::Translated || latin {
+                wrong.push(format!("{english:?} -> {:?} ({:?})", out.text, out.status));
+            }
+        }
+    }
+    assert!(wrong.is_empty(), "{}", wrong.join("\n"));
+}
+
+/// The lines whose argument is what a pick-axe or an axe is put to
+/// (dig.c's d_action[] and verbing: "You continue cutting the tree.").
+const DIG_LINES: [&str; 4] = [
+    "You %s %s.",
+    "You start %s.",
+    "You start %s downward.",
+    "You continue %s downward.",
+];
+
+#[test]
+fn every_sentence_of_digging_is_russian() {
+    let t = translator();
+    let cat = t.catalog();
+    let mut wrong = Vec::new();
+    for fmt in DIG_LINES {
+        let generic = cat
+            .by_fmt(fmt)
+            .unwrap_or_else(|| panic!("{fmt:?} in the catalog"));
+        let dig = |i: &usize| {
+            cat.templates()[*i]
+                .sites
+                .iter()
+                .any(|s| s.starts_with("src/dig.c"))
+        };
+        let derived: Vec<usize> = cat.derived(generic).iter().copied().filter(dig).collect();
+        assert!(!derived.is_empty(), "{fmt:?}: no sentence of dig.c's");
+        for i in derived {
+            let english = &cat.templates()[i].fmt;
+            let out = t.message(None, &[], english);
+            if out.status != Status::Translated || out.text.chars().any(|c| c.is_ascii_alphabetic())
+            {
+                wrong.push(format!("{english:?} -> {:?} ({:?})", out.text, out.status));
+            }
+        }
+    }
+    assert!(wrong.is_empty(), "{}", wrong.join("\n"));
+}
+
 #[test]
 fn what_cannot_be_translated_stays_english() {
     // a template without Russian yet: one the translator takes as itself

@@ -25,6 +25,90 @@ ru = "Вы полны энергии."
 en = "searching"
 ru = "искать"
 
+# a counted wait's occupation (cmd.c's f_text): "You stop waiting."
+[12625ba3c14e]
+en = "waiting"
+ru = "ждать"
+
+# what a pick-axe or an axe is put to (dig.c's d_action[] and verbing):
+# "You start/begin/continue cutting the tree.", "You start chopping downward."
+
+[31a121b2ba03]
+en = "You start chipping the statue."
+ru = "Вы начинаете откалывать куски от статуи."
+
+[67a4e4277140]
+en = "You start chopping at the door."
+ru = "Вы начинаете рубить дверь."
+
+[55ad0f52882c]
+en = "You start cutting the tree."
+ru = "Вы начинаете рубить дерево."
+
+[5c3c3dac9a0c]
+en = "You start hitting the boulder."
+ru = "Вы начинаете бить по валуну."
+
+[c032aeab7a0f]
+en = "You start swinging."
+ru = "Вы начинаете замахиваться."
+
+[54ebd1df350d]
+en = "You begin chipping the statue."
+ru = "Вы начинаете откалывать куски от статуи."
+
+[58d93b84e210]
+en = "You begin chopping at the door."
+ru = "Вы начинаете рубить дверь."
+
+[273e87f4b29a]
+en = "You begin cutting the tree."
+ru = "Вы начинаете рубить дерево."
+
+[55d11c37450b]
+en = "You begin digging."
+ru = "Вы начинаете копать."
+
+[e021fd071d3d]
+en = "You begin hitting the boulder."
+ru = "Вы начинаете бить по валуну."
+
+[0435f45e9c30]
+en = "You begin swinging."
+ru = "Вы начинаете замахиваться."
+
+[59238794c199]
+en = "You continue chipping the statue."
+ru = "Вы продолжаете откалывать куски от статуи."
+
+[3e27749ee3e4]
+en = "You continue chopping at the door."
+ru = "Вы продолжаете рубить дверь."
+
+[892485e17e64]
+en = "You continue cutting the tree."
+ru = "Вы продолжаете рубить дерево."
+
+[b2598ba87d34]
+en = "You continue digging."
+ru = "Вы продолжаете копать."
+
+[227f378b5537]
+en = "You continue hitting the boulder."
+ru = "Вы продолжаете бить по валуну."
+
+[005075caa1b9]
+en = "You continue swinging."
+ru = "Вы продолжаете замахиваться."
+
+[bd2bc9297395]
+en = "You start chopping downward."
+ru = "Вы начинаете рубить вниз."
+
+[dbcbf2684959]
+en = "You continue chopping downward."
+ru = "Вы продолжаете рубить вниз."
+
 [37b621a30e7f]
 en = "The '%s' prefix should be followed by a movement command."
 ru = "После префикса '{1}' нужна команда движения."
@@ -123,7 +207,7 @@ ru = "Не вижу там ловушки."
 
 [18c2feb65720]
 en = "You finish %s."
-ru = "Вы заканчиваете{1:skip} снимать с себя снаряжение."
+ru = "Вы заканчиваете {1}."
 
 [2ed647c1764d]
 en = "You do not owe %s anything."

@@ -1903,7 +1903,9 @@ EXTCMD_ROW = re.compile(r" %-(\d+)s %4s %s")
 def add_extcmds(cat, units):
     """The extended commands' descriptions (cmd.c extcmdlist[]: "apply
     (use) a tool (pick-axe, key, lamp...)"), which the `#` palette and the
-    `#?` list show, and each command's row of the `#?` list."""
+    `#?` list show, and each command's row of the `#?` list; the
+    occupation a command given a count becomes (its f_text: "searching",
+    as rhack hands it to set_occupation(): "You stop searching.")."""
     for unit in units:
         if unit.path != "cmd.c":
             continue
@@ -1928,6 +1930,10 @@ def add_extcmds(cat, units):
                         x.kind == "string" for x in row[1]) else "?"
                     desc = "".join(x.value for x in row[2])
                     cat.add(escape(desc), "menu", f"src/cmd.c:{toks[j].line} extcmdlist {name}", [])
+                    if len(row) >= 6 and row[5] and all(x.kind == "string" for x in row[5]):
+                        occupation = "".join(x.value for x in row[5])
+                        cat.add(escape(occupation), "occupation",
+                                f"src/cmd.c:{toks[j].line} extcmdlist {name}", [])
                     for line, width in rows:
                         add_extcmd_row(cat, f"src/cmd.c:{line} doextlist {name}", name, desc, width)
                 j = end + 1
