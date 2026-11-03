@@ -656,11 +656,22 @@ points, energy, armour class, experience and gold, the six
 characteristics, and every other line of the window by section, in the
 engine's words as its translator says them; nothing the window does not
 say. The spells (`+`, `Z`, or the HUD's button; `spells.rs`,
-`spells_view.rs`) are a row each: the school's medallion, the name, the
-school and level, the chance of failure and how well the spell is
-remembered. A pick casts it (from `+`'s list, the list is closed and `Z`
-picks the spell by its name); Tab or the Reorder button makes a pick the
-engine's own swap of two spells' letters, and `[sort spells]` is a row.
+`spells_view.rs`) are a card each: the spell's icon, its name, school and
+level and whether it asks a direction or a place, a line on what it does
+in 5.0, its chance of failure (green, amber or red, a number and a bar),
+its cost in Pw (five a level, greyed when the hero is short of it) and how
+well it is remembered. Beside the list, the full card of the spell under
+the pointer or the focus spells it all out, warns of a forgotten spell's
+backfire, and has a button that puts the spell on the action bar's first
+free slot; a card dragged onto a slot binds it there, and a spell's slot
+shows its cost and greys when the hero cannot pay. A pick casts it (from
+`+`'s list, the list is closed and `Z` picks the spell by its name); once
+cast, a directional spell's question names the spell and how to aim it,
+and gold arrows round the hero show the ways it can go. Tab or the
+Reorder button makes a pick the engine's own swap of two spells' letters
+(the swap names the spell, not its letter), and `[sort spells]` is a
+row. Under a gamepad the d-pad walks the cards, A casts and no card shows
+a key.
 The skills (#enhance; `skills.rs`, `skills_view.rs`) are listed by group,
 each with its level in words and pips and what the window marks it with:
 "advance" when it can advance now (a pick that advances it), "later" for
@@ -679,8 +690,12 @@ tab's button closes the one window and asks the engine for the other.
 A panel's header and hint name its key as the player presses it now,
 and that key closes it again, as Esc and a gamepad's B do. The `sheet`
 scenario opens it in a game, from the key, the HUD's button and a moved
-key, and checks that each line of the window is on it; `spells` casts
-from both lists, by key, click and gamepad, and swaps two spells;
+key, and checks that each line of the window is on it; `spells` checks
+every card's words, the full card following the keys and the pointer,
+the cost greyed on the cards and the bar, a directional spell's aim, a
+spell put on the bar by the full card's button and by a drag, casts from
+both lists by key, click and gamepad (no key shown under the pad), and
+swaps two spells;
 `skills` shows a debug-mode hero's skills, then advances two (by a letter
 and by a gamepad); `journal` opens #chronicle and checks its events and
 the newest message; `codex` checks a Wizard's discoveries, their icons,

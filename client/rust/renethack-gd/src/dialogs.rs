@@ -2026,8 +2026,13 @@ pub struct Dialogs {
     /// (else its first pick).
     opening_cursor: Option<usize>,
     /// The open spells' panel: its spells, whether a pick reorders them
-    /// (else it casts), the reorder's button.
+    /// (else it casts), the reorder's button, the full card.
     spells: Option<SpellsOpen>,
+    /// The hero's Pw now (the spells' cards grey what it cannot pay), and
+    /// the action bar's slots on screen (a spell's card dropped on one is
+    /// bound to it).
+    energy: Option<i64>,
+    bar_slots: Rc<RefCell<Vec<Rect2>>>,
     /// What the game is to do once the open panel's window is answered
     /// (`take_follow`): cast the spell `+`'s panel picked, open the
     /// codex's other tab.
@@ -2065,6 +2070,9 @@ struct SpellsOpen {
     book: Spellbook,
     reorder: bool,
     button: Option<Gd<Button>>,
+    /// The full card of the spell under the pointer or the focus (None
+    /// where the screen has no room for it).
+    detail: Option<Rc<RefCell<spells_view::Detail>>>,
 }
 
 /// A row of a panel's list (`Dialogs::panel_rows`).
@@ -2123,6 +2131,8 @@ impl Dialogs {
             opening_rpg: false,
             opening_cursor: None,
             spells: None,
+            energy: None,
+            bar_slots: Rc::new(RefCell::new(Vec::new())),
             follow: None,
             journal: None,
             codex: None,
@@ -3863,10 +3873,12 @@ impl Dialogs {
         Kind::Menu(Box::new(view))
     }
 
-    /// spell.c's menus (`+`, `Z`, the swap's): the spells' panel, a row a
-    /// spell. A pick casts it (from `+`'s, through `Z` once the menu is
-    /// answered: `take_cast`), unless the player reorders the spells, when
-    /// it is the engine's swap; `[sort spells]` is a row of its own.
+    /// spell.c's menus (`+`, `Z`, the swap's): the spells' panel, a card a
+    /// spell, and beside the list the full card of the spell under the
+    /// pointer or the focus. A pick casts it (from `+`'s, through `Z` once
+    /// the menu is answered: `take_cast`), unless the player reorders the
+    /// spells, when it is the engine's swap; `[sort spells]` is a row of
+    /// its own. A card dragged onto the action bar binds the spell there.
     fn open_spells(
         &mut self,
         req: u64,
@@ -3874,13 +3886,32 @@ impl Dialogs {
         items: &[nh_protocol::MenuItem],
         book: Spellbook,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        use spells_view::{DETAIL_W, GAP, LIST_W};
         let state = MenuState::new(how, None, items);
-        let width = SPELLS_W.min(self.panel_width());
+        // the full card where the screen has room for it beside the list
+        let room = self.panel_width();
+        let with_card = room >= LIST_W + GAP + DETAIL_W;
+        let list_w = LIST_W.min(room);
+        let width = if with_card {
+            list_w + GAP + DETAIL_W
+        } else {
+            list_w
+        };
         let plain = |c| KeyInput::plain(Key::Char(c));
         let (title, own) = match book.purpose {
             Purpose::Cast => (tr!("spells-cast-title"), Some(plain('Z'))),
             Purpose::View => (tr!("spells-title"), Some(plain('+'))),
-            Purpose::Swap(letter) => (tr!("spells-swap-title", letter = letter.to_string()), None),
+            // the spell by its name, not its letter (no pad player's key)
+            Purpose::Swap(letter) => match book.spells.iter().find(|s| s.letter == letter) {
+                Some(s) => (
+                    tr!(
+                        "spells-swap-title-named",
+                        spell = spells_view::spell_name(&s.name)
+                    ),
+                    None,
+                ),
+                None => (tr!("spells-swap-title", letter = letter.to_string()), None),
+            },
         };
         let (shade, panel, mut col, key) =
             self.panel_frame(req, &title, own, DialogEvent::MenuCancel, width);
@@ -3890,19 +3921,58 @@ impl Dialogs {
             .map(|e| match () {
                 _ if !e.selectable => 0.0,
                 _ if book.sort.is_some_and(|(idx, _)| idx == e.idx) => spells_view::SORT_H,
-                _ => spells_view::ROW_H,
+                _ => spells_view::CARD_H,
             })
             .collect();
-        let rows = self.panel_rows(req, &state, heights, width, &mut col, &mut |_, e| {
+        let mut body = HBoxContainer::new_alloc();
+        body.add_theme_constant_override("separation", GAP as i32);
+        let mut list_col = VBoxContainer::new_alloc();
+        list_col.add_theme_constant_override("separation", 0);
+        list_col.set_custom_minimum_size(Vector2::new(list_w, 0.0));
+        let pw = self.energy;
+        let rows = self.panel_rows(req, &state, heights, list_w, &mut list_col, &mut |_, e| {
             if !e.selectable {
                 return PanelRow::Fixed(Control::new_alloc());
             }
             let (cells, text) = match book.spell(e.idx) {
-                Some(s) => spells_view::cells(s),
+                Some(s) => spells_view::cells(s, pw),
                 None => spells_view::sort_cells(),
             };
             PanelRow::Pick(cells, text)
         });
+        body.add_child(&list_col);
+        let detail = with_card.then(|| {
+            let d = spells_view::Detail::new(DETAIL_W, rows.list.view_h, &self.queue, self.pad);
+            body.add_child(&d.root);
+            Rc::new(RefCell::new(d))
+        });
+        col.add_child(&body);
+        // each card: its letter no pad player's key; under the pointer, its
+        // full card; dragged, onto the bar
+        for (i, row) in rows.rows.iter().enumerate() {
+            let MenuRow::Item { button, .. } = row else {
+                continue;
+            };
+            let letter = button
+                .get_child(0)
+                .and_then(|h| h.get_child(0))
+                .and_then(|l| l.try_cast::<Label>().ok());
+            if let Some(letter) = letter {
+                pad_view::key_words(&letter, self.pad);
+            }
+            let Some(s) = state.entries.get(i).and_then(|e| book.spell(e.idx)) else {
+                continue;
+            };
+            spells_view::card_back(button, s);
+            if let Some(d) = &detail {
+                let (d, s) = (d.clone(), s.clone());
+                let b = button.clone();
+                b.signals()
+                    .mouse_entered()
+                    .connect(move || d.borrow_mut().show(&s, pw));
+            }
+            spells_view::draggable(button, s, self.bar_slots.clone(), self.queue.clone());
+        }
         // `+`'s: the reorder, a pick then the engine's swap
         let reorders = book.spells.len() > 1;
         let button = (book.purpose == Purpose::View && reorders).then(|| {
@@ -3913,11 +3983,6 @@ impl Dialogs {
         });
         let foot = self.panel_foot(&mut col, button.as_slice());
         let purpose = book.purpose;
-        self.spells = Some(SpellsOpen {
-            book,
-            reorder: false,
-            button,
-        });
         // a single spell: nothing to reorder
         let hint = if purpose == Purpose::View && !reorders {
             spells_hint(Purpose::Cast, false, &key)
@@ -3925,7 +3990,102 @@ impl Dialogs {
             spells_hint(purpose, false, &key)
         };
         let kind = self.panel_menu(state, rows, items, foot, hint);
+        // the full card of the focus (a gamepad's), else of the first spell
+        if let Some(d) = &detail {
+            let focus = match &kind {
+                Kind::Menu(view) => view
+                    .cursor
+                    .and_then(|c| view.state.entries.get(c))
+                    .and_then(|e| book.spell(e.idx)),
+                _ => None,
+            };
+            if let Some(s) = focus.or(book.spells.first()) {
+                d.borrow_mut().show(s, pw);
+            }
+        }
+        self.spells = Some(SpellsOpen {
+            book,
+            reorder: false,
+            button,
+            detail,
+        });
         (kind, shade, panel)
+    }
+
+    /// The spells' panel: its full card follows the keyboard's (a
+    /// gamepad's) focus.
+    fn spells_focus(&mut self) {
+        let Some(sp) = self.spells.as_ref() else {
+            return;
+        };
+        let Some(d) = sp.detail.as_ref() else {
+            return;
+        };
+        let Some(Open {
+            kind: Kind::Menu(view),
+            ..
+        }) = self.open.as_ref()
+        else {
+            return;
+        };
+        let focus = view
+            .cursor
+            .and_then(|c| view.state.entries.get(c))
+            .and_then(|e| sp.book.spell(e.idx));
+        if let Some(s) = focus {
+            d.borrow_mut().show(s, self.energy);
+        }
+    }
+
+    /// The spell the spells' panel's full card shows (self-tests).
+    pub fn spells_card(&self) -> Option<String> {
+        self.spells.as_ref()?.detail.as_ref()?.borrow().shown()
+    }
+
+    /// The full card's button that puts its spell on the bar, pressed
+    /// (self-tests).
+    pub fn press_spells_to_bar(&mut self) -> bool {
+        let Some(d) = self.spells.as_ref().and_then(|sp| sp.detail.clone()) else {
+            return false;
+        };
+        d.borrow_mut().press_to_bar();
+        true
+    }
+
+    /// The spells' cards on the canvas, by their spells' English names
+    /// (self-tests).
+    pub fn spells_cards(&self) -> Vec<(String, Rect2)> {
+        let (Some(sp), Some(open)) = (self.spells.as_ref(), self.open.as_ref()) else {
+            return Vec::new();
+        };
+        let Kind::Menu(view) = &open.kind else {
+            return Vec::new();
+        };
+        view.rows
+            .iter()
+            .zip(&view.state.entries)
+            .filter_map(|(row, e)| match row {
+                MenuRow::Item { button, .. } => {
+                    let s = sp.book.spell(e.idx)?;
+                    Some((s.name.clone(), button.get_global_rect()))
+                }
+                MenuRow::Fixed => None,
+            })
+            .collect()
+    }
+
+    /// The action bar's slots as the spells' cards know them (self-tests).
+    pub fn bar_slots(&self) -> Vec<Rect2> {
+        self.bar_slots.borrow().clone()
+    }
+
+    /// The words the open dialog shows (self-tests: a gamepad's has no
+    /// keyboard key).
+    pub fn panel_words(&self) -> Vec<String> {
+        self.open
+            .as_ref()
+            .map(|o| pad_view::shown_words(&o.panel))
+            .unwrap_or_default()
     }
 
     /// #enhance's window: the skills' panel, a skill a row by group, with
@@ -5008,6 +5168,18 @@ impl Dialogs {
         self.owes = owes;
     }
 
+    /// The hero's Pw now, for the spells' cards.
+    pub fn set_energy(&mut self, pw: Option<i64>) {
+        self.energy = pw;
+    }
+
+    /// The action bar's slots on screen, where a spell's card may drop.
+    pub fn set_bar_slots(&mut self, rects: &[Rect2]) {
+        if *self.bar_slots.borrow() != rects {
+            *self.bar_slots.borrow_mut() = rects.to_vec();
+        }
+    }
+
     /// The hero rendered in their gear, for the character sheet's
     /// portrait.
     pub fn set_portrait(&mut self, render: Gd<Texture2D>) {
@@ -5396,8 +5568,9 @@ impl Dialogs {
         if self.codex.is_some() && input.key == Key::Tab && !input.echo {
             return self.switch_codex();
         }
-        let reply = self.key_reply(input)?;
-        Some(self.spells_reply(reply))
+        let reply = self.key_reply(input);
+        self.spells_focus();
+        Some(self.spells_reply(reply?))
     }
 
     fn key_reply(&mut self, input: &KeyInput) -> Option<Reply> {

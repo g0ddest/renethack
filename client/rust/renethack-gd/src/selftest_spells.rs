@@ -14,8 +14,11 @@
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicI64, Ordering};
 
+use godot::classes::{Engine, Input, InputEventMouseButton, InputEventMouseMotion};
+use godot::global::{MouseButton, MouseButtonMask};
+use godot::prelude::*;
 use nh_protocol::Reply;
-use nh_world::{Key, KeyInput, KeyProfile, Prompt};
+use nh_world::{Key, KeyInput, KeyProfile, Prompt, SlotBinding};
 
 use super::{CharacterChoice, DialogEvent, PadEv, Step, fail_on_error_screen, key, quit, start_as};
 use crate::game::RenethackGame;
@@ -169,6 +172,104 @@ fn first_spell() -> String {
         .unwrap_or_default()
 }
 
+/// Every card says what its spell does, costs and asks; the full card
+/// shows `want` (else the first spell).
+fn cards_say(g: &RenethackGame, want: Option<usize>) -> Result<bool, String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let b = book(g).ok_or("no spells' menu under the panel")?;
+    let texts = ui.dialogs.panel_texts();
+    for s in &b.spells {
+        let says = spells_view::description(&s.name).ok_or(format!("{}: no line", s.name))?;
+        let costs = crate::spells::cost(s.level).to_string();
+        for w in [&says, &costs] {
+            if !texts.contains(w) {
+                return Err(format!("{}'s card shows no {w:?}: {texts:?}", s.name));
+            }
+        }
+        if let Some(tag) = spells_view::aim_tag(spells_view::aim_of(&s.name))
+            && !texts.iter().any(|t| t.contains(&tag))
+        {
+            return Err(format!("{}'s card says not that it asks {tag:?}", s.name));
+        }
+    }
+    let shown = b.spells.get(want.unwrap_or(0)).map(|s| s.name.clone());
+    Ok(ui.dialogs.spells_card() == shown)
+}
+
+/// The full card shows the spell of the list's `i`th card.
+fn card_of(g: &RenethackGame, i: usize) -> Result<bool, String> {
+    let b = book(g).ok_or("no spells")?;
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    Ok(ui.dialogs.spells_card() == b.spells.get(i).map(|s| s.name.clone()))
+}
+
+fn frames() -> i64 {
+    Engine::singleton().get_process_frames() as i64
+}
+
+static INPUT_AT: AtomicI64 = AtomicI64::new(0);
+
+/// A pointer's event at `at` on the canvas, as the player's mouse gives
+/// it: a move (with the left button down if `held`), or the left button
+/// pressed or let go.
+fn mouse(g: &RenethackGame, at: Vector2, press: Option<bool>, held: bool) -> Result<(), String> {
+    let vp = g.base().get_viewport().ok_or("no viewport")?;
+    let at = vp.get_screen_transform() * at;
+    match press {
+        Some(down) => {
+            let mut ev = InputEventMouseButton::new_gd();
+            ev.set_button_index(MouseButton::LEFT);
+            ev.set_pressed(down);
+            ev.set_position(at);
+            ev.set_global_position(at);
+            if down {
+                ev.set_button_mask(MouseButtonMask::LEFT);
+            }
+            Input::singleton().parse_input_event(&ev);
+        }
+        None => {
+            let mut ev = InputEventMouseMotion::new_gd();
+            ev.set_position(at);
+            ev.set_global_position(at);
+            if held {
+                ev.set_button_mask(MouseButtonMask::LEFT);
+            }
+            Input::singleton().parse_input_event(&ev);
+        }
+    }
+    INPUT_AT.store(frames(), Ordering::Relaxed);
+    Ok(())
+}
+
+/// A few frames since the last pointer's event: the GUI has had it.
+fn input_taken(_: &RenethackGame) -> Result<bool, String> {
+    Ok(frames() > INPUT_AT.load(Ordering::Relaxed) + 2)
+}
+
+/// `text` names a keyboard's key ("Esc", "Tab", "Enter"), not a word
+/// that begins as one (the Escape school).
+fn names_a_key(text: &str) -> bool {
+    text.split(|c: char| !c.is_alphanumeric())
+        .any(|w| matches!(w, "Esc" | "Tab" | "Enter" | "Shift" | "Ctrl"))
+}
+
+/// The `i`th card's middle on the canvas.
+fn card_at(g: &RenethackGame, i: usize) -> Result<Vector2, String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let cards = ui.dialogs.spells_cards();
+    let (_, r) = cards.get(i).ok_or(format!("no card {i}: {cards:?}"))?;
+    Ok(r.position + r.size / 2.0)
+}
+
+/// The bar's slot of the spell `name`, if it is on the bar.
+fn on_bar(g: &RenethackGame, name: &str) -> Option<usize> {
+    let want = SlotBinding::Spell { name: name.into() };
+    (0..nh_world::BAR_SLOTS).find(|&i| g.ui_state.bar.get(i) == Some(&want))
+}
+
+/// The slot a card is dropped on (the fifth: a command's, replaced).
+const DROP_SLOT: usize = 4;
+
 pub(super) fn spells() -> Vec<Step> {
     let mut steps = start_as(wizard());
     steps.extend([
@@ -211,7 +312,27 @@ pub(super) fn spells() -> Vec<Step> {
             }
             Ok(true)
         }),
+        Step::Wait("every card says what its spell does, costs and asks", |g| {
+            cards_say(g, None)
+        }),
         Step::Shot("spells"),
+        // the full card follows the keyboard's focus, and the pointer
+        Step::Key(KeyInput::plain(Key::Down)),
+        Step::Wait("the focus on the first card, its full card", |g| {
+            card_of(g, 0)
+        }),
+        Step::Key(KeyInput::plain(Key::Down)),
+        Step::Wait("the focus on the second card, its full card", |g| {
+            card_of(g, 1)
+        }),
+        Step::Shot("spells-focus"),
+        Step::Call("the pointer on the first card", |g| {
+            let at = card_at(g, 0)?;
+            mouse(g, at, None, false)
+        }),
+        Step::Wait("the full card of the card under the pointer", |g| {
+            Ok(input_taken(g)? && card_of(g, 0)?)
+        }),
         // + again closes it; no turn passed
         key('+'),
         Step::Wait("closed on +, no turn passed", |g| {
@@ -232,12 +353,114 @@ pub(super) fn spells() -> Vec<Step> {
         Step::Wait("a's spell cast through Z: the direction asked", |g| {
             Ok(asked_direction(g)? && cast_through_z(g, &first_spell())?)
         }),
+        Step::Wait(
+            "the question names the spell, its aim round the hero",
+            |g| {
+                let ui = g.ui.as_ref().ok_or("no UI")?;
+                let line = ui.hud.prompt_line().unwrap_or_default();
+                let name = spells_view::spell_name(&first_spell());
+                if !line.contains(&name) {
+                    return Err(format!("the prompt line says {line:?}"));
+                }
+                Ok(ui.aim.shown())
+            },
+        ),
+        Step::Shot("spells-aim"),
         esc(),
         Step::Wait("no direction: the command again", command),
         // Z's panel casts a pick at once (the energy is short now)
         key('Z'),
         Step::Wait("Z's panel", |g| shown(g, Purpose::Cast, false)),
+        Step::Wait("Z's panel greys the spells the Pw left cannot pay", |g| {
+            let b = book(g).ok_or("no spells")?;
+            let pw = g.world.status.number("energy").ok_or("no Pw")?;
+            let short = b
+                .spells
+                .iter()
+                .filter(|s| crate::spells::cost(s.level) > pw)
+                .count();
+            if short == 0 {
+                return Err(format!("{pw} Pw pays for every spell"));
+            }
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let said = crate::tr!("spells-cost-short");
+            let greyed = ui
+                .dialogs
+                .panel_texts()
+                .iter()
+                .filter(|t| **t == said)
+                .count();
+            Ok(greyed == short)
+        }),
+        Step::Call("the bar greys the spell the Pw left cannot pay", |g| {
+            let slot = on_bar(g, &first_spell()).ok_or("the first spell is on no slot")?;
+            let pw = g.world.status.number("energy").ok_or("no Pw")?;
+            let ui = g.ui.as_mut().ok_or("no UI")?;
+            let (filled, enabled) = ui.hud.action_bar().slot_states()[slot];
+            if pw < 5 && (!filled || enabled) {
+                return Err(format!(
+                    "slot {slot} at {pw} Pw: filled {filled}, enabled {enabled}"
+                ));
+            }
+            Ok(())
+        }),
         Step::Shot("spells-cast"),
+        // the full card's button: the second spell on the bar's first
+        // free slot
+        Step::Key(KeyInput::plain(Key::Down)),
+        Step::Key(KeyInput::plain(Key::Down)),
+        Step::Wait("the second card's full card", |g| card_of(g, 1)),
+        Step::Call("its button: onto the bar", |g| {
+            let ui = g.ui.as_mut().ok_or("no UI")?;
+            if !ui.dialogs.press_spells_to_bar() {
+                return Err("no full card".into());
+            }
+            Ok(())
+        }),
+        Step::Wait("the second spell on the bar's first free slot", |g| {
+            let b = book(g).ok_or("no spells")?;
+            let s = b.spells.get(1).ok_or("one spell")?;
+            Ok(on_bar(g, &s.name).is_some())
+        }),
+        // the first card dragged onto a slot: bound there, not cast
+        Step::Wait("the bar's slots known", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.dialogs.bar_slots().len() > DROP_SLOT)
+        }),
+        Step::Call("the first card pressed", |g| {
+            g.sent.clear();
+            let at = card_at(g, 0)?;
+            mouse(g, at, Some(true), true)
+        }),
+        Step::Wait("pressed", input_taken),
+        Step::Call("dragged onto the bar", |g| {
+            let at = card_at(g, 0)? + Vector2::new(0.0, 40.0);
+            mouse(g, at, None, true)
+        }),
+        Step::Wait("moved", input_taken),
+        Step::Call("over a slot", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let r = ui.dialogs.bar_slots()[DROP_SLOT];
+            mouse(g, r.position + r.size / 2.0, None, true)
+        }),
+        Step::Wait("moved over the slot", input_taken),
+        Step::Call("let go on the slot", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let r = ui.dialogs.bar_slots()[DROP_SLOT];
+            mouse(g, r.position + r.size / 2.0, Some(false), false)
+        }),
+        Step::Wait("the first spell on the slot, Z's panel still up", |g| {
+            if !g.sent.is_empty() {
+                return Err(format!("the drag answered the engine: {:?}", g.sent));
+            }
+            let want = SlotBinding::Spell {
+                name: first_spell(),
+            };
+            Ok(input_taken(g)?
+                && g.ui_state.bar.get(DROP_SLOT) == Some(&want)
+                && shown(g, Purpose::Cast, false)?)
+        }),
+        Step::Shot("spells-dragged"),
         Step::Call("the answers so far forgotten", |g| {
             g.sent.clear();
             Ok(())
@@ -302,6 +525,24 @@ pub(super) fn spells() -> Vec<Step> {
             PadEv::Button(PadButton::Down, true),
             PadEv::Button(PadButton::Down, false),
         ]),
+        Step::Wait(
+            "under a pad: no card shows a key, the full card follows",
+            |g| {
+                let ui = g.ui.as_ref().ok_or("no UI")?;
+                let b = book(g).ok_or("no spells")?;
+                let words = ui.dialogs.panel_words();
+                for s in &b.spells {
+                    if words.contains(&s.letter.to_string()) {
+                        return Err(format!("{}'s letter shows: {words:?}", s.name));
+                    }
+                }
+                if words.iter().any(|w| *w == "+" || names_a_key(w)) {
+                    return Err(format!("a key shows: {words:?}"));
+                }
+                card_of(g, 0)
+            },
+        ),
+        Step::Shot("spells-pad"),
         Step::Pad(vec![
             PadEv::Button(PadButton::A, true),
             PadEv::Button(PadButton::A, false),
@@ -309,6 +550,19 @@ pub(super) fn spells() -> Vec<Step> {
         Step::Wait("the first row's spell cast by A through Z", |g| {
             let first = PAD_FIRST.lock().map_err(|e| e.to_string())?.clone();
             Ok(z_picked(g).is_some() && cast_through_z(g, &first)?)
+        }),
+        Step::Wait("the pad's aim: the spell named, its buttons, no key", |g| {
+            if !asked_direction(g)? {
+                // a spell that asks no direction
+                return Ok(true);
+            }
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let line = ui.hud.prompt_line().unwrap_or_default();
+            let first = PAD_FIRST.lock().map_err(|e| e.to_string())?.clone();
+            if names_a_key(&line) || !line.contains(&spells_view::spell_name(&first)) {
+                return Err(format!("the prompt line says {line:?}"));
+            }
+            Ok(ui.aim.shown())
         }),
         // whatever the cast asks (a direction, where to jump), let go
         Step::KeysUntil("the cast's questions let go", |g| {

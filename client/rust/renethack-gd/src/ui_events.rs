@@ -61,6 +61,12 @@ pub enum UiEvent {
     },
     /// Put back the slot the last right click cleared.
     SlotUndo,
+    /// The spells' panel: put the spell `name` (its English) on the action
+    /// bar, on `slot` (a card dropped on it) or the first free one.
+    BindSpell {
+        name: String,
+        slot: Option<usize>,
+    },
     /// From the inventory panel.
     Inventory(InvInput),
     /// The client's settings page (the title's button, the HUD's gear),

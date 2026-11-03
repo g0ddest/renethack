@@ -4,6 +4,7 @@
 mod achievement_bake;
 mod achievement_view;
 mod action_bar;
+mod aim_view;
 mod animator;
 mod art;
 mod audio;

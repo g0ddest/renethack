@@ -817,6 +817,13 @@ mod tests {
                 .filter(|k| keys.contains(k))
                 .map(|k| ("Guide".to_string(), k)),
         );
+        // every spell's line on what it does (`spells_view::description`)
+        named.extend(crate::spells::KNOWN.iter().map(|k| {
+            (
+                "spells".to_string(),
+                crate::spells_view::description_id(k.name),
+            )
+        }));
         let missing: Vec<String> = named
             .iter()
             .filter(|(_, k)| !keys.contains(k))

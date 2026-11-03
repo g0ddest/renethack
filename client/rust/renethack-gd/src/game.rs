@@ -207,6 +207,8 @@ pub struct Ui {
     pub audio: crate::audio::Audio,
     /// The prologue's words and black, over everything.
     pub prologue: crate::prologue_view::PrologueView,
+    /// A spell's aim round the hero while its direction is asked.
+    pub aim: crate::aim_view::AimView,
 }
 
 /// The legacy text (`english`, the engine's lines) in the language played,
@@ -240,6 +242,62 @@ fn prompt_line(prompt: &Prompt, pad: Option<PadKind>) -> Option<String> {
         (Prompt::MapPause, None) => Some(tr!("prompt-more")),
         (Prompt::MapPause, Some(a)) => Some(tr!("prompt-more-pad", a = a)),
         _ => None,
+    }
+}
+
+impl RenethackGame {
+    /// The prompt line while a spell being cast asks its direction or its
+    /// place: the spell named, and how to aim it (with a gamepad, its
+    /// stick and buttons; a cancelled direction still spends the Pw).
+    fn aim_line(&self, prompt: &Prompt, pad: Option<PadKind>) -> Option<String> {
+        let spell = crate::spells_view::spell_name(self.casting.as_deref()?);
+        match prompt {
+            Prompt::FreeKey {
+                query,
+                directions: true,
+            } => {
+                let said = i18n::engine(EngineKind::Prompt, query).into_owned();
+                let question = question_shown(&said, pad.is_some());
+                let words = pad.map(|k| (k.label(PadButton::A), k.label(PadButton::B)));
+                Some(crate::spells_view::aim_prompt(&spell, &question, words))
+            }
+            Prompt::Command if self.world.getpos => getpos_line(&self.world, pad)
+                .map(|line| tr!("spells-aim-place-line", spell = spell, line = line)),
+            _ => None,
+        }
+    }
+
+    /// The aim of a directional spell being cast round the hero on screen:
+    /// the hero's feet, and the eight cells round them (NetHack's order);
+    /// None unless its direction is asked.
+    fn spell_aim(&self, camera: Option<&Gd<Camera3D>>) -> Option<(Vector2, [Vector2; 8])> {
+        self.casting.as_ref()?;
+        let asked = matches!(
+            self.pending,
+            Some((
+                _,
+                Prompt::FreeKey {
+                    directions: true,
+                    ..
+                }
+            ))
+        );
+        if !asked {
+            return None;
+        }
+        let cam = camera?;
+        let (feet, _) = self.ui.as_ref()?.map.hero_stands()?;
+        if cam.is_position_behind(feet) {
+            return None;
+        }
+        const XDIR: [f32; 8] = [-1.0, -1.0, 0.0, 1.0, 1.0, 1.0, 0.0, -1.0];
+        const YDIR: [f32; 8] = [0.0, -1.0, -1.0, -1.0, 0.0, 1.0, 1.0, 1.0];
+        let lift = Vector3::new(0.0, 0.05, 0.0);
+        let hero = cam.unproject_position(feet + lift);
+        let around = std::array::from_fn(|i| {
+            cam.unproject_position(feet + lift + Vector3::new(XDIR[i], 0.0, YDIR[i]))
+        });
+        Some((hero, around))
     }
 }
 
@@ -466,6 +524,10 @@ pub struct RenethackGame {
     /// The engine's last answers and the requests they answered
     /// (self-tests).
     pub(crate) sent: std::collections::VecDeque<(Prompt, Reply)>,
+    /// The spell `Z`'s menu was last answered with (its English name),
+    /// until the engine is back at its command prompt: its direction's or
+    /// its place's question names it, and its aim shows round the hero.
+    pub(crate) casting: Option<String>,
     /// The credits and licences page while it is open, and the settings
     /// page's place it was opened from (Back returns there).
     pub(crate) credits_page: Option<crate::credits_page::CreditsPage>,
@@ -592,6 +654,9 @@ pub struct RenethackGame {
     cleared: Option<(usize, SlotBinding)>,
     /// The bar is drawn again when this changes.
     bar_key: Option<Vec<nh_world::SlotView>>,
+    /// The hero's Pw the bar was drawn for (a spell's slot greys when the
+    /// hero cannot pay for it).
+    bar_pw: Option<i64>,
     /// A gamepad's state, and its world cursor (None: on the hero).
     pub(crate) pad: Pad,
     pub(crate) pad_cursor: Option<(i32, i32)>,
@@ -933,6 +998,7 @@ impl INode for RenethackGame {
             options_run: None,
             raw_keys: false,
             sent: std::collections::VecDeque::new(),
+            casting: None,
             credits_page: None,
             credits_return: None,
             device_quality: nh_world::Quality::High,
@@ -982,6 +1048,7 @@ impl INode for RenethackGame {
             deferred: None,
             cleared: None,
             bar_key: None,
+            bar_pw: None,
             pad: Pad::new(),
             pad_cursor: None,
             bar_labels: None,
@@ -1110,6 +1177,11 @@ impl INode for RenethackGame {
         self.base_mut().add_child(&veil_layer);
         self.veil = Some(veil);
         self.veil_cue = Some(cue);
+        // a spell's aim round the hero, under the HUD and the panels
+        let mut aim_layer = CanvasLayer::new_alloc();
+        aim_layer.set_name("AimLayer");
+        aim_layer.set_layer(0);
+        self.base_mut().add_child(&aim_layer);
         // the toast over the HUD, under the panels and dialogs
         let mut toast_layer = CanvasLayer::new_alloc();
         toast_layer.set_name("ToastLayer");
@@ -1158,6 +1230,7 @@ impl INode for RenethackGame {
             tips: crate::tips::TipHost::new(tip_layer),
             audio: crate::audio::Audio::new(audio_root),
             prologue: crate::prologue_view::PrologueView::new(next()),
+            aim: crate::aim_view::AimView::new(aim_layer),
         });
         // the character sheet's portrait: the hero the inventory's doll
         // renders
@@ -2364,10 +2437,15 @@ impl RenethackGame {
         }
         let catalog = self.catalog.clone();
         let pad = self.pad.active.then_some(self.pad.kind);
+        // back at the command prompt: no spell is being cast
+        if prompt == Prompt::Command && !self.world.getpos {
+            self.casting = None;
+        }
         let line = match prompt {
             Prompt::Command => getpos_line(&self.world, pad),
             _ => prompt_line(&prompt, pad),
         };
+        let line = self.aim_line(&prompt, pad).or(line);
         let inventory_menu = match &prompt {
             Prompt::Menu { how, items, .. } => {
                 *how != PickHow::None
@@ -2476,6 +2554,9 @@ impl RenethackGame {
                     self.sent.pop_front();
                 }
                 self.sent.push_back((prompt.clone(), reply.clone()));
+                if let Some(name) = crate::spells::cast_pick(prompt, &reply) {
+                    self.casting = Some(name);
+                }
                 self.uses.on_reply(prompt, &reply, &self.world);
                 if *prompt == Prompt::Command {
                     self.world.note_getpos_answer(&reply);
@@ -3897,6 +3978,35 @@ impl RenethackGame {
         }
     }
 
+    /// The spells' panel put the spell `name` on the bar: on `slot`, else
+    /// on the first free one (a spell already on the bar stays where it
+    /// is; a full bar says to drop the card on a slot).
+    fn bind_spell(&mut self, name: &str, slot: Option<usize>) {
+        let binding = SlotBinding::Spell { name: name.into() };
+        let on = (0..BAR_SLOTS).find(|&i| self.ui_state.bar.get(i) == Some(&binding));
+        let slot = match (slot, on) {
+            (Some(s), _) => s,
+            (None, Some(s)) => {
+                let key = self.slot_key(s);
+                self.ui_mut()
+                    .hud
+                    .toast(&tr!("spells-on-bar", key = key), false);
+                return;
+            }
+            (None, None) => match (0..BAR_SLOTS).find(|&i| self.ui_state.bar.get(i).is_none()) {
+                Some(s) => s,
+                None => {
+                    self.ui_mut().hud.toast(&tr!("spells-bar-full"), false);
+                    return;
+                }
+            },
+        };
+        self.ui_state.bar.set(slot, Some(binding));
+        self.save_ui_state();
+        let key = self.slot_key(slot);
+        self.ui_mut().hud.toast(&tr!("bar-bound", key = key), false);
+    }
+
     /// Right click on a slot: it is cleared, with an Undo.
     fn clear_slot(&mut self, slot: usize) {
         let Some(b) = self.ui_state.bar.get(slot).cloned() else {
@@ -3974,7 +4084,9 @@ impl RenethackGame {
         let views: Vec<nh_world::SlotView> = (0..BAR_SLOTS)
             .map(|i| self.ui_state.bar.view(i, &self.world.inventory))
             .collect();
-        let redraw = self.bar_key.as_ref() != Some(&views);
+        let pw = self.world.status.number("energy");
+        let redraw = self.bar_key.as_ref() != Some(&views) || self.bar_pw != pw;
+        self.bar_pw = pw;
         let ctx = self.pad_ctx();
         let Some(ui) = self.ui.as_mut() else {
             return;
@@ -4002,6 +4114,7 @@ impl RenethackGame {
         ui.dialogs.set_pad(pad.is_some());
         let owes = (self.world.inventory.items().iter()).any(|i| i.text.contains("(unpaid"));
         ui.dialogs.set_owes(owes);
+        ui.dialogs.set_energy(self.world.status.number("energy"));
         ui.help.set_pad(pad.is_some());
         ui.inventory.set_pad(pad);
         ui.game_menu.set_pad(pad);
@@ -4082,6 +4195,7 @@ impl RenethackGame {
         );
         ui.inventory.set_dark(ui.map.dark());
         let rects = ui.hud.action_bar().slot_rects();
+        ui.dialogs.set_bar_slots(&rects);
         ui.inventory.set_bar_rects(rects);
         // the character sheet's portrait is the doll's render
         let sheet = ui.dialogs.layout_name() == Some("sheet");
@@ -4118,12 +4232,23 @@ impl RenethackGame {
                 }
             };
             bar.set_icon(i, icon.as_ref());
+            // a spell's slot: its cost in Pw, greyed when the hero is short
+            let spell = match binding {
+                Some(SlotBinding::Spell { name }) => crate::spells::spell_known(name),
+                _ => None,
+            };
+            let price = spell.map(|k| crate::spells::cost(k.level));
             let count = v
                 .charges
                 .map(|c| c.to_string())
-                .or_else(|| v.count.map(|c| c.to_string()));
+                .or_else(|| v.count.map(|c| c.to_string()))
+                .or_else(|| price.map(|p| p.to_string()));
             bar.set_count(i, count.as_deref());
-            bar.set_enabled(i, v.state != SlotState::Gone);
+            let paid = match (price, pw) {
+                (Some(p), Some(pw)) => pw >= p,
+                _ => true,
+            };
+            bar.set_enabled(i, v.state != SlotState::Gone && paid);
             // the keys as the player presses them now
             let profile = self.ui_state.profile;
             let map = self.settings.keymaps.get(profile);
@@ -4559,6 +4684,7 @@ impl RenethackGame {
             }
             UiEvent::ActionSlot { slot, .. } => self.clear_slot(slot),
             UiEvent::SlotUndo => self.undo_clear(),
+            UiEvent::BindSpell { name, slot } => self.bind_spell(&name, slot),
             UiEvent::Inventory(ev) if self.state == GameState::Playing => self.on_inventory(ev),
             UiEvent::OpenSettings => self.open_settings(),
             UiEvent::CloseSettings => self.close_settings(),
@@ -6248,9 +6374,12 @@ impl RenethackGame {
             ))
         });
         let look = self.look_tip_at(camera.as_ref());
+        let aim = self.spell_aim(camera.as_ref());
         let Some(ui) = self.ui.as_mut() else {
             return;
         };
+        ui.aim
+            .sync(aim, Time::singleton().get_ticks_msec() as f64 / 1000.0);
         ui.hud.set_cursor_at(cursor);
         ui.hud.set_threats(
             &heads,

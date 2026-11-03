@@ -276,6 +276,27 @@ fn row(text: &str, turns: bool) -> Option<(String, i32, School, u8, Retention, O
     Some((f.join(" "), level, school, fail, retention, turns))
 }
 
+/// What a spell of `level` costs in Pw (spell.c's SPELL_LEV_PW).
+pub fn cost(level: i32) -> i64 {
+    i64::from(level) * 5
+}
+
+/// The spell `reply` picks in `Z`'s menu `prompt` (its English name), if
+/// that is what was answered.
+pub fn cast_pick(prompt: &nh_world::Prompt, reply: &nh_protocol::Reply) -> Option<String> {
+    let nh_world::Prompt::Menu { title, items, .. } = prompt else {
+        return None;
+    };
+    let book = spellbook(title.as_deref(), items)?;
+    let nh_protocol::Reply::Menu(picks) = reply else {
+        return None;
+    };
+    let idx = i32::try_from(picks.first()?.0).ok()?;
+    (book.purpose == Purpose::Cast)
+        .then(|| book.spell(idx).map(|s| s.name.clone()))
+        .flatten()
+}
+
 /// The spellbook in a menu: None unless it is one of spell.c's.
 pub fn spellbook(title: Option<&str>, items: &[MenuItem]) -> Option<Spellbook> {
     let purpose = purpose(title?.trim())?;
