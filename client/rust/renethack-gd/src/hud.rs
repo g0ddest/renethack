@@ -2564,9 +2564,7 @@ impl Hud {
 
     /// The window's pixels to the canvas's one (the stretch, the UI scale).
     fn window_scale(&self) -> f32 {
-        (self.root.get_viewport())
-            .map_or(1.0, |v| v.get_screen_transform().a.x)
-            .max(0.01)
+        theme::window_scale(self.root.get_viewport())
     }
 
     /// Place the blocks that depend on the canvas size (the compact

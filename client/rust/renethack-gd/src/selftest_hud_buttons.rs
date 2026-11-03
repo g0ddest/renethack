@@ -31,13 +31,10 @@ fn frames() -> i64 {
     Engine::singleton().get_process_frames() as i64
 }
 
-/// The window's pixels to a canvas pixel.
+/// The window's pixels to a canvas pixel (a headless run at no set size:
+/// those of the window the design is for, as the HUD counts them).
 fn screen_per_canvas(g: &RenethackGame) -> f32 {
-    let vp = g.base().get_viewport();
-    vp.map_or(1.0, |v| {
-        let t = v.get_screen_transform();
-        t.a.x
-    })
+    crate::theme::window_scale(g.base().get_viewport())
 }
 
 /// The window is a Steam Deck's screen.

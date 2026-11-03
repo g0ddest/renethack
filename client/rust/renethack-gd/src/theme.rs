@@ -715,6 +715,26 @@ pub fn user_scale(window: &Gd<Window>, chosen: Option<u32>) -> u32 {
         .unwrap_or_else(|| auto_ui_scale(window))
 }
 
+/// The window's pixels to one of the canvas (the stretch and the UI
+/// scale), as the HUD sizes its hit targets by. A headless run at no set
+/// size has a stand-in window of a few pixels, nothing a player sees: it
+/// counts as the 1920×1080 window the design is for, at the UI scale (as
+/// its dialogs are laid out for that window: `Dialogs::screen`).
+pub fn window_scale(viewport: Option<Gd<godot::classes::Viewport>>) -> f32 {
+    let Some(vp) = viewport else {
+        return 1.0;
+    };
+    let k = vp.get_screen_transform().a.x.max(0.01);
+    let window = vp.get_visible_rect().size * k;
+    let headless = godot::classes::DisplayServer::singleton().get_name() == "headless";
+    if headless && (window.x < 320.0 || window.y < 240.0) {
+        return vp
+            .try_cast::<Window>()
+            .map_or(1.0, |w| w.get_content_scale_factor());
+    }
+    k
+}
+
 /// Lay the canvas out for 1920×1080 design pixels (canvas_items, expand)
 /// at the player's UI scale (`chosen`: the settings page's); the 3D view
 /// keeps the window's resolution.
