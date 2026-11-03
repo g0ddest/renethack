@@ -53,6 +53,9 @@ SCENES = {
     "branches": ("branches", [], 600),
     "rays": ("rays", [], 300),
     "effects": ("effects", [], 300),
+    # a scroll of light read, armour and a weapon enchanted, a curse
+    # lifted, a bolt of force into a wall
+    "magic": ("magic", [], 300),
     "item-use": ("item-use", [], 300),
     "states": ("states", [], 400),
     "crowd": ("crowd", [], 400),

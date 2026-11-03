@@ -382,14 +382,17 @@ the project that loads it (`build/perf/project`). The copy runs under its
 own name, so Godot's shader cache starts empty, as on a player's first
 launch. Then it plays these in a window at 1920×1080 with vsync off: `title`
 (the title over its scene, a game started and quit); `tour`;
-`branches`; `rays`; `effects`; `item-use`; `states`; `crowd` (about thirty
+`branches`; `rays`; `effects`; `magic` (a scroll of light read, armour and
+a weapon enchanted, a curse lifted, a bolt of force into a wall);
+`item-use`; `states`; `crowd` (about thirty
 peaceful creatures of many kinds made round the hero in debug mode, then
 forty turns among them); two soaks into the Gnomish Mines; one to Dlvl 7;
 a soak of 2000 requests; `deep`, the deep dungeon in debug mode (the
 hero teleported to Medusa's island, the castle, the levels of Gehennom and
 Vlad's Tower, the creatures of each made round them); `prologue`, a new
-game told with the prologue, beat by beat; and `trapdoor`, falling through
-a trap door, a pit and holes. Every run logs each frame
+game told with the prologue, beat by beat; `trapdoor`, falling through a
+trap door, a pit and holes; `dressing`, the rooms' dressing branch by
+branch; and `gehennom`, its levels one by one. Every run logs each frame
 (`RENETHACK_FRAME_LOG=<file>`, `frame_log.rs`): its wall time, the game's
 own work in it by part, the pipelines Godot compiled, the models the map
 built, the level and the self-test's step. It also samples the process's
