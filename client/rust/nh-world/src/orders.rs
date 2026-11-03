@@ -1080,10 +1080,17 @@ impl TickDriver {
                 .turn
                 .is_some_and(|t| world.turn().is_some_and(|now| now > t))
         {
-            // no word and no time: the engine said its refusal before and
-            // does not say it twice (Norep): the newest line is it
+            // no word and no time (or no T: to tell): the engine said its
+            // refusal before and does not say it twice (Norep), the newest
+            // line being it; or the search was taken in silence, a fast
+            // hero's that passed no turn. A foe's refusal, with no foe
+            // beside the hero to refuse for, was not this search's; a
+            // peril's stands (the status may not show it)
             let newest = world.log.iter().next_back();
-            if let Some(stop) = newest.and_then(|m| refusal(&m.text, world, catalog)) {
+            let again = newest
+                .and_then(|m| refusal(&m.text, world, catalog))
+                .filter(|s| *s != Stop::FoeBeside || engaged(world, catalog));
+            if let Some(stop) = again {
                 return Some(stop);
             }
         }
@@ -1586,11 +1593,16 @@ mod tests {
         d.observe(&w, &cat);
         assert_eq!(d.next(&w, &cat), None);
         assert_eq!(d.take_stop(), Some(Stop::Peril(None)));
-        // a foe's refusal, said once and then kept quiet
+        // a foe's refusal, said once and then kept quiet, the foe still
+        // beside her
+        draw(&mut w.map, &cat, 2, &[" J"]);
+        assert_eq!(d.observe(&w, &cat), Some(Mode::Combat));
         say(&mut w, "You already found a monster.");
         assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
         d.observe(&w, &cat);
         assert_eq!(d.take_stop(), Some(Stop::FoeBeside));
+        draw(&mut w.map, &cat, 2, &[" ."]);
+        d.observe(&w, &cat);
         // taken without a word: a fast hero's search may cost no turn
         say(&mut w, "You hear a door open.");
         assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
@@ -1604,6 +1616,46 @@ mod tests {
         );
         d.observe(&w, &cat);
         assert_eq!(d.take_stop(), Some(Stop::FoeBeside));
+    }
+
+    #[test]
+    fn a_fast_heros_silent_search_after_an_old_refusal_is_taken() {
+        let (mut w, cat) = world_of(&ROOM);
+        stat(&mut w, "hp", "10");
+        let mut d = TickDriver::new();
+        // the foe refused for is gone; the refusal is still the newest line
+        say(&mut w, "You already found a monster.");
+        d.observe(&w, &cat);
+        assert!(!engaged(&w, &cat));
+        // a fast hero's search passes no turn, and says nothing: taken
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
+        d.observe(&w, &cat);
+        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "20s");
+        // the same with T: off (no turn to tell)
+        let (mut w, cat) = world_of(&ROOM);
+        stat(&mut w, "hp", "10");
+        w.status.apply(&StatusUpdate {
+            field: "time".into(),
+            value: None,
+            conds: None,
+            chg: 0,
+            percent: 0,
+            color: 0,
+        });
+        assert_eq!(w.turn(), None);
+        let mut d = TickDriver::new();
+        say(&mut w, "You already found a monster.");
+        d.observe(&w, &cat);
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
+        d.observe(&w, &cat);
+        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "20s");
+        // a peril's refusal stands, though the status shows none
+        say(&mut w, "Searching doesn't feel like a good idea right now.");
+        d.interrupt(Stop::Key);
+        d.observe(&w, &cat);
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
+        d.observe(&w, &cat);
+        assert_eq!(d.take_stop(), Some(Stop::Peril(None)));
     }
 
     #[test]

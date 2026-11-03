@@ -563,8 +563,12 @@ pub struct RenethackGame {
     pub(crate) order_actions: u64,
     /// Why the last order ended (self-tests).
     pub(crate) last_stop: Option<Stop>,
-    /// When the engine last refused a rest (`moment`), and why.
+    /// When the engine last refused a rest (`moment`), and why: a refusal
+    /// it printed for that F5, not a silence read as one.
     rest_refused: Option<(Moment, Stop)>,
+    /// The log's last seq when F5 started its rest: a refusal newer than
+    /// it is the engine's for this press.
+    rest_seq: Option<u64>,
     /// A cell the self-test hovers instead of the mouse.
     pub(crate) test_hover: Option<(i32, i32)>,
     /// What the hero uses, from the keys and letters sent (decision 8).
@@ -968,6 +972,7 @@ impl INode for RenethackGame {
             order_actions: 0,
             last_stop: None,
             rest_refused: None,
+            rest_seq: None,
             test_hover: None,
             uses: nh_world::UseTracker::new(),
             ui_state: UiState::new(KeyProfile::Modern),
@@ -4242,11 +4247,20 @@ impl RenethackGame {
         let Some(stop @ (Stop::FoeBeside | Stop::Peril(_))) = self.driver.stop().cloned() else {
             return;
         };
+        // printed for this press, or a silence read as an earlier one
+        // repeated (Norep), which a fast hero's taken search may also be:
+        // only a printed one answers F5 at this moment without the engine
+        // (a refused search costs nothing: the next F5 asks again)
+        let since = self.rest_seq;
         let newest = self.world.log.iter().next_back();
-        if newest.is_some_and(|m| nh_world::rest_refused(&m.text)) {
+        let printed = newest
+            .is_some_and(|m| nh_world::rest_refused(&m.text) && since.is_some_and(|s| m.seq > s));
+        if printed {
             self.world.log.keep_newest_in_history();
+            self.rest_refused = self.moment().map(|at| (at, stop));
+        } else {
+            self.rest_refused = None;
         }
-        self.rest_refused = self.moment().map(|at| (at, stop));
     }
 
     /// Rest until HP and Pw are full (F5), at a command prompt.
@@ -4267,6 +4281,7 @@ impl RenethackGame {
             return;
         }
         // full already: said so, though nothing was done
+        self.rest_seq = Some(self.world.log.last_seq());
         if !self.start_order(Order::Rest) && self.last_stop == Some(Stop::Healed) {
             self.stop_note = Some((stop_text(&Stop::Healed), Instant::now()));
         }
