@@ -31,6 +31,7 @@ use nh_i18n::lexicon::Lexicon;
 use crate::codex;
 use crate::codex_view;
 use crate::command_menu::{self, Section};
+use crate::command_wheel::{self, CommandWheel, WheelAct};
 use crate::i18n::{self, EngineKind, Lang};
 use crate::journal;
 use crate::journal_view::{self, JournalView};
@@ -96,6 +97,10 @@ const PALETTE_ROWS: f32 = 18.0;
 /// HUD's Commands button it hangs from.
 const NAME_SIZE: i32 = 14;
 const PALETTE_GAP: f32 = 8.0;
+/// The room the command wheel keeps above the HUD's foot besides the
+/// foot itself: the upper row of buttons beside a docked log, a pad's
+/// hints.
+const WHEEL_FOOT: f32 = 100.0;
 /// The fewest rows the palette hung from the button shows (else it opens
 /// centred).
 const PALETTE_LEAST_ROWS: f32 = 6.0;
@@ -1430,6 +1435,9 @@ struct Palette {
     /// Its list's height centred; hung from the button, it may show fewer
     /// rows.
     full_h: f32,
+    /// The sections' folds as the player left them, while a wheel's
+    /// "More…" shows one section alone.
+    folds_kept: Option<Vec<bool>>,
 }
 
 impl Palette {
@@ -1529,6 +1537,38 @@ impl Palette {
                 let c = self.slot_cmd.get(s).copied().flatten()?;
                 Some(PalettePick::Cmd(self.cmds[c].name.clone()))
             }
+        }
+    }
+
+    /// Section `only` alone open (a wheel's "More…"), the player's folds
+    /// kept aside; None: the player's folds back.
+    fn only(&mut self, only: Option<Section>) {
+        match only {
+            Some(s) => {
+                if self.folds_kept.is_none() {
+                    self.folds_kept = Some(self.groups.iter().map(|g| g.folded).collect());
+                }
+                for g in self.groups.iter_mut() {
+                    g.folded = g.section != s;
+                }
+            }
+            None => {
+                if let Some(kept) = self.folds_kept.take() {
+                    for (g, f) in self.groups.iter_mut().zip(kept) {
+                        g.folded = f;
+                    }
+                }
+            }
+        }
+    }
+
+    /// The highlight on section `s`'s heading.
+    fn on_section(&mut self, s: Option<Section>) {
+        let Some(s) = s else {
+            return;
+        };
+        if let Some(g) = self.groups.iter().position(|g| g.section == s) {
+            self.selected = self.lines.iter().position(|&l| l == PaletteLine::Head(g));
         }
     }
 
@@ -1969,6 +2009,29 @@ enum Kind {
         letter: char,
         pick: bool,
     },
+    /// The command menu as a wheel (`#`'s request, the list's other face).
+    Wheel(Box<CommandWheel>),
+}
+
+/// The open command wheel as self-tests read it: its ring, its wedges'
+/// words, the one pointed at, its middle on screen, whether it is held.
+pub type WheelShown = (
+    command_wheel::Ring,
+    Vec<String>,
+    Option<usize>,
+    Vector2,
+    bool,
+);
+
+/// How the command wheel opens for the next `#`: where its middle goes
+/// (None: the screen's), whether a key or button holds it, and whether
+/// that was let go before it showed (a tap: it stays open).
+#[derive(Debug, Clone, Copy)]
+struct WheelNext {
+    at: Option<Vector2>,
+    held: bool,
+    let_go: bool,
+    since: std::time::Instant,
 }
 
 struct Open {
@@ -2013,6 +2076,13 @@ pub struct Dialogs {
     /// The HUD's Commands button pressed, and when: the palette opening
     /// next hangs from it.
     palette_anchor: Option<(Rect2, std::time::Instant)>,
+    /// `#` opens the wheel rather than the list (the settings' command
+    /// menu), and the wheel the next `#` opens however it is set (held
+    /// from the command prompt, a pad's "Commands").
+    wheel_style: bool,
+    wheel_next: Option<WheelNext>,
+    /// The list opening next has only this section open (a "More…").
+    palette_section: Option<Section>,
     /// The hero rendered in their gear (the inventory's doll): the
     /// character sheet's portrait.
     portrait: Option<Gd<Texture2D>>,
@@ -2107,6 +2177,22 @@ impl Dialogs {
         self.open.as_ref().map(|o| o.panel.get_global_rect())
     }
 
+    /// Where a pad's hints go while a dialog is open: in its panel's
+    /// bottom, or under the command wheel's ring.
+    pub fn hints_rect(&self) -> Option<Rect2> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Wheel(w)) => {
+                let r = command_wheel::RING / 2.0 * w.scale();
+                let c = w.centre();
+                Some(Rect2::new(
+                    Vector2::new(c.x - r - 120.0, c.y + r - 6.0),
+                    Vector2::new(2.0 * r + 240.0, 60.0),
+                ))
+            }
+            _ => self.panel_rect(),
+        }
+    }
+
     pub fn new(mut layer: Gd<CanvasLayer>, queue: UiQueue) -> Dialogs {
         let mut root = Control::new_alloc();
         theme::full_rect_ignore(&root);
@@ -2125,6 +2211,9 @@ impl Dialogs {
             palette_pool: None,
             keymap: nh_world::Keymap::default(),
             palette_anchor: None,
+            wheel_style: false,
+            wheel_next: None,
+            palette_section: None,
             portrait: None,
             sheet: None,
             opening_own: None,
@@ -2609,6 +2698,17 @@ impl Dialogs {
         catalog: Option<&Catalog>,
     ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
         let cmds = palette_cmds(catalog, &self.keymap);
+        self.open_palette_cmds(req, cmds)
+    }
+
+    /// The list of `cmds` (the wheel's own when it gives way to it).
+    fn open_palette_cmds(
+        &mut self,
+        req: u64,
+        cmds: Vec<PaletteCmd>,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        // a wheel's "More…": that section alone open, its heading on
+        let section = self.palette_section.take();
         // hung from the HUD's Commands button just pressed (not one long
         // gone: a `#` it never opened)
         let anchor = (self.palette_anchor.take())
@@ -2641,7 +2741,9 @@ impl Dialogs {
                 let mut p = palette.borrow_mut();
                 p.pad = self.pad;
                 p.owes = self.owes;
+                p.only(section);
                 p.refilter("");
+                p.on_section(section);
             }
             fill_palette(&palette);
             self.place_palette(&mut panel, &mut shade, &palette, anchor);
@@ -2803,6 +2905,7 @@ impl Dialogs {
             marks,
             width,
             full_h: view_h,
+            folds_kept: None,
             dropdown: false,
             cancel_row,
         }));
@@ -2822,7 +2925,12 @@ impl Dialogs {
                 fill_palette(&p);
             });
         }
-        palette.borrow_mut().refilter("");
+        {
+            let mut p = palette.borrow_mut();
+            p.only(section);
+            p.refilter("");
+            p.on_section(section);
+        }
         fill_palette(&palette);
         // refiltering is local to the palette: it never touches the game
         let p = palette.clone();
@@ -2840,6 +2948,222 @@ impl Dialogs {
             shade,
             panel,
         )
+    }
+
+    /// The wheel `#`'s request opens, if one: the one asked for (held from
+    /// the command prompt, a pad's "Commands"), else the settings' choice;
+    /// never for the warm-up's (it builds the list).
+    fn wheel_for(&mut self, req: u64) -> Option<WheelNext> {
+        if self.warming || req == 0 {
+            return None;
+        }
+        let asked = (self.wheel_next.take()).filter(|n| n.since.elapsed().as_secs_f32() < 2.0);
+        if asked.is_some() {
+            return asked;
+        }
+        if !self.wheel_style {
+            return None;
+        }
+        // the Commands button's: the wheel by it
+        let at = (self.palette_anchor.take())
+            .filter(|(_, at)| at.elapsed().as_secs_f32() < 2.0)
+            .map(|(r, _)| r.center());
+        Some(WheelNext {
+            at,
+            held: false,
+            let_go: false,
+            since: std::time::Instant::now(),
+        })
+    }
+
+    fn open_wheel(
+        &mut self,
+        req: u64,
+        catalog: Option<&Catalog>,
+        next: WheelNext,
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let cmds = palette_cmds(catalog, &self.keymap);
+        // above the HUD's foot (its orbs, bar, buttons and a pad's hints),
+        // as large as the room there lets it be
+        let screen = self.root.get_size();
+        let ring = command_wheel::RING;
+        let foot = (self.bottom_room + WHEEL_FOOT).min(screen.y * 0.5);
+        let room = Vector2::new(screen.x, screen.y - foot) - Vector2::new(2.0, 2.0) * PANEL_EDGE;
+        let k = (room.x.min(room.y) / ring).clamp(0.4, 1.0);
+        let half = ring / 2.0 * k + PANEL_EDGE;
+        let at = next
+            .at
+            .unwrap_or(Vector2::new(screen.x / 2.0, (screen.y - foot) / 2.0));
+        let clamp = |v: f32, low: f32, high: f32| {
+            if high < low {
+                (low + high) / 2.0
+            } else {
+                v.clamp(low, high)
+            }
+        };
+        let centre = Vector2::new(
+            clamp(at.x, half, screen.x - half),
+            clamp(at.y, half, screen.y - foot - half + PANEL_EDGE),
+        );
+        // the map dimmed a little; the mouse is the wheel's everywhere
+        let mut shade = ColorRect::new_alloc();
+        shade.set_color(Color::from_rgba(0.0, 0.0, 0.0, 0.25));
+        theme::full_rect_ignore(&shade);
+        shade.set_mouse_filter(MouseFilter::STOP);
+        let q = self.queue.clone();
+        shade
+            .signals()
+            .gui_input()
+            .connect(move |e: Gd<InputEvent>| {
+                let ev = match e.try_cast::<InputEventMouseButton>() {
+                    Ok(b) => {
+                        let button = match b.get_button_index() {
+                            MouseButton::LEFT => 1,
+                            MouseButton::RIGHT => 2,
+                            MouseButton::MIDDLE => 3,
+                            _ => return,
+                        };
+                        // on the canvas (a self-test's mouse too)
+                        DialogEvent::WheelButton {
+                            button,
+                            pressed: b.is_pressed(),
+                            at: b.get_global_position(),
+                        }
+                    }
+                    Err(e) => match e.try_cast::<godot::classes::InputEventMouseMotion>() {
+                        Ok(m) => DialogEvent::WheelMove(m.get_global_position()),
+                        Err(_) => return,
+                    },
+                };
+                push(&q, UiEvent::Dialog { req, ev });
+            });
+        self.root.add_child(&shade);
+        let mut panel = PanelContainer::new_alloc();
+        panel.set_mouse_filter(MouseFilter::IGNORE);
+        panel.add_theme_stylebox_override("panel", &StyleBoxEmpty::new_gd());
+        let r = ring / 2.0;
+        place(
+            &panel,
+            [0.0; 4],
+            [centre.x - r, centre.y - r, centre.x + r, centre.y + r],
+        );
+        panel.set_pivot_offset(Vector2::new(r, r));
+        panel.set_scale(Vector2::new(k, k));
+        let root = Control::new_alloc();
+        panel.add_child(&root);
+        self.root.add_child(&panel);
+        let held = next.held && !next.let_go;
+        // nothing pointed at: the mouse is at its middle, or it moves next
+        let wheel = CommandWheel::new(root, centre, k, cmds, self.owes, self.pad, held);
+        (Kind::Wheel(Box::new(wheel)), shade, panel)
+    }
+
+    /// What the wheel's pick asks: a command run, a cancel, nothing yet,
+    /// or the list in its place (for the same request).
+    fn wheel_act(&mut self, act: WheelAct) -> Option<Reply> {
+        match act {
+            WheelAct::Stay => None,
+            WheelAct::Run(name) => Some(Reply::ExtCmd(Some(name))),
+            WheelAct::Cancel => Some(Reply::ExtCmd(None)),
+            WheelAct::List(section) => {
+                self.wheel_to_list(section);
+                None
+            }
+        }
+    }
+
+    /// The wheel gives way to the list, for the same request: every
+    /// section, or `section` alone open.
+    fn wheel_to_list(&mut self, section: Option<Section>) {
+        let Some(open) = self.open.take_if(|o| matches!(o.kind, Kind::Wheel(_))) else {
+            return;
+        };
+        let Kind::Wheel(wheel) = &open.kind else {
+            return;
+        };
+        let cmds = wheel.cmds().to_vec();
+        let (req, prompt) = (open.req, open.prompt.clone());
+        self.retire(open);
+        self.palette_section = section;
+        let (kind, shade, panel) = self.open_palette_cmds(req, cmds);
+        let pad_room = add_pad_room(&panel);
+        pad_view::show_key_words(&panel, self.pad);
+        self.open = Some(Open {
+            req,
+            prompt,
+            kind,
+            own: None,
+            rpg: false,
+            shade,
+            panel,
+            pad_room,
+        });
+    }
+
+    /// The next `#` opens the wheel: its middle at `at` on the canvas (the
+    /// mouse), else in the screen's middle; `held` while the key or
+    /// button that asked for it is down.
+    pub fn set_wheel_next(&mut self, at: Option<Vector2>, held: bool) {
+        self.wheel_next = Some(WheelNext {
+            at,
+            held,
+            let_go: false,
+            since: std::time::Instant::now(),
+        });
+    }
+
+    /// `#` opens the wheel rather than the list (the settings' choice).
+    pub fn set_wheel_style(&mut self, wheel: bool) {
+        self.wheel_style = wheel;
+    }
+
+    /// The key or button holding the wheel let go: its pick, or (the
+    /// wheel not up yet) it opens to stay.
+    pub fn wheel_let_go(&mut self) -> Option<Reply> {
+        if let Some(next) = self.wheel_next.as_mut() {
+            next.let_go = true;
+            return None;
+        }
+        let act = match self.open.as_mut().map(|o| &mut o.kind) {
+            Some(Kind::Wheel(w)) => w.let_go(),
+            _ => return None,
+        };
+        self.wheel_act(act)
+    }
+
+    /// A stick pushed while the wheel is up.
+    pub fn wheel_aim(&mut self, x: f32, y: f32) {
+        if let Some(Kind::Wheel(w)) = self.open.as_mut().map(|o| &mut o.kind) {
+            w.aim(x, y);
+        }
+    }
+
+    /// The open wheel: its ring, its wedges' words, the one pointed at, its
+    /// middle on screen, whether it is held (self-tests).
+    pub fn wheel_shown(&self) -> Option<WheelShown> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Wheel(w)) => {
+                let (ring, words, hover) = w.shown();
+                Some((ring, words, hover, w.centre(), w.held()))
+            }
+            _ => None,
+        }
+    }
+
+    /// Where the open wheel's wedge `i` is on screen (self-tests).
+    pub fn wheel_wedge_rect(&self, i: usize) -> Option<Rect2> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Wheel(w)) => w.wedge_rect(i),
+            _ => None,
+        }
+    }
+
+    /// The open wheel's wedges (self-tests).
+    pub fn wheel_items(&self) -> Option<Vec<command_wheel::WheelItem>> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Wheel(w)) => Some(w.items().to_vec()),
+            _ => None,
+        }
     }
 
     /// A section's heading row: its fold mark, its title, how many it
@@ -4783,7 +5107,10 @@ impl Dialogs {
                     }
                 }
             }
-            Prompt::ExtCmd => self.open_palette(req, catalog),
+            Prompt::ExtCmd => match self.wheel_for(req) {
+                Some(next) => self.open_wheel(req, catalog, next),
+                None => self.open_palette(req, catalog),
+            },
             Prompt::Show { title, lines } => {
                 // #vanquished, #genocided, #overview (a menu of no choice
                 // comes as a text window): laid out from the engine's English
@@ -4986,6 +5313,7 @@ impl Dialogs {
             Kind::ExtCmd { .. } => "extcmd",
             Kind::Show { .. } => "show",
             Kind::MessageMenu { .. } => "message",
+            Kind::Wheel(_) => "wheel",
         })
     }
 
@@ -5575,6 +5903,10 @@ impl Dialogs {
 
     fn key_reply(&mut self, input: &KeyInput) -> Option<Reply> {
         let open = self.open.as_mut()?;
+        if let Kind::Wheel(w) = &mut open.kind {
+            let act = w.key(input.key, input.mods.shift, input.echo);
+            return self.wheel_act(act);
+        }
         let escape = open.prompt.escape_reply();
         // an RPG panel's own command, as the player presses it now
         if open.own.is_some() && !input.echo && self.keymap.translate(*input) == open.own {
@@ -5713,6 +6045,8 @@ impl Dialogs {
                 '\n' | ' ' if !*pick => Some(Reply::Char(0)),
                 _ => None,
             },
+            // answered above
+            Kind::Wheel(_) => None,
         }
     }
 
@@ -5777,6 +6111,31 @@ impl Dialogs {
             return self.osk(crate::gamepad::OskOp::Press);
         }
         let open = self.open.as_mut().filter(|o| o.req == req)?;
+        if let Kind::Wheel(w) = &mut open.kind {
+            let act = match ev {
+                DialogEvent::WheelMove(at) => {
+                    w.point(*at);
+                    WheelAct::Stay
+                }
+                // a click picks what it is on (in the middle, a cancel)
+                DialogEvent::WheelButton {
+                    button: 1,
+                    pressed: true,
+                    at,
+                } => {
+                    w.point(*at);
+                    w.pick()
+                }
+                DialogEvent::WheelButton {
+                    button: 2,
+                    pressed: true,
+                    ..
+                } => WheelAct::Cancel,
+                DialogEvent::ExtCmd(None) => WheelAct::Cancel,
+                _ => WheelAct::Stay,
+            };
+            return self.wheel_act(act);
+        }
         let escape = open.prompt.escape_reply();
         match (&mut open.kind, ev) {
             (Kind::Menu(view), DialogEvent::MenuClick(i)) => {

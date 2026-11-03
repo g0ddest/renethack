@@ -44,6 +44,8 @@ mod chords_tests;
 mod codex_tests;
 #[path = "selftest_command_menu.rs"]
 mod command_menu_tests;
+#[path = "selftest_command_wheel.rs"]
+mod command_wheel_tests;
 #[path = "selftest_conditions.rs"]
 mod conditions_tests;
 #[path = "selftest_corridors.rs"]
@@ -2353,8 +2355,9 @@ fn gamepad() -> Vec<Step> {
         }),
         Step::Wait("a command after the fight", idle_command),
     ]);
-    // save: a yes/no, Yes by the d-pad and A
-    steps.extend(radial(7));
+    // save, through LT's Commands and the wheel: a yes/no, Yes by the
+    // d-pad and A
+    steps.extend(command_wheel_tests::pad_save());
     steps.extend([
         Step::Request(
             "Really save?",
@@ -5319,6 +5322,7 @@ impl SelfTest {
             "map-pause" => map_pause(),
             "pool-sizes" => pool_sizes(),
             "palette" => palette(),
+            "command-wheel" => command_wheel_tests::command_wheel(),
             "threat-arrow" => threat_arrow(),
             "threats" => threats_tests::threats(),
             "gamepad" => gamepad(),

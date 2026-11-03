@@ -88,7 +88,9 @@ pub(super) fn rebind() -> Vec<Step> {
         Step::Wait("the controls", |g| {
             Ok(page(g)?.section() == Section::Controls)
         }),
-        // the Classic keys' list (a new character's keys are Modern)
+        // the Classic keys' list (a new character's keys are Modern), on
+        // the row under the command menu's
+        keys!("↓", DOWN),
         keys!("→", RIGHT),
         Step::Wait("the Classic keys", |g| {
             Ok(page(g)?.controls() == Shown::Keys(KeyProfile::Classic))

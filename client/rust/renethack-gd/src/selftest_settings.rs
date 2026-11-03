@@ -575,6 +575,26 @@ pub(super) fn settings() -> Vec<Step> {
                 && entry(slot).is_some_and(|e| e.ends_with(&tr!("controls-slot", n = 1))))
         }),
         Step::Shot("settings-controls"),
+        // its first row, the command menu: the list; → the wheel, kept;
+        // ← the list again; ↓ the controls' row
+        Step::Wait("the command menu's row, the list", |g| {
+            Ok(page(g)?.field() == Some(Field::CommandMenu)
+                && shown(g, Field::CommandMenu)? == tr!("settings-command-menu-list"))
+        }),
+        keys!("→", RIGHT),
+        Step::Wait("the wheel, kept", |g| {
+            Ok(profile(g)?.settings.command_wheel
+                && g.settings.command_wheel
+                && shown(g, Field::CommandMenu)? == tr!("settings-command-menu-wheel"))
+        }),
+        keys!("←", LEFT),
+        Step::Wait("the list again", |g| {
+            Ok(!profile(g)?.settings.command_wheel && !g.settings.command_wheel)
+        }),
+        keys!("↓", DOWN),
+        Step::Wait("the controls' row", |g| {
+            Ok(page(g)?.field() == Some(Field::Controls))
+        }),
         keys!("→", RIGHT),
         Step::Wait("the gamepad's controls", |g| {
             let p = page(g)?;
@@ -808,6 +828,7 @@ fn old_profile() -> Profile {
             prologue: nh_world::PrologueWhen::default(),
             order_speed: Some(nh_world::OrderSpeed::Fast),
             walk_to_stairs: true,
+            command_wheel: true,
             nethack_options: vec!["hitpointbar".into()],
         },
         volumes: [("Music".to_string(), 40), ("SFX".to_string(), 100)].into(),

@@ -37,7 +37,7 @@ fn entry_glyph(e: RadialEntry) -> Glyph {
         RadialEntry::Rest => Glyph::Moon,
         RadialEntry::Pray => Glyph::Ankh,
         RadialEntry::Travel => Glyph::Stairs,
-        RadialEntry::Save => Glyph::Scroll,
+        RadialEntry::Commands => Glyph::List,
     }
 }
 
@@ -205,6 +205,11 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
             (vec![Left, Right], "hint-fold"),
             (vec![A], "hint-run"),
             (vec![Lb, Rb], "hint-page"),
+            (vec![B], "hint-cancel"),
+        ],
+        PadCtx::Wheel => vec![
+            (vec![Left, Right], "hint-choose"),
+            (vec![A], "hint-ok"),
             (vec![B], "hint-cancel"),
         ],
         PadCtx::Codex => vec![

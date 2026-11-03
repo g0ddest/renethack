@@ -291,6 +291,8 @@ pub enum PadCtx {
     Read,
     /// The command palette: its list.
     Palette,
+    /// The command wheel: a stick points at a wedge, A picks it.
+    Wheel,
     /// The codex: its tabs on the bumpers.
     Codex,
     /// The inventory panel: browse, a question, or a menu of items.
@@ -354,6 +356,9 @@ pub enum PadOut {
     RadialOpen,
     RadialHover(Option<usize>),
     RadialClose(Option<usize>),
+    /// A stick pushed this far (each axis -1..1) where the command wheel
+    /// points at what it is pushed toward.
+    Aim(f32, f32),
     Osk(OskOp),
     Pick(PickOp),
 }
@@ -375,7 +380,7 @@ pub const RADIAL: [RadialEntry; 8] = [
     RadialEntry::Rest,
     RadialEntry::Pray,
     RadialEntry::Travel,
-    RadialEntry::Save,
+    RadialEntry::Commands,
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -390,7 +395,8 @@ pub enum RadialEntry {
     Rest,
     Pray,
     Travel,
-    Save,
+    /// Every command: the command wheel (Save is the game menu's).
+    Commands,
 }
 
 impl RadialEntry {
@@ -404,7 +410,7 @@ impl RadialEntry {
             RadialEntry::Rest => "radial-rest",
             RadialEntry::Pray => "radial-pray",
             RadialEntry::Travel => "radial-travel",
-            RadialEntry::Save => "radial-save",
+            RadialEntry::Commands => "radial-commands",
         }
     }
 }
@@ -617,6 +623,8 @@ impl Pad {
                 }
                 if self.radial.is_some() {
                     self.radial_hover(&mut out);
+                } else if ctx == PadCtx::Wheel {
+                    out.push(PadOut::Aim(self.left.x, self.left.y));
                 } else {
                     self.stick_moved(true, ctx, now, &mut out);
                 }
@@ -632,6 +640,8 @@ impl Pad {
                 }
                 if self.radial.is_some() {
                     self.radial_hover(&mut out);
+                } else if ctx == PadCtx::Wheel {
+                    out.push(PadOut::Aim(self.right.x, self.right.y));
                 } else {
                     self.stick_moved(false, ctx, now, &mut out);
                 }

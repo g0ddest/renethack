@@ -98,6 +98,10 @@ settings-order-speed-normal = Normal
 settings-order-speed-slow = Slow
 settings-stairs-walk = < and > walk to the stairs
 settings-stairs-walk-about = Off the stairs, On walks to the known stairs and takes them; Off answers as NetHack does ("You can't go down here.").
+settings-command-menu = Command menu
+settings-command-menu-about = What # and the Commands button open: the list in sections, or the wheel. Holding Tab or the middle mouse button opens the wheel either way.
+settings-command-menu-list = List
+settings-command-menu-wheel = Wheel
 settings-gameplay = Gameplay
 settings-autopickup = Autopickup
 settings-autopickup-about = Walking onto things picks up the kinds the next row chooses.
@@ -725,6 +729,85 @@ cmd-section-actions = Actions
 cmd-section-info = Information
 cmd-section-game = Game
 cmd-section-moves = Moves and prefixes
+wheel-all = All commands…
+wheel-more = More…
+wheel-hint = Point at one · let go or click: pick · in the middle: cancel
+wheel-section-hint = Its commands
+wheel-all-hint = The list, every section
+# the command wheel: a command's word on a wedge, by its name; "-": none
+# (its description shows)
+wheel-cmd = { $cmd ->
+        [pray] Pray
+        [chat] Chat
+        [pay] Pay
+        [search] Search
+        [wait] Wait
+        [open] Open
+        [close] Close
+        [kick] Kick
+        [loot] Loot
+        [eat] Eat
+        [quaff] Drink
+        [read] Read
+        [wear] Wear
+        [takeoff] Take off
+        [wield] Wield
+        [apply] Apply
+        [throw] Throw
+        [fire] Fire
+        [quiver] Quiver
+        [zap] Zap a wand
+        [puton] Put on
+        [remove] Remove
+        [takeoffall] Take off all
+        [swap] Swap weapons
+        [twoweapon] Two weapons
+        [invoke] Invoke
+        [rub] Rub
+        [dip] Dip
+        [tip] Empty
+        [pickup] Pick up
+        [drop] Drop
+        [engrave] Engrave
+        [offer] Offer
+        [cast] Cast
+        [sit] Sit
+        [force] Force a lock
+        [untrap] Untrap
+        [ride] Ride
+        [jump] Jump
+        [turn] Turn undead
+        [monster] Monster power
+        [wipe] Wipe face
+        [up] Go up
+        [down] Go down
+        [travel] Travel
+        [attributes] Attributes
+        [enhance] Skills
+        [showspells] Spells
+        [overview] Overview
+        [conduct] Conduct
+        [known] Discoveries
+        [knownclass] Discoveries by class
+        [terrain] Terrain
+        [annotate] Name the level
+        [chronicle] Chronicle
+        [vanquished] Vanquished
+        [genocided] Genocided
+        [look] Look here
+        [save] Save
+        [quit] Give up
+        [options] Options
+        [optionsfull] All options
+        [saveoptions] Save options
+        [autopickup] Autopickup
+        [toggle] Toggle an option
+        [perminv] Inventory window
+        [redraw] Redraw
+        [repeat] Repeat
+        [help] Help
+       *[other] -
+    }
 # the words that find an extended command in the `#` palette beside its
 # name and description, a comma between two, else its name (the
 # commands' names stay English: they are what one types)
@@ -1019,7 +1102,7 @@ radial-kick = Kick
 radial-rest = Rest
 radial-pray = Pray
 radial-travel = Travel
-radial-save = Save
+radial-commands = Commands
 
 ## The action bar, more
 

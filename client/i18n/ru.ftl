@@ -98,6 +98,10 @@ settings-order-speed-normal = Обычно
 settings-order-speed-slow = Медленно
 settings-stairs-walk = < и > ведут к лестнице
 settings-stairs-walk-about = Когда вы не на лестнице: «Вкл.» — герой идёт к известной лестнице и проходит по ней; «Выкл.» — ответ как в NetHack («Здесь нельзя спуститься»).
+settings-command-menu = Меню команд
+settings-command-menu-about = Что открывают # и кнопка «Команды»: список по разделам или круговое меню. Если удерживать Tab или среднюю кнопку мыши, круговое меню откроется в любом случае.
+settings-command-menu-list = Список
+settings-command-menu-wheel = Круговое
 settings-gameplay = Игра
 settings-autopickup = Автоподбор
 settings-autopickup-about = Шаг на предметы подбирает те их виды, что выбраны строкой ниже.
@@ -734,6 +738,85 @@ cmd-section-actions = Действия в мире
 cmd-section-info = Сведения
 cmd-section-game = Игра
 cmd-section-moves = Шаги и приставки
+wheel-all = Все команды…
+wheel-more = Ещё…
+wheel-hint = Наведите на одну · отпустите или щёлкните: выбрать · в центре: отмена
+wheel-section-hint = Команды раздела
+wheel-all-hint = Список, все разделы
+# the command wheel: a command's word on a wedge, by its name; "-": none
+# (тогда — описание команды)
+wheel-cmd = { $cmd ->
+        [pray] Молиться
+        [chat] Поговорить
+        [pay] Заплатить
+        [search] Искать
+        [wait] Ждать
+        [open] Открыть
+        [close] Закрыть
+        [kick] Пнуть
+        [loot] Обыскать
+        [eat] Съесть
+        [quaff] Выпить
+        [read] Прочесть
+        [wear] Надеть доспех
+        [takeoff] Снять доспех
+        [wield] Взять оружие
+        [apply] Применить
+        [throw] Метнуть
+        [fire] Выстрелить
+        [quiver] Колчан
+        [zap] Палочка
+        [puton] Надеть украшение
+        [remove] Снять украшение
+        [takeoffall] Снять всё
+        [swap] Сменить оружие
+        [twoweapon] Два оружия
+        [invoke] Задействовать
+        [rub] Потереть
+        [dip] Окунуть
+        [tip] Опустошить
+        [pickup] Поднять
+        [drop] Положить
+        [engrave] Писать на полу
+        [offer] Жертва
+        [cast] Заклинание
+        [sit] Сесть
+        [force] Взломать
+        [untrap] Обезвредить
+        [ride] Оседлать
+        [jump] Прыгнуть
+        [turn] Изгнать нежить
+        [monster] Способность
+        [wipe] Утереть лицо
+        [up] Подняться
+        [down] Спуститься
+        [travel] Идти к…
+        [attributes] Характеристики
+        [enhance] Навыки
+        [showspells] Заклинания
+        [overview] Обзор
+        [conduct] Обеты
+        [known] Открытия
+        [knownclass] Открытия класса
+        [terrain] Местность
+        [annotate] Назвать уровень
+        [chronicle] Летопись
+        [vanquished] Побеждённые
+        [genocided] Истреблённые
+        [look] Что здесь
+        [save] Сохранить
+        [quit] Сдаться
+        [options] Параметры
+        [optionsfull] Все параметры
+        [saveoptions] Сохранить параметры
+        [autopickup] Автоподбор
+        [toggle] Переключить параметр
+        [perminv] Окно инвентаря
+        [redraw] Перерисовать
+        [repeat] Повторить
+        [help] Справка
+       *[other] -
+    }
 # слова, по которым палитра `#` находит расширенную команду, кроме её
 # имени и описания, через запятую, иначе само имя (имена команд остаются
 # английскими: их и набирают)
@@ -1117,7 +1200,7 @@ radial-kick = Пнуть
 radial-rest = Отдых
 radial-pray = Молиться
 radial-travel = Идти к…
-radial-save = Сохранить
+radial-commands = Команды
 
 ## Панель действий, ещё
 

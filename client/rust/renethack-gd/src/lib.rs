@@ -16,6 +16,7 @@ mod census;
 mod codex;
 mod codex_view;
 mod command_menu;
+mod command_wheel;
 mod creation;
 mod credits;
 mod credits_page;

@@ -52,6 +52,10 @@ pub struct Settings {
     /// off, they are NetHack's ("You can't go down here.").
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub walk_to_stairs: bool,
+    /// `#` and the HUD's Commands button open the command wheel rather
+    /// than the list (holding Tab or the middle button opens it anyway).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub command_wheel: bool,
     /// The player's own NetHack options (`player_options`): those `O` set
     /// in the last game, given to every new game and restore. One of the
     /// client's own an older profile kept (the end's `disclose`) is left

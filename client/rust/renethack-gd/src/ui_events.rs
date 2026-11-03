@@ -123,6 +123,14 @@ pub enum DialogEvent {
     Reorder,
     /// The codex: its other tab.
     SwitchTab,
+    /// The command wheel: the mouse moved to a point on the canvas, or
+    /// a button (1 left, 2 right, 3 middle) pressed or let go there.
+    WheelMove(godot::builtin::Vector2),
+    WheelButton {
+        button: i32,
+        pressed: bool,
+        at: godot::builtin::Vector2,
+    },
 }
 
 /// Role, race, gender and alignment codes ("random" allowed).

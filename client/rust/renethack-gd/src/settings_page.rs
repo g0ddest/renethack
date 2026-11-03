@@ -109,8 +109,8 @@ impl Section {
                 Field::Hints,
             ],
             Section::Gameplay => &GAMEPLAY,
-            // and under it, the list it chooses
-            Section::Controls => &[Field::Controls],
+            // the command menu's face, then the list the next row chooses
+            Section::Controls => &[Field::CommandMenu, Field::Controls],
         }
     }
 }
@@ -169,6 +169,8 @@ pub enum Field {
     OrderSpeed,
     /// `<` and `>` off the stairs walk to them.
     StairsWalk,
+    /// What `#` and the Commands button open: the list or the wheel.
+    CommandMenu,
     /// Which controls the list shows: a key profile's, or the gamepad's.
     Controls,
 }
@@ -215,6 +217,7 @@ impl Field {
             },
             Field::OrderSpeed => tr!("settings-order-speed"),
             Field::StairsWalk => tr!("settings-stairs-walk"),
+            Field::CommandMenu => tr!("settings-command-menu"),
             Field::Controls => tr!("controls-show"),
         }
     }
@@ -291,6 +294,7 @@ impl Field {
             }
             Field::OrderSpeed => tr!("settings-order-speed-about"),
             Field::StairsWalk => tr!("settings-stairs-walk-about"),
+            Field::CommandMenu => tr!("settings-command-menu-about"),
             Field::Controls => tr!("controls-show-about"),
         }
     }
@@ -502,6 +506,8 @@ pub fn value_text(field: Field, v: &View) -> String {
         },
         Field::StairsWalk if v.settings.walk_to_stairs => tr!("settings-on"),
         Field::StairsWalk => tr!("settings-off"),
+        Field::CommandMenu if v.settings.command_wheel => tr!("settings-command-menu-wheel"),
+        Field::CommandMenu => tr!("settings-command-menu-list"),
         // the page's own choice (`SettingsPage::show`)
         Field::Controls => String::new(),
     }
@@ -652,6 +658,9 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
         }
         Field::StairsWalk => {
             s.walk_to_stairs = step_through(&[false, true], s.walk_to_stairs, dir, wrap);
+        }
+        Field::CommandMenu => {
+            s.command_wheel = step_through(&[false, true], s.command_wheel, dir, wrap);
         }
         // the page's own (`SettingsPage::controls_step`)
         Field::Controls => return None,

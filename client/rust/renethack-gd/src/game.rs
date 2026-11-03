@@ -685,6 +685,9 @@ pub struct RenethackGame {
     /// The map's last sync, milliseconds (the frame log).
     map_ms: f64,
     pub(crate) headless: bool,
+    /// The key or button holding the command wheel open (Tab, the middle
+    /// mouse button): letting it go picks.
+    wheel_held: Option<WheelHold>,
     /// The start-up veil (the boot splash's colour), the cue pulsing on
     /// it, and when it began to lift (None: still down).
     veil: Option<Gd<godot::classes::ColorRect>>,
@@ -1062,6 +1065,7 @@ impl INode for RenethackGame {
             requests: 0,
             map_ms: 0.0,
             headless: false,
+            wheel_held: None,
             veil: None,
             veil_cue: None,
             first_launch: false,
@@ -1515,13 +1519,39 @@ impl INode for RenethackGame {
             }
             Err(event) => event,
         };
-        if event.clone().try_cast::<InputEventMouseButton>().is_ok() {
+        if let Ok(b) = event.clone().try_cast::<InputEventMouseButton>() {
             self.pad.active = false;
+            // the middle button held: the command wheel at the mouse
+            if b.get_button_index() == MouseButton::MIDDLE
+                && self.wheel_hold(WheelHold::Middle, b.is_pressed(), Some(b.get_position()))
+            {
+                self.handled();
+                return;
+            }
         }
         let Ok(key) = event.try_cast::<InputEventKey>() else {
             return;
         };
         self.pad.active = false;
+        // Tab held: the command wheel at the mouse (NetHack's ^I is the
+        // wizard's alone, and stays on Ctrl+I); a Tab the player bound to a
+        // command stays theirs, and the wheel up takes Tab as a step round
+        if key.get_keycode() == godot::global::Key::TAB
+            && !key.is_ctrl_pressed()
+            && !key.is_alt_pressed()
+            && !key.is_meta_pressed()
+            && !key.is_shift_pressed()
+        {
+            if key.is_echo() && self.wheel_held == Some(WheelHold::Tab) {
+                self.handled();
+                return;
+            }
+            let at = self.mouse_pos;
+            if !key.is_echo() && self.wheel_hold(WheelHold::Tab, key.is_pressed(), at) {
+                self.handled();
+                return;
+            }
+        }
         // a letter typed with the command menu open and its search not yet
         // typed into: the search takes the keyboard, and Godot gives it
         // the letter (and the keys after it)
@@ -1843,6 +1873,11 @@ impl RenethackGame {
     }
 
     /// A motion outside the window (a drag holds the pointer) hovers nothing.
+    /// The mouse on the canvas, as its last motion put it (self-tests).
+    pub(crate) fn mouse_at(&self) -> Option<Vector2> {
+        self.mouse_pos
+    }
+
     fn record_mouse(&mut self, pos: Vector2) {
         let inside = self
             .base()
@@ -3164,6 +3199,47 @@ impl RenethackGame {
         self.push_ui(UiEvent::GameKey(KeyInput::plain(Key::Char('#'))));
     }
 
+    /// A key or button that holds the command wheel pressed or let go:
+    /// pressed at the command prompt with nothing up, the wheel opens at
+    /// the mouse, held; let go, the wheel picks what it points at. False
+    /// when it is not the wheel's (the key goes on as it would).
+    fn wheel_hold(&mut self, hold: WheelHold, pressed: bool, at: Option<Vector2>) -> bool {
+        if !pressed {
+            if self.wheel_held != Some(hold) {
+                return false;
+            }
+            self.wheel_held = None;
+            if let Some(r) = self.ui_mut().dialogs.wheel_let_go() {
+                self.dialog_reply(r);
+            }
+            return true;
+        }
+        let Some(ui) = self.ui.as_ref() else {
+            return false;
+        };
+        let free = self.state == GameState::Playing
+            && self.at_command()
+            && self.count.shown().is_none()
+            && !ui.dialogs.is_open()
+            && !ui.inventory.is_open()
+            && !ui.help.is_open()
+            && !ui.game_menu.is_open()
+            && !ui.hud.full_log_open();
+        // a Tab the player gave a command keeps it
+        let mine = hold == WheelHold::Middle || {
+            let tab = KeyInput::plain(Key::Tab);
+            self.keymap().translate(tab).is_none_or(|k| k == tab)
+        };
+        if !free || !mine {
+            return false;
+        }
+        self.wheel_held = Some(hold);
+        self.driver.interrupt(Stop::Panel);
+        self.ui_mut().dialogs.set_wheel_next(at, true);
+        self.push_ui(UiEvent::GameKey(KeyInput::plain(Key::Char('#'))));
+        true
+    }
+
     /// The game's menu, over the game at its command prompt (orders stop).
     fn open_game_menu(&mut self) {
         self.driver.interrupt(Stop::Panel);
@@ -3712,6 +3788,7 @@ impl RenethackGame {
                 },
                 Some("show") => PadCtx::Read,
                 Some("extcmd") => PadCtx::Palette,
+                Some("wheel") => PadCtx::Wheel,
                 Some("choice") => PadCtx::Choice,
                 Some("text") => PadCtx::Text,
                 Some("picker") => PadCtx::Picker {
@@ -3816,6 +3893,7 @@ impl RenethackGame {
                 }
                 PadOut::Osk(op) => self.osk(op),
                 PadOut::Pick(op) => self.pick_op(op),
+                PadOut::Aim(x, y) => self.ui_mut().dialogs.wheel_aim(x, y),
             }
         }
     }
@@ -3886,7 +3964,13 @@ impl RenethackGame {
             RadialEntry::Rest => self.push_ui(UiEvent::Rest),
             RadialEntry::Pray => self.use_slot(SlotUse::Macro(nh_world::Macro::ext("pray"))),
             RadialEntry::Travel => self.push_ui(key('_')),
-            RadialEntry::Save => self.push_ui(key('S')),
+            // the command wheel, in the screen's middle, A to pick
+            RadialEntry::Commands => {
+                if self.at_command() {
+                    self.ui_mut().dialogs.set_wheel_next(None, false);
+                    self.push_ui(UiEvent::GameKey(KeyInput::plain(Key::Char('#'))));
+                }
+            }
         }
     }
 
@@ -4099,6 +4183,7 @@ impl RenethackGame {
         let map = self.settings.keymaps.get(self.ui_state.profile);
         ui.hud.set_keymap(map);
         ui.dialogs.set_keymap(map);
+        ui.dialogs.set_wheel_style(self.settings.command_wheel);
         ui.inventory.set_keymap(map);
         ui.help.set_keymap(map);
         // the RPG panels keep above the HUD's orbs and bar
@@ -4133,7 +4218,7 @@ impl RenethackGame {
         let panel = ui
             .help
             .frame_rect()
-            .or_else(|| ui.dialogs.panel_rect())
+            .or_else(|| ui.dialogs.hints_rect())
             .or_else(|| ui.inventory.frame_rect());
         ui.pad
             .dock_hints(panel, ui.hud.log_rect(), ui.hud.micro_rect());
@@ -6610,4 +6695,11 @@ mod tests {
             Some("--More--  (✕)")
         );
     }
+}
+
+/// What holds the command wheel open.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum WheelHold {
+    Tab,
+    Middle,
 }
