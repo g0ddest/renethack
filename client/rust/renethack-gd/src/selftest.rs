@@ -5228,6 +5228,7 @@ impl SelfTest {
             "peaceful-swap" => peaceful_tests::peaceful_swap(),
             "rest" => rest_tests::rest(),
             "rest-peril" => rest_tests::rest_peril(),
+            "rest-elbereth" => rest_tests::rest_elbereth(),
             "calm" => calm_tests::calm(),
             "valley" => valley_tests::valley(),
             "quest-words" => prose_tests::quest_words(),

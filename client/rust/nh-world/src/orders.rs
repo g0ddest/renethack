@@ -1,7 +1,8 @@
 //! Time in the style of BG3 (spec 4): the player gives orders — walk to a
 //! cell, hold a key, rest until healed, go to the stairs — and the client
 //! carries them out one engine action per tick; in a fight every action
-//! waits for the player. An order stops on anything that deserves the
+//! waits for the player (but a rest whose search the engine took: it
+//! refuses one beside a foe that is not scared). An order stops on anything that deserves the
 //! player's eye, and on any key or click, before its next step. A fight
 //! is NetHack's own idea of a threat to a run or a travel (`lookaround`):
 //! a hostile the hero sees beside them, or blows given or taken. One
@@ -833,12 +834,13 @@ impl TickDriver {
     /// The next action of the order, at a command prompt once `ready`; None
     /// when it has ended (`take_stop` says why).
     pub fn next(&mut self, world: &World, catalog: &Catalog) -> Option<Action> {
-        let fight = self.mode == Mode::Combat;
         let active = self.active.as_mut()?;
         if active.finishing {
             return self.end(Stop::Arrived);
         }
-        if active.one_shot && active.actions > 0 {
+        // (a rest the engine took goes on: its counts are the engine's to
+        // stop, as a veteran's rest on Elbereth beside a scared foe)
+        if active.one_shot && active.actions > 0 && !active.accepted {
             return self.end(Stop::OneAction);
         }
         let dirchars = world.dirchars.clone();
@@ -924,10 +926,11 @@ impl TickDriver {
                     return self.end(Stop::Done);
                 }
                 // the first search a plain one, which the engine judges:
-                // it refuses it beside a foe (`monster_nearby()`) or with
-                // the hero's life in danger, and a count's not at all; in a
-                // fight, a turn at a time: every action waits
-                let count = if fight || !active.accepted {
+                // it refuses it beside a foe (`monster_nearby()`, not one
+                // scared or without attacks) or with the hero's life in
+                // danger, and a count's not at all; once it took that, a
+                // count in a fight too
+                let count = if !active.accepted {
                     Vec::new()
                 } else {
                     crate::count_keys(REST_COUNT, world.number_pad)
@@ -1078,7 +1081,9 @@ impl TickDriver {
                 return Some(stop);
             }
             let full = rest && REST_FULL.contains(&n.text.as_str());
-            if n.urgent || !(n.harmless || (items && at_goal) || full) {
+            // a foe scared off (by Elbereth): the rest goes on
+            let flees = rest && n.text.ends_with(" turns to flee.");
+            if n.urgent || !(n.harmless || (items && at_goal) || full || flees) {
                 return Some(Stop::Message(n.text.clone()));
             }
         }
@@ -1661,13 +1666,24 @@ mod tests {
         d.observe(&w, &cat);
         assert_eq!(d.next(&w, &cat), None);
         assert_eq!(d.take_stop(), Some(Stop::OneAction));
-        // a rest: one search, no count
+        // a rest: one plain search; the engine took it (the foe is scared
+        // or has no attacks), so its count follows, the fight or not
         stat(&mut w, "hp", "10");
         d.observe(&w, &cat);
+        assert_eq!(d.mode(), Mode::Combat);
         assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
+        turn(&mut w, 3);
+        say(&mut w, "The jackal turns to flee.");
+        d.observe(&w, &cat);
+        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "20s");
+        turn(&mut w, 23);
+        d.observe(&w, &cat);
+        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "20s");
+        // a blow ends it
+        stat(&mut w, "hp", "9");
         d.observe(&w, &cat);
         assert_eq!(d.next(&w, &cat), None);
-        assert_eq!(d.take_stop(), Some(Stop::OneAction));
+        assert_eq!(d.take_stop(), Some(Stop::HpLost));
         // the engine refuses the search beside the foe: no rest, in the
         // client's words
         assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");

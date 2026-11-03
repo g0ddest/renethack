@@ -13,6 +13,12 @@
 //! search then, but lets a count's run on to her death from it. F5 says
 //! why in the client's words, sends nothing and lets no turn pass; a plain
 //! `s` gets 5.0's own refusal; she lives.
+//!
+//! `rest-elbereth`: a veteran's rest. Hurt, the Valkyrie writes Elbereth
+//! in the dust and a jackal is made beside her: a fight, where every
+//! order is one action. 5.0 takes F5's plain search (the scared jackal is
+//! no `monster_nearby()`), and one F5 then rests on in counts, many turns,
+//! not one.
 
 use std::sync::Mutex;
 use std::time::Instant;
@@ -219,6 +225,76 @@ pub(super) fn rest_peril() -> Vec<Step> {
     steps.extend(quit());
     steps
 }
+
+pub(super) fn rest_elbereth() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode, seed 1 (no hostile about)", |g| {
+        g.debug_mode = true;
+        g.seed = Some(1);
+        Ok(())
+    })];
+    steps.extend(start());
+    steps.extend(wish("2 potions of sickness"));
+    steps.extend(drink());
+    steps.extend([
+        key('E'),
+        Step::Request(
+            "what to write with",
+            |p| matches!(p, Prompt::FreeKey { query, .. } if query.contains("write with")),
+        ),
+        key('-'),
+        Step::AnswerUntil('n', "what to write in the dust", |g| {
+            Ok(matches!(&g.pending, Some((_, Prompt::Text { query, .. }))
+                if query.contains("write in the dust")))
+        }),
+        Step::Dialog(DialogEvent::TextSubmitted("Elbereth".into())),
+        Step::AnswerUntil('n', "a command after engraving", idle_command),
+        Step::Key(ctrl_key('g')),
+        Step::Request(
+            "what to create",
+            |p| matches!(p, Prompt::Text { query, .. } if query.contains("Create what")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted("jackal".into())),
+        Step::AnswerUntil('n', "a command after the creation", idle_command),
+        Step::Wait("a fight: the jackal beside her, HP short", |g| {
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            if !hp(g).is_some_and(|(v, max)| v < max) {
+                return Err("HP full before F5".into());
+            }
+            if !nh_world::engaged(&g.world, cat) {
+                return Err("no foe beside her".into());
+            }
+            Ok(g.driver.mode() == Mode::Combat)
+        }),
+        Step::Call("what was sent so far, the turn", before_f5),
+        Step::Key(KeyInput::plain(Key::F(5))),
+        Step::Wait("one F5 rested on in counts", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            if ui.hud.mode_view().1.as_deref() == Some(tr!("rest-foe").as_str()) {
+                return Err("F5 refused beside the scared jackal".into());
+            }
+            if g.driver.is_active() || !g.pending.as_ref().is_some_and(|(_, p)| command(p)) {
+                return Ok(false);
+            }
+            let then = TURN.lock().map_err(|e| e.to_string())?.ok_or("no turn")?;
+            let turns = g.world.turn().ok_or("no turn")? - then;
+            let last = g.world.log.iter().next_back().map(|m| m.text.clone());
+            godot::prelude::godot_print!(
+                "selftest: rest-elbereth: {turns} turns of one F5, ended {:?}, last said {last:?}",
+                g.last_stop
+            );
+            if turns < ELBERETH_TURNS {
+                return Err(format!("one F5 rested {turns} turns"));
+            }
+            Ok(true)
+        }),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
+/// The turns one F5 on Elbereth rests at least: more than a fight's one
+/// action, a count's.
+const ELBERETH_TURNS: i64 = 3;
 
 /// What was sent so far and the turn, before an F5.
 fn before_f5(g: &mut RenethackGame) -> Result<(), String> {
