@@ -65,6 +65,7 @@ mod sheet;
 mod sheet_view;
 mod skills;
 mod skills_view;
+mod spell_bake;
 mod spells;
 mod spells_view;
 mod steam;

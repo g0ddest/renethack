@@ -14,7 +14,7 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, AtomicUsize, Ordering};
 use std::sync::{Mutex, Once};
 use std::time::{Duration, Instant};
 
@@ -3424,6 +3424,34 @@ fn achievement_icons() -> Vec<Step> {
 /// More than the achievements (69).
 const ACHIEVEMENT_ICONS_MAX: usize = 120;
 
+/// The spells' icons (spell_bake): one step a spell, no game.
+fn spell_icons() -> Vec<Step> {
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+    let mut steps = Vec::new();
+    for _ in 0..crate::spells::KNOWN.len() {
+        steps.push(Step::Call("the next spell's icon", |_| {
+            let i = NEXT.fetch_add(1, Ordering::Relaxed);
+            let known = crate::spells::KNOWN.get(i).ok_or("no spell left")?;
+            let path = crate::spell_bake::bake(known)?;
+            godot_print!(
+                "selftest: spell-icons: {} -> {}",
+                known.name,
+                path.display()
+            );
+            Ok(())
+        }));
+    }
+    steps.push(Step::Call("every spell's icon", |_| {
+        let n = NEXT.load(Ordering::Relaxed);
+        if n != crate::spells::KNOWN.len() {
+            return Err(format!("{n} icons baked"));
+        }
+        godot_print!("selftest: spell-icons: {n} icons");
+        Ok(())
+    }));
+    steps
+}
+
 /// The store's draft art (`store_art`): the capsules, the page's
 /// background and the library's images, from the title's chamber, into
 /// `steam/store/`. Writes files: `make steam-art` runs it, at the title.
@@ -5159,6 +5187,7 @@ impl SelfTest {
             "gallery" => gallery(),
             "icons" => icons(),
             "achievement-icons" => achievement_icons(),
+            "spell-icons" => spell_icons(),
             "steam-art" => steam_art(),
             "achievements" => achievements::achievements(),
             "smoke" => smoke(),

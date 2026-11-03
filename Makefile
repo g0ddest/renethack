@@ -17,6 +17,7 @@
 #   make art          fetch the CC0 art again (tools/fetch_art.py; needs Pillow)
 #   make audio        fetch the CC0 sounds again (tools/fetch_audio.py)
 #   make app-icon     draw the game's icon again (tools/app_icon.py; needs Pillow)
+#   make spell-icons  bake the spells' icons again (client/godot/art/icons/spells)
 #   make i18n-catalog extract the English catalog of every text the engine shows
 #   make i18n-check   the extractor's tests; fail if the catalog is out of date
 #   make help         the help's Guidebooks (client/help): the Russian fetched again
@@ -73,7 +74,7 @@ SOAK_WINDOW ?=
 # more for tools/perf.py, e.g. PERF_ARGS="--scenes tour,crowd --wait 30"
 PERF_ARGS ?=
 
-.PHONY: all engine client steam import run test test-client soak perf cold-start variants lint need-timeout art audio app-icon icons achievement-icons achievement-vdf steam-art deck \
+.PHONY: all engine client steam import run test test-client soak perf cold-start variants lint need-timeout art audio app-icon icons achievement-icons spell-icons achievement-vdf steam-art deck \
 	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows source-check steampipe
 all: engine
 
@@ -249,6 +250,17 @@ achievement-icons: all client
 	grep '^selftest: achievement-icons' $$pg/achievement-icons.log; \
 	grep -q 'SELFTEST PASS achievement-icons' $$pg/achievement-icons.log \
 		|| { tail -40 $$pg/achievement-icons.log; exit 1; }; \
+	rm -rf $$pg
+
+# Bake the spells' icons (client/godot/art/icons/spells/<spell>.png) from
+# the game-icons.net symbols in client/godot/art/ccby/game-icons, each on
+# its school's plate (spell_bake.rs); headless, no game
+spell-icons: all client
+	@pg=$$(mktemp -d); $(if $(TIMEOUT),$(TIMEOUT) 600) $(GODOT) --headless --path $(GODOT_PROJECT) \
+		-- --selftest=spell-icons --playground=$$pg/playground > $$pg/spell-icons.log 2>&1; \
+	grep '^selftest: spell-icons: [0-9]* icons' $$pg/spell-icons.log; \
+	grep -q 'SELFTEST PASS spell-icons' $$pg/spell-icons.log \
+		|| { tail -40 $$pg/spell-icons.log; exit 1; }; \
 	rm -rf $$pg
 
 # Draft store art for Steam (steam/store/; docs/steam.md): the capsules,

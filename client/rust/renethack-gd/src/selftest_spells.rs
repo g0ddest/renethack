@@ -371,7 +371,8 @@ fn spells_or_why(g: &RenethackGame, purpose: Purpose) -> Result<bool, String> {
 
 /// `spells-many`: a Wizard who has read ten more books (debug mode's
 /// wishes), long names among them: `+`, `Z` and the swap each come as the
-/// spells' panel, every spell a row.
+/// spells' panel, every spell a row. In the pack a wished book keeps its
+/// cover until it is read; then it shows its spell's icon.
 pub(super) fn spells_many() -> Vec<Step> {
     let mut steps = vec![Step::Call("debug mode", |g| {
         g.debug_mode = true;
@@ -402,6 +403,7 @@ pub(super) fn spells_many() -> Vec<Step> {
         *w = books;
         Ok(())
     }));
+    steps.extend(pack_of_books(false));
     steps.push(Step::Call("the first book", |_| {
         READING.store(0, Ordering::Relaxed);
         Ok(())
@@ -430,6 +432,7 @@ pub(super) fn spells_many() -> Vec<Step> {
             }),
         ]);
     }
+    steps.extend(pack_of_books(true));
     steps.extend([
         key('+'),
         Step::Wait("+'s panel for many spells", |g| {
@@ -459,6 +462,56 @@ pub(super) fn spells_many() -> Vec<Step> {
     ]);
     steps.extend(quit());
     steps
+}
+
+/// The wished books as the pack names them: each tells its spell (and
+/// has its spell's icon) only once the hero knows its kind. Read, every
+/// one does; unread, all but those of a kind the hero began with (a
+/// Wizard's second book) keep their covers.
+fn books_tell(g: &RenethackGame, read: bool) -> Result<bool, String> {
+    let wished = WISHED.lock().map_err(|e| e.to_string())?.clone();
+    let told: Vec<(String, bool)> = g
+        .world
+        .inventory
+        .items()
+        .iter()
+        .filter(|i| wished.contains(&i.letter))
+        .map(|i| (i.text.clone(), spells::book_spell(&i.text).is_some()))
+        .collect();
+    let n = told.iter().filter(|(_, t)| *t).count();
+    let right = if read { n == told.len() } else { n <= 2 };
+    if !right {
+        return Err(format!("read {read}: {told:?}"));
+    }
+    Ok(true)
+}
+
+/// The pack open on the wished books, `read` or not yet, and closed.
+fn pack_of_books(read: bool) -> Vec<Step> {
+    vec![
+        key('i'),
+        if read {
+            Step::Wait("the pack: each book read shows its spell", |g| {
+                let open = g.ui.as_ref().is_some_and(|ui| ui.inventory.is_open());
+                Ok(open && books_tell(g, true)?)
+            })
+        } else {
+            Step::Wait("the pack: the books unread keep their covers", |g| {
+                let open = g.ui.as_ref().is_some_and(|ui| ui.inventory.is_open());
+                Ok(open && books_tell(g, false)?)
+            })
+        },
+        Step::Shot(if read {
+            "spells-books-known"
+        } else {
+            "spells-books-unknown"
+        }),
+        esc(),
+        Step::Wait("the pack closed", |g| {
+            let open = g.ui.as_ref().is_some_and(|ui| ui.inventory.is_open());
+            Ok(!open && command(g)?)
+        }),
+    ]
 }
 
 fn monk() -> CharacterChoice {

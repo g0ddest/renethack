@@ -404,6 +404,11 @@ const PROSE: &[(&str, &str)] = &[
     ("Textures larger than", "credits-md-art-changes"),
     ("CC-BY", "credits-md-ccby"),
     ("The models listed under “CC-BY”", "credits-md-ccby-models"),
+    ("Spell icons", "credits-md-spell-icons"),
+    (
+        "The symbols of the spells' icons",
+        "credits-md-spell-icons-about",
+    ),
     ("Fonts", "credits-md-fonts"),
     ("The UI's fonts are under", "credits-md-fonts-ofl"),
     ("Sound credits", "credits-md-sound"),

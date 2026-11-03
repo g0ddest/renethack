@@ -4049,16 +4049,21 @@ impl RenethackGame {
             let icon = match binding {
                 None => None,
                 Some(SlotBinding::Item { key, .. }) => {
-                    let class = self
+                    let item = self
                         .world
                         .inventory
                         .items()
                         .iter()
-                        .find(|it| it.tile == key.tile)
-                        .map_or_else(|| icons::tile_class(key.tile), |it| it.class);
-                    Some(icons::item_icon(key.tile, class))
+                        .find(|it| it.tile == key.tile);
+                    Some(match item {
+                        Some(it) => icons::inv_icon(it),
+                        None => icons::item_icon(key.tile, icons::tile_class(key.tile)),
+                    })
                 }
-                Some(SlotBinding::Spell { .. }) => Some(icons::emblem(icons::Glyph::Book)),
+                // the spell's own icon (a book's emblem if none is baked)
+                Some(SlotBinding::Spell { name }) => Some(
+                    icons::spell_icon(name).unwrap_or_else(|| icons::emblem(icons::Glyph::Book)),
+                ),
                 Some(SlotBinding::Command { cmd }) => {
                     Some(icons::emblem(icons::command_glyph(*cmd)))
                 }

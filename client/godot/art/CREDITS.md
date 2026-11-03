@@ -84,6 +84,61 @@ glint. The scorpion and the centipede are kept as they came, unrigged. The textu
 | `ccby/polypizza/Scorpion.glb` | Scorpion (scorpions, Scorpius) | Poly by Google | https://poly.pizza/m/6Bu7d_Pkm5o |
 | `ccby/polypizza/Centipede.glb` | Centipede (centipedes) | Poly by Google | https://poly.pizza/m/8C36B7L_2hR |
 
+## Spell icons
+
+The symbols of the spells' icons come from game-icons.net and are under the
+Creative Commons Attribution 3.0 license
+(https://creativecommons.org/licenses/by/3.0/), Zeromancer's heart under
+CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Each was
+painted here on its school's plate (`make spell-icons`): lit as a relief,
+given a glow, an outline and a shadow, and scaled down.
+
+| Where | What | Author | Source |
+|---|---|---|---|
+| `ccby/game-icons/lorc/dig-dug.svg` | Dig dug (dig) | Lorc | https://game-icons.net/1x1/lorc/dig-dug.html |
+| `ccby/game-icons/lorc/energy-arrow.svg` | Energy arrow (magic missile) | Lorc | https://game-icons.net/1x1/lorc/energy-arrow.html |
+| `ccby/game-icons/lorc/burning-meteor.svg` | Burning meteor (fireball) | Lorc | https://game-icons.net/1x1/lorc/burning-meteor.html |
+| `ccby/game-icons/lorc/energy-breath.svg` | Energy breath (cone of cold) | Lorc | https://game-icons.net/1x1/lorc/energy-breath.html |
+| `ccby/game-icons/delapouite/night-sleep.svg` | Night sleep (sleep) | Delapouite | https://game-icons.net/1x1/delapouite/night-sleep.html |
+| `ccby/game-icons/lorc/death-zone.svg` | Death zone (finger of death) | Lorc | https://game-icons.net/1x1/lorc/death-zone.html |
+| `ccby/game-icons/lorc/sun.svg` | Sun (light) | Lorc | https://game-icons.net/1x1/lorc/sun.html |
+| `ccby/game-icons/lorc/beast-eye.svg` | Beast eye (detect monsters) | Lorc | https://game-icons.net/1x1/lorc/beast-eye.html |
+| `ccby/game-icons/zeromancer/heart-plus.svg` | Heart plus (healing) | Zeromancer (CC0) | https://game-icons.net/1x1/zeromancer/heart-plus.html |
+| `ccby/game-icons/lorc/unlocking.svg` | Unlocking (knock) | Lorc | https://game-icons.net/1x1/lorc/unlocking.html |
+| `ccby/game-icons/lorc/punch-blast.svg` | Punch blast (force bolt) | Lorc | https://game-icons.net/1x1/lorc/punch-blast.html |
+| `ccby/game-icons/delapouite/knocked-out-stars.svg` | Knocked out stars (confuse monster) | Delapouite | https://game-icons.net/1x1/delapouite/knocked-out-stars.html |
+| `ccby/game-icons/delapouite/blindfold.svg` | Blindfold (cure blindness) | Delapouite | https://game-icons.net/1x1/delapouite/blindfold.html |
+| `ccby/game-icons/lorc/life-tap.svg` | Life tap (drain life) | Lorc | https://game-icons.net/1x1/lorc/life-tap.html |
+| `ccby/game-icons/lorc/snail.svg` | Snail (slow monster) | Lorc | https://game-icons.net/1x1/lorc/snail.html |
+| `ccby/game-icons/lorc/padlock.svg` | Padlock (wizard lock) | Lorc | https://game-icons.net/1x1/lorc/padlock.html |
+| `ccby/game-icons/lorc/imp-laugh.svg` | Imp laugh (create monster) | Lorc | https://game-icons.net/1x1/lorc/imp-laugh.html |
+| `ccby/game-icons/lorc/meat.svg` | Meat (detect food) | Lorc | https://game-icons.net/1x1/lorc/meat.html |
+| `ccby/game-icons/lorc/terror.svg` | Terror (cause fear) | Lorc | https://game-icons.net/1x1/lorc/terror.html |
+| `ccby/game-icons/lorc/crystal-ball.svg` | Crystal ball (clairvoyance) | Lorc | https://game-icons.net/1x1/lorc/crystal-ball.html |
+| `ccby/game-icons/delapouite/medicines.svg` | Medicines (cure sickness) | Delapouite | https://game-icons.net/1x1/delapouite/medicines.html |
+| `ccby/game-icons/lorc/puppet.svg` | Puppet (charm monster) | Lorc | https://game-icons.net/1x1/lorc/puppet.html |
+| `ccby/game-icons/lorc/sprint.svg` | Sprint (haste self) | Lorc | https://game-icons.net/1x1/lorc/sprint.html |
+| `ccby/game-icons/delapouite/secret-door.svg` | Secret door (detect unseen) | Delapouite | https://game-icons.net/1x1/delapouite/secret-door.html |
+| `ccby/game-icons/lorc/feather.svg` | Feather (levitation) | Lorc | https://game-icons.net/1x1/lorc/feather.html |
+| `ccby/game-icons/sbed/health-increase.svg` | Health increase (extra healing) | Sbed | https://game-icons.net/1x1/sbed/health-increase.html |
+| `ccby/game-icons/lorc/muscle-up.svg` | Muscle up (restore ability) | Lorc | https://game-icons.net/1x1/lorc/muscle-up.html |
+| `ccby/game-icons/delapouite/invisible.svg` | Invisible (invisibility) | Delapouite | https://game-icons.net/1x1/delapouite/invisible.html |
+| `ccby/game-icons/skoll/open-treasure-chest.svg` | Open treasure chest (detect treasure) | Skoll | https://game-icons.net/1x1/skoll/open-treasure-chest.html |
+| `ccby/game-icons/skoll/breaking-chain.svg` | Breaking chain (remove curse) | Skoll | https://game-icons.net/1x1/skoll/breaking-chain.html |
+| `ccby/game-icons/lorc/treasure-map.svg` | Treasure map (magic mapping) | Lorc | https://game-icons.net/1x1/lorc/treasure-map.html |
+| `ccby/game-icons/lorc/magnifying-glass.svg` | Magnifying glass (identify) | Lorc | https://game-icons.net/1x1/lorc/magnifying-glass.html |
+| `ccby/game-icons/delapouite/shambling-zombie.svg` | Shambling zombie (turn undead) | Delapouite | https://game-icons.net/1x1/delapouite/shambling-zombie.html |
+| `ccby/game-icons/lorc/frog.svg` | Frog (polymorph) | Lorc | https://game-icons.net/1x1/lorc/frog.html |
+| `ccby/game-icons/lorc/teleport.svg` | Teleport (teleport away) | Lorc | https://game-icons.net/1x1/lorc/teleport.html |
+| `ccby/game-icons/lorc/owl.svg` | Owl (create familiar) | Lorc | https://game-icons.net/1x1/lorc/owl.html |
+| `ccby/game-icons/lorc/interdiction.svg` | Interdiction (cancellation) | Lorc | https://game-icons.net/1x1/lorc/interdiction.html |
+| `ccby/game-icons/lorc/magic-shield.svg` | Magic shield (protection) | Lorc | https://game-icons.net/1x1/lorc/magic-shield.html |
+| `ccby/game-icons/delapouite/jump-across.svg` | Jump across (jumping) | Delapouite | https://game-icons.net/1x1/delapouite/jump-across.html |
+| `ccby/game-icons/delapouite/stone-bust.svg` | Stone bust (stone to flesh) | Delapouite | https://game-icons.net/1x1/delapouite/stone-bust.html |
+| `ccby/game-icons/lorc/lightning-branches.svg` | Lightning branches (chain lightning) | Lorc | https://game-icons.net/1x1/lorc/lightning-branches.html |
+| `ccby/game-icons/lorc/ball-glow.svg` | Ball glow (flame sphere) | Lorc | https://game-icons.net/1x1/lorc/ball-glow.html |
+| `ccby/game-icons/lorc/frozen-orb.svg` | Frozen orb (freeze sphere) | Lorc | https://game-icons.net/1x1/lorc/frozen-orb.html |
+
 ## Fonts
 
 The UI's fonts are under the SIL Open Font License 1.1 (not CC0); each

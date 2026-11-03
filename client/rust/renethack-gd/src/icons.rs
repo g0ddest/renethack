@@ -28,6 +28,8 @@ const FLARE: &str = "res://art/cc0/icons/flare";
 thread_local! {
     static ITEMS: RefCell<HashMap<(i32, char), Gd<Texture2D>>> = RefCell::new(HashMap::new());
     static GLYPHS: RefCell<HashMap<Glyph, Gd<Texture2D>>> = RefCell::new(HashMap::new());
+    /// The spells' baked icons by name (None: none baked).
+    static SPELLS: RefCell<HashMap<String, Option<Gd<Texture2D>>>> = RefCell::new(HashMap::new());
     /// Appearance names and class symbols by tile, for tints.
     static LOOKS: RefCell<HashMap<i32, (String, char)>> = RefCell::new(HashMap::new());
 }
@@ -37,6 +39,7 @@ thread_local! {
 pub fn clear() {
     ITEMS.with(|i| i.borrow_mut().clear());
     GLYPHS.with(|g| g.borrow_mut().clear());
+    SPELLS.with(|s| s.borrow_mut().clear());
     crate::achievement_view::clear();
     crate::theme::clear_fonts();
 }
@@ -89,6 +92,31 @@ pub fn item_icon(tile: i32, class: char) -> Gd<Texture2D> {
             )
         });
     ITEMS.with(|i| i.borrow_mut().insert((tile, class), tex.clone()));
+    tex
+}
+
+/// The icon of an item in the pack: an identified spellbook's is its
+/// spell's (`spells::book_spell`), any other the icon of its appearance.
+/// An unknown book keeps its cover's, so the icon never tells its spell.
+pub fn inv_icon(item: &nh_protocol::InvItem) -> Gd<Texture2D> {
+    let spell = (item.class == '+')
+        .then(|| crate::spells::book_spell(&item.text))
+        .flatten()
+        .and_then(|k| spell_icon(k.name));
+    spell.unwrap_or_else(|| item_icon(item.tile, item.class))
+}
+
+/// The baked icon of the spell `name` (objects.h's English), if there is
+/// one (`make spell-icons`).
+pub fn spell_icon(name: &str) -> Option<Gd<Texture2D>> {
+    if let Some(t) = SPELLS.with(|s| s.borrow().get(name).cloned()) {
+        return t;
+    }
+    let tex = crate::spells::spell_known(name).and_then(|k| {
+        let file = crate::spells::slug(k.name);
+        load_png(&format!("{}/{file}.png", crate::spell_bake::DIR))
+    });
+    SPELLS.with(|s| s.borrow_mut().insert(name.to_string(), tex.clone()));
     tex
 }
 

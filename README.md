@@ -732,6 +732,16 @@ The inventory icons are baked from the same art: `make icons` (needs a
 display, about a minute) renders every object appearance tile into
 `client/godot/art/icons/items/<tile>.png`; they are committed.
 
+Each of 5.0's spells has its own icon: a game-icons.net symbol (CC BY 3.0,
+in `client/godot/art/ccby/game-icons`) painted on its school's plate, whose
+shape and colour both name the school (attack a spiked disc in ember red,
+healing a green disc, divination a blue hexagon, enchantment a violet
+quatrefoil, clerical an amber lancet arch, escape a teal slanted plate,
+matter a slate block). `make spell-icons` (headless, seconds) bakes them
+into `client/godot/art/icons/spells/<spell>.png`. A spellbook shows its
+spell's icon once the hero knows what it is; an unknown book keeps its
+cover's.
+
 The game's own icon follows NetHack's: a shield with a blue field before
 two crossed swords, drawn afresh in the game's steel and gold, with the
 hero's `@` as the shield's device. `make app-icon` (needs Pillow) draws it

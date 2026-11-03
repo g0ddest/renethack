@@ -1,6 +1,6 @@
-//! The spells' panel's rows (`spells`): a spell's school on a medallion,
-//! its name, school and level, its chance of failure and how well it is
-//! remembered, each in the language now.
+//! The spells' panel's rows (`spells`): a spell's own icon (its school's
+//! medallion when none is baked), its name, school and level, its chance
+//! of failure and how well it is remembered, each in the language now.
 
 use godot::classes::control::{MouseFilter, SizeFlags};
 use godot::classes::texture_rect::{ExpandMode, StretchMode};
@@ -85,15 +85,20 @@ fn fail_color(fail: u8) -> Color {
     }
 }
 
-/// A medallion of `glyph`.
-pub fn medallion(glyph: Glyph, side: f32) -> Gd<TextureRect> {
+/// The spell's own icon (`make spell-icons`), else its school's medallion.
+pub fn spell_icon(s: &Spell, side: f32) -> Gd<TextureRect> {
+    let tex = icons::spell_icon(&s.name).unwrap_or_else(|| icons::emblem(school_glyph(s.school)));
+    icon_rect(&tex, side)
+}
+
+fn icon_rect(tex: &Gd<godot::classes::Texture2D>, side: f32) -> Gd<TextureRect> {
     let mut t = TextureRect::new_alloc();
     t.set_mouse_filter(MouseFilter::IGNORE);
     t.set_expand_mode(ExpandMode::IGNORE_SIZE);
     t.set_stretch_mode(StretchMode::KEEP_ASPECT_CENTERED);
     t.set_custom_minimum_size(Vector2::new(side, side));
     t.set_v_size_flags(SizeFlags::SHRINK_CENTER);
-    t.set_texture(&icons::emblem(glyph));
+    t.set_texture(tex);
     t
 }
 
@@ -136,7 +141,7 @@ fn memory(r: Retention) -> Gd<VBoxContainer> {
 /// A spell's cells after its letter: the medallion, the name over the
 /// school and level, the failure, the memory; and the name's label.
 pub fn cells(s: &Spell) -> (Vec<Gd<Control>>, Gd<Label>) {
-    let mut out: Vec<Gd<Control>> = vec![medallion(school_glyph(s.school), MEDALLION).upcast()];
+    let mut out: Vec<Gd<Control>> = vec![spell_icon(s, MEDALLION).upcast()];
     let mut name = column(None);
     let mut n = label(&spell_name(&s.name), Face::BodyBold, 19, theme::TEXT);
     n.set_clip_text(true);

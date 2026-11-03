@@ -1187,8 +1187,7 @@ impl Socket {
             }
             return;
         };
-        self.icon
-            .set_texture(&icons::item_icon(item.tile, item.class));
+        self.icon.set_texture(&icons::inv_icon(item));
         self.letter.set_text(&item.letter.to_string());
         self.pill.set_visible(true);
         self.count.set_text(&if item.quan > 1 {
@@ -3875,7 +3874,7 @@ impl InventoryPanel {
         let preview = self
             .selected
             .and_then(|l| self.pack.by_letter(l))
-            .map(|i| icons::item_icon(i.tile, i.class));
+            .map(icons::inv_icon);
         for (i, sock) in self.cells.iter_mut().enumerate() {
             let target = shown.get(i).copied();
             let item = match target {
@@ -4396,7 +4395,7 @@ impl InventoryPanel {
         icon.set_custom_minimum_size(Vector2::new(28.0, 28.0));
         icon.set_v_size_flags(SizeFlags::SHRINK_CENTER);
         match item {
-            Some(it) => icon.set_texture(&icons::item_icon(it.tile, it.class)),
+            Some(it) => icon.set_texture(&icons::inv_icon(it)),
             None => {
                 icon.set_texture(&icons::glyph_icon(Glyph::Hand));
                 icon.set_modulate(theme::GOLD_BRIGHT);
@@ -4614,7 +4613,7 @@ impl InventoryPanel {
         let mut icon = TextureRect::new_alloc();
         icon.set_expand_mode(ExpandMode::IGNORE_SIZE);
         icon.set_stretch_mode(StretchMode::KEEP_ASPECT_CENTERED);
-        icon.set_texture(&icons::item_icon(item.tile, item.class));
+        icon.set_texture(&icons::inv_icon(&item));
         icon.set_custom_minimum_size(Vector2::new(128.0, 128.0));
         icon_box.add_child(&icon);
         self.detail.add_child(&icon_box);
