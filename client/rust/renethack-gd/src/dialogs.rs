@@ -2083,6 +2083,9 @@ pub struct Dialogs {
     wheel_next: Option<WheelNext>,
     /// The list opening next has only this section open (a "More…").
     palette_section: Option<Section>,
+    /// The menu being opened, its lines as the game wrote them (its
+    /// objects' icons go by their English names).
+    opening_english: Vec<String>,
     /// The spells the hero knows, as the last `+` or `Z` listed them (the
     /// wheel's spells' ring).
     known_spells: Vec<spells::Spell>,
@@ -2217,6 +2220,7 @@ impl Dialogs {
             wheel_style: false,
             wheel_next: None,
             palette_section: None,
+            opening_english: Vec::new(),
             known_spells: Vec::new(),
             portrait: None,
             sheet: None,
@@ -2599,7 +2603,8 @@ impl Dialogs {
                         t.set_stretch_mode(StretchMode::KEEP_ASPECT_CENTERED);
                         t.set_custom_minimum_size(Vector2::new(glyph_w, glyph_w));
                         t.set_v_size_flags(SizeFlags::SHRINK_CENTER);
-                        t.set_texture(&crate::icons::item_icon(g.tile, class));
+                        let english = self.opening_english.get(i).map(String::as_str);
+                        t.set_texture(&crate::icons::named_icon(g.tile, class, english));
                         cells.push(t.upcast());
                     }
                     g => {
@@ -4693,7 +4698,8 @@ impl Dialogs {
                 counts.set((with + usize::from(found.is_some()), all + 1));
             }
             let t = found?;
-            Some(crate::icons::item_icon(t.tile, class?))
+            // an identified book's spell, as the pack shows it
+            Some(crate::icons::named_icon(t.tile, class?, Some(&e.name)))
         };
         let view =
             codex_view::discoveries(d, self.panel_width().min(JOURNAL_W), &heading, &card, &icon);
@@ -5037,7 +5043,14 @@ impl Dialogs {
                             .collect();
                         self.open_menu(req, *how, Some(&tr!("overview-title")), &shown)
                     }
-                    None => self.open_menu(req, *how, title.as_deref(), items),
+                    None => {
+                        // the lines as the game wrote them: an object's
+                        // icon by its English name (a book's spell)
+                        self.opening_english = texts.iter().map(|t| t.to_string()).collect();
+                        let opened = self.open_menu(req, *how, title.as_deref(), items);
+                        self.opening_english.clear();
+                        opened
+                    }
                 }
             }
             Prompt::Choice {
@@ -5370,6 +5383,21 @@ impl Dialogs {
                 .map(|l| l.has_theme_font_override("normal_font")),
             _ => None,
         }
+    }
+
+    /// The textures the open dialog shows (self-tests: the icons).
+    pub fn panel_textures(&self) -> Vec<Gd<Texture2D>> {
+        let Some(o) = self.open.as_ref() else {
+            return Vec::new();
+        };
+        o.panel
+            .find_children_ex("*")
+            .type_("TextureRect")
+            .owned(false)
+            .done()
+            .iter_shared()
+            .filter_map(|n| n.try_cast::<TextureRect>().ok()?.get_texture())
+            .collect()
     }
 
     /// Every label's text in the open dialog, in order (self-tests).

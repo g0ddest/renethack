@@ -687,6 +687,7 @@ pub(super) fn spells_many() -> Vec<Step> {
         ]);
     }
     steps.extend(pack_of_books(true));
+    steps.extend(books_elsewhere());
     steps.extend([
         key('+'),
         Step::Wait("+'s panel for many spells", |g| {
@@ -766,6 +767,89 @@ fn pack_of_books(read: bool) -> Vec<Step> {
             Ok(!open && command(g)?)
         }),
     ]
+}
+
+/// The spell icon of each read book in `names` (their spells' English
+/// names) is among the open dialog's icons.
+fn shows_spell_icons(g: &RenethackGame, names: &[String]) -> Result<bool, String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let shown = ui.dialogs.panel_textures();
+    for n in names {
+        let icon = crate::icons::spell_icon(n).ok_or(format!("no icon for {n}"))?;
+        if !shown.contains(&icon) {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+/// The spells of the first two books wished for, once read.
+fn first_books(g: &RenethackGame) -> Result<Vec<String>, String> {
+    let wished = WISHED.lock().map_err(|e| e.to_string())?.clone();
+    wished
+        .iter()
+        .take(2)
+        .map(|c| {
+            let item = g.world.inventory.by_letter(*c).ok_or(format!("no {c}"))?;
+            spells::book_spell(&item.text)
+                .map(|k| k.name.to_string())
+                .ok_or(format!("{:?} tells no spell", item.text))
+        })
+        .collect()
+}
+
+static FLOOR: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+/// A read book shows its spell's icon outside the pack too: `\`'s
+/// discoveries, and the pick-up menu of two books put down.
+fn books_elsewhere() -> Vec<Step> {
+    fn book(n: usize) -> Result<KeyInput, String> {
+        let wished = WISHED.lock().map_err(|e| e.to_string())?;
+        wished
+            .get(n)
+            .map(|c| KeyInput::plain(Key::Char(*c)))
+            .ok_or_else(|| "no book".to_string())
+    }
+    let drop = |pick: fn(&RenethackGame) -> Result<KeyInput, String>| {
+        [
+            key('d'),
+            Step::Request("what to drop", |p| !matches!(p, Prompt::Command)),
+            Step::KeyFrom("a read book", pick),
+            Step::Request("dropped", |p| matches!(p, Prompt::Command)),
+        ]
+    };
+    let mut steps = vec![
+        Step::Call("the first two books' spells", |g| {
+            *FLOOR.lock().map_err(|e| e.to_string())? = first_books(g)?;
+            Ok(())
+        }),
+        key('\\'),
+        Step::Wait("the discoveries, a read book by its spell's icon", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let names = FLOOR.lock().map_err(|e| e.to_string())?.clone();
+            Ok(ui.dialogs.layout_name() == Some("codex") && shows_spell_icons(g, &names)?)
+        }),
+        Step::Shot("spells-discoveries"),
+        esc(),
+        Step::Wait("closed", command),
+    ];
+    // the drop asks a count first for a stack; each book is one
+    steps.extend(drop(|_| book(0)));
+    steps.extend(drop(|_| book(1)));
+    steps.extend([
+        key(','),
+        Step::Wait("the pick-up menu, each book by its spell's icon", |g| {
+            let menu = matches!(g.pending, Some((_, Prompt::Menu { .. })));
+            let names = FLOOR.lock().map_err(|e| e.to_string())?.clone();
+            Ok(menu && shows_spell_icons(g, &names)?)
+        }),
+        Step::Shot("spells-pickup"),
+        // both picked up again
+        Step::Key(KeyInput::plain(Key::Char('.'))),
+        Step::Key(KeyInput::plain(Key::Enter)),
+        Step::Wait("picked up, the command again", command),
+    ]);
+    steps
 }
 
 fn monk() -> CharacterChoice {

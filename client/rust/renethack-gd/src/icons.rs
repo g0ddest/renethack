@@ -99,11 +99,18 @@ pub fn item_icon(tile: i32, class: char) -> Gd<Texture2D> {
 /// spell's (`spells::book_spell`), any other the icon of its appearance.
 /// An unknown book keeps its cover's, so the icon never tells its spell.
 pub fn inv_icon(item: &nh_protocol::InvItem) -> Gd<Texture2D> {
-    let spell = (item.class == '+')
-        .then(|| crate::spells::book_spell(&item.text))
-        .flatten()
+    named_icon(item.tile, item.class, Some(&item.text))
+}
+
+/// The icon of an object of appearance `tile` and class `class` that the
+/// game names `english` (a menu's line, the pack's, a discovery's): an
+/// identified spellbook's is its spell's, any other its appearance's.
+pub fn named_icon(tile: i32, class: char, english: Option<&str>) -> Gd<Texture2D> {
+    let spell = english
+        .filter(|_| class == '+')
+        .and_then(crate::spells::book_spell)
         .and_then(|k| spell_icon(k.name));
-    spell.unwrap_or_else(|| item_icon(item.tile, item.class))
+    spell.unwrap_or_else(|| item_icon(tile, class))
 }
 
 /// The baked icon of the spell `name` (objects.h's English), if there is
