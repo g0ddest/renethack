@@ -96,6 +96,15 @@ impl PortraitView {
         }
     }
 
+    /// The hero's metal mirrors here what it does on the map (the map's
+    /// `metal_sky`), or it reads dark.
+    pub fn set_metal_sky(&mut self, sky: &Gd<godot::classes::Sky>) {
+        if let Some(mut env) = self.camera.get_environment() {
+            env.set_sky(sky);
+            env.set_reflection_source(godot::classes::environment::ReflectionSource::SKY);
+        }
+    }
+
     pub fn texture(&self) -> Gd<Texture2D> {
         self.viewport
             .get_texture()

@@ -2056,6 +2056,11 @@ impl Hud {
         self.role.as_deref()
     }
 
+    /// The portrait's metal mirrors what it does on the map.
+    pub fn set_metal_sky(&mut self, sky: &Gd<godot::classes::Sky>) {
+        self.portrait.set_metal_sky(sky);
+    }
+
     /// Every frame of a game: the hero's model (None: none to show), the
     /// gear it shows, whether polymorphed. The portrait renders them when
     /// that changes, and shows the render in place of the initial.

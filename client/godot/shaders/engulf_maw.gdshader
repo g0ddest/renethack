@@ -111,6 +111,8 @@ void fragment() {
 	ALBEDO = col;
 	ROUGHNESS = mix(0.32, 0.12, goo) + 0.12 * n;
 	SPECULAR = 0.65;
+	// nothing in there to mirror (map_view's metal sky: a torch-lit vault)
+	RADIANCE = vec4(0.0, 0.0, 0.0, 1.0);
 	// a dim light of its own, so its depths are never black
 	EMISSION = deep.rgb * 0.6 + flesh.rgb * mix(0.12, 0.25, goo) + ridge.rgb * c * 0.08;
 	// gone towards the camera, far round the hero, high up

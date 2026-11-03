@@ -3653,6 +3653,15 @@ impl InventoryPanel {
         self.doll_view.hero = node;
     }
 
+    /// The hero's metal mirrors on the doll what it does on the map (the
+    /// map's `metal_sky`), or it reads dark.
+    pub fn set_metal_sky(&mut self, sky: &Gd<godot::classes::Sky>) {
+        if let Some(mut env) = self.doll_view.camera.get_environment() {
+            env.set_sky(sky);
+            env.set_reflection_source(godot::classes::environment::ReflectionSource::SKY);
+        }
+    }
+
     /// The doll's render, the hero in their gear (the character sheet's
     /// portrait shows it).
     pub fn doll_texture(&self) -> Gd<Texture2D> {

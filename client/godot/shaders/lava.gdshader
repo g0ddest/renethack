@@ -144,5 +144,7 @@ void fragment() {
 	float seen = texture(fow_tex, (wpos.xz + 0.5) / FIELD).r;
 	ALBEDO = mix(rock, molten.rgb * 0.3, crack);
 	ROUGHNESS = mix(0.9, 0.4, crack);
+	// nor does it mirror the metal sky (map_view's): it shines by its fire
+	RADIANCE = vec4(0.0, 0.0, 0.0, 1.0);
 	EMISSION = (glow * energy + rock * 0.15 * heat) * mix(0.35, 1.0, seen);
 }

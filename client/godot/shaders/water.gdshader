@@ -185,5 +185,7 @@ void fragment() {
 	ROUGHNESS = clamp(0.28 + turn * 6.0, 0.28, 0.85);
 	METALLIC = 0.0;
 	SPECULAR = 0.45;
+	// nor does water mirror the metal sky (its glints are the lights')
+	RADIANCE = vec4(0.0, 0.0, 0.0, 1.0);
 	NORMAL = n;
 }

@@ -1164,6 +1164,12 @@ impl INode for RenethackGame {
         if let Some(ui) = self.ui.as_mut() {
             let render = ui.inventory.doll_texture();
             ui.dialogs.set_portrait(render);
+            // the doll and the portrait mirror the map's sky: one, made
+            // under the start-up veil
+            if let Some(sky) = ui.map.metal_sky() {
+                ui.inventory.set_metal_sky(&sky);
+                ui.hud.set_metal_sky(&sky);
+            }
         }
         self.show_game(false);
         self.device_quality = crate::video::device_quality();

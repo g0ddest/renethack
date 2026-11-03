@@ -29,10 +29,11 @@ use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::label_3d::DrawFlags;
 use godot::classes::light_3d::Param;
 use godot::classes::mesh::PrimitiveType;
+use godot::classes::sky::RadianceSize;
 use godot::classes::{
     Camera3D, CanvasLayer, ColorRect, Decal, DirectionalLight3D, Environment, FogMaterial,
     FogVolume, GeometryInstance3D, Label3D, Material, MeshInstance3D, Node3D, OmniLight3D,
-    PackedScene, RenderingServer, Shader, ShaderMaterial, StandardMaterial3D, SurfaceTool,
+    PackedScene, RenderingServer, Shader, ShaderMaterial, Sky, StandardMaterial3D, SurfaceTool,
     SystemFont, VisualInstance3D, WorldEnvironment,
 };
 use godot::prelude::*;
@@ -136,6 +137,30 @@ fn grade_curve(shadows: Color, highlights: Color) -> Gd<godot::classes::Gradient
     t.set_gradient(&g);
     t.set_width(256);
     t
+}
+
+/// How much paler than the branch's torches the lamps metal mirrors are.
+const SKY_LAMP_PALE: f64 = 0.3;
+/// What metal mirrors where the branch has no sky for it (`reflect` 0:
+/// Air, Water; next to none: Gehennom): a dull fill this many times the
+/// level's ambient light (its metal is dulled too: `Art::set_mirror`).
+const SKY_FILL: f32 = 1.5;
+
+/// What metal mirrors (`shaders/metal_sky.gdshader`): a sky for an
+/// environment's reflections only (never drawn, lighting nothing). Nothing
+/// over a dungeon reflects, so without it every blade, coin and ring of
+/// mail read flat or dark. One for the map, the doll's and the portrait's
+/// (`MapView::metal_sky`): made under the start-up veil, and again over a
+/// few frames when a level of another branch changes it, under its fade.
+fn make_metal_sky() -> Option<(Gd<Sky>, Gd<ShaderMaterial>)> {
+    let shader = godot::tools::try_load::<Shader>("res://shaders/metal_sky.gdshader").ok()?;
+    let mut mat = ShaderMaterial::new_gd();
+    mat.set_shader(&shader);
+    let mut sky = Sky::new_gd();
+    sky.set_material(&mat);
+    // sharp enough for a polished blade, a cube of 128 a side
+    sky.set_radiance_size(RadianceSize::SIZE_128);
+    Some((sky, mat))
 }
 
 /// More cells changed at once than this: those near the hero (within
@@ -3650,6 +3675,12 @@ pub struct MapView {
     /// How much of the branch's haze the air holds at the camera's
     /// distance now (`air_near`), as last set.
     air_near: f32,
+    /// What metal mirrors (`make_metal_sky`), the branch's strength,
+    /// lamp and fill it was last made with, and whether metal mirrors it
+    /// now (not in the overview).
+    metal_sky: Option<(Gd<Sky>, Gd<ShaderMaterial>)>,
+    sky_made: Option<(f32, Color, Vector3)>,
+    mirrors: bool,
     snap: bool,
     /// Seconds since the start (the torch's flicker).
     clock: f64,
@@ -3987,6 +4018,13 @@ impl MapView {
         env.set_ambient_source(AmbientSource::COLOR);
         env.set_ambient_light_color(Color::from_rgb(0.28, 0.32, 0.46));
         env.set_ambient_light_energy(0.12);
+        // metal mirrors the sky of `make_metal_sky` (made at the
+        // branch's strength in `show_reflect`, from `new` on: under the
+        // start-up veil)
+        let metal_sky = make_metal_sky();
+        if let Some((sky, _)) = &metal_sky {
+            env.set_sky(sky);
+        }
         env.set_reflection_source(ReflectionSource::DISABLED);
         // AgX keeps the hue of fire and rolls the highlights off gently
         env.set_tonemapper(ToneMapper::AGX);
@@ -4409,6 +4447,9 @@ impl MapView {
             overview: None,
             overview_k: 0.0,
             air_near: 1.0,
+            metal_sky,
+            sky_made: None,
+            mirrors: false,
             snap: true,
             clock: 0.0,
             hero_at: None,
@@ -5076,6 +5117,7 @@ impl MapView {
             self.hero_light
                 .set_param(Param::ENERGY, HERO_LIGHT_ENERGY * l.hero_light);
         }
+        self.show_reflect();
         self.show_sky_sea(match l.under {
             Under::Sky => Some("res://shaders/sky_sea.gdshader"),
             Under::Stars => Some("res://shaders/stars.gdshader"),
@@ -6509,6 +6551,54 @@ impl MapView {
             m.set_shader_parameter("strength", &(VIGNETTE * (1.0 - k)).to_variant());
         }
         RenderingServer::singleton().global_shader_parameter_set("overview", &k.to_variant());
+        self.show_reflect();
+    }
+
+    /// What metal mirrors (`make_metal_sky`), as much as the branch has it
+    /// (`reflect`), its lamps the branch's torches (paler: their hot
+    /// cores), a dull fill as the level's ambient light where it has none;
+    /// none in the overview, whose far, plain view has no polish to show.
+    /// The sky is made again (over a few frames, under a new level's fade)
+    /// only when the branch changes it; the overview only stops metal
+    /// mirroring it. Metal is dulled with it (`Art::set_mirror`).
+    fn show_reflect(&mut self) {
+        let Some((_, sky)) = self.metal_sky.as_mut() else {
+            return;
+        };
+        let l = &self.branch_look;
+        let lamp = l.torch.lerp(Color::WHITE, SKY_LAMP_PALE);
+        let a = l.ambient.srgb_to_linear();
+        let fill = Vector3::new(a.r, a.g, a.b) * l.ambient_energy * SKY_FILL;
+        if self.sky_made != Some((l.reflect, lamp, fill)) {
+            sky.set_shader_parameter("strength", &l.reflect.to_variant());
+            sky.set_shader_parameter("lamp", &lamp.to_variant());
+            sky.set_shader_parameter("flat_fill", &fill.to_variant());
+            self.sky_made = Some((l.reflect, lamp, fill));
+        }
+        let mirrors = self.overview_k <= 0.5;
+        if mirrors != self.mirrors {
+            self.mirrors = mirrors;
+            self.env.set_reflection_source(if mirrors {
+                ReflectionSource::SKY
+            } else {
+                ReflectionSource::DISABLED
+            });
+        }
+        // and metal as metallic as the level has a sky for it: where it
+        // mirrors next to nothing (or in the overview) as it was before
+        // it mirrored anything
+        let k = if mirrors {
+            self.branch_look.reflect
+        } else {
+            0.0
+        };
+        self.art.set_mirror(k);
+    }
+
+    /// The sky metal mirrors, for the views of the hero that keep their
+    /// own environment (the doll, the portrait): theirs mirrors the same.
+    pub fn metal_sky(&self) -> Option<Gd<Sky>> {
+        self.metal_sky.as_ref().map(|(sky, _)| sky.clone())
     }
 
     /// How much of the branch's haze the air holds: as much as the eye

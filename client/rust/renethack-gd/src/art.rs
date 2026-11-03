@@ -47,8 +47,19 @@ use crate::meshes::{
 /// be read.
 const BUILT_IN_MANIFEST: &str = include_str!("../../../godot/art/manifest.json");
 const ART_ROOT: &str = "res://art/";
-/// Metals keep some colour of their own under the torch.
-const MAX_METALLIC: f32 = 0.45;
+/// A model's metal shines by what it mirrors (map_view's metal sky), but is
+/// never quite full (some colour of its own under the torch) nor quite a
+/// mirror (the sky's lamps as hard dots, flickering as it moves).
+const MAX_METALLIC: f32 = 0.8;
+const METAL_ROUGHNESS: f32 = 0.3;
+/// Where a level mirrors less of the sky (`Art::set_mirror`), metal more
+/// metallic than this is dulled towards it: with nothing to mirror, metal
+/// at 0.8 keeps a fifth of its diffuse and reads near black (this was the
+/// most before metal mirrored anything).
+const DULL_METALLIC: f32 = 0.45;
+/// The metallic a metal material has where the level mirrors all of the
+/// sky (copies keep it).
+const METAL_LIT: &str = "metal_lit";
 /// Pooled instances kept per look; more are freed.
 const POOL_MAX: usize = 24;
 /// Time per frame the map's new instances may take; a look never seen
@@ -468,6 +479,11 @@ pub struct Art {
     /// each was made from, and the ids of those made (they take none more).
     rims: HashMap<i64, Gd<Material>>,
     rimmed: HashSet<i64>,
+    /// The metal materials made (`keep_metal`, by id: they may be freed)
+    /// with their metallic where the level mirrors all of the sky, and how
+    /// much of it the level mirrors now (`set_mirror`).
+    metals: Vec<(InstanceId, f32)>,
+    mirror: f32,
     /// The pass that edges them (`EDGE_SHADER`), once loaded (None: not
     /// yet asked for; Some(None): missing).
     edge: Option<Option<Gd<Material>>>,
@@ -581,6 +597,8 @@ impl Art {
             derived: HashMap::new(),
             rims: HashMap::new(),
             rimmed: HashSet::new(),
+            metals: Vec::new(),
+            mirror: 1.0,
             edge: None,
             glint: None,
             coin_glint: None,
@@ -1155,8 +1173,52 @@ impl Art {
         }
         let spec = self.manifest.material_at(material).1.clone();
         let m = self.build_surface(&spec, shade, world, tint);
+        self.keep_metal(&m, None);
         self.surfaces.insert(key, m.clone());
         m
+    }
+
+    /// Metal mirrors as much of the sky as a level has of it (`k`, 0 to
+    /// 1: map_view's `show_reflect`): every metal material made is dulled
+    /// towards `DULL_METALLIC` where it has less, so that with nothing to
+    /// mirror metal reads as it did before it mirrored anything.
+    pub fn set_mirror(&mut self, k: f32) {
+        let k = k.clamp(0.0, 1.0);
+        if k == self.mirror {
+            return;
+        }
+        self.mirror = k;
+        self.metals.retain(
+            |&(id, lit)| match Gd::<BaseMaterial3D>::try_from_instance_id(id) {
+                Ok(mut m) => {
+                    m.set_metallic(dulled(lit, k));
+                    true
+                }
+                Err(_) => false,
+            },
+        );
+    }
+
+    /// `m`, just made (a copy of `from`'s, if so), kept to be dulled with
+    /// the level's mirror when it is metal, and dulled now.
+    fn keep_metal(&mut self, m: &Gd<Material>, from: Option<&Gd<Material>>) {
+        let Ok(mut b) = m.clone().try_cast::<BaseMaterial3D>() else {
+            return;
+        };
+        let lit_of = |m: &Gd<Material>| {
+            m.has_meta(METAL_LIT)
+                .then(|| m.get_meta(METAL_LIT).try_to::<f32>().ok())
+                .flatten()
+        };
+        let lit = lit_of(m)
+            .or_else(|| from.and_then(lit_of))
+            .unwrap_or_else(|| b.get_metallic());
+        if lit <= DULL_METALLIC {
+            return;
+        }
+        b.set_meta(METAL_LIT, &lit.to_variant());
+        b.set_metallic(dulled(lit, self.mirror));
+        self.metals.push((b.instance_id(), lit));
     }
 
     /// A plain colour with a finish (markers, glows, eyes).
@@ -1848,6 +1910,9 @@ impl Art {
             // a shader of its own, or a glow: as it is
             _ => src.clone(),
         };
+        if out != *src {
+            self.keep_metal(&out, Some(src));
+        }
         self.rims.insert(key, out.clone());
         self.rimmed.insert(out.instance_id().to_i64());
         out
@@ -2130,13 +2195,21 @@ impl Art {
                     continue;
                 };
                 let key = (src.instance_id().to_i64(), path.to_string());
-                let painted = self.repainted.entry(key).or_insert_with(|| {
-                    recoloured(&[Some(src)], None, Some(texture.clone()))
-                        .pop()
-                        .flatten()
-                });
+                let painted = match self.repainted.get(&key) {
+                    Some(m) => m.clone(),
+                    None => {
+                        let m = recoloured(&[Some(src.clone())], None, Some(texture.clone()))
+                            .pop()
+                            .flatten();
+                        if let Some(m) = &m {
+                            self.keep_metal(m, Some(&src));
+                        }
+                        self.repainted.insert(key, m.clone());
+                        m
+                    }
+                };
                 if let Some(m) = painted {
-                    mi.set_surface_override_material(i, &*m);
+                    mi.set_surface_override_material(i, &m);
                 }
             }
         }
@@ -2360,6 +2433,11 @@ impl Art {
                 };
                 let texture = if body { skin_tex.clone() } else { None };
                 let materials = recoloured(&worn, colour, texture);
+                for (m, src) in materials.iter().zip(&worn) {
+                    if let Some(m) = m {
+                        self.keep_metal(m, src.as_ref());
+                    }
+                }
                 out.push((mesh.upcast::<Mesh>(), mi.get_skin(), materials, !base));
             }
             inst.queue_free();
@@ -2553,6 +2631,7 @@ impl Art {
             }
             Err(m) => m,
         };
+        self.keep_metal(&out, Some(src));
         self.derived.insert(key, out.clone());
         out
     }
@@ -2574,10 +2653,9 @@ impl Art {
         let out = match src.duplicate_resource().try_cast::<BaseMaterial3D>().ok() {
             Some(mut m) => {
                 let mut albedo = mul(m.get_albedo(), tint);
-                // nothing in a dungeon to reflect: full metal would be black
                 if m.get_metallic() > MAX_METALLIC {
                     m.set_metallic(MAX_METALLIC);
-                    let rough = m.get_roughness().max(0.35);
+                    let rough = m.get_roughness().max(METAL_ROUGHNESS);
                     m.set_roughness(rough);
                 }
                 if let Some(model) = finish {
@@ -2619,6 +2697,9 @@ impl Art {
             }
             None => src.clone(),
         };
+        if out != *src {
+            self.keep_metal(&out, Some(src));
+        }
         self.derived.insert(key, out.clone());
         out
     }
@@ -4542,6 +4623,12 @@ fn turned(mesh: &Gd<Mesh>, by: Transform3D) -> Option<Gd<Mesh>> {
     Some(out.upcast())
 }
 
+/// A metal's metallic where the level mirrors `k` of the sky, from `lit`
+/// (all of it): towards `DULL_METALLIC` where it mirrors less.
+fn dulled(lit: f32, k: f32) -> f32 {
+    DULL_METALLIC + (lit - DULL_METALLIC) * k
+}
+
 /// `materials` multiplied by `colour` and taking `texture` as their albedo
 /// (a skin tone, a hair colour): copies, the mesh shared.
 fn recoloured(
@@ -4651,6 +4738,20 @@ pub fn set_layer_mask(v: &mut Gd<VisualInstance3D>, mask: u32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn metal_is_dulled_where_the_level_mirrors_less() {
+        // all of the sky: as made; none: as metal was before it mirrored
+        assert_eq!(dulled(0.8, 1.0), 0.8);
+        assert_eq!(dulled(0.8, 0.0), DULL_METALLIC);
+        assert_eq!(dulled(1.0, 0.0), DULL_METALLIC);
+        let gehennom = dulled(0.8, 0.05);
+        assert!(gehennom > DULL_METALLIC && gehennom < 0.5);
+        // no more metallic than made, whatever the level
+        for k in [0.0, 0.3, 1.0] {
+            assert!(dulled(0.8, k) <= 0.8);
+        }
+    }
 
     #[test]
     fn a_statue_stands_on_its_plinth_whatever_flies() {

@@ -231,6 +231,10 @@ pub struct BranchLook {
     /// What its rooms are dressed with.
     pub dress: Dress,
     pub under: Under,
+    /// How much metal mirrors (map_view's `metal_sky`; 1: the main
+    /// dungeon's torch-lit vault): next to nothing where the light is the
+    /// fire's, the sky's or the deep's (0: nothing at all).
+    pub reflect: f32,
 }
 
 const NEUTRAL: Grade = Grade {
@@ -295,6 +299,7 @@ const MAIN: BranchLook = BranchLook {
         formations: false,
     },
     under: Under::Rock,
+    reflect: 1.0,
 };
 
 /// The look of a branch.
@@ -387,6 +392,8 @@ pub fn look_of(branch: Branch) -> BranchLook {
             embers: true,
             underglow: Some(rgb(1.0, 0.36, 0.12)),
             dust: 1.5,
+            // (its darkness tuned without it: the fire alone shines on iron)
+            reflect: 0.05,
             dress: Dress {
                 // in colours and iron the fire lights: black on its black
                 // stone showed nothing
@@ -524,6 +531,7 @@ fn plane_look(plane: Plane) -> BranchLook {
             darkness: rgb(0.55, 0.68, 0.88),
             dust: 0.0,
             under: Under::Sky,
+            reflect: 0.0,
             grade: Grade {
                 saturation: 0.85,
                 brightness: 1.1,
@@ -549,6 +557,7 @@ fn plane_look(plane: Plane) -> BranchLook {
             darkness: rgb(0.08, 0.015, 0.005),
             cracks: 1.4,
             embers: true,
+            reflect: 0.3,
             // (near neutral: the air and the light carry the fire's colour,
             // warmed again by the grade everything turned orange)
             grade: Grade {
@@ -570,6 +579,7 @@ fn plane_look(plane: Plane) -> BranchLook {
             darkness: rgb(0.01, 0.04, 0.08),
             dust: 2.0,
             under: Under::Deep,
+            reflect: 0.0,
             grade: Grade {
                 saturation: 0.9,
                 shadows: rgb(0.9, 1.0, 1.12),
@@ -823,6 +833,22 @@ mod tests {
         assert_eq!(look_of(Branch::Gehennom).material("floor"), "basalt_floor");
         assert_eq!(look_of(Branch::Gehennom).material("masonry"), "ash_wall");
         assert!(look_of(Branch::Sokoban).fill_scale > main.fill_scale);
+    }
+
+    #[test]
+    fn metal_mirrors_torchlight_and_next_to_nothing_else() {
+        assert_eq!(look_of(Branch::Main).reflect, 1.0);
+        assert_eq!(look_of(Branch::Mines).reflect, 1.0);
+        // Gehennom's dark (and each of its levels and lairs) was tuned
+        // without it; the Planes of Air and Water are lit by their sky
+        let g = Branch::Gehennom;
+        for lair in [None, Some("valley"), Some("sanctum")] {
+            let l = look_of_level(g, Some(&notice("Gehennom", 27, lair)));
+            assert!(l.reflect <= 0.05, "{lair:?}");
+            assert!(swamp(l).reflect <= 0.05, "{lair:?}");
+        }
+        assert_eq!(look_of(Branch::Planes(Plane::Air)).reflect, 0.0);
+        assert_eq!(look_of(Branch::Planes(Plane::Water)).reflect, 0.0);
     }
 
     fn notice(dungeon: &str, depth: i32, lair: Option<&str>) -> LevelNotice {

@@ -659,6 +659,11 @@ void fragment() {
 	// rock's tops and ledges mirror nothing at all
 	SPECULAR = (chunks > 0.0 ? specular * (1.0 - up) : specular) * (1.0 - rim_near);
 	METALLIC = metallic * orm.b;
+	// what metal mirrors (map_view's metal sky) falls on no stone, wet
+	// floor or ice (the dark is tuned without it): only on the metal the
+	// hero sees (a sink's rim, gilded capitals), never on what is
+	// remembered
+	RADIANCE = vec4(0.0, 0.0, 0.0, 1.0 - METALLIC * seen);
 	AO = orm.r;
 	AO_LIGHT_AFFECT = 0.3;
 	if (rim > 0.0) {
