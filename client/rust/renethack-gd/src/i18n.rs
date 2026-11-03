@@ -893,6 +893,7 @@ mod tests {
             turn: Some(3),
             urgent: false,
             from_history: false,
+            history_only: false,
             fmt: Some("You hit %s.".into()),
             args: vec![FmtArg::Str("the newt".into())],
         };

@@ -2945,7 +2945,11 @@ impl Hud {
     fn show_log(&mut self, world: &World, follow: bool, now: f64) {
         let input_seq = world.input_seq();
         let secs = self.fade_secs();
-        let recent: Vec<&Message> = world.log.iter().rev().take(LOG_LINES).collect();
+        // (a line the client said in its own words is in the history only)
+        let recent: Vec<&Message> = (world.log.iter().rev())
+            .filter(|m| !m.history_only)
+            .take(LOG_LINES)
+            .collect();
         let lines: Vec<String> = recent
             .iter()
             .rev()

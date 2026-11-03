@@ -4235,7 +4235,8 @@ impl RenethackGame {
 
     /// The engine refused the rest's search, a foe beside the hero or the
     /// hero's life in danger: its words ("use the 'm' prefix", which a
-    /// newcomer never asked for) go from the log, the client's say why
+    /// newcomer never asked for) stay in the history (^P, F9) for a
+    /// veteran, out of the HUD's log, where the client's say why
     /// (`stop_text`).
     fn refused_rest(&mut self) {
         let Some(stop @ (Stop::FoeBeside | Stop::Peril(_))) = self.driver.stop().cloned() else {
@@ -4243,7 +4244,7 @@ impl RenethackGame {
         };
         let newest = self.world.log.iter().next_back();
         if newest.is_some_and(|m| nh_world::rest_refused(&m.text)) {
-            self.world.log.retract_newest();
+            self.world.log.keep_newest_in_history();
         }
         self.rest_refused = self.moment().map(|at| (at, stop));
     }

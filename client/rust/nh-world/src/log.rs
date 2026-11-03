@@ -27,6 +27,9 @@ pub struct Message {
     pub urgent: bool,
     /// Restored from a save (putmsghistory), not said in this session.
     pub from_history: bool,
+    /// In the history only (^P, F9), not in the HUD's log: the client
+    /// said it there in its own words (`keep_newest_in_history`).
+    pub history_only: bool,
     /// The printf format the engine made `text` from, the key of its
     /// translation, and its arguments: kept so the log can be shown again
     /// in another language. None for history and for text the host could
@@ -55,6 +58,7 @@ impl MessageLog {
             turn,
             urgent: false,
             from_history,
+            history_only: false,
             fmt: None,
             args: Vec::new(),
         });
@@ -76,6 +80,7 @@ impl MessageLog {
             turn,
             urgent: false,
             from_history: false,
+            history_only: false,
             fmt,
             args,
         });
@@ -110,6 +115,16 @@ impl MessageLog {
         let m = self.messages.pop_back()?;
         self.last_seq += 1;
         Some(m)
+    }
+
+    /// Keep the newest message in the history only, out of the HUD's log
+    /// (the client says it in its own words). `last_seq` moves on, as for
+    /// a retraction, so views notice the change.
+    pub fn keep_newest_in_history(&mut self) {
+        if let Some(m) = self.messages.back_mut() {
+            m.history_only = true;
+            self.last_seq += 1;
+        }
     }
 
     /// Messages newer than `seq`.
@@ -165,6 +180,12 @@ mod tests {
         assert_eq!(log.last_seq(), 1006);
         log.push("next".into(), 0, None, false);
         assert_eq!(log.iter().next_back().unwrap().seq, 1007);
+        // kept in the history only: still there, and views see a change
+        log.keep_newest_in_history();
+        let newest = log.iter().next_back().unwrap();
+        assert!(newest.history_only && newest.text == "next");
+        assert_eq!(log.last_seq(), 1008);
+        assert_eq!(log.since(1007).count(), 0);
     }
 
     #[test]

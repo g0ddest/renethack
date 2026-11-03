@@ -6,7 +6,8 @@
 //! so and sends nothing. A brown mold in sight across the room lets her
 //! rest; beside a jackal NetHack refuses the search (`monster_nearby()`,
 //! which leaves a scared foe or one without attacks be), and the client
-//! says so in its own words, never NetHack's "use the 'm' prefix".
+//! says so in its own words, never NetHack's "use the 'm' prefix" on the
+//! HUD; that line stays in the history (F9, ^P) for a veteran.
 //!
 //! `rest-peril`: no rest while the hero's life is in danger. Hurt, the
 //! Valkyrie falls fatally sick (#wizintrinsic): 5.0 refuses a plain
@@ -133,10 +134,14 @@ pub(super) fn rest() -> Vec<Step> {
         Step::Wait(
             "F5 beside the jackal: the engine refuses, the client's words",
             |g| {
-                if logged(g, "already found a monster") {
-                    return Err("NetHack's refusal of a search left in the log".into());
-                }
                 let ui = g.ui.as_ref().ok_or("no UI")?;
+                if ui.hud.log_shown().contains("already found a monster") {
+                    return Err("NetHack's refusal of a search on the HUD's log".into());
+                }
+                // in the history (F9, ^P), for a veteran's 'm' prefix
+                if !logged(g, "already found a monster") {
+                    return Ok(false);
+                }
                 if ui.hud.mode_view().1.as_deref() != Some(tr!("rest-foe").as_str()) {
                     return Ok(false);
                 }
