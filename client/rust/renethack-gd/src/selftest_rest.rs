@@ -7,6 +7,12 @@
 //! rest; beside a jackal NetHack refuses the search (`monster_nearby()`,
 //! which leaves a scared foe or one without attacks be), and the client
 //! says so in its own words, never NetHack's "use the 'm' prefix".
+//!
+//! `rest-peril`: no rest while the hero's life is in danger. Hurt, the
+//! Valkyrie falls fatally sick (#wizintrinsic): 5.0 refuses a plain
+//! search then, but lets a count's run on to her death from it. F5 says
+//! why in the client's words, sends nothing and lets no turn pass; a plain
+//! `s` gets 5.0's own refusal; she lives.
 
 use std::sync::Mutex;
 use std::time::Instant;
@@ -15,7 +21,9 @@ use nh_protocol::Reply;
 use nh_world::{Key, KeyInput, Mode, Prompt};
 
 use super::audio_tests::{letter, wish};
-use super::{DialogEvent, Step, command, ctrl_key, idle_command, key, logged, quit, start};
+use super::{
+    DialogEvent, Step, command, ctrl_key, entry_key, idle_command, key, logged, quit, start,
+};
 use crate::game::RenethackGame;
 use crate::tr;
 
@@ -150,6 +158,82 @@ pub(super) fn rest() -> Vec<Step> {
     ]);
     steps.extend(quit());
     steps
+}
+
+/// The turn before the last F5.
+static TURN: Mutex<Option<i64>> = Mutex::new(None);
+
+pub(super) fn rest_peril() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode, seed 1 (no hostile about)", |g| {
+        g.debug_mode = true;
+        g.seed = Some(1);
+        Ok(())
+    })];
+    steps.extend(start());
+    steps.extend(wish("2 potions of sickness"));
+    steps.extend(drink());
+    steps.extend([
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::ExtCmd(Some("wizintrinsic".into()))),
+        Step::Request("the intrinsics", |p| matches!(p, Prompt::Menu { .. })),
+        Step::KeyFrom("fatally sick", |g| entry_key(g, "fatally sick")),
+        Step::Dialog(DialogEvent::MenuConfirm),
+        Step::AnswerUntil('n', "a command, fatally sick", idle_command),
+        Step::Wait("the status: food poisoning or a terminal illness", |g| {
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            let names = g.world.status.condition_names(cat);
+            Ok(names.iter().any(|n| n == "FoodPois" || n == "TermIll"))
+        }),
+        Step::Call("what was sent so far, the turn", before_f5),
+        Step::Key(KeyInput::plain(Key::F(5))),
+        Step::Wait("F5 sick: the client's words, nothing sent", |g| {
+            said(g, &tr!("rest-peril-ill"))
+        }),
+        Step::Wait("no turn passed", same_turn),
+        // 5.0 agrees: its own refusal of a plain search
+        key('s'),
+        Step::AnswerUntil('n', "a command after the search", idle_command),
+        Step::Wait("5.0's own refusal", |g| {
+            Ok(logged(
+                g,
+                "Searching doesn't feel like a good idea right now.",
+            ))
+        }),
+        Step::Wait("no turn passed for it", same_turn),
+        Step::Call("the line cleared; what was sent, the turn", |g| {
+            g.stop_note = None;
+            before_f5(g)
+        }),
+        Step::Key(KeyInput::plain(Key::F(5))),
+        Step::Wait("F5 again: the same words, nothing sent", |g| {
+            said(g, &tr!("rest-peril-ill"))
+        }),
+        Step::Wait("alive, no turn passed", |g| {
+            if logged(g, "You die") {
+                return Err("she died resting".into());
+            }
+            same_turn(g)
+        }),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
+/// What was sent so far and the turn, before an F5.
+fn before_f5(g: &mut RenethackGame) -> Result<(), String> {
+    *SENT.lock().map_err(|e| e.to_string())? = g.sent.back().cloned();
+    *TURN.lock().map_err(|e| e.to_string())? = g.world.turn();
+    Ok(())
+}
+
+/// The turn is the one before the last F5.
+fn same_turn(g: &RenethackGame) -> Result<bool, String> {
+    let then = *TURN.lock().map_err(|e| e.to_string())?;
+    match g.world.turn() {
+        now if now == then => Ok(true),
+        now => Err(format!("the turn went from {then:?} to {now:?}")),
+    }
 }
 
 /// `q` and the pack's potion of sickness: HP lost, nothing to fight.

@@ -48,6 +48,11 @@ const SEARCH_REFUSED_HINT: (&str, &str) = (
     "You already found a monster.  Use '",
     "' prefix to force another search.",
 );
+/// 5.0's refusal of a search while the hero is turning to stone or slime,
+/// strangled or fatally sick (`cmd_safety_prevention`, by
+/// `danger_uprops()`): the catalog's 5e60c1763e17. Like the foe's, it is
+/// said only of a search without a count (`!gm.multi`).
+const SEARCH_UNSAFE: &str = "Searching doesn't feel like a good idea right now.";
 /// The highest count a prefix takes (NetHack's LARGEST_INT).
 const MAX_COUNT: u32 = 32767;
 
@@ -143,6 +148,9 @@ pub enum Stop {
     Hostile,
     /// The engine would not rest: a foe beside the hero (`search_refused`).
     FoeBeside,
+    /// No rest while the hero's life is in danger (the status shows it, or
+    /// the engine refused the search for it: `SEARCH_UNSAFE`).
+    Peril(Option<Peril>),
     HpLost,
     Hunger,
     /// A new condition (confusion, blindness...).
@@ -182,6 +190,7 @@ impl Stop {
             Stop::Question => "Stopped: a question".into(),
             Stop::Hostile => "Stopped: a hostile beside you".into(),
             Stop::FoeBeside => "No rest with a foe beside you".into(),
+            Stop::Peril(_) => "No rest: your life is in danger".into(),
             Stop::HpLost => "Stopped: you are hurt".into(),
             Stop::Hunger => "Stopped: hunger changed".into(),
             Stop::Condition => "Stopped: your condition changed".into(),
@@ -192,6 +201,39 @@ impl Stop {
             Stop::Reset => "Stopped".into(),
         }
     }
+}
+
+/// What makes a rest deadly, as the status line names it: 5.0's
+/// `danger_uprops()`, under which it refuses a search without a count and
+/// lets a count's run on to the end (`sickness_dialogue()` stops none).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Peril {
+    /// Strngl.
+    Strangled,
+    /// Stone.
+    Stone,
+    /// Slime.
+    Slime,
+    /// FoodPois or TermIll.
+    Ill,
+}
+
+/// The status conditions of each peril, the quickest to kill first.
+const PERILS: [(&str, Peril); 5] = [
+    ("Strngl", Peril::Strangled),
+    ("Stone", Peril::Stone),
+    ("Slime", Peril::Slime),
+    ("FoodPois", Peril::Ill),
+    ("TermIll", Peril::Ill),
+];
+
+/// The peril the status line shows, if any.
+pub fn peril(world: &World, catalog: &Catalog) -> Option<Peril> {
+    let names = world.status.condition_names(catalog);
+    PERILS
+        .iter()
+        .find(|(name, _)| names.iter().any(|n| n == name))
+        .map(|&(_, p)| p)
 }
 
 /// One engine action: `keys[0]` answers the command prompt waiting now,
@@ -279,6 +321,23 @@ pub fn search_refused(text: &str) -> bool {
             .strip_prefix(head)
             .and_then(|t| t.strip_suffix(tail))
             .is_some_and(|key| !key.is_empty() && key.len() <= 4)
+}
+
+/// One of 5.0's refusals of a rest's search: a foe beside the hero, or
+/// the hero's life in danger.
+pub fn rest_refused(text: &str) -> bool {
+    search_refused(text) || text == SEARCH_UNSAFE
+}
+
+/// The stop a refusal of the rest's search makes.
+fn refusal(text: &str, world: &World, catalog: &Catalog) -> Option<Stop> {
+    if search_refused(text) {
+        Some(Stop::FoeBeside)
+    } else if text == SEARCH_UNSAFE {
+        Some(Stop::Peril(peril(world, catalog)))
+    } else {
+        None
+    }
 }
 
 /// Cells with a threat on them.
@@ -553,6 +612,7 @@ impl CountEntry {
 #[derive(Debug, Clone)]
 struct Before {
     hero: Option<(i32, i32)>,
+    turn: Option<i64>,
     hunger: String,
     conditions: u64,
     generation: u64,
@@ -566,6 +626,7 @@ impl Before {
     fn of(world: &World, target: Option<(i32, i32)>) -> Before {
         Before {
             hero: world.hero(),
+            turn: world.turn(),
             hunger: world.status.get("hunger").unwrap_or("").to_string(),
             conditions: world.status.conditions(),
             generation: world.map.generation(),
@@ -590,6 +651,9 @@ struct Active {
     finishing: bool,
     /// What an attack aims at, to follow it when it moves.
     target: Option<Glyph>,
+    /// A rest: the engine took its first search, a plain one (it judges
+    /// only those), so its counts may follow.
+    accepted: bool,
 }
 
 /// Runs orders: the next action when the tick has passed, the mode, and
@@ -701,6 +765,7 @@ impl TickDriver {
             before: None,
             finishing: false,
             target,
+            accepted: false,
         });
         self.next(world, catalog)
             .ok_or_else(|| self.stop.take().unwrap_or(Stop::Done))
@@ -850,11 +915,19 @@ impl TickDriver {
                 if full("hp", "hpmax") && full("energy", "energymax") {
                     return self.end(Stop::Healed);
                 }
+                // the engine would let a count of searches run on to a
+                // death from stoning, slime, strangling or sickness
+                if let Some(p) = peril(world, catalog) {
+                    return self.end(Stop::Peril(Some(p)));
+                }
                 if active.actions >= REST_LIMIT / REST_COUNT {
                     return self.end(Stop::Done);
                 }
-                // in a fight, a turn at a time: every action waits
-                let count = if fight {
+                // the first search a plain one, which the engine judges:
+                // it refuses it beside a foe (`monster_nearby()`) or with
+                // the hero's life in danger, and a count's not at all; in a
+                // fight, a turn at a time: every action waits
+                let count = if fight || !active.accepted {
                     Vec::new()
                 } else {
                     crate::count_keys(REST_COUNT, world.number_pad)
@@ -935,8 +1008,14 @@ impl TickDriver {
         if self.active.as_ref().is_some_and(|a| a.finishing) {
             // the arrival's own action was the last
             self.interrupt(Stop::Arrived);
-        } else if let Some(why) = self.check(world, entered_combat, hurt, &news) {
+        } else if let Some(why) = self.check(world, catalog, entered_combat, hurt, &news) {
             self.interrupt(why);
+        } else if let Some(a) = self.active.as_mut()
+            && matches!(a.order, Order::Rest)
+            && a.actions > 0
+        {
+            // the engine took the rest's plain search
+            a.accepted = true;
         }
         (self.mode != was).then_some(self.mode)
     }
@@ -945,6 +1024,7 @@ impl TickDriver {
     fn check(
         &self,
         world: &World,
+        catalog: &Catalog,
         entered_combat: bool,
         hurt: bool,
         news: &[News],
@@ -977,10 +1057,25 @@ impl TickDriver {
             _ => false,
         };
         let rest = matches!(active.order, Order::Rest);
-        for n in news.iter().filter(|n| n.seq > before.seq) {
+        let fresh: Vec<&News> = news.iter().filter(|n| n.seq > before.seq).collect();
+        if rest
+            && !active.accepted
+            && fresh.is_empty()
+            && !before
+                .turn
+                .is_some_and(|t| world.turn().is_some_and(|now| now > t))
+        {
+            // no word and no time: the engine said its refusal before and
+            // does not say it twice (Norep): the newest line is it
+            let newest = world.log.iter().next_back();
+            if let Some(stop) = newest.and_then(|m| refusal(&m.text, world, catalog)) {
+                return Some(stop);
+            }
+        }
+        for n in fresh {
             let items = ITEMS_HERE.iter().any(|h| n.text.starts_with(h));
-            if rest && search_refused(&n.text) {
-                return Some(Stop::FoeBeside);
+            if rest && let Some(stop) = refusal(&n.text, world, catalog) {
+                return Some(stop);
             }
             let full = rest && REST_FULL.contains(&n.text.as_str());
             if n.urgent || !(n.harmless || (items && at_goal) || full) {
@@ -1428,8 +1523,12 @@ mod tests {
         stat(&mut w, "energy", "2");
         let mut d = TickDriver::new();
         d.observe(&w, &cat);
-        // twenty searches at a time, the engine's own count
-        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "20s");
+        // a plain search first, which the engine judges; it took it
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
+        turn(&mut w, 2);
+        d.observe(&w, &cat);
+        // then twenty searches at a time, the engine's own count
+        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "20s");
         stat(&mut w, "hp", "16");
         // the engine ends the count at full HP: Pw is not full yet
         say(&mut w, "You are in full health.");
@@ -1449,6 +1548,72 @@ mod tests {
         d.observe(&w, &cat);
         assert_eq!(d.next(&w, &cat), None);
         assert_eq!(d.take_stop(), Some(Stop::Healed));
+    }
+
+    #[test]
+    fn rest_counts_only_once_the_engine_took_a_plain_search() {
+        let (mut w, cat) = world_of(&ROOM);
+        stat(&mut w, "hp", "10");
+        let mut d = TickDriver::new();
+        d.observe(&w, &cat);
+        // refused, the hero's life in danger, though the status shows no
+        // peril: no count follows
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
+        say(&mut w, "Searching doesn't feel like a good idea right now.");
+        d.observe(&w, &cat);
+        assert_eq!(d.next(&w, &cat), None);
+        assert_eq!(d.take_stop(), Some(Stop::Peril(None)));
+        // again: the engine does not say it twice (Norep), and no time
+        // passes
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
+        d.observe(&w, &cat);
+        assert_eq!(d.next(&w, &cat), None);
+        assert_eq!(d.take_stop(), Some(Stop::Peril(None)));
+        // a foe's refusal, said once and then kept quiet
+        say(&mut w, "You already found a monster.");
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
+        d.observe(&w, &cat);
+        assert_eq!(d.take_stop(), Some(Stop::FoeBeside));
+        // taken without a word: a fast hero's search may cost no turn
+        say(&mut w, "You hear a door open.");
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
+        d.observe(&w, &cat);
+        assert_eq!(keys(&d.next(&w, &cat).unwrap()), "20s");
+        // a count's last search refused beside a foe come near
+        turn(&mut w, 22);
+        say(
+            &mut w,
+            "You already found a monster.  Use 'm' prefix to force another search.",
+        );
+        d.observe(&w, &cat);
+        assert_eq!(d.take_stop(), Some(Stop::FoeBeside));
+    }
+
+    #[test]
+    fn no_rest_while_the_status_shows_a_peril() {
+        let (mut w, cat) = world_of(&ROOM);
+        stat(&mut w, "hp", "10");
+        let mask = |name: &str| cat.conditions.iter().find(|c| c.name == name).unwrap().mask;
+        let mut d = TickDriver::new();
+        d.observe(&w, &cat);
+        for (name, p) in [
+            ("FoodPois", Peril::Ill),
+            ("TermIll", Peril::Ill),
+            ("Stone", Peril::Stone),
+            ("Slime", Peril::Slime),
+            ("Strngl", Peril::Strangled),
+        ] {
+            conds(&mut w, mask(name));
+            assert_eq!(peril(&w, &cat), Some(p), "{name}");
+            assert_eq!(d.start(Order::Rest, &w, &cat), Err(Stop::Peril(Some(p))));
+        }
+        // the quickest to kill named first
+        conds(&mut w, mask("FoodPois") | mask("Strngl"));
+        assert_eq!(peril(&w, &cat), Some(Peril::Strangled));
+        // what is no peril
+        conds(&mut w, mask("Conf") | mask("Blind"));
+        assert_eq!(peril(&w, &cat), None);
+        assert_eq!(keys(&d.start(Order::Rest, &w, &cat).unwrap()), "s");
     }
 
     #[test]

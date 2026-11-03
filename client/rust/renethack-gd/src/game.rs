@@ -25,9 +25,9 @@ use nh_world::achievements::{Achievements, Tracker};
 use nh_world::{
     Action, ActionBar, BAR_SLOTS, Cell, ClickPlan, CommandInput, CountEntry, GameOption, Gameplay,
     Key, KeyContext, KeyInput, KeyProfile, MacroRunner, MacroStep, MenuKind, Mode, OptionsRun,
-    Order, Profile, Prompt, RunStep, Settings, SlotBinding, SlotState, SlotUse, Stop, TickDriver,
-    Typeahead, UiState, World, click_order, describe_cell, find_path, in_field, item_question,
-    menu_kind, nethack_key, repeatable, stairs_order,
+    Order, Peril, Profile, Prompt, RunStep, Settings, SlotBinding, SlotState, SlotUse, Stop,
+    TickDriver, Typeahead, UiState, World, click_order, describe_cell, find_path, in_field,
+    item_question, menu_kind, nethack_key, repeatable, stairs_order,
 };
 
 use crate::census::Census;
@@ -328,6 +328,9 @@ fn order_text(order: &Order, pad: bool) -> String {
     }
 }
 
+/// The turn and the hero's cell: no time has passed while it is the same.
+type Moment = (i64, (i32, i32));
+
 /// What the HUD says about why an order ended.
 fn stop_text(stop: &Stop) -> String {
     match stop {
@@ -342,6 +345,13 @@ fn stop_text(stop: &Stop) -> String {
         Stop::Question => tr!("stop-question"),
         Stop::Hostile => tr!("stop-hostile"),
         Stop::FoeBeside => tr!("rest-foe"),
+        Stop::Peril(p) => match p {
+            Some(Peril::Strangled) => tr!("rest-peril-strangled"),
+            Some(Peril::Stone) => tr!("rest-peril-stone"),
+            Some(Peril::Slime) => tr!("rest-peril-slime"),
+            Some(Peril::Ill) => tr!("rest-peril-ill"),
+            None => tr!("rest-peril"),
+        },
         Stop::HpLost => tr!("stop-hurt"),
         Stop::Hunger => tr!("stop-hunger"),
         Stop::Condition => tr!("stop-condition"),
@@ -553,8 +563,8 @@ pub struct RenethackGame {
     pub(crate) order_actions: u64,
     /// Why the last order ended (self-tests).
     pub(crate) last_stop: Option<Stop>,
-    /// When the engine last refused a rest (`moment`).
-    rest_refused: Option<(i64, (i32, i32))>,
+    /// When the engine last refused a rest (`moment`), and why.
+    rest_refused: Option<(Moment, Stop)>,
     /// A cell the self-test hovers instead of the mouse.
     pub(crate) test_hover: Option<(i32, i32)>,
     /// What the hero uses, from the keys and letters sent (decision 8).
@@ -4219,22 +4229,23 @@ impl RenethackGame {
 
     /// The turn and the hero's cell: no time has passed while it is the
     /// same.
-    fn moment(&self) -> Option<(i64, (i32, i32))> {
+    fn moment(&self) -> Option<Moment> {
         Some((self.world.turn()?, self.world.hero()?))
     }
 
-    /// The engine refused the rest's search, a foe beside the hero: its
-    /// words ("use the 'm' prefix", which a newcomer never asked for) go
-    /// from the log, the client's say why (`stop_text`).
+    /// The engine refused the rest's search, a foe beside the hero or the
+    /// hero's life in danger: its words ("use the 'm' prefix", which a
+    /// newcomer never asked for) go from the log, the client's say why
+    /// (`stop_text`).
     fn refused_rest(&mut self) {
-        if self.driver.stop() != Some(&Stop::FoeBeside) {
+        let Some(stop @ (Stop::FoeBeside | Stop::Peril(_))) = self.driver.stop().cloned() else {
             return;
-        }
+        };
         let newest = self.world.log.iter().next_back();
-        if newest.is_some_and(|m| nh_world::search_refused(&m.text)) {
+        if newest.is_some_and(|m| nh_world::rest_refused(&m.text)) {
             self.world.log.retract_newest();
         }
-        self.rest_refused = self.moment();
+        self.rest_refused = self.moment().map(|at| (at, stop));
     }
 
     /// Rest until HP and Pw are full (F5), at a command prompt.
@@ -4244,11 +4255,14 @@ impl RenethackGame {
             return;
         }
         // whether a foe beside the hero forbids it is the engine's to say
-        // (one scared or without attacks does not): its refusal comes
-        // back in the client's words (`refused_rest`). It says it once
-        // (Norep): F5 again at the same moment gets the same answer here.
-        if self.rest_refused.is_some() && self.rest_refused == self.moment() {
-            self.stop_note = Some((tr!("rest-foe"), Instant::now()));
+        // (one scared or without attacks does not), from the rest's first
+        // search, a plain one: its refusal comes back in the client's
+        // words (`refused_rest`). It says it once (Norep): F5 again at the
+        // same moment gets the same answer here.
+        if let Some((at, stop)) = &self.rest_refused
+            && self.moment() == Some(*at)
+        {
+            self.stop_note = Some((stop_text(stop), Instant::now()));
             return;
         }
         // full already: said so, though nothing was done
