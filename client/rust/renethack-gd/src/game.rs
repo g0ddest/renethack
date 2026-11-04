@@ -6294,9 +6294,12 @@ impl RenethackGame {
         let Some(paths) = self.paths.clone() else {
             return false;
         };
-        // a restore: the hero's picture as it was saved
+        // a restore: the hero's picture as it was saved (a save made before
+        // the pictures were, or one whose picture failed, has none: no
+        // error for it)
         let saved_portrait = save_exists(&paths.playground, name)
             .then(|| saved_portrait_path(&paths.playground, name))
+            .filter(|p| p.is_file())
             .and_then(|p| godot::classes::Image::load_from_file(p.to_string_lossy().as_ref()))
             .and_then(|i| godot::classes::ImageTexture::create_from_image(&i));
         let test = self.selftest.is_some();
