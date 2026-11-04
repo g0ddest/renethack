@@ -238,7 +238,7 @@ fn settled(_: &RenethackGame) -> Result<bool, String> {
 pub(super) fn hud_tips() -> Vec<Step> {
     let mut steps = start_as(wizard());
     steps.extend([
-        // the status strip's chips: two conditions
+        // the states' pills by the HP orb: two conditions
         Step::Call("blind and levitating", |g| {
             let cat = g.catalog.clone().ok_or("no catalog")?;
             let mask = |name: &str| {
@@ -252,10 +252,10 @@ pub(super) fn hud_tips() -> Vec<Step> {
             set_status(g, "condition", "", Some(conds));
             Ok(())
         }),
-        Step::Wait("the conditions' chips in the strip", |g| {
+        Step::Wait("the conditions' pills by the HP orb", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            let blind = crate::i18n::engine(crate::i18n::EngineKind::Status, "Blind");
-            Ok(ui.hud.tipped().iter().any(|(t, _)| *t == *blind))
+            let blind = crate::states_view::tip("Blind");
+            Ok(ui.hud.tipped().iter().any(|(t, _)| *t == blind))
         }),
         // laid out where they stay
         Step::Call("", |_| {

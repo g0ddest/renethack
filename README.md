@@ -764,6 +764,20 @@ into `client/godot/art/icons/spells/<spell>.png`. A spellbook shows its
 spell's icon once the hero knows what it is; an unknown book keeps its
 cover's.
 
+The hero's states stand by the HP orb: hunger, encumbrance and every
+condition the status line shows (`states.rs`, `states_view.rs`), each a
+pill with its icon and its word. The icons are baked like the spells'
+(`make state-icons`), each symbol on a plate whose shape and colour grade
+how alarming the state is: deadly a spiked red disc, dangerous an orange
+hexagon, impairing an amber disc, worth knowing a steel-blue block. Over a
+pill, the tooltip says what the state means and what usually helps. A
+state that comes and impairs or threatens says the same in a toast, as a
+gamepad has no pointer. The deadly conditions' banner says what helps
+under its words. The column stands above the HP orb, or left of it in the
+compact layout, where the log docks beside the orb; a pill too wide for
+the room there shows its icon alone. The `conditions` scenario checks
+each pill, its tooltip, its toast and the banner.
+
 The game's own icon follows NetHack's: a shield with a blue field before
 two crossed swords, drawn afresh in the game's steel and gold, with the
 hero's `@` as the shield's device. `make app-icon` (needs Pillow) draws it

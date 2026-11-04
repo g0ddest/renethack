@@ -72,6 +72,8 @@ mod skills_view;
 mod spell_bake;
 mod spells;
 mod spells_view;
+mod states;
+mod states_view;
 mod steam;
 mod store_art;
 mod surface;

@@ -19,7 +19,7 @@ use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
 
 use nh_world::{Key, KeyInput, Prompt};
 
-use godot::prelude::Vector3;
+use godot::prelude::*;
 
 use super::{DialogEvent, Step, command, ctrl_key, entry_key, key, map_view, start};
 use crate::animator::STEP_SECS;
@@ -109,6 +109,9 @@ fn strangled() -> Vec<Step> {
             let p = map_view(g)?.hero_posture();
             Ok(p.clutch == 1.0 && p.miss < THROAT_MISS)
         }),
+        Step::Wait("strangled: its pill, the banner and what helps", |g| {
+            banner_says(g, "Strngl")
+        }),
         Step::Shot("conditions-strangled"),
     ]);
     steps.extend(close_up(false));
@@ -165,6 +168,7 @@ fn loaded() -> Vec<Step> {
             *AT.lock().unwrap() = map_view(g)?.hero_posture().lean;
             Ok(())
         }),
+        Step::Wait("the Burdened pill", |g| rail_says(g, "Burdened")),
         Step::Shot("conditions-burdened"),
     ]);
     steps.extend(close_up(false));
@@ -193,6 +197,9 @@ fn loaded() -> Vec<Step> {
         Step::Wait("leaning further", |g| {
             let p = map_view(g)?.hero_posture();
             Ok(p.settled && p.lean > *AT.lock().unwrap() && p.head.0 > 0.0)
+        }),
+        Step::Wait("the Overtaxed pill, no Burdened one", |g| {
+            Ok(rail_says(g, "Overtaxed")? && rail_lacks(g, "Burdened")?)
         }),
         Step::Shot("conditions-overtaxed"),
     ]);
@@ -251,6 +258,10 @@ fn starving() -> Vec<Step> {
         Step::Wait("slumped, the camera close", |g| {
             let p = map_view(g)?.hero_posture();
             Ok(p.settled && p.bow > 0.0)
+        }),
+        Step::Wait("the hunger's pill", |g| {
+            let h = hunger(g).to_string();
+            rail_says(g, &h)
         }),
         Step::Shot("conditions-weak"),
     ]);
@@ -373,6 +384,18 @@ fn effect(shot: &'static str) -> Vec<Step> {
     steps.extend(three_turns_of(|g| entry_key(g, effect_now().0)));
     steps.extend([
         Step::Wait("the effect shown", |g| effect_shows(g, true)),
+        Step::Wait("its pill by the HP orb, its toast", |g| {
+            let word = effect_now().1;
+            let toast = g.ui.as_ref().ok_or("no UI")?.hud.toast_shown();
+            if toast.as_deref() != Some(crate::states_view::tip(word).as_str()) {
+                return Ok(false);
+            }
+            rail_says(g, word)
+        }),
+        Step::Call("the pointer over the pill", |g| {
+            hover_pill(g, effect_now().1)
+        }),
+        Step::Wait("the pill's tooltip", |g| tip_shown(g, effect_now().1)),
         Step::Shot(shot),
         Step::Call("", |_| {
             SEARCHED.store(0, Ordering::Relaxed);
@@ -387,6 +410,7 @@ fn effect(shot: &'static str) -> Vec<Step> {
             forced_search(g)
         }),
         Step::Wait("the effect gone", |g| effect_shows(g, false)),
+        Step::Wait("its pill gone", |g| rail_lacks(g, effect_now().1)),
     ]);
     steps
 }
@@ -543,6 +567,9 @@ fn countdown(shot: &'static str, end: &'static str) -> Vec<Step> {
             let before = *AT.lock().unwrap();
             Ok(share(g, current().0)?.is_some_and(|p| p > before))
         }),
+        Step::Wait("its deadly pill, the banner and what helps", |g| {
+            banner_says(g, countdown_word())
+        }),
         Step::Shot(shot),
         Step::Call("", |_| {
             SEARCHED.store(0, Ordering::Relaxed);
@@ -565,11 +592,23 @@ fn countdown(shot: &'static str, end: &'static str) -> Vec<Step> {
         let (shown, tinted) = map_view(g)?.hero_shown(&g.world);
         Ok(shown.is_empty() && !tinted)
     }));
+    steps.push(Step::Wait("cured: its pill and the banner gone", |g| {
+        let banner = g.ui.as_ref().ok_or("no UI")?.hud.deadly_shown();
+        Ok(rail_lacks(g, countdown_word())? && banner.is_none())
+    }));
     // the god's light gone before the next picture
     steps.push(Step::Wait("the prayer over", |g| {
         Ok(map_view(g)?.hero_prayer().is_none())
     }));
     steps
+}
+
+/// The status line's word of the countdown under test.
+fn countdown_word() -> &'static str {
+    match current().0 {
+        Shown::Slime => "Slime",
+        _ => "Stone",
+    }
 }
 
 /// The condition's share of the way, if the hero's model wears its tint.
@@ -633,4 +672,87 @@ pub(super) fn pray() -> [Step; 8] {
             Ok(matches!(g.pending, Some((_, Prompt::Command))) && !g.driver.is_active())
         }),
     ]
+}
+
+/// The rail by the HP orb shows `word`'s pill: its icon, the word as the
+/// player reads it, and over it a tooltip that says what the state means
+/// and what helps; on the screen, clear of the HUD's other blocks.
+fn rail_says(g: &RenethackGame, word: &str) -> Result<bool, String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let shown = ui.hud.states().shown();
+    let Some((_, tip, rect)) = shown.iter().find(|(w, ..)| w == word) else {
+        return Ok(false);
+    };
+    if crate::icons::state_icon(word).is_none() {
+        return Err(format!("{word} has no icon"));
+    }
+    let help = crate::states_view::help(word).ok_or(format!("{word}: no help"))?;
+    let said = crate::states_view::word_shown(word);
+    if !tip.contains(&help) || !tip.contains(&said) {
+        return Err(format!("{word}'s tooltip says {tip:?}"));
+    }
+    let screen = g
+        .base()
+        .get_viewport()
+        .ok_or("no viewport")?
+        .get_visible_rect();
+    if !screen.encloses(*rect) {
+        return Err(format!(
+            "{word}'s pill {rect:?} leaves the screen {screen:?}"
+        ));
+    }
+    for (name, r) in ui.hud.blocks() {
+        if name != "states" && r.intersects(*rect) {
+            return Err(format!("{word}'s pill {rect:?} is over the {name} {r:?}"));
+        }
+    }
+    Ok(true)
+}
+
+/// No pill of `word` on the rail.
+fn rail_lacks(g: &RenethackGame, word: &str) -> Result<bool, String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    Ok(!ui.hud.states().shown().iter().any(|(w, ..)| w == word))
+}
+
+/// The deadly banner names the condition `word` and says what helps it.
+fn banner_says(g: &RenethackGame, word: &str) -> Result<bool, String> {
+    if !rail_says(g, word)? {
+        return Ok(false);
+    }
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let Some((words, help)) = ui.hud.deadly_shown() else {
+        return Ok(false);
+    };
+    let want = crate::hud::deadly_words(word).ok_or(format!("{word} is no deadly"))?;
+    let helps = crate::states_view::help(word).ok_or("no help")?;
+    let helps = crate::layouts::upstart(&helps);
+    if !words.contains(&want) || !help.contains(&helps) {
+        return Err(format!("the banner says {words:?} / {help:?}"));
+    }
+    Ok(true)
+}
+
+/// The pointer over `word`'s pill shows its tooltip.
+fn hover_pill(g: &RenethackGame, word: &str) -> Result<(), String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let shown = ui.hud.states().shown();
+    let (_, _, rect) = shown
+        .iter()
+        .find(|(w, ..)| w == word)
+        .ok_or(format!("no {word} pill"))?;
+    let vp = g.base().get_viewport().ok_or("no viewport")?;
+    let at = vp.get_screen_transform() * (rect.position + rect.size / 2.0);
+    let mut ev = godot::classes::InputEventMouseMotion::new_gd();
+    ev.set_position(at);
+    ev.set_global_position(at);
+    godot::classes::Input::singleton().parse_input_event(&ev);
+    Ok(())
+}
+
+/// The tooltip over the pill says the pill's words.
+fn tip_shown(g: &RenethackGame, word: &str) -> Result<bool, String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let want = crate::states_view::tip(word);
+    Ok(ui.tips.shown().is_some_and(|(words, _)| words == want))
 }

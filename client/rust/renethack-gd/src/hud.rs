@@ -15,8 +15,8 @@ use godot::classes::control::{FocusMode, GrowDirection, MouseFilter, SizeFlags};
 use godot::classes::text_server::{AutowrapMode, OverrunBehavior};
 use godot::classes::{
     BoxContainer, Button, CanvasLayer, ColorRect, Control, GridContainer, HBoxContainer,
-    HFlowContainer, InputEvent, InputEventMouseButton, Label, PanelContainer, Polygon2D,
-    RichTextLabel, ShaderMaterial, StyleBoxFlat, Time, VBoxContainer,
+    InputEvent, InputEventMouseButton, Label, PanelContainer, Polygon2D, RichTextLabel,
+    ShaderMaterial, StyleBoxFlat, Time, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, MouseButton, VerticalAlignment};
 use godot::prelude::*;
@@ -29,6 +29,7 @@ use crate::i18n::{self, EngineKind};
 use crate::minimap::{self, Minimap};
 use crate::orb::{self, Orb};
 use crate::portrait::PortraitView;
+use crate::states_view::StatesRail;
 use crate::theme::{self, Face, Frame, bbcode_escape, hex, hex_alpha, place};
 use crate::tr;
 use crate::ui_events::{UiEvent, UiQueue, push};
@@ -792,8 +793,8 @@ fn message_bbcode(m: &Message, input_seq: u64, faded: bool) -> String {
 
 // ---- Godot nodes ----
 
-/// (background, border, text) of a chip.
-fn chip_colors(tone: Tone) -> (Color, Color, Color) {
+/// (background, border, text) of a chip (also the states' pills).
+pub(crate) fn chip_colors(tone: Tone) -> (Color, Color, Color) {
     match tone {
         Tone::Deadly => (
             Color::from_rgba(0.42, 0.05, 0.04, 0.95),
@@ -901,66 +902,6 @@ impl ValueChip {
         self.text.set_text(value.unwrap_or(""));
         self.panel.set_visible(value.is_some());
         crate::tips::set(&self.panel, tip);
-    }
-}
-
-/// A chip on screen (hunger, encumbrance, a condition) and what pulses in it.
-struct ShownChip {
-    chip: Chip,
-    node: Gd<PanelContainer>,
-    style: Gd<StyleBoxFlat>,
-    gem: Option<Gd<ShaderMaterial>>,
-}
-
-/// A need chip (hunger, encumbrance): text in a toned frame.
-fn need_chip(c: &Chip) -> ShownChip {
-    let (bg, border, fg) = chip_colors(c.tone);
-    let style = chip_style(bg, border);
-    let mut p = PanelContainer::new_alloc();
-    p.set_mouse_filter(MouseFilter::IGNORE);
-    p.add_theme_stylebox_override("panel", &style);
-    p.set_custom_minimum_size(Vector2::new(0.0, 26.0));
-    let word = i18n::engine(EngineKind::Status, &c.text);
-    p.add_child(&theme::styled_label(&word, Face::BodyBold, 16, fg));
-    ShownChip {
-        chip: c.clone(),
-        node: p,
-        style,
-        gem: None,
-    }
-}
-
-/// A condition: a gem set in a ring, toned by the condition's danger, and
-/// its name (the glyphs of phase I replace the name with an icon).
-fn condition_chip(c: &Chip) -> ShownChip {
-    let (bg, border, fg) = chip_colors(c.tone);
-    let rim = match c.tone {
-        Tone::Info => theme::GOLD,
-        _ => border,
-    };
-    let mut style = chip_style(Color { a: 0.85, ..bg }, Color { a: 0.8, ..border });
-    style.set_content_margin(Side::LEFT, 3.0);
-    let mut p = PanelContainer::new_alloc();
-    p.set_mouse_filter(MouseFilter::PASS);
-    p.add_theme_stylebox_override("panel", &style);
-    p.set_custom_minimum_size(Vector2::new(0.0, 26.0));
-    let word = i18n::engine(EngineKind::Status, &c.text);
-    crate::tips::set(&p, &word);
-    let mut row = hbox(5);
-    let (gem, material) = ring(20.0, 0.62, rim);
-    if let Some(m) = &material {
-        let mut m = m.clone();
-        m.set_shader_parameter("face_center", &rim.lerp(Color::WHITE, 0.15).to_variant());
-        m.set_shader_parameter("face_edge", &rim.darkened(0.7).to_variant());
-    }
-    row.add_child(&gem);
-    row.add_child(&theme::styled_label(&word, Face::BodyBold, 15, fg));
-    p.add_child(&row);
-    ShownChip {
-        chip: c.clone(),
-        node: p,
-        style,
-        gem: material,
     }
 }
 
@@ -1249,10 +1190,8 @@ pub struct Hud {
     subtitle: Gd<Label>,
     ac: ValueChip,
     gold: ValueChip,
-    need_box: Gd<HBoxContainer>,
-    needs: Vec<ShownChip>,
-    cond_box: Gd<HFlowContainer>,
-    conditions: Vec<ShownChip>,
+    /// Hunger, encumbrance and the conditions as icons by the HP orb.
+    states: StatesRail,
     attrs: Gd<RichTextLabel>,
     /// The attributes last shown, and the ones flashing (index, up, since).
     attr_values: Vec<(&'static str, String)>,
@@ -1343,6 +1282,8 @@ pub struct Hud {
     flash_ribbon: Gd<HBoxContainer>,
     flash_since: Option<f64>,
     deadly: Gd<Label>,
+    /// What helps the deadly conditions, under their banner.
+    deadly_help: Gd<Label>,
     combat: Option<bool>,
 
     tooltip_panel: Gd<PanelContainer>,
@@ -1455,14 +1396,7 @@ impl Hud {
         chip_row.add_child(&ac.panel);
         let gold = ValueChip::new(6);
         chip_row.add_child(&gold.panel);
-        let need_box = hbox(6);
-        chip_row.add_child(&need_box);
         col.add_child(&chip_row);
-        let mut cond_box = HFlowContainer::new_alloc();
-        cond_box.set_mouse_filter(MouseFilter::IGNORE);
-        cond_box.add_theme_constant_override("h_separation", 6);
-        cond_box.add_theme_constant_override("v_separation", 4);
-        col.add_child(&cond_box);
         block.add_child(&col);
         let mut attrs = rich(MouseFilter::STOP);
         attrs.set_fit_content(true);
@@ -1642,6 +1576,12 @@ impl Hud {
             .set_position(Vector2::new(CLUSTER_W - orb::SIZE, orb_y));
         cluster.add_child(&hp.node());
         cluster.add_child(&pw.node());
+        // the hero's states: above the HP orb, or left of it in the
+        // compact layout (the log docks beside the orb there): `layout`
+        let states = StatesRail::new();
+        cluster.add_child(&states.node());
+        solid.push(states.node());
+        cluster_parts.push(("states", states.node()));
         solid.push(hp.node());
         solid.push(pw.node());
         hp.reset();
@@ -1850,6 +1790,18 @@ impl Hud {
         theme::outline(&deadly, 12);
         deadly.set_visible(false);
         root.add_child(&deadly);
+        // what helps, under it, while it shows
+        let mut deadly_help = theme::styled_label("", Face::BodyBold, 20, theme::TEXT);
+        place(
+            &deadly_help,
+            [0.5, 0.0, 0.5, 0.0],
+            [-420.0, 300.0, 420.0, 300.0],
+        );
+        deadly_help.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        deadly_help.set_autowrap_mode(AutowrapMode::WORD_SMART);
+        theme::outline(&deadly_help, 8);
+        deadly_help.set_visible(false);
+        root.add_child(&deadly_help);
 
         // ---- full log, F9; scrolls with the wheel ----
         // a modal the size of the inventory panel, over the dimmed world
@@ -1955,10 +1907,7 @@ impl Hud {
             subtitle,
             ac,
             gold,
-            need_box,
-            needs: Vec::new(),
-            cond_box,
-            conditions: Vec::new(),
+            states,
             attrs,
             attr_values: Vec::new(),
             attr_flash: Vec::new(),
@@ -2011,6 +1960,7 @@ impl Hud {
             flash_ribbon,
             flash_since: None,
             deadly,
+            deadly_help,
             combat: None,
             tooltip_panel,
             tooltip,
@@ -2416,9 +2366,7 @@ impl Hud {
     pub fn relang(&mut self) {
         self.write_keys();
         self.status_text.clear();
-        for mut c in self.needs.drain(..).chain(self.conditions.drain(..)) {
-            c.node.queue_free();
-        }
+        self.states.relang();
         self.log_key = None;
         self.full_log_dirty = true;
         self.show_subtitle();
@@ -2618,6 +2566,7 @@ impl Hud {
                     [EDGE, -EDGE - LOG_H, EDGE + LOG_W, -EDGE],
                 );
             }
+
             // the attribute strip goes to the tooltip and the Character panel
             self.attrs.set_visible(!compact);
             let h = if compact {
@@ -2654,6 +2603,11 @@ impl Hud {
             self.log_key = None;
         }
         self.lay_micro();
+        // the states over the HP orb: left-aligned at it, or right-aligned
+        // at its right edge where the log docks beside it (to the screen's
+        // edge across at most)
+        let room = (size.x - CLUSTER_W) / 2.0 + orb::SIZE - EDGE;
+        self.states.lay(compact, CLUSTER_H - orb::SIZE, room);
         let max = banner_room(size.x);
         self.prompt.set_custom_minimum_size(Vector2::new(0.0, 24.0));
         self.prompt_row.set_meta("max_width", &max.to_variant());
@@ -2839,57 +2793,49 @@ impl Hud {
         }
     }
 
+    /// Hunger, encumbrance and the conditions on the states' rail. The
+    /// deadly conditions' banner says them and what helps; a state that
+    /// comes and impairs or threatens says what it means and what helps in
+    /// a toast (a gamepad has no pointer for the pill's tooltip).
     fn show_chips(&mut self, view: &StatusView) {
-        let same = |shown: &[ShownChip], chips: &[Chip]| {
-            shown.len() == chips.len() && shown.iter().zip(chips).all(|(a, b)| a.chip == *b)
+        let shown: Vec<(String, Tone)> = view.chips().map(|c| (c.text.clone(), c.tone)).collect();
+        let Some(new) = self.states.show(&shown) else {
+            return;
         };
-        if !same(&self.needs, &view.needs) {
-            for mut c in self.needs.drain(..) {
-                c.node.queue_free();
-            }
-            for c in &view.needs {
-                let shown = need_chip(c);
-                self.need_box.add_child(&shown.node);
-                self.needs.push(shown);
-            }
-        }
-        if !same(&self.conditions, &view.conditions) {
-            for mut c in self.conditions.drain(..) {
-                c.node.queue_free();
-            }
-            for c in &view.conditions {
-                let shown = condition_chip(c);
-                self.cond_box.add_child(&shown.node);
-                self.conditions.push(shown);
-            }
-            self.cond_box.set_visible(!self.conditions.is_empty());
-            let words: Vec<String> = view
-                .conditions
-                .iter()
-                .filter_map(|c| deadly_words(&c.text))
-                .collect();
-            self.deadly.set_text(&words.join("   "));
-            self.deadly.set_visible(!words.is_empty());
+        let deadly: Vec<&Chip> = view
+            .conditions
+            .iter()
+            .filter(|c| deadly_words(&c.text).is_some())
+            .collect();
+        let words: Vec<String> = deadly
+            .iter()
+            .filter_map(|c| deadly_words(&c.text))
+            .collect();
+        self.deadly.set_text(&words.join("   "));
+        self.deadly.set_visible(!words.is_empty());
+        let helps: Vec<String> = deadly
+            .iter()
+            .filter_map(|c| crate::states_view::help(&c.text))
+            .map(|h| crate::layouts::upstart(&h))
+            .collect();
+        self.deadly_help.set_text(&helps.join("\n"));
+        self.deadly_help.set_visible(!helps.is_empty());
+        let told = new.iter().find(|w| {
+            let tone = shown.iter().find(|(s, _)| s == *w).map(|(_, t)| *t);
+            matches!(tone, Some(Tone::Warn | Tone::Bad | Tone::Deadly)) && deadly_words(w).is_none()
+        });
+        if let Some(w) = told {
+            self.toast(&crate::states_view::tip(w), false);
         }
     }
 
-    /// Deadly chips, their gems and the deadly banner glow and fade.
+    /// The deadly pills and the deadly banner glow and fade.
     fn pulse(&mut self, now: f64) {
-        let any = |v: &[ShownChip]| v.iter().any(|c| c.chip.tone == Tone::Deadly);
-        if !any(&self.needs) && !any(&self.conditions) && !self.deadly.is_visible() {
+        if !self.states.deadly() && !self.deadly.is_visible() {
             return;
         }
         let k = pulse_now(now);
-        let (bg, ..) = chip_colors(Tone::Deadly);
-        let glow = bg.lerp(Color::from_rgb(0.95, 0.2, 0.15), k as f64);
-        for c in self.needs.iter_mut().chain(self.conditions.iter_mut()) {
-            if c.chip.tone == Tone::Deadly {
-                c.style.set_bg_color(glow);
-                if let Some(m) = &mut c.gem {
-                    m.set_shader_parameter("glow", &k.to_variant());
-                }
-            }
-        }
+        self.states.pulse(k);
         if self.deadly.is_visible() {
             self.deadly
                 .set_modulate(Color::from_rgba(1.0, 1.0, 1.0, 0.55 + 0.45 * k));
@@ -3045,11 +2991,36 @@ impl Hud {
     /// Is a block that takes the mouse under `pos` (then the map is not hovered)?
     pub fn covers(&self, pos: Vector2) -> bool {
         self.root.is_visible()
-            && self.solid.iter().any(|p| {
+            && (self.solid.iter().any(|p| {
                 p.is_visible_in_tree()
                     && p.get_mouse_filter() != MouseFilter::IGNORE
                     && p.get_global_rect().contains_point(pos)
-            })
+            }))
+    }
+
+    /// The states' rail: what it shows (self-tests).
+    pub fn states(&self) -> &StatesRail {
+        &self.states
+    }
+
+    /// The deadly banner's words and what helps under them, while they
+    /// show (self-tests).
+    pub fn deadly_shown(&self) -> Option<(String, String)> {
+        self.deadly.is_visible().then(|| {
+            let help = if self.deadly_help.is_visible() {
+                self.deadly_help.get_text().to_string()
+            } else {
+                String::new()
+            };
+            (self.deadly.get_text().to_string(), help)
+        })
+    }
+
+    /// The toast's words, while it shows (self-tests).
+    pub fn toast_shown(&self) -> Option<String> {
+        self.toast_panel
+            .is_visible()
+            .then(|| self.toast.get_text().to_string())
     }
 
     /// What the prompt line shows, if it is up (self-tests).
@@ -3471,11 +3442,9 @@ impl Hud {
         self.attrs.set_text("");
         self.attr_values.clear();
         self.attr_flash.clear();
-        for mut c in self.needs.drain(..).chain(self.conditions.drain(..)) {
-            c.node.queue_free();
-        }
-        self.cond_box.set_visible(false);
+        self.states.show(&[]);
         self.deadly.set_visible(false);
+        self.deadly_help.set_visible(false);
         self.hp.reset();
         self.pw.reset();
         self.xp_fill.set_visible(false);

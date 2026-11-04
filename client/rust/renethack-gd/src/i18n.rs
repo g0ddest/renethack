@@ -824,6 +824,12 @@ mod tests {
                 crate::spells_view::description_id(k.name),
             )
         }));
+        // every state's line on what it means and what helps (`states`)
+        named.extend(
+            crate::states::STATES
+                .iter()
+                .map(|s| ("states".to_string(), crate::states::help_id(s.word))),
+        );
         let missing: Vec<String> = named
             .iter()
             .filter(|(_, k)| !keys.contains(k))

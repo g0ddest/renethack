@@ -605,6 +605,49 @@ spells-desc-chain-lightning = Lightning leaps from you to the creatures around, 
 spells-desc-flame-sphere = Left out of 5.0: no book of it is found in the game.
 spells-desc-freeze-sphere = Left out of 5.0: no book of it is found in the game.
 
+## The hero's states by the orbs (states.rs, states_view.rs): a state's word, then what it means and what usually helps
+
+state-tip = { $state }: { $help }
+state-help-satiated = you have eaten your fill. Eating much more may choke you.
+state-help-hungry = time to eat something.
+state-help-weak = hunger saps your strength. Eat at once; a prayer may help.
+state-help-fainting = you pass out from hunger and will starve soon. Eat now, or pray.
+state-help-fainted = you are out cold from hunger. Eat as soon as you come to, or pray.
+state-help-burdened = you move slower. Drop or stash what you can spare.
+state-help-stressed = you are much slower and fight worse. Drop some of the load.
+state-help-strained = you can barely move or fight. Drop things now.
+state-help-overtaxed = you can hardly take a step. Drop things now.
+state-help-overloaded = you cannot move at all. Drop things to move again.
+state-help-stone = you are turning to stone and will die in a few turns. Eat a lizard or an acidic corpse, drink acid, cast stone to flesh at yourself, or pray.
+state-help-slime = you are turning into slime. Burn it off with fire, cast cure sickness, or pray.
+state-help-strngl = you are being strangled and have a few turns left. Take off an amulet of strangulation, or pray.
+state-help-foodpois = you ate something deadly. Pray, apply a unicorn horn, eat a eucalyptus leaf, or cast cure sickness.
+state-help-termill = a deadly illness. Pray, apply a unicorn horn, eat a eucalyptus leaf, or cast cure sickness.
+state-help-inlava = you are sinking in lava. Climb out at once.
+state-help-grab = a sea monster holds you and will drown you. Kill it, break free or teleport away.
+state-help-parlyz = you cannot move until it wears off.
+state-help-out = you are unconscious until you come to.
+state-help-zzz = you are asleep; a blow may wake you.
+state-help-blind = you cannot see or read. It wears off; a unicorn horn or a potion of healing cures it.
+state-help-conf = you may step the wrong way, your spells fail and scrolls work strangely. Wait, or apply a unicorn horn.
+state-help-stun = you stagger: steps and blows go at random and you cannot cast. Wait, or apply a unicorn horn.
+state-help-hallu = you see the wrong creatures and objects. Wait, or apply a unicorn horn.
+state-help-deaf = you hear nothing around you. It wears off; a unicorn horn cures it.
+state-help-held = something holds or has swallowed you, and you cannot walk away. Fight it, or teleport.
+state-help-trap = you are caught in a trap. Keep trying to move to get free.
+state-help-wlegs = your legs are hurt: you cannot kick and you carry less. They heal in time.
+state-help-submrg = you are under water: you see little and what you carry gets wet.
+state-help-teth = you are chained to a buried iron ball and cannot go far. Keep pulling, or read remove curse.
+state-help-slip = your fingers are slippery and you may drop what you wield. Wipe your hands.
+state-help-lev = you float: you cannot pick things up or go down stairs. It wears off, or take off what lifts you.
+state-help-fly = you fly over water, lava and traps, and can still use the stairs.
+state-help-ride = you are riding your steed; #ride gets you down.
+state-help-glow = your hands glow: the next creature you hit in melee is confused.
+state-help-icy = you stand on ice and may slip.
+state-help-uhold = you are holding a creature fast.
+state-help-bare = you fight with your bare hands.
+state-help-busy = you are busy with something and cannot act yet.
+
 ## The RPG panels: the skills (#enhance)
 
 skills-title = Skills
@@ -651,8 +694,8 @@ credits-md-art-cc0 = Everything listed under “Art credits” is dedicated to t
 credits-md-art-changes = Large textures were scaled down and re-encoded, flipbooks converted to PNG, some maps repacked and the armours' metals made brighter; nothing else was changed.
 credits-md-ccby = CC-BY
 credits-md-ccby-models = The models listed under “CC-BY” are under the Creative Commons Attribution 3.0 license (https://creativecommons.org/licenses/by/3.0/), from Poly Pizza, changed as the English page tells.
-credits-md-spell-icons = Spell icons
-credits-md-spell-icons-about = The symbols of the spells' icons come from game-icons.net and are under the Creative Commons Attribution 3.0 license (https://creativecommons.org/licenses/by/3.0/), Zeromancer's heart under CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Each was painted here on its school's plate: lit as a relief, given a glow, an outline and a shadow, and scaled down.
+credits-md-spell-icons = Icons of spells and states
+credits-md-spell-icons-about = The symbols of the icons of the spells and of the hero's states come from game-icons.net and are under the Creative Commons Attribution 3.0 license (https://creativecommons.org/licenses/by/3.0/), Zeromancer's heart under CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Each was painted here on its plate, a spell's school's or a state's tone's: lit as a relief, given a glow, an outline and a shadow, and scaled down.
 credits-md-fonts = Fonts
 credits-md-fonts-ofl = The UI's fonts are under the SIL Open Font License 1.1 (not CC0).
 credits-md-sound = Sound credits

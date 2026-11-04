@@ -401,9 +401,15 @@ fn shifted(src: &[f32], n: usize, dx: i64, dy: i64) -> Vec<f32> {
 
 /// The icon of a symbol `mask` on the plate of school `s`: RGBA8 (straight
 /// alpha), SIDE by SIDE. `seed` varies the paint's grain.
+#[cfg(test)]
 pub fn paint(mask: &Mask, s: School, seed: u32) -> Option<Vec<u8>> {
+    paint_with(mask, s, paint_of(s), seed)
+}
+
+/// The same on the plate of `s`'s shape in the paint `pal` (the states'
+/// icons: a shape and a paint by how alarming the state is).
+pub fn paint_with(mask: &Mask, s: School, pal: Paint, seed: u32) -> Option<Vec<u8>> {
     let f = fit(mask, s)?;
-    let pal = paint_of(s);
     let px = 2.0 / N as f32;
     let at = |i: usize| (i as f32 + 0.5) * px - 1.0;
     // the symbol and the plate at the painting's size
@@ -523,11 +529,12 @@ fn global(path: &str) -> PathBuf {
         .into()
 }
 
-/// The symbol of `known` as a mask, its SVG drawn at `side` pixels.
-fn symbol(known: &Known, side: usize) -> Result<Mask, String> {
-    let path = format!("{ART}/{}.svg", known.art);
+/// The symbol `art` (a game-icons.net author and name) as a mask, its SVG
+/// drawn at `side` pixels.
+fn symbol(art: &str, side: usize) -> Result<Mask, String> {
+    let path = format!("{ART}/{art}.svg");
     if !FileAccess::file_exists(&path) {
-        return Err(format!("{}: no {path}", known.name));
+        return Err(format!("no {path}"));
     }
     let svg = FileAccess::get_file_as_string(&path).to_string();
     let svg = svg.replace(BACKDROP, "");
@@ -537,7 +544,7 @@ fn symbol(known: &Known, side: usize) -> Result<Mask, String> {
         .scale(side as f32 / 512.0)
         .done();
     if err != godot::global::Error::OK {
-        return Err(format!("{}: {path} does not draw: {err:?}", known.name));
+        return Err(format!("{path} does not draw: {err:?}"));
     }
     img.convert(Format::RGBA8);
     let (w, h) = (img.get_width() as usize, img.get_height() as usize);
@@ -546,15 +553,21 @@ fn symbol(known: &Known, side: usize) -> Result<Mask, String> {
     Ok(Mask { w, h, a })
 }
 
-/// Bake the icon of the spell `known`; its path.
-pub fn bake(known: &Known) -> Result<PathBuf, String> {
-    let mask = symbol(known, 1024)?;
-    let seed = known
-        .name
+/// Bake the symbol `art` on the plate of `shape` in `pal` into
+/// `dir/<file>.png` (its grain seeded by `file`); its path.
+pub fn bake_symbol(
+    art: &str,
+    shape: School,
+    pal: Paint,
+    dir: &str,
+    file: &str,
+) -> Result<PathBuf, String> {
+    let mask = symbol(art, 1024).map_err(|e| format!("{file}: {e}"))?;
+    let seed = file
         .bytes()
         .fold(7u32, |h, b| h.wrapping_mul(31).wrapping_add(u32::from(b)));
-    let rgba = paint(&mask, known.school, seed)
-        .ok_or_else(|| format!("{}: its symbol is empty", known.name))?;
+    let rgba = paint_with(&mask, shape, pal, seed)
+        .ok_or_else(|| format!("{file}: its symbol is empty"))?;
     let image = Image::create_from_data(
         SIDE as i32,
         SIDE as i32,
@@ -563,11 +576,26 @@ pub fn bake(known: &Known) -> Result<PathBuf, String> {
         &PackedByteArray::from(rgba.as_slice()),
     )
     .ok_or("cannot make an image")?;
-    let dir = global(DIR);
+    let dir = global(dir);
     std::fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
-    let path = dir.join(format!("{}.png", spells::slug(known.name)));
+    let path = dir.join(format!("{file}.png"));
     crate::icon_bake::save(&image, &path)?;
     Ok(path)
+}
+
+/// Where the states' icons go (`make state-icons`).
+pub const STATES_DIR: &str = "res://art/icons/states";
+
+/// Bake the icon of the hero's state `s` on its tone's plate; its path.
+pub fn bake_state(s: &crate::states::State) -> Result<PathBuf, String> {
+    let (shape, pal) = crate::states::plate(s.tone);
+    bake_symbol(s.art, shape, pal, STATES_DIR, &crate::states::slug(s.word))
+}
+
+/// Bake the icon of the spell `known`; its path.
+pub fn bake(known: &Known) -> Result<PathBuf, String> {
+    let file = spells::slug(known.name);
+    bake_symbol(known.art, known.school, paint_of(known.school), DIR, &file)
 }
 
 #[cfg(test)]

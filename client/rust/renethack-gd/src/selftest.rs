@@ -3446,6 +3446,30 @@ fn achievement_icons() -> Vec<Step> {
 /// More than the achievements (69).
 const ACHIEVEMENT_ICONS_MAX: usize = 120;
 
+/// The hero's states' icons (spell_bake): one step a state, no game.
+fn state_icons() -> Vec<Step> {
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+    let mut steps = Vec::new();
+    for _ in 0..crate::states::STATES.len() {
+        steps.push(Step::Call("the next state's icon", |_| {
+            let i = NEXT.fetch_add(1, Ordering::Relaxed);
+            let s = crate::states::STATES.get(i).ok_or("no state left")?;
+            let path = crate::spell_bake::bake_state(s)?;
+            godot_print!("selftest: state-icons: {} -> {}", s.word, path.display());
+            Ok(())
+        }));
+    }
+    steps.push(Step::Call("every state's icon", |_| {
+        let n = NEXT.load(Ordering::Relaxed);
+        if n != crate::states::STATES.len() {
+            return Err(format!("{n} icons baked"));
+        }
+        godot_print!("selftest: state-icons: {n} icons");
+        Ok(())
+    }));
+    steps
+}
+
 /// The spells' icons (spell_bake): one step a spell, no game.
 fn spell_icons() -> Vec<Step> {
     static NEXT: AtomicUsize = AtomicUsize::new(0);
@@ -5210,6 +5234,7 @@ impl SelfTest {
             "icons" => icons(),
             "achievement-icons" => achievement_icons(),
             "spell-icons" => spell_icons(),
+            "state-icons" => state_icons(),
             "steam-art" => steam_art(),
             "achievements" => achievements::achievements(),
             "smoke" => smoke(),

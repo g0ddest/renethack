@@ -84,13 +84,15 @@ glint. The scorpion and the centipede are kept as they came, unrigged. The textu
 | `ccby/polypizza/Scorpion.glb` | Scorpion (scorpions, Scorpius) | Poly by Google | https://poly.pizza/m/6Bu7d_Pkm5o |
 | `ccby/polypizza/Centipede.glb` | Centipede (centipedes) | Poly by Google | https://poly.pizza/m/8C36B7L_2hR |
 
-## Spell icons
+## Icons of spells and states
 
-The symbols of the spells' icons come from game-icons.net and are under the
+The symbols of the icons of the spells and of the hero's states come from
+game-icons.net and are under the
 Creative Commons Attribution 3.0 license
 (https://creativecommons.org/licenses/by/3.0/), Zeromancer's heart under
 CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Each was
-painted here on its school's plate (`make spell-icons`): lit as a relief,
+painted here on its plate, a spell's school's or a state's tone's (`make
+spell-icons`, `make state-icons`): lit as a relief,
 given a glow, an outline and a shadow, and scaled down.
 
 | Where | What | Author | Source |
@@ -138,6 +140,38 @@ given a glow, an outline and a shadow, and scaled down.
 | `ccby/game-icons/lorc/lightning-branches.svg` | Lightning branches (chain lightning) | Lorc | https://game-icons.net/1x1/lorc/lightning-branches.html |
 | `ccby/game-icons/lorc/ball-glow.svg` | Ball glow (flame sphere) | Lorc | https://game-icons.net/1x1/lorc/ball-glow.html |
 | `ccby/game-icons/lorc/frozen-orb.svg` | Frozen orb (freeze sphere) | Lorc | https://game-icons.net/1x1/lorc/frozen-orb.html |
+| `ccby/game-icons/skoll/fat.svg` | Fat (Satiated) | Skoll | https://game-icons.net/1x1/skoll/fat.html |
+| `ccby/game-icons/delapouite/fork-knife-spoon.svg` | Fork knife spoon (Hungry, Weak, Fainting, Fainted) | Delapouite | https://game-icons.net/1x1/delapouite/fork-knife-spoon.html |
+| `ccby/game-icons/delapouite/weight.svg` | Weight (Burdened, Stressed, Strained, Overtaxed, Overloaded) | Delapouite | https://game-icons.net/1x1/delapouite/weight.html |
+| `ccby/game-icons/lorc/stoned-skull.svg` | Stoned skull (Stone) | Lorc | https://game-icons.net/1x1/lorc/stoned-skull.html |
+| `ccby/game-icons/delapouite/slime.svg` | Slime (Slime) | Delapouite | https://game-icons.net/1x1/delapouite/slime.html |
+| `ccby/game-icons/delapouite/lungs.svg` | Lungs (Strngl) | Delapouite | https://game-icons.net/1x1/delapouite/lungs.html |
+| `ccby/game-icons/lorc/vomiting.svg` | Vomiting (FoodPois) | Lorc | https://game-icons.net/1x1/lorc/vomiting.html |
+| `ccby/game-icons/delapouite/plague-doctor-profile.svg` | Plague doctor profile (TermIll) | Delapouite | https://game-icons.net/1x1/delapouite/plague-doctor-profile.html |
+| `ccby/game-icons/sbed/lava.svg` | Lava (InLava) | Sbed | https://game-icons.net/1x1/sbed/lava.html |
+| `ccby/game-icons/lorc/shadow-grasp.svg` | Shadow grasp (Grab) | Lorc | https://game-icons.net/1x1/lorc/shadow-grasp.html |
+| `ccby/game-icons/delapouite/frozen-body.svg` | Frozen body (Parlyz) | Delapouite | https://game-icons.net/1x1/delapouite/frozen-body.html |
+| `ccby/game-icons/delapouite/dead-head.svg` | Dead head (Out) | Delapouite | https://game-icons.net/1x1/delapouite/dead-head.html |
+| `ccby/game-icons/lorc/sleepy.svg` | Sleepy (Zzz) | Lorc | https://game-icons.net/1x1/lorc/sleepy.html |
+| `ccby/game-icons/skoll/sight-disabled.svg` | Sight disabled (Blind) | Skoll | https://game-icons.net/1x1/skoll/sight-disabled.html |
+| `ccby/game-icons/lorc/swirl-string.svg` | Swirl string (Conf) | Lorc | https://game-icons.net/1x1/lorc/swirl-string.html |
+| `ccby/game-icons/skoll/knockout.svg` | Knockout (Stun) | Skoll | https://game-icons.net/1x1/skoll/knockout.html |
+| `ccby/game-icons/lorc/spotted-mushroom.svg` | Spotted mushroom (Hallu) | Lorc | https://game-icons.net/1x1/lorc/spotted-mushroom.html |
+| `ccby/game-icons/skoll/hearing-disabled.svg` | Hearing disabled (Deaf) | Skoll | https://game-icons.net/1x1/skoll/hearing-disabled.html |
+| `ccby/game-icons/lorc/manacles.svg` | Manacles (Held) | Lorc | https://game-icons.net/1x1/lorc/manacles.html |
+| `ccby/game-icons/lorc/wolf-trap.svg` | Wolf trap (Trap) | Lorc | https://game-icons.net/1x1/lorc/wolf-trap.html |
+| `ccby/game-icons/lorc/broken-bone.svg` | Broken bone (WLegs) | Lorc | https://game-icons.net/1x1/lorc/broken-bone.html |
+| `ccby/game-icons/lorc/drowning.svg` | Drowning (Submrg) | Lorc | https://game-icons.net/1x1/lorc/drowning.html |
+| `ccby/game-icons/lorc/harpoon-chain.svg` | Harpoon chain (Teth) | Lorc | https://game-icons.net/1x1/lorc/harpoon-chain.html |
+| `ccby/game-icons/delapouite/oil-can.svg` | Oil can (Slip) | Delapouite | https://game-icons.net/1x1/delapouite/oil-can.html |
+| `ccby/game-icons/delapouite/air-balloon.svg` | Air balloon (Lev) | Delapouite | https://game-icons.net/1x1/delapouite/air-balloon.html |
+| `ccby/game-icons/lorc/feathered-wing.svg` | Feathered wing (Fly) | Lorc | https://game-icons.net/1x1/lorc/feathered-wing.html |
+| `ccby/game-icons/lorc/horse-head.svg` | Horse head (Ride) | Lorc | https://game-icons.net/1x1/lorc/horse-head.html |
+| `ccby/game-icons/lorc/glowing-hands.svg` | Glowing hands (Glow) | Lorc | https://game-icons.net/1x1/lorc/glowing-hands.html |
+| `ccby/game-icons/delapouite/ice-skate.svg` | Ice skate (Icy) | Delapouite | https://game-icons.net/1x1/delapouite/ice-skate.html |
+| `ccby/game-icons/lorc/grab.svg` | Grab (UHold) | Lorc | https://game-icons.net/1x1/lorc/grab.html |
+| `ccby/game-icons/lorc/fist.svg` | Fist (Bare) | Lorc | https://game-icons.net/1x1/lorc/fist.html |
+| `ccby/game-icons/lorc/hourglass.svg` | Hourglass (Busy) | Lorc | https://game-icons.net/1x1/lorc/hourglass.html |
 
 ## Fonts
 

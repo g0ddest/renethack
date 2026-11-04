@@ -30,6 +30,8 @@ thread_local! {
     static GLYPHS: RefCell<HashMap<Glyph, Gd<Texture2D>>> = RefCell::new(HashMap::new());
     /// The spells' baked icons by name (None: none baked).
     static SPELLS: RefCell<HashMap<String, Option<Gd<Texture2D>>>> = RefCell::new(HashMap::new());
+    /// The hero's states' baked icons by the status line's word.
+    static STATES: RefCell<HashMap<String, Option<Gd<Texture2D>>>> = RefCell::new(HashMap::new());
     /// Appearance names and class symbols by tile, for tints.
     static LOOKS: RefCell<HashMap<i32, (String, char)>> = RefCell::new(HashMap::new());
 }
@@ -40,6 +42,7 @@ pub fn clear() {
     ITEMS.with(|i| i.borrow_mut().clear());
     GLYPHS.with(|g| g.borrow_mut().clear());
     SPELLS.with(|s| s.borrow_mut().clear());
+    STATES.with(|s| s.borrow_mut().clear());
     crate::achievement_view::clear();
     crate::theme::clear_fonts();
 }
@@ -124,6 +127,20 @@ pub fn spell_icon(name: &str) -> Option<Gd<Texture2D>> {
         load_png(&format!("{}/{file}.png", crate::spell_bake::DIR))
     });
     SPELLS.with(|s| s.borrow_mut().insert(name.to_string(), tex.clone()));
+    tex
+}
+
+/// The baked icon of the hero's state shown by the status line's word
+/// `word` ("Hungry", "Blind"), if there is one (`make state-icons`).
+pub fn state_icon(word: &str) -> Option<Gd<Texture2D>> {
+    if let Some(t) = STATES.with(|s| s.borrow().get(word).cloned()) {
+        return t;
+    }
+    let tex = crate::states::state(word).and_then(|s| {
+        let file = crate::states::slug(s.word);
+        load_png(&format!("{}/{file}.png", crate::spell_bake::STATES_DIR))
+    });
+    STATES.with(|s| s.borrow_mut().insert(word.to_string(), tex.clone()));
     tex
 }
 
