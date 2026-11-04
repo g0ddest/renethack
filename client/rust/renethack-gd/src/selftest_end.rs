@@ -166,6 +166,20 @@ fn english_on_the_way(g: &RenethackGame) -> Result<(), String> {
     Ok(())
 }
 
+/// The open question is a debug death's, in its own words (`key`'s
+/// title, line and answers), not NetHack's bare "Die?" or "Save bones?".
+fn debug_question_says(g: &RenethackGame, key: &str) -> Result<(), String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let words = ui.dialogs.shown_words();
+    for part in ["title", "about", "yes", "no"] {
+        let want = i18n::tr(&format!("{key}-{part}"));
+        if !words.iter().any(|w| w.contains(&want)) {
+            return Err(format!("{key}: no {want:?} among {words:?}"));
+        }
+    }
+    Ok(())
+}
+
 /// The questions of the end answered no (the windows closed) until the
 /// end page is up, the dialogs on the way looked at.
 fn on_the_way() -> Step {
@@ -539,7 +553,40 @@ pub(super) fn end_death() -> Vec<Step> {
             "Die?",
             |p| matches!(p, Prompt::Choice { query, .. } if query.contains("Die?")),
         ),
+        Step::Call("Die? in its own words", |g| {
+            debug_question_says(g, "dlg-debug-die")
+        }),
+        Step::Shot("end-death-die"),
+        // opened for the keys: the pad's first press shows the default
+        tap(PadButton::Right),
+        Step::Wait("→: on the default, to live on", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            match ui.dialogs.choice_focus() {
+                None => Ok(false),
+                Some('n') => Ok(true),
+                Some(c) => Err(format!("the first press went to {c:?}, not the default n")),
+            }
+        }),
+        Step::Shot("end-death-die-pad"),
         key('y'),
+        Step::Wait("Save bones? (when the level keeps bones) or the end", |g| {
+            fail_on_error_screen(g)?;
+            match g.pending.as_ref().map(|(_, p)| p) {
+                Some(Prompt::Choice { query, .. }) if query.contains("bones") => {
+                    debug_question_says(g, "dlg-debug-bones")?;
+                    let ui = g.ui.as_ref().ok_or("no UI")?;
+                    match ui.dialogs.choice_focus() {
+                        Some('n') => Ok(true),
+                        other => Err(format!("Save bones? opens on {other:?}, not n")),
+                    }
+                }
+                _ => Ok(screen(g) == Some("end")),
+            }
+        }),
+        Step::ShotIf("end-death-bones", |g| {
+            Ok(matches!(g.pending.as_ref().map(|(_, p)| p),
+                Some(Prompt::Choice { query, .. }) if query.contains("bones")))
+        }),
         on_the_way(),
     ]);
     steps.extend(end_page("end-death", |g| end_page_ok(g, EndHow::Died)));

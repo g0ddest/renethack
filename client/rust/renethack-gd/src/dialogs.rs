@@ -482,6 +482,49 @@ fn quits(english: &str) -> bool {
         .starts_with("Really quit without saving?")
 }
 
+/// A debug death's question in the client's words: done()'s "Die?" and
+/// really_done()'s "Save bones?" came one after the other in the same
+/// frame and buttons, as one dialog twice. Each has its own title, a line
+/// of what it means and its answers' words; NetHack's answers stay.
+struct DebugEnd {
+    title: String,
+    about: String,
+    yes: String,
+    no: String,
+}
+
+fn debug_end(english: &str) -> Option<DebugEnd> {
+    let [title, about, yes, no] = match english.trim() {
+        "Die?" => [
+            "dlg-debug-die-title",
+            "dlg-debug-die-about",
+            "dlg-debug-die-yes",
+            "dlg-debug-die-no",
+        ],
+        "Save bones?" => [
+            "dlg-debug-bones-title",
+            "dlg-debug-bones-about",
+            "dlg-debug-bones-yes",
+            "dlg-debug-bones-no",
+        ],
+        _ => return None,
+    };
+    Some(DebugEnd {
+        title: i18n::tr(title),
+        about: i18n::tr(about),
+        yes: i18n::tr(yes),
+        no: i18n::tr(no),
+    })
+}
+
+/// A line under a question's title, saying what it means.
+fn about_line(text: &str, width: f32) -> Gd<Label> {
+    let mut l = theme::styled_label(text, Face::Body, 16, theme::TEXT_DIM);
+    l.set_autowrap_mode(AutowrapMode::WORD_SMART);
+    l.set_custom_minimum_size(Vector2::new(width, 0.0));
+    l
+}
+
 /// What giving up means, under the engine's question: in the danger's
 /// colour, as wide as the question.
 fn quit_warning(width: f32) -> Gd<Label> {
@@ -5190,22 +5233,29 @@ impl Dialogs {
                 allowed,
                 default,
             } => {
-                let width = self.fit_width(query.chars().count().min(80), 0.0, 420.0);
-                let (shade, panel, mut col) = self.frame_at(width, Some(query), Place::Top);
-                if let Prompt::Choice { query: english, .. } = original
-                    && quits(english)
-                {
-                    col.add_child(&quit_warning(width));
-                }
                 let english = match original {
                     Prompt::Choice { query, .. } => query.as_str(),
                     _ => query.as_str(),
                 };
-                let named: Vec<(char, String)> = visible
+                // a debug death's two questions, each in its own words
+                let debug = debug_end(english);
+                let title = debug.as_ref().map_or(query.as_str(), |d| d.title.as_str());
+                let width = self.fit_width(title.chars().count().min(80), 0.0, 420.0);
+                let (shade, panel, mut col) = self.frame_at(width, Some(title), Place::Top);
+                if quits(english) {
+                    col.add_child(&quit_warning(width));
+                }
+                if let Some(d) = &debug {
+                    col.add_child(&about_line(&d.about, width));
+                }
+                let mut named: Vec<(char, String)> = visible
                     .iter()
                     .filter(|c| !matches!(c, 'y' | 'n' | 'q' | 'a'))
                     .filter_map(|&c| answer_word(c, english, query).map(|w| (c, w)))
                     .collect();
+                if let Some(d) = &debug {
+                    named.extend([('y', d.yes.clone()), ('n', d.no.clone())]);
+                }
                 let word = |c: char| named.iter().find(|(n, _)| *n == c).map(|(_, w)| w.as_str());
                 let items: Vec<(String, UiEvent)> = visible
                     .iter()
@@ -5837,6 +5887,16 @@ impl Dialogs {
         }
     }
 
+    /// The answer the open question's focus is on (self-tests).
+    pub fn choice_focus(&self) -> Option<char> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Choice { buttons, focus, .. }) => {
+                focus.and_then(|f| buttons.get(f)).map(|(c, _)| *c)
+            }
+            _ => None,
+        }
+    }
+
     /// The open menu's keyboard row (an index into `menu_entries`).
     pub fn menu_cursor(&self) -> Option<usize> {
         match self.open.as_ref().map(|o| &o.kind) {
@@ -6137,8 +6197,14 @@ impl Dialogs {
                 };
                 if step != 0 && !buttons.is_empty() {
                     let n = buttons.len() as i32;
-                    let f = focus.map_or(if step > 0 { -1 } else { 0 }, |f| f as i32);
-                    *focus = Some(((f + step).rem_euclid(n)) as usize);
+                    let first = default.and_then(|d| buttons.iter().position(|(c, _)| *c == d));
+                    *focus = Some(match (*focus, first) {
+                        // the first press shows the default answer (what
+                        // Enter takes), as a gamepad starts on it
+                        (None, Some(d)) => d,
+                        (None, None) => usize::from(step < 0) * (n as usize - 1),
+                        (Some(f), _) => (f as i32 + step).rem_euclid(n) as usize,
+                    });
                     show_focus(buttons, *focus, &self.look);
                     return None;
                 }

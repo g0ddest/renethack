@@ -754,6 +754,14 @@ dlg-all-a-pad = All
 # an answer the question names by a word ("Which ring-finger, Right or
 # Left?"): the word, then its key
 dlg-named-answer = { $word } ({ $key })
+dlg-debug-die-title = Debug mode: let the hero die?
+dlg-debug-die-about = The hero has met their death. Debug mode can undo it: Live on, and the game goes on as if nothing happened.
+dlg-debug-die-yes = Die
+dlg-debug-die-no = Live on
+dlg-debug-bones-title = Debug mode: leave bones?
+dlg-debug-bones-about = The game is over. Bones keep this level, with the hero's ghost and belongings, for a hero of a later game to find.
+dlg-debug-bones-yes = Leave bones
+dlg-debug-bones-no = No bones
 # how an answer's word begins in this language's question
 choice-stem = { $word }
 dlg-ok = OK

@@ -761,6 +761,14 @@ dlg-no-pad = Нет
 dlg-cancel-q-pad = Отмена
 dlg-all-a-pad = Все
 dlg-named-answer = { $word } ({ $key })
+dlg-debug-die-title = Режим отладки: дать герою умереть?
+dlg-debug-die-about = Герой погиб. В режиме отладки это можно отменить: «Выжить» — и игра пойдёт дальше, будто ничего не было.
+dlg-debug-die-yes = Умереть
+dlg-debug-die-no = Выжить
+dlg-debug-bones-title = Режим отладки: оставить кости?
+dlg-debug-bones-about = Игра окончена. Кости сохранят этот уровень с призраком героя и его вещами — их найдёт герой одной из следующих игр.
+dlg-debug-bones-yes = Оставить кости
+dlg-debug-bones-no = Без костей
 choice-stem = { $word ->
         [Right] прав
         [Left] лев
