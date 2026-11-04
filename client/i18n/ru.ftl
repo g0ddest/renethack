@@ -1225,7 +1225,6 @@ hint-actions = Действия
 hint-wheel = Колесо
 hint-fire = Выстрел
 hint-bar = Панель
-hint-menu = Меню
 hint-pick = Выбрать
 hint-cancel = Отмена
 hint-here = Здесь

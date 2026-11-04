@@ -5730,6 +5730,14 @@ impl Dialogs {
             .unwrap_or_default()
     }
 
+    /// The open menu has more than a page to scroll through.
+    pub fn menu_paged(&self) -> bool {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Menu(view)) => view.max_top > 0.5,
+            _ => false,
+        }
+    }
+
     /// The open menu picks something (not one only to read).
     pub fn menu_picks(&self) -> bool {
         matches!(self.open.as_ref().map(|o| &o.kind), Some(Kind::Menu(v)) if v.state.how != PickHow::None)

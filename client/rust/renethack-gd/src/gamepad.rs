@@ -291,6 +291,9 @@ pub enum PadCtx {
     Read,
     /// The command palette: its list.
     Palette,
+    /// A short list to pick one from, on one page: the cell's menu, a
+    /// pick-one menu with no second page (no paging to hint at).
+    Pick,
     /// The command wheel: a stick points at a wedge, A picks it.
     Wheel,
     /// The spells' panel with its card: a menu, Y puts the card's spell

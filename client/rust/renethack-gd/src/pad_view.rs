@@ -173,7 +173,7 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
             (vec![Lt], "hint-wheel"),
             (vec![Rt], "hint-fire"),
             (vec![Lb, Rb], "hint-bar"),
-            (vec![Start], "hint-menu"),
+            // Start's own medallion by the micro-buttons names the menu
         ],
         PadCtx::Getpos => vec![(vec![A], "hint-pick"), (vec![B], "hint-cancel")],
         PadCtx::Direction => vec![(vec![A], "hint-here"), (vec![B], "hint-cancel")],
@@ -182,6 +182,11 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
             (vec![Start], "hint-confirm"),
             (vec![B], "hint-cancel"),
             (vec![Lb, Rb], "hint-page"),
+        ],
+        PadCtx::Pick => vec![
+            (vec![Up, Down], "hint-choose"),
+            (vec![A], "hint-ok"),
+            (vec![B], "hint-cancel"),
         ],
         PadCtx::Menu { any: false } => vec![
             (vec![Up, Down], "hint-choose"),
@@ -550,6 +555,7 @@ mod tests {
             PadCtx::Direction,
             PadCtx::Menu { any: true },
             PadCtx::Menu { any: false },
+            PadCtx::Pick,
             PadCtx::Choice,
             PadCtx::Message { letter: 'y' },
             PadCtx::Read,
@@ -569,5 +575,9 @@ mod tests {
                 .iter()
                 .any(|(_, w)| *w == "hint-inventory")
         );
+        // Start is named by its medallion, not twice
+        assert!(!hints(PadCtx::World).iter().any(|(_, w)| *w == "hint-menu"));
+        // a list of one page: no paging
+        assert!(!hints(PadCtx::Pick).iter().any(|(_, w)| *w == "hint-page"));
     }
 }

@@ -1126,7 +1126,6 @@ hint-actions = Actions
 hint-wheel = Wheel
 hint-fire = Fire
 hint-bar = Bar
-hint-menu = Menu
 hint-pick = Pick
 hint-cancel = Cancel
 hint-here = Here

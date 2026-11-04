@@ -3791,13 +3791,15 @@ impl RenethackGame {
                 // the bar
                 Some("menu") if ui.dialogs.spells_card().is_some() => PadCtx::Spells,
                 Some("menu") if !ui.dialogs.menu_picks() => PadCtx::Read,
+                // one to pick on one page: nothing to page through
+                Some("menu") if !ui.dialogs.menu_any() && !ui.dialogs.menu_paged() => PadCtx::Pick,
                 Some("menu") => PadCtx::Menu {
                     any: ui.dialogs.menu_any(),
                 },
                 Some("show") => PadCtx::Read,
                 Some("extcmd") => PadCtx::Palette,
                 Some("wheel") => PadCtx::Wheel,
-                Some("cellmenu") => PadCtx::Menu { any: false },
+                Some("cellmenu") => PadCtx::Pick,
                 Some("choice") => PadCtx::Choice,
                 Some("text") => PadCtx::Text,
                 Some("picker") => PadCtx::Picker {

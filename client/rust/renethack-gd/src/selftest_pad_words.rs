@@ -213,7 +213,7 @@ pub(super) fn pad_words() -> Vec<Step> {
                 return Ok(false);
             }
             no_keys("the menu", &ui.dialogs.shown_words())?;
-            Ok(strip_on(g, PadCtx::Menu { any: false }))
+            Ok(strip_on(g, PadCtx::Pick))
         }),
         Step::Shot("pad-words-menu"),
         tap(PadButton::B),
