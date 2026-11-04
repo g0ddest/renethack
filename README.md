@@ -574,7 +574,14 @@ runners: Linux in the sniper SDK container, Windows with the same Docker
 image, macOS (optional) on a macOS runner. Run it from the repository's
 Actions tab (dist → Run workflow; tick Steam for a Steam build, macOS for
 the dmg), or push a tag `v*` (a release: all three, with Steam). Each
-job's package is an artifact of the run, on the run's page. Signing the
+job's package is an artifact of the run, on the run's page. A tag's run
+then makes a **draft** GitHub release named after it, holding the Linux
+tar.gz, the Windows zip and installer, the macOS dmg and `SHA256SUMS`, with
+the commits since the previous `v*` tag as its notes; it is published by
+hand from the Releases page once checked. A tag with a hyphen (`v1.0.0-rc1`)
+makes a pre-release. To release: `git tag -a v1.0.0 -m "renethack 1.0.0"`,
+then `git push origin v1.0.0`. Rerunning a tag's workflow replaces the
+draft's files. Signing the
 dmg takes the secrets `MACOS_CERTIFICATE` (a base64 .p12),
 `MACOS_CERTIFICATE_PASSWORD` and `MACOS_SIGN_IDENTITY`, and notarizing it
 `APPLE_ID`, `APPLE_TEAM_ID` and `APPLE_APP_PASSWORD`; without them it is

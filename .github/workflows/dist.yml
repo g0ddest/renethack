@@ -1,6 +1,8 @@
 # Production builds (tools/dist; the README's "Production builds"): run by
 # hand (Actions → dist → Run workflow) or by pushing a tag v*, a release:
-# those build with Steam. Each job leaves its package as an artifact.
+# those build all three platforms with Steam. Each job leaves its package
+# as an artifact, and a tag's run also gathers them into a draft GitHub
+# release with SHA256SUMS.
 name: dist
 
 on:
@@ -19,6 +21,11 @@ on:
 
 permissions:
   contents: read
+
+# one run per ref at a time; a release tag's run is never cut short
+concurrency:
+  group: dist-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   GODOT_VERSION: 4.7.2
@@ -171,3 +178,59 @@ jobs:
           name: renethack-macos
           path: dist/renethack-*-macos-arm64.dmg
           if-no-files-found: error
+
+  release:
+    # a tag v*: one GitHub release holding every platform's package and
+    # their checksums, left as a draft for the owner to read and publish
+    # (a tag with a hyphen, v1.0.0-rc1, is a pre-release)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: renethack-*
+          path: dist/release
+          merge-multiple: true
+      - name: Checksums
+        run: |
+          cd dist/release
+          ls -l
+          sha256sum renethack-* > SHA256SUMS
+          cat SHA256SUMS
+      - name: Notes
+        run: |
+          tag=$GITHUB_REF_NAME
+          prev=$(git describe --tags --abbrev=0 --match 'v*' "$tag^" 2>/dev/null || true)
+          {
+            echo "renethack ${tag#v}: Windows, macOS (Apple silicon) and Linux (the Steam Linux Runtime)."
+            echo
+            if [ -n "$prev" ]; then
+              echo "## Changes since $prev"
+              echo
+              git log --no-merges --format='- %s' "$prev..$tag"
+            else
+              echo "The first release."
+            fi
+            echo
+            echo "SHA256SUMS lists every package's checksum."
+          } > dist/notes.md
+          cat dist/notes.md
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$GITHUB_REF_NAME
+          case "$tag" in *-*) pre=--prerelease ;; *) pre= ;; esac
+          if gh release view "$tag" >/dev/null 2>&1; then
+            # a rerun, or a release made by hand first: replace its files
+            gh release upload "$tag" dist/release/* --clobber
+          else
+            gh release create "$tag" dist/release/* --draft ${pre:+"$pre"} --verify-tag \
+              --title "renethack ${tag#v}" --notes-file dist/notes.md
+          fi
