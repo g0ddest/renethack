@@ -692,7 +692,12 @@ The codex (`\` and #conduct; `codex.rs`, `codex_view.rs`) has a tab
 for each: the discoveries by class, each object a card with its
 appearance's icon (as the inventory's), its name and its looks, dimmer
 when it is known from the start and never come across; and the
-voluntary challenges, a line each. Tab, a gamepad's bumper or the other
+voluntary challenges, a line each. A type the player named (#call) shows
+their own name on its card, and the types they named come first, under
+«Ваши названия». An item whose kind the hero does not know (a potion,
+scroll, ring, wand, amulet, spellbook or gem by its look) has «Назвать
+вид…» right under its card's first action; `identify` names a wished-for
+potion's type that way and finds the name on the card and in the codex. Tab, a gamepad's bumper or the other
 tab's button closes the one window and asks the engine for the other.
 A panel's header and hint name its key as the player presses it now,
 and that key closes it again, as Esc and a gamepad's B do. The `sheet`

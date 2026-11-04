@@ -195,6 +195,34 @@ fn look(item: &InvItem) -> String {
     stem[..end].to_string()
 }
 
+/// The hero does not know the item's kind by name: a potion, scroll,
+/// ring, wand, amulet or spellbook the pack shows by its look ("an orange
+/// potion", "a scroll labeled FOO", "a parchment spellbook"), or by the
+/// player's own name for its type ("a potion called fizzy"); a gem or a
+/// gray stone by its colour ("a blue gem", "a gray stone"). Its card offers
+/// to call the type (#call). Other classes' looks name a known kind as
+/// often as not, so they are not counted.
+pub fn kind_unknown(item: &InvItem) -> bool {
+    let look = look(item);
+    if look.is_empty() {
+        return false;
+    }
+    match item.class {
+        '!' | '?' | '=' | '/' | '"' | '+' => {
+            // "potion of healing", "ring of conflict", "spellbook of sleep";
+            // the Amulet (or its imitation) is told by its own name
+            !look.contains(" of ") && !look.contains("Amulet") && !look.contains("Book of the Dead")
+        }
+        '*' => {
+            look.ends_with(" gem")
+                || look.ends_with(" gems")
+                || look == "gray stone"
+                || look == "gray stones"
+        }
+        _ => false,
+    }
+}
+
 /// Weapons applied rather than swung: polearms and lances (hit at a
 /// distance), the bullwhip, the mattock (dig). Unidentified names too.
 const APPLIED_WEAPONS: [&str; 20] = [
@@ -408,6 +436,40 @@ pub fn default_action(item: &InvItem, pack: &Pack) -> Option<ItemActionKind> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_kind_is_unknown_while_the_pack_shows_its_look() {
+        let item = |class: char, text: &str| item('a', class, 1, &[], text);
+        for (class, text) in [
+            ('!', "an orange potion"),
+            ('!', "2 uncursed potions called fizzy"),
+            ('?', "a scroll labeled ZELGO MER"),
+            ('?', "an unlabeled scroll"),
+            ('=', "a ruby ring"),
+            ('/', "an oak wand"),
+            ('"', "a circular amulet"),
+            ('+', "a parchment spellbook"),
+            ('*', "a blue gem"),
+            ('*', "3 gray stones"),
+        ] {
+            assert!(kind_unknown(&item(class, text)), "{text}");
+        }
+        for (class, text) in [
+            ('!', "an uncursed potion of healing"),
+            ('?', "a scroll of identify"),
+            ('=', "a ring of conflict (on left hand)"),
+            ('/', "a wand of digging (0:5)"),
+            ('"', "the Amulet of Yendor"),
+            ('+', "a blessed spellbook of force bolt"),
+            ('+', "the Book of the Dead"),
+            ('*', "a sapphire"),
+            ('*', "a worthless piece of blue glass"),
+            (')', "a crude dagger"),
+            ('[', "an old gray cloak"),
+        ] {
+            assert!(!kind_unknown(&item(class, text)), "{text}");
+        }
+    }
     use ItemActionKind::*;
     use nh_protocol::Inventory;
 

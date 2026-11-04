@@ -703,6 +703,8 @@ journal-hint-esc = ↑↓ PgUp PgDn: сообщения · Esc: закрыть
 codex-title = Кодекс
 codex-discoveries = Открытия
 codex-conduct = Испытания
+codex-yours = Ваши названия
+codex-called = Ваше название: «{ $name }»
 codex-hint = ↑↓ PgUp PgDn: прокрутка · Tab: другая вкладка · Esc, { $key }: закрыть
 codex-hint-esc = ↑↓ PgUp PgDn: прокрутка · Tab: другая вкладка · Esc: закрыть
 

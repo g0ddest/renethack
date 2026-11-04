@@ -23,6 +23,9 @@ pub struct Discovery {
     pub unseen: bool,
     /// The prices a shop showed ("buy 20 sell 10").
     pub prices: Option<String>,
+    /// The player's own name for the type (#call): "fizzy" in "potion
+    /// called fizzy (orange)".
+    pub called: Option<String>,
     /// The line without its marks, as its translation reads it.
     pub text: String,
 }
@@ -71,12 +74,18 @@ fn discovery(line: &str) -> Option<Discovery> {
         appearance = Some(rest[open + 2..rest.len() - 1].to_string());
         name = &rest[..open];
     }
-    (!name.trim().is_empty()).then(|| Discovery {
-        name: name.trim().to_string(),
+    let name = name.trim();
+    let called = name
+        .find(" called ")
+        .map(|at| name[at + 8..].trim().to_string())
+        .filter(|c| !c.is_empty());
+    (!name.is_empty()).then(|| Discovery {
+        name: name.to_string(),
         appearance,
         note,
         unseen,
         prices,
+        called,
         text,
     })
 }
@@ -112,6 +121,17 @@ pub fn discoveries(lines: &[(String, bool)]) -> Option<Discoveries> {
         header: header.trim().to_string(),
         sections,
     })
+}
+
+impl Discoveries {
+    /// The types the player has named (#call), in the window's order.
+    pub fn called(&self) -> Vec<&Discovery> {
+        self.sections
+            .iter()
+            .flat_map(|s| &s.entries)
+            .filter(|e| e.called.is_some())
+            .collect()
+    }
 }
 
 /// The object class a section's heading names (objnam.c's let_to_name):
@@ -230,6 +250,32 @@ mod tests {
         assert_eq!(arti.note.as_deref(), Some("lawful long sword"));
         assert_eq!(d.sections[0].entries[0].appearance, None);
         assert_eq!(d.sections[2].entries[0].name, "dagger");
+    }
+
+    #[test]
+    fn the_player_s_own_names_read() {
+        let lines = [
+            (
+                "Discoveries, by order of discovery within each class".to_string(),
+                true,
+            ),
+            ("Potions".to_string(), true),
+            ("  potion called fizzy (orange)".to_string(), false),
+            ("  potion of healing (pink)".to_string(), false),
+            ("Scrolls".to_string(), true),
+            ("  scroll called fire maybe (ZELGO MER)".to_string(), false),
+        ];
+        let d = discoveries(&lines).expect("discoveries");
+        let called: Vec<(&str, Option<&str>)> = d
+            .called()
+            .iter()
+            .map(|e| (e.called.as_deref().unwrap(), e.appearance.as_deref()))
+            .collect();
+        assert_eq!(
+            called,
+            [("fizzy", Some("orange")), ("fire maybe", Some("ZELGO MER"))]
+        );
+        assert_eq!(d.sections[0].entries[1].called, None);
     }
 
     #[test]

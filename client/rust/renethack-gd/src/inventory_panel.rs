@@ -1573,6 +1573,9 @@ pub struct InventoryPanel {
     /// What the detail column shows (the item, and its actions or not):
     /// it is rebuilt only when that changes.
     detail_key: Option<(Option<InvItem>, bool)>,
+    /// The card's «Name its type…» stands under its default action: the
+    /// hero does not know the item's kind (self-tests).
+    card_call: bool,
     detail_empty: Gd<Label>,
     ctx_menu: Gd<PanelContainer>,
     ctx_rows: Gd<VBoxContainer>,
@@ -2321,6 +2324,7 @@ impl InventoryPanel {
             pack_key: Vec::new(),
             detail,
             detail_key: None,
+            card_call: false,
             detail_empty,
             ctx_menu,
             ctx_rows,
@@ -2609,6 +2613,31 @@ impl InventoryPanel {
 
     pub fn selected(&self) -> Option<char> {
         self.selected
+    }
+
+    /// The card's «Name its type…» stands under its default action
+    /// (self-tests).
+    pub fn card_call_on_top(&self) -> bool {
+        self.card_call
+    }
+
+    /// The card's words: its labels' and its buttons' (self-tests).
+    pub fn detail_words(&self) -> Vec<String> {
+        self.detail
+            .find_children_ex("*")
+            .owned(false)
+            .done()
+            .iter_shared()
+            .filter_map(|n| {
+                if let Ok(l) = n.clone().try_cast::<Label>() {
+                    Some(l.get_text().to_string())
+                } else {
+                    n.try_cast::<Button>()
+                        .ok()
+                        .map(|b| b.get_text().to_string())
+                }
+            })
+            .collect()
     }
 
     /// The grid's cells: the letter ('-' for the hands) and whether it is
@@ -4650,6 +4679,8 @@ impl InventoryPanel {
             return;
         }
         self.detail_key = Some(key);
+        // a card without actions (a question's, none) has none on top
+        self.card_call = false;
         for mut c in self.detail.get_children().iter_shared() {
             c.queue_free();
         }
@@ -4704,13 +4735,25 @@ impl InventoryPanel {
                 let b = self.action_row(item.letter, first, 320.0, 40.0, true);
                 self.detail.add_child(&b);
             }
+            // a kind the hero does not know: naming its type stands under
+            // the default action (the plan's identification helpers)
+            let call = actions
+                .iter()
+                .find(|a| a.kind == ItemActionKind::Call && !a.default)
+                .filter(|_| nh_world::kind_unknown(&item));
+            if let Some(c) = call {
+                let b = self.action_row(item.letter, c, 320.0, 34.0, false);
+                self.detail.add_child(&b);
+            }
+            self.card_call = call.is_some();
             let mut grid_box = GridContainer::new_alloc();
             grid_box.set_columns(2);
             grid_box.add_theme_constant_override("h_separation", 6);
             grid_box.add_theme_constant_override("v_separation", 2);
             let mut n = 0;
             for a in rest.by_ref() {
-                if a.default || n >= 8 {
+                let on_top = call.is_some() && a.kind == ItemActionKind::Call;
+                if a.default || on_top || n >= 8 {
                     continue;
                 }
                 let b = self.action_row(item.letter, a, 157.0, 30.0, false);

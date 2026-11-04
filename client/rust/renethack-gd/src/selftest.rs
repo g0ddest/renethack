@@ -88,6 +88,8 @@ mod help_tests;
 mod hero;
 #[path = "selftest_hud_buttons.rs"]
 mod hud_buttons_tests;
+#[path = "selftest_identify.rs"]
+mod identify_tests;
 #[path = "selftest_input.rs"]
 mod input_ru;
 #[path = "selftest_journal.rs"]
@@ -5295,6 +5297,7 @@ impl SelfTest {
             "sheet" => sheet_tests::sheet(),
             "spells" => spells_tests::spells(),
             "spells-many" => spells_tests::spells_many(),
+            "identify" => identify_tests::identify(),
             "spells-one" => spells_tests::spells_one(),
             "give-up" => give_up_tests::give_up(),
             "hud-tips" => tips_tests::hud_tips(),

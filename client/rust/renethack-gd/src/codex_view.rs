@@ -1,6 +1,8 @@
 //! The codex's panel (`codex`): the discoveries by class, each object a
 //! card with its icon (its appearance's, as the inventory shows it), its
-//! name and what it looks like; or the conduct, a line each. Two tabs: the
+//! name and what it looks like, and the player's own name for a type they
+//! called (#call), those types also first, under «Ваши названия»; or the
+//! conduct, a line each. Two tabs: the
 //! one shown is the engine's window now, the other a click or Tab away.
 
 use godot::classes::control::{MouseFilter, SizeFlags};
@@ -105,6 +107,17 @@ fn card(
     let mut n = label(name, Face::Body, 16, color);
     n.set_autowrap_mode(AutowrapMode::WORD_SMART);
     col.add_child(&n);
+    // the player's own name for the type (#call), marked as theirs
+    if let Some(called) = &d.called {
+        let mut c = label(
+            &crate::tr!("codex-called", name = called.as_str()),
+            Face::BodyBold,
+            13,
+            theme::GOLD_BRIGHT,
+        );
+        c.set_autowrap_mode(AutowrapMode::WORD_SMART);
+        col.add_child(&c);
+    }
     if let Some(l) = looks {
         col.add_child(&label(l, Face::Body, 13, theme::TEXT_DIM));
     }
@@ -135,6 +148,26 @@ pub fn discoveries(
     let mut order = label(&heading_of(&d.header), Face::Body, 14, theme::TEXT_DIM);
     order.set_autowrap_mode(AutowrapMode::WORD_SMART);
     root.add_child(&order);
+    // the types the player has named, first: their own words find them
+    let called = d.called();
+    if !called.is_empty() {
+        root.add_child(&heading(&crate::tr!("codex-yours")));
+        let mut grid = HFlowContainer::new_alloc();
+        grid.set_mouse_filter(MouseFilter::IGNORE);
+        grid.add_theme_constant_override("h_separation", 8);
+        grid.add_theme_constant_override("v_separation", 8);
+        grid.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        for e in called {
+            let s = d
+                .sections
+                .iter()
+                .find(|s| s.entries.iter().any(|x| std::ptr::eq(x, e)))
+                .map_or("", |s| s.heading.as_str());
+            let (name, looks) = said(e);
+            grid.add_child(&card(e, &name, looks.as_deref(), icon(s, e)));
+        }
+        root.add_child(&grid);
+    }
     for s in &d.sections {
         if !s.heading.is_empty() {
             root.add_child(&heading(&heading_of(&s.heading)));

@@ -695,6 +695,8 @@ journal-hint-esc = ↑↓ PgUp PgDn: the messages · Esc: close
 codex-title = Codex
 codex-discoveries = Discoveries
 codex-conduct = Conduct
+codex-yours = Your names
+codex-called = Your name: “{ $name }”
 codex-hint = ↑↓ PgUp PgDn: scroll · Tab: the other tab · Esc, { $key }: close
 codex-hint-esc = ↑↓ PgUp PgDn: scroll · Tab: the other tab · Esc: close
 
