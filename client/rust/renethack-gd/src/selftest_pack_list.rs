@@ -240,6 +240,46 @@ pub(super) fn pack_list() -> Vec<Step> {
             fail_on_error_screen(g)?;
             Ok(matches!(g.pending, Some((_, Prompt::Command))))
         }),
+        // at 140 % the panel shrinks to fit, its words do not: they read
+        // at the size the scale asks for, as the HUD's do
+        key('i'),
+        Step::Wait("the list again", |g| {
+            Ok(panel(g)?.is_open() && list_right(g)?)
+        }),
+        Step::Call("140 %", |g| {
+            let mut s = g.settings.clone();
+            s.ui_scale = Some(140);
+            g.set_settings(s);
+            Ok(())
+        }),
+        Step::Wait("the words at 140 %'s size", |g| {
+            let Some((size, s)) = panel(g)?.list_words_size() else {
+                return Ok(false);
+            };
+            // the panel shrunk to fit at 140 % (the scale applied)
+            if s >= 1.0 {
+                return Ok(false);
+            }
+            // its words at the canvas's 16, as unshrunk (within the most
+            // they grow back)
+            let shown = size as f32 * s;
+            let want = (16.0f32).min(16.0 * s * 1.35);
+            if (shown - want).abs() >= 1.0 {
+                return Err(format!(
+                    "the words at {shown:.1} on the canvas, not {want:.1}"
+                ));
+            }
+            Ok(true)
+        }),
+        Step::Shot("pack-list-140"),
+        Step::Call("the scale back", |g| {
+            let mut s = g.settings.clone();
+            s.ui_scale = None;
+            g.set_settings(s);
+            Ok(())
+        }),
+        Step::Key(KeyInput::plain(Key::Escape)),
+        Step::Wait("the panel closed", |g| Ok(!panel(g)?.is_open())),
     ]);
     steps
 }

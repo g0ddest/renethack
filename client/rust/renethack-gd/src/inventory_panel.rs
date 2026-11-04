@@ -190,7 +190,7 @@ fn picked_mark(count: Option<i64>) -> String {
 }
 
 /// A class's heading over its lines in the list.
-fn list_heading(class: char, first: bool) -> Gd<Control> {
+fn list_heading(class: char, first: bool, text_k: f32) -> Gd<Control> {
     let mut row = HBoxContainer::new_alloc();
     row.set_mouse_filter(MouseFilter::IGNORE);
     row.add_theme_constant_override("separation", 6);
@@ -207,13 +207,23 @@ fn list_heading(class: char, first: bool) -> Gd<Control> {
     glyph.set_modulate(theme::GOLD);
     row.add_child(&glyph);
     let heading = class_heading(class);
-    let mut l = theme::styled_label(&heading, Face::Caps, 15, theme::GOLD);
+    let mut l = theme::styled_label(&heading, Face::Caps, sized(15, text_k), theme::GOLD);
     l.set_v_size_flags(SizeFlags::SHRINK_END);
     row.add_child(&l);
     // what the self-tests read
     row.set_meta("words", &GString::from(heading.as_str()).to_variant());
     row.upcast()
 }
+
+/// A font size of the list's, `k` times its own (the panel shrunk to
+/// fit: its words keep the size the UI scale asks for).
+fn sized(size: i32, k: f32) -> i32 {
+    (size as f32 * k).round() as i32
+}
+
+/// The most the list's words grow back where the panel is shrunk to fit
+/// (its rows grow with them, the list scrolls).
+const TEXT_K_MOST: f32 = 1.35;
 
 /// The key that switches the pack between the grid and the list (a
 /// gamepad's Back/View gives it too).
@@ -1551,6 +1561,9 @@ pub struct InventoryPanel {
     list_box: Gd<ScrollContainer>,
     list_rows: Gd<VBoxContainer>,
     list_key: Vec<String>,
+    /// How much the list's words grow back while the panel is shrunk to
+    /// fit the canvas (`layout`).
+    text_k: f32,
     /// The rows' controls by cell index (`cells_shown`), for the focus.
     list_cells: Vec<Gd<Control>>,
     /// The switches between the grid and the list.
@@ -2302,6 +2315,7 @@ impl InventoryPanel {
             list_box,
             list_rows,
             list_key: Vec::new(),
+            text_k: 1.0,
             list_cells: Vec::new(),
             view_buttons,
             pack_key: Vec::new(),
@@ -3771,6 +3785,14 @@ impl InventoryPanel {
         if self.frame.get_scale() != scale {
             self.frame.set_scale(scale);
         }
+        // shrunk to fit (a high UI scale on a small screen), the list's
+        // words grow back: they read at the size the scale asks for
+        let k = (1.0 / s.max(0.01)).clamp(1.0, TEXT_K_MOST);
+        if (k - self.text_k).abs() > 0.005 {
+            self.text_k = k;
+            self.list_key.clear();
+            self.dirty = true;
+        }
         let pos = Vector2::new(
             ((view.x - WIDTH * s) / 2.0).round(),
             (view.y - CLUSTER_TOP - HEIGHT * s).max(8.0).round(),
@@ -4304,9 +4326,10 @@ impl InventoryPanel {
             ));
         }
         key.push(format!(
-            "{}|{}",
+            "{}|{}|{}",
             i18n::lang().code(),
-            self.keymap_hint_key()
+            self.keymap_hint_key(),
+            self.text_k
         ));
         if key == self.list_key {
             return;
@@ -4327,7 +4350,8 @@ impl InventoryPanel {
             if let Some(it) = &item
                 && class_starts.get(i).copied().unwrap_or(false)
             {
-                self.list_rows.add_child(&list_heading(it.class, i == 0));
+                self.list_rows
+                    .add_child(&list_heading(it.class, i == 0, self.text_k));
             }
             let row = self.list_row(*t, item.as_ref(), i, question, menu_letters, drag_item);
             if self.focus == Some(i) {
@@ -4337,8 +4361,9 @@ impl InventoryPanel {
             self.list_cells.push(row.upcast());
         }
         if shown.is_empty() {
+            let size = sized(15, self.text_k);
             let mut none =
-                theme::styled_label(&tr!("inv-list-empty"), Face::Body, 15, theme::TEXT_DIM);
+                theme::styled_label(&tr!("inv-list-empty"), Face::Body, size, theme::TEXT_DIM);
             none.set_autowrap_mode(AutowrapMode::WORD_SMART);
             self.list_rows.add_child(&none);
         }
@@ -4347,6 +4372,18 @@ impl InventoryPanel {
             self.list_box
                 .call_deferred("ensure_control_visible", &[row.to_variant()]);
         }
+    }
+
+    /// The list's first line's words: their font size, and the panel's
+    /// scale (self-tests: the words' size on screen).
+    pub fn list_words_size(&self) -> Option<(i32, f32)> {
+        let row = self.list_cells.first()?;
+        let hbox = row.get_child(0)?;
+        let words = (hbox.get_children().iter_shared())
+            .filter_map(|c| c.try_cast::<Label>().ok())
+            .nth(1)?;
+        let size = words.get_theme_font_size("font_size");
+        Some((size, self.frame.get_scale().x))
     }
 
     /// What the tips' keys depend on, for the list's drawn key.
@@ -4389,9 +4426,14 @@ impl InventoryPanel {
             _ => '-',
         };
         // not small caps: `a` and `A` are different items
-        let mut l =
-            theme::styled_label(&letter.to_string(), Face::BodyBold, 16, theme::GOLD_BRIGHT);
-        l.set_custom_minimum_size(Vector2::new(16.0, 0.0));
+        let k = self.text_k;
+        let mut l = theme::styled_label(
+            &letter.to_string(),
+            Face::BodyBold,
+            sized(16, k),
+            theme::GOLD_BRIGHT,
+        );
+        l.set_custom_minimum_size(Vector2::new(16.0 * k, 0.0));
         l.set_horizontal_alignment(HorizontalAlignment::CENTER);
         l.set_vertical_alignment(VerticalAlignment::CENTER);
         l.set_v_size_flags(SizeFlags::SHRINK_CENTER);
@@ -4415,7 +4457,7 @@ impl InventoryPanel {
             Some(it) => i18n::engine(EngineKind::Name, &it.text).into_owned(),
             None => hands_label(question.map_or("", |q| q.verb.as_str())),
         };
-        let mut w = theme::styled_label(&words, Face::Body, 16, theme::TEXT);
+        let mut w = theme::styled_label(&words, Face::Body, sized(16, k), theme::TEXT);
         w.set_autowrap_mode(AutowrapMode::WORD_SMART);
         w.set_h_size_flags(SizeFlags::EXPAND_FILL);
         w.set_v_size_flags(SizeFlags::SHRINK_CENTER);
@@ -4440,7 +4482,8 @@ impl InventoryPanel {
         };
         root.add_theme_stylebox_override("panel", style);
         if let Some(n) = picked {
-            let mut check = theme::styled_label(&picked_mark(n), Face::BodyBold, 16, theme::GOOD);
+            let mut check =
+                theme::styled_label(&picked_mark(n), Face::BodyBold, sized(16, k), theme::GOOD);
             check.set_v_size_flags(SizeFlags::SHRINK_CENTER);
             row.add_child(&check);
         }
