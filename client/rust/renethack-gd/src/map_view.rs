@@ -355,6 +355,11 @@ const XRAY: Color = Color::from_rgba(0.55, 0.68, 1.0, 0.45);
 /// A creature the hero's body hides, its outline seen through it: a
 /// hostile's, a pet's (fainter: one often follows behind them).
 const XRAY_FOE: Color = Color::from_rgba(1.0, 0.3, 0.22, 0.85);
+/// The hero's body a contour keeps off (xray_contour.gdshader): half its
+/// width and depth, and how far over their head (roomier than the body
+/// the x-ray finds them hidden by: their cloak, arms and hair).
+const XRAY_HERO_HALF: Vector2 = Vector2::new(0.45, 0.3);
+const XRAY_HERO_OVER: f32 = 0.15;
 const XRAY_PET: Color = Color::from_rgba(0.37, 0.84, 0.75, 0.6);
 /// The hero's body for what it hides behind it: half its width and its
 /// depth, metres (a box round the model would take in a spear held up).
@@ -3536,6 +3541,8 @@ pub struct MapView {
     /// a hostile's and a pet's.
     xray_behind: Vec<(Gd<Node3D>, bool)>,
     xray_creature: Option<(Gd<Material>, Gd<Material>)>,
+    /// The hero's body as their contours last kept off it (feet, tall).
+    xray_hero: Option<(Vector3, f32)>,
     /// The huge and gigantic creatures drawn see-through: each hides an
     /// object or a trap the hero knows of.
     big_faded: Vec<Gd<Node3D>>,
@@ -4362,6 +4369,7 @@ impl MapView {
             xray_steed: None,
             xray_behind: Vec::new(),
             xray_creature,
+            xray_hero: None,
             big_faded: Vec::new(),
             rider_view,
             room_lights: Vec::new(),
@@ -5904,6 +5912,23 @@ impl MapView {
             }
         }
         self.fade_big(faded);
+        // their contours never over the hero's own body (a kitten behind
+        // a wizard was a teal sticker on her robe)
+        let body = self.hero_stands();
+        if body != self.xray_hero {
+            self.xray_hero = body;
+            let (feet, tall) = body.unwrap_or((Vector3::new(0.0, -100.0, 0.0), 0.0));
+            let size = Vector3::new(XRAY_HERO_HALF.x, tall + XRAY_HERO_OVER, XRAY_HERO_HALF.y);
+            for m in self.xray_creature.iter().flat_map(|(foe, pet)| [foe, pet]) {
+                if let Some(mut line) = m
+                    .get_next_pass()
+                    .and_then(|l| l.try_cast::<ShaderMaterial>().ok())
+                {
+                    line.set_shader_parameter("hero_feet", &feet.to_variant());
+                    line.set_shader_parameter("hero_size", &size.to_variant());
+                }
+            }
+        }
         let key = |v: &[(Gd<Node3D>, bool)]| -> Vec<(InstanceId, bool)> {
             v.iter().map(|(n, h)| (n.instance_id(), *h)).collect()
         };
