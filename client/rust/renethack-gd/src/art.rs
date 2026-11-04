@@ -424,6 +424,8 @@ enum Preload {
     Head(String, Region),
     /// A scene's meshes shaded smooth.
     Smooth(usize),
+    /// A role's shoes, cut from its outfit's boots (`Art::shoe`).
+    Shoes(usize),
     /// A model worn on another's bones, built once (its meshes are made).
     Prop(usize),
     /// An instance built once and pooled: its meshes, materials and
@@ -509,6 +511,8 @@ pub struct Art {
     repainted: HashMap<(i64, String), Option<Gd<Material>>>,
     /// Sleeves cut free of their hands, by the source mesh's id.
     handless: HashMap<i64, Gd<ArrayMesh>>,
+    /// An outfit's boots cut to shoes (`shoe`), by the boot's mesh.
+    shoes: HashMap<i64, Option<Gd<ArrayMesh>>>,
     /// The meshes (and their skins) of each base head, built once.
     heads: HashMap<String, Option<HeadParts>>,
     /// The base characters' bodies cut to a region, by (base, region, cut
@@ -617,6 +621,7 @@ impl Art {
             smoothed: HashMap::new(),
             repainted: HashMap::new(),
             handless: HashMap::new(),
+            shoes: HashMap::new(),
             heads: HashMap::new(),
             bodies: HashMap::new(),
             outfits: outfit::Outfits::default(),
@@ -679,8 +684,13 @@ impl Art {
             .models()
             .flat_map(|(_, _, m)| {
                 let head = m.head.iter().chain(&m.second_head).cloned();
+                let feet = m.head.clone().zip(m.feet.as_ref().map(Region::footwear));
                 head.map(|h| (h, Region::Head))
                     .chain(m.bare_arms.clone().map(|a| (a, Region::bare(m))))
+                    .chain(
+                        feet.into_iter()
+                            .flat_map(|(h, r)| r.into_iter().map(move |r| (h.clone(), r))),
+                    )
             })
             .filter(|(h, _)| self.manifest.head(h).is_some())
             .collect();
@@ -692,6 +702,16 @@ impl Art {
                 .models()
                 .filter(|(_, _, m)| m.smooth && m.scene.is_some())
                 .map(|(i, _, _)| Preload::Smooth(i)),
+        );
+        // (a cut reads the mesh back from the GPU: never before a visible
+        // screen)
+        q.extend(
+            self.manifest
+                .models()
+                .filter(|(_, _, m)| {
+                    m.scene.is_some() && m.feet.as_ref().is_some_and(|f| f.shoe.dye().is_some())
+                })
+                .map(|(i, _, _)| Preload::Shoes(i)),
         );
         q.reverse();
         self.preload_most = q.len();
@@ -719,6 +739,16 @@ impl Art {
                         .clone()
                         .map(|a| Preload::Head(a, Region::bare(spec))),
                 );
+                if let (Some(feet), Some(h)) = (spec.feet.as_ref(), spec.head.clone()) {
+                    q.extend(
+                        Region::footwear(feet)
+                            .into_iter()
+                            .map(|r| Preload::Head(h.clone(), r)),
+                    );
+                    if feet.shoe.dye().is_some() {
+                        q.push(Preload::Shoes(look.art.model));
+                    }
+                }
                 q.extend(
                     spec.extras
                         .iter()
@@ -847,6 +877,15 @@ impl Art {
                     inner.queue_free();
                 }
             }
+            Preload::Shoes(i) => {
+                if let Some(scene) = self.scene(i) {
+                    let mut inner = scene.instantiate_as::<Node3D>();
+                    for (boot, _) in boots_of(&inner) {
+                        self.shoe(&boot);
+                    }
+                    inner.queue_free();
+                }
+            }
             Preload::Prop(i) => {
                 if let Some(mut prop) = self.prop(i, Color::WHITE, false) {
                     prop.queue_free();
@@ -888,7 +927,9 @@ impl Art {
         match item {
             Preload::Texture(t) => vec![full(t)],
             Preload::Library(n, _) => library(n).into_iter().collect(),
-            Preload::Scene(i) | Preload::Smooth(i) | Preload::Prop(i) => scene(*i).collect(),
+            Preload::Scene(i) | Preload::Smooth(i) | Preload::Prop(i) | Preload::Shoes(i) => {
+                scene(*i).collect()
+            }
             Preload::Head(kind, region) => head(kind, *region),
             Preload::Warm(look) => {
                 let spec = self.manifest.model_at(look.art.model).1;
@@ -2018,6 +2059,7 @@ impl Art {
         let r = look.art;
         let spec = self.manifest.model_at(r.model).1.clone();
         let mut holder = holder.clone();
+        let mut footwear = Extras::new();
         let (mut inner, player) = match (spec.proc, self.scene(r.model)) {
             (Some(kind), _) => self.build_proc(kind, &spec, look),
             (None, Some(scene)) => {
@@ -2057,6 +2099,10 @@ impl Art {
                 if spec.head_scale != 1.0 {
                     scale_head(&inner, spec.head_scale);
                 }
+                // a role's own footwear, its outfit's boots only with boots
+                if let (Some(feet), Some(kind)) = (spec.feet.as_ref(), spec.head.as_deref()) {
+                    footwear = self.attach_feet(&inner, kind, feet, look);
+                }
                 let shade = rgb(spec.shade_rgb());
                 self.dress(&inner, look, shade);
                 (inner, player)
@@ -2069,6 +2115,7 @@ impl Art {
         } else {
             Vec::new()
         };
+        extras.extend(footwear);
         // its own thing round the neck, skinned to it (a tourist's camera:
         // the hero's pack overrules it)
         if spec.proc.is_none()
@@ -2395,6 +2442,104 @@ impl Art {
         true
     }
 
+    /// A role's own footwear (`ModelSpec::feet`): its head's base
+    /// character's shins (in hose, or bare) and bare feet worn on the
+    /// outfit's skeleton, or shoes cut from the outfit's own boots; and the
+    /// boots put by. All are extras: the footwear hidden by boots worn, the
+    /// boots shown only with them (a role starts with none; every role wore
+    /// the same buckled pair).
+    fn attach_feet(
+        &mut self,
+        inner: &Gd<Node3D>,
+        kind: &str,
+        feet: &nh_art::Footwear,
+        look: &ModelLook,
+    ) -> Extras {
+        let mut out = Extras::new();
+        let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) else {
+            return out;
+        };
+        // as an outfit's mesh is dressed (`dress`): the material, tinted
+        let dye = |art: &mut Art, wear: &nh_art::Wear| {
+            wear.dye().and_then(|(name, tint)| {
+                let m = art.manifest.material_index(name)?;
+                let tint = tint.map_or(Color::WHITE, rgb);
+                Some(art.surface(m, 100, false, mul(look.tint, tint)))
+            })
+        };
+        let hose = dye(self, &feet.hose);
+        let shoe = dye(self, &feet.shoe);
+        for region in Region::footwear(feet) {
+            let Some(parts) = self.head_parts(kind, region, Lean::Upright, None) else {
+                continue;
+            };
+            let dyed = if region == Region::Shins {
+                hose.clone()
+            } else {
+                None
+            };
+            for (i, (mesh, skin, materials, _)) in parts.iter().enumerate() {
+                let mut mi = MeshInstance3D::new_alloc();
+                mi.set_name(&format!("{BASE_PART}{region:?}{i}"));
+                mi.set_mesh(mesh);
+                for (s, m) in materials.iter().enumerate() {
+                    if let Some(m) = dyed.as_ref().or(m.as_ref()) {
+                        mi.set_surface_override_material(s as i32, m);
+                    }
+                }
+                if let Some(skin) = skin {
+                    mi.set_skin(skin);
+                }
+                skeleton.add_child(&mi);
+                mi.set_skeleton_path(&NodePath::from(".."));
+                out.push((Slotted::HiddenBy(BOOTS_SLOT.to_string()), mi.upcast()));
+            }
+        }
+        for (mut boot, name) in boots_of(inner) {
+            if let Some(material) = shoe.as_ref()
+                && let Some(cut) = self.shoe(&boot)
+                && let Some(mut parent) = boot.get_parent()
+            {
+                // a sibling of the boot, skinned as it is
+                let mut mi = MeshInstance3D::new_alloc();
+                mi.set_name(&format!("{BASE_PART}Shoe{name}"));
+                mi.set_mesh(&cut);
+                for s in 0..cut.get_surface_count() {
+                    mi.set_surface_override_material(s, material);
+                }
+                if let Some(skin) = boot.get_skin() {
+                    mi.set_skin(&skin);
+                }
+                parent.add_child(&mi);
+                mi.set_transform(boot.get_transform());
+                mi.set_skeleton_path(&boot.get_skeleton_path());
+                out.push((Slotted::HiddenBy(BOOTS_SLOT.to_string()), mi.upcast()));
+            }
+            boot.set_visible(false);
+            out.push((Slotted::ShownWith(BOOTS_SLOT.to_string()), boot.upcast()));
+        }
+        out
+    }
+
+    /// An outfit's boot cut to a shoe (its foot and a low collar), once per
+    /// mesh; None: there is none.
+    fn shoe(&mut self, boot: &Gd<MeshInstance3D>) -> Option<Gd<ArrayMesh>> {
+        let mesh = boot.get_mesh()?.try_cast::<ArrayMesh>().ok()?;
+        let key = mesh.instance_id().to_i64();
+        self.shoes
+            .entry(key)
+            .or_insert_with(|| {
+                // (every triangle reaching under the line, its corners over
+                // it brought down onto it: a level collar, and no hole in
+                // the foot's top)
+                let low = |t: [Vector3; 3]| t.iter().any(|v| v.y < SHOE_TOP);
+                let level = |v: Vector3, _| Vector3::new(v.x, v.y.min(SHOE_TOP), v.z);
+                let (cut, _) = cut_triangles(&mesh, low, level);
+                (cut.get_surface_count() > 0).then_some(cut)
+            })
+            .clone()
+    }
+
     /// The outfit's mesh whose sleeves end in hands, left without them
     /// (cut at the cuff, once per mesh): the base character's show there.
     fn bare_the_hands(&mut self, mut sleeves: Gd<MeshInstance3D>, wrist: f32) {
@@ -2553,6 +2698,23 @@ impl Art {
             // from the waist (under the trousers' top) to the neck
             Region::Torso => cut(mesh, |v| v.y > 1.06 && v.y < at + 0.03),
             Region::Body => cut(mesh, |v| v.y < at + 0.03),
+            // (in the rest pose, standing: the two overlap round the ankle,
+            // for whole triangles would leave a gap there; the hose narrows
+            // to the skin at the ankle, so its ragged end stays inside the
+            // shoe or under the foot's skin, and again under the hem, where
+            // its top is brought level)
+            Region::Shins => cut_triangles(
+                mesh,
+                |t| t.iter().all(|v| v.y > ANKLE - ANKLE_BAND) && t.iter().any(|v| v.y < HOSE_TOP),
+                |v, n| {
+                    let up = smoothstep(ANKLE, ANKLE + HOSE_TAPER, v.y);
+                    let down = 1.0 - smoothstep(HEM - HOSE_TAPER, HEM, v.y);
+                    let v = v + n * HOSE_SWELL * up * down;
+                    Vector3::new(v.x, v.y.min(HOSE_TOP), v.z)
+                },
+            ),
+            Region::BareShins => cut(mesh, |v| v.y > ANKLE - ANKLE_BAND && v.y < HOSE_TOP),
+            Region::Feet => cut_out(mesh, |v| v.y < ANKLE + ANKLE_BAND, FOOT_SWELL),
         };
         self.bodies.insert(key, c.clone());
         c
@@ -2919,6 +3081,25 @@ impl Art {
 /// 4.7 defaults to none, and such a mesh is drawn unskinned, its rig's
 /// own scale on it (the Poly Pizza beasts and the centaur a hundred
 /// times too big, out of sight).
+/// An outfit's boots (its meshes named `_Feet` or `_Feet_Boots`), and the
+/// end of their names.
+fn boots_of(inner: &Gd<Node3D>) -> Vec<(Gd<MeshInstance3D>, String)> {
+    inner
+        .find_children_ex("*")
+        .type_("MeshInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+        .filter_map(|n| {
+            let name = n.get_name().to_string();
+            let end = ["_Feet_Boots", "_Feet"]
+                .into_iter()
+                .find(|e| name.ends_with(e))?;
+            Some((n.try_cast::<MeshInstance3D>().ok()?, end.to_string()))
+        })
+        .collect()
+}
+
 fn bind_skins(inner: &Gd<Node3D>) {
     for node in inner
         .find_children_ex("*")
@@ -4309,6 +4490,23 @@ const BASE_PART: &str = "Base";
 const HAIR_PART: &str = "Hair";
 /// How far into a sleeve a base character's hand begins.
 const TUCK: f32 = 0.012;
+/// A role's own footwear (`ModelSpec::feet`) in place of the outfit's
+/// boots: the shoe up to the ankle, the hose from there up under the
+/// trousers' hem (the outfits' end 0.40-0.44 m up, their boots 0.45-0.56).
+const ANKLE: f32 = 0.1;
+const HOSE_TOP: f32 = 0.48;
+const ANKLE_BAND: f32 = 0.06;
+const FOOT_SWELL: f32 = 0.003;
+/// (the hose a layer over the shin, wound or knitted, under the hem)
+const HOSE_SWELL: f32 = 0.025;
+/// (and how far over the ankle it has grown to that)
+const HOSE_TAPER: f32 = 0.08;
+/// (the lowest of the outfits' hems: the hose is back to the skin there)
+const HEM: f32 = 0.40;
+/// A shoe: an outfit's boot cut this high (its foot and a low collar).
+const SHOE_TOP: f32 = 0.11;
+/// The slot of boots.
+const BOOTS_SLOT: &str = "boots";
 
 /// Which part of a base character is worn.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -4321,6 +4519,28 @@ enum Region {
     Hands,
     /// All of it under the head.
     Body,
+    /// From the ankle up under an outfit's trousers' hem, in hose (a layer
+    /// over the shin) or bare, and the feet below the ankle bare: a role's
+    /// own footwear (`ModelSpec::feet`; a shoe is cut from the outfit's
+    /// boot, `Art::shoe`).
+    Shins,
+    BareShins,
+    Feet,
+}
+
+impl Region {
+    /// The regions of the base character a role's footwear wears: the
+    /// shins, and the feet when they are bare.
+    fn footwear(feet: &nh_art::Footwear) -> Vec<Region> {
+        let shins = match feet.hose {
+            nh_art::Wear::Skin(_) => Region::BareShins,
+            nh_art::Wear::Dyed { .. } => Region::Shins,
+        };
+        match feet.shoe {
+            nh_art::Wear::Skin(_) => vec![shins, Region::Feet],
+            nh_art::Wear::Dyed { .. } => vec![shins],
+        }
+    }
 }
 
 impl Region {
@@ -4543,6 +4763,16 @@ fn cut(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool) -> CutBody {
 /// As `cut`, every vertex kept moved `swell` out along its normal (a layer
 /// over the same body: a glove over a hand).
 fn cut_out(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool, swell: f32) -> CutBody {
+    cut_triangles(mesh, |t| t.iter().all(|&v| keep(v)), |v, n| v + n * swell)
+}
+
+/// `mesh`'s triangles that `keep` takes (by their corners), each kept
+/// vertex put where `place` says (from where it is and its normal).
+fn cut_triangles(
+    mesh: &Gd<ArrayMesh>,
+    keep: impl Fn([Vector3; 3]) -> bool,
+    place: impl Fn(Vector3, Vector3) -> Vector3,
+) -> CutBody {
     use godot::classes::mesh::{ArrayFormat, ArrayType, PrimitiveType};
     let slot = |a: ArrayType| a.ord() as usize;
     let mut out = ArrayMesh::new_gd();
@@ -4558,12 +4788,16 @@ fn cut_out(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool, swell: f32) -> 
             .unwrap_or_default();
         let normals = normals.as_slice();
         // the triangles kept, their corners numbered anew in the order met
-        let inside = |k: i32| verts.get(k as usize).is_some_and(|&v| keep(v));
+        let corner = |k: i32| verts.get(k as usize).copied();
         let mut renumbered: HashMap<i32, i32> = HashMap::new();
         let mut used: Vec<usize> = Vec::new();
         let mut triangles: Vec<i32> = Vec::new();
         for t in index.as_slice().chunks_exact(3) {
-            if !t.iter().all(|&k| inside(k)) {
+            let corners = (corner(t[0]), corner(t[1]), corner(t[2]));
+            let (Some(a), Some(b), Some(c)) = corners else {
+                continue;
+            };
+            if !keep([a, b, c]) {
                 continue;
             }
             for &k in t {
@@ -4581,10 +4815,8 @@ fn cut_out(mesh: &Gd<ArrayMesh>, keep: impl Fn(Vector3) -> bool, swell: f32) -> 
             let kept = if s == slot(ArrayType::INDEX) {
                 PackedInt32Array::from(triangles.as_slice()).to_variant()
             } else if s == slot(ArrayType::VERTEX) {
-                let out_by = |k: usize| match normals.get(k) {
-                    Some(&n) if swell != 0.0 => verts[k] + n * swell,
-                    _ => verts[k],
-                };
+                let out_by =
+                    |k: usize| place(verts[k], normals.get(k).copied().unwrap_or_default());
                 let moved: Vec<Vector3> = used.iter().map(|&k| out_by(k)).collect();
                 PackedVector3Array::from(moved.as_slice()).to_variant()
             } else if (slot(ArrayType::CUSTOM0)..=slot(ArrayType::CUSTOM3)).contains(&s) {

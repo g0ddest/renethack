@@ -322,6 +322,11 @@ pub struct ModelSpec {
     /// linen from crown to sole).
     #[serde(default)]
     pub bare_legs: bool,
+    /// A role's own footwear: the outfit's boots are drawn only while boots
+    /// are worn, and otherwise the head's base character's shins and feet
+    /// in these (`Footwear`).
+    #[serde(default)]
+    pub feet: Option<Footwear>,
     /// A second head of this kind beside the first, the two leaning apart
     /// from one neck (an ettin).
     #[serde(default)]
@@ -381,6 +386,39 @@ pub struct Coat {
     pub on: Vec<String>,
     #[serde(default = "one")]
     pub scale: f32,
+}
+
+/// What a role wears on its feet without boots (`ModelSpec::feet`): the
+/// shoe (below the ankle) and the hose (from the ankle up under the
+/// trousers' hem), each the base character's own skin or a manifest
+/// material dyed.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct Footwear {
+    pub shoe: Wear,
+    pub hose: Wear,
+}
+
+/// Bare ("skin"), or a manifest material, its colour multiplied by a
+/// tint ("#rrggbb") as a `Dress` is.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum Wear {
+    Skin(String),
+    Dyed {
+        material: String,
+        #[serde(default)]
+        tint: Option<String>,
+    },
+}
+
+impl Wear {
+    /// The manifest material and its tint, or None: the skin.
+    pub fn dye(&self) -> Option<(&str, Option<[f32; 3]>)> {
+        match self {
+            Wear::Skin(_) => None,
+            Wear::Dyed { material, tint } => Some((material, tint.as_deref().and_then(hex))),
+        }
+    }
 }
 
 /// What an outfit's mesh is made of (`ModelSpec::dress`), or how a
@@ -1430,6 +1468,7 @@ impl ArtManifest {
             bare_arms: None,
             bare_chest: false,
             bare_legs: false,
+            feet: None,
             second_head: None,
             girth: 1.0,
             head_scale: 1.0,
@@ -1588,6 +1627,21 @@ mod tests {
                     !matches!(d.material.as_str(), "chain_mail" | "plate_mail"),
                     "{name} {part}: mail unworn"
                 );
+            }
+            // and the feet: its outfit's boots only with boots worn, its
+            // own footwear (skin, or a material of the manifest) without
+            let feet = spec
+                .feet
+                .as_ref()
+                .unwrap_or_else(|| panic!("{name}: the outfit's boots shown though none are worn"));
+            for wear in [&feet.shoe, &feet.hose] {
+                match wear {
+                    Wear::Skin(s) => assert_eq!(s, "skin", "{name}: bare feet are \"skin\""),
+                    Wear::Dyed { material, .. } => assert!(
+                        art.material_index(material).is_some(),
+                        "{name}: no material {material} for its feet"
+                    ),
+                }
             }
         }
     }

@@ -72,6 +72,8 @@ mod end_tests;
 mod falls_tests;
 #[path = "selftest_features.rs"]
 mod features_tests;
+#[path = "selftest_feet.rs"]
+mod feet_tests;
 #[path = "selftest_first.rs"]
 mod first_tests;
 #[path = "selftest_gameplay.rs"]
@@ -5323,6 +5325,7 @@ impl SelfTest {
             "outfits" => outfits_tests::outfits(),
             "late-monsters" => late_tests::late_monsters(),
             "helm-hair" => helm_hair_tests::helm_hair(),
+            "feet" => feet_tests::feet(),
             "ordinals" => ordinals_tests::ordinals(),
             "travel-words" => travel_words_tests::travel_words(),
             "features" => features_tests::features(),
