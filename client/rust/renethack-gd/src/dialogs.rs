@@ -28,6 +28,7 @@ use nh_world::{Key, KeyInput, MenuEntry, MenuOutcome, MenuState, Prompt, TextLin
 
 use nh_i18n::lexicon::Lexicon;
 
+use crate::cell_menu::{self, CellMenu};
 use crate::codex;
 use crate::codex_view;
 use crate::command_menu::{self, Section};
@@ -2011,6 +2012,9 @@ enum Kind {
     },
     /// The command menu as a wheel (`#`'s request, the list's other face).
     Wheel(Box<CommandWheel>),
+    /// What can be done at a cell (the engine's #therecmdmenu), a popup
+    /// by the cell.
+    CellMenu(Box<CellMenu>),
 }
 
 /// The open command wheel as self-tests read it: its ring, its wedges'
@@ -2089,6 +2093,9 @@ pub struct Dialogs {
     /// The spells the hero knows, as the last `+` or `Z` listed them (the
     /// wheel's spells' ring).
     known_spells: Vec<spells::Spell>,
+    /// The cell clicked (where on screen, what is known there) and when:
+    /// the engine's menu of what can be done there opens by it.
+    cell_anchor: Option<(Vector2, Vec<String>, std::time::Instant)>,
     /// The hero rendered in their gear (the inventory's doll): the
     /// character sheet's portrait.
     portrait: Option<Gd<Texture2D>>,
@@ -2195,6 +2202,13 @@ impl Dialogs {
                     Vector2::new(2.0 * r + 240.0, 60.0),
                 ))
             }
+            // under the popup, as wide as the hints need
+            Some(Kind::CellMenu(_)) => self.panel_rect().map(|r| {
+                Rect2::new(
+                    Vector2::new(r.position.x - 260.0, r.end().y - 6.0),
+                    Vector2::new(r.size.x + 520.0, 60.0),
+                )
+            }),
             _ => self.panel_rect(),
         }
     }
@@ -2222,6 +2236,7 @@ impl Dialogs {
             palette_section: None,
             opening_english: Vec::new(),
             known_spells: Vec::new(),
+            cell_anchor: None,
             portrait: None,
             sheet: None,
             opening_own: None,
@@ -3190,6 +3205,103 @@ impl Dialogs {
     pub fn wheel_items(&self) -> Option<Vec<command_wheel::WheelItem>> {
         match self.open.as_ref().map(|o| &o.kind) {
             Some(Kind::Wheel(w)) => Some(w.items().to_vec()),
+            _ => None,
+        }
+    }
+
+    /// The engine's menu of what can be done at a cell, a popup by it: `at`
+    /// the cell on screen, `look` what is known there.
+    fn open_cell_menu(
+        &mut self,
+        req: u64,
+        items: &[nh_protocol::MenuItem],
+        at: Vector2,
+        look: &[String],
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        // the map left as it is; a click beside the popup cancels
+        let mut shade = ColorRect::new_alloc();
+        shade.set_color(Color::from_rgba(0.0, 0.0, 0.0, 0.0));
+        theme::full_rect_ignore(&shade);
+        shade.set_mouse_filter(MouseFilter::STOP);
+        let q = self.queue.clone();
+        shade
+            .signals()
+            .gui_input()
+            .connect(move |e: Gd<InputEvent>| {
+                if let Ok(b) = e.try_cast::<InputEventMouseButton>()
+                    && b.is_pressed()
+                    && matches!(b.get_button_index(), MouseButton::LEFT | MouseButton::RIGHT)
+                {
+                    push(
+                        &q,
+                        UiEvent::Dialog {
+                            req,
+                            ev: DialogEvent::MenuCancel,
+                        },
+                    );
+                }
+            });
+        self.root.add_child(&shade);
+        let mut panel = PanelContainer::new_alloc();
+        panel.set_mouse_filter(MouseFilter::STOP);
+        theme::apply_frame(&panel, Frame::Panel);
+        let mut col = VBoxContainer::new_alloc();
+        col.add_theme_constant_override("separation", 4);
+        panel.add_child(&col);
+        let q = self.queue.clone();
+        let (mut menu, _) = CellMenu::build(&mut col, look, items, self.pad, |i| {
+            let q = q.clone();
+            Box::new(move || {
+                push(
+                    &q,
+                    UiEvent::Dialog {
+                        req,
+                        ev: DialogEvent::MenuClick(i),
+                    },
+                );
+            })
+        });
+        self.root.add_child(&panel);
+        // beside the cell, right of it where there is room, else left; above
+        // the HUD's foot
+        let size = panel.get_combined_minimum_size();
+        let screen = self.root.get_size();
+        let mut pos = at + Vector2::new(24.0, -size.y * 0.3);
+        if pos.x + size.x > screen.x - PANEL_EDGE {
+            pos.x = at.x - 24.0 - size.x;
+        }
+        let floor = (screen.y - self.bottom_room - PANEL_EDGE).max(size.y + PANEL_EDGE);
+        pos.x = pos
+            .x
+            .clamp(PANEL_EDGE, (screen.x - size.x - PANEL_EDGE).max(PANEL_EDGE));
+        pos.y = pos.y.clamp(PANEL_EDGE, (floor - size.y).max(PANEL_EDGE));
+        place(
+            &panel,
+            [0.0; 4],
+            [pos.x, pos.y, pos.x + size.x, pos.y + size.y],
+        );
+        // a pad's focus on looking, the one that does nothing (never on the
+        // stairs: two stray A's would leave the level)
+        if self.pad {
+            let look_here = items
+                .iter()
+                .position(|i| i.str.as_deref() == Some(cell_menu::LOOK_HERE));
+            menu.focus_item(look_here);
+        }
+        (Kind::CellMenu(Box::new(menu)), shade, panel)
+    }
+
+    /// The menu of what can be done at a cell opening next goes by it:
+    /// `at` on the canvas, `look` what is known there, a line each.
+    pub fn set_cell_anchor(&mut self, at: Vector2, look: Vec<String>) {
+        self.cell_anchor = Some((at, look, std::time::Instant::now()));
+    }
+
+    /// The open cell's menu: each row's place among the engine's items
+    /// and its rect on screen (self-tests).
+    pub fn cell_menu_rows(&self) -> Option<Vec<(usize, Rect2)>> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::CellMenu(m)) => Some(m.rows()),
             _ => None,
         }
     }
@@ -4994,6 +5106,25 @@ impl Dialogs {
                 self.opening_cursor = (english_title == Some(THERE_MENU))
                     .then(|| texts.iter().position(|t| *t == LOOK_HERE))
                     .flatten();
+                // what can be done at the cell clicked: a popup by it
+                let anchor = (english_title == Some(cell_menu::TITLE) && *how == PickHow::One)
+                    .then(|| self.cell_anchor.take())
+                    .flatten()
+                    .filter(|(_, _, at)| at.elapsed().as_secs_f32() < 2.0);
+                if let Some((at, look, _)) = anchor {
+                    let (kind, shade, panel) = self.open_cell_menu(req, english, at, &look);
+                    self.open = Some(Open {
+                        req,
+                        prompt: original.clone(),
+                        kind,
+                        own: None,
+                        rpg: false,
+                        shade,
+                        panel,
+                        pad_room: None,
+                    });
+                    return;
+                }
                 let book = spells::spellbook(english_title, english);
                 if let Some(b) = &book {
                     self.known_spells = b.spells.clone();
@@ -5355,6 +5486,7 @@ impl Dialogs {
             Kind::Show { .. } => "show",
             Kind::MessageMenu { .. } => "message",
             Kind::Wheel(_) => "wheel",
+            Kind::CellMenu(_) => "cellmenu",
         })
     }
 
@@ -5540,6 +5672,13 @@ impl Dialogs {
                 b.set_text(&named_choice(*c, on, word));
             }
         }
+        if let Kind::CellMenu(m) = &mut open.kind
+            && on
+            && m.focus().is_none()
+        {
+            let look = cell_menu_look_here(&open.prompt);
+            m.focus_item(look);
+        }
         if let Kind::ExtCmd { edit, palette, .. } = &open.kind {
             palette.borrow_mut().pad = on;
             palette.borrow_mut().refilter(&edit.get_text().to_string());
@@ -5685,6 +5824,7 @@ impl Dialogs {
                     || view.state.entries.iter().all(|e| !e.selectable)
                     || view.cursor.is_some()
             }
+            Some(Kind::CellMenu(m)) => m.focus().is_some() || m.rows().is_empty(),
             _ => true,
         }
     }
@@ -5693,6 +5833,7 @@ impl Dialogs {
     pub fn menu_cursor(&self) -> Option<usize> {
         match self.open.as_ref().map(|o| &o.kind) {
             Some(Kind::Menu(view)) => view.cursor,
+            Some(Kind::CellMenu(m)) => m.focus(),
             _ => None,
         }
     }
@@ -5963,6 +6104,9 @@ impl Dialogs {
             let act = w.key(input.key, input.mods.shift, input.echo);
             return self.wheel_act(act);
         }
+        if let Kind::CellMenu(m) = &mut open.kind {
+            return m.key(input);
+        }
         let escape = open.prompt.escape_reply();
         // an RPG panel's own command, as the player presses it now
         if open.own.is_some() && !input.echo && self.keymap.translate(*input) == open.own {
@@ -6102,7 +6246,7 @@ impl Dialogs {
                 _ => None,
             },
             // answered above
-            Kind::Wheel(_) => None,
+            Kind::Wheel(_) | Kind::CellMenu(_) => None,
         }
     }
 
@@ -6167,6 +6311,13 @@ impl Dialogs {
             return self.osk(crate::gamepad::OskOp::Press);
         }
         let open = self.open.as_mut().filter(|o| o.req == req)?;
+        if let Kind::CellMenu(m) = &mut open.kind {
+            return match ev {
+                DialogEvent::MenuClick(i) => m.pick(*i),
+                DialogEvent::MenuCancel => Some(Reply::Cancel),
+                _ => None,
+            };
+        }
         if let Kind::Wheel(w) = &mut open.kind {
             let act = match ev {
                 DialogEvent::WheelMove(at) => {
@@ -6812,6 +6963,16 @@ impl Osk {
 
 /// An empty row at the end of a dialog's column: room a gamepad's hints
 /// take inside the panel (`Dialogs::set_pad_room`).
+/// Where "Look at what is here" is among a cell menu's items.
+fn cell_menu_look_here(prompt: &Prompt) -> Option<usize> {
+    match prompt {
+        Prompt::Menu { items, .. } => items
+            .iter()
+            .position(|i| i.str.as_deref() == Some(cell_menu::LOOK_HERE)),
+        _ => None,
+    }
+}
+
 fn add_pad_room(panel: &Gd<PanelContainer>) -> Option<Gd<Control>> {
     let mut col = panel.get_child(0)?.try_cast::<VBoxContainer>().ok()?;
     let mut room = Control::new_alloc();

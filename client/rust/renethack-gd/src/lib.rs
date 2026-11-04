@@ -12,6 +12,7 @@ mod batch;
 mod bearing;
 mod bindings;
 mod branch_look;
+mod cell_menu;
 mod census;
 mod codex;
 mod codex_view;

@@ -38,6 +38,8 @@ mod acts_tests;
 mod audio_tests;
 #[path = "selftest_calm.rs"]
 mod calm_tests;
+#[path = "selftest_cell_menu.rs"]
+mod cell_menu_tests;
 #[path = "selftest_chords.rs"]
 mod chords_tests;
 #[path = "selftest_codex.rs"]
@@ -5323,6 +5325,7 @@ impl SelfTest {
             "pool-sizes" => pool_sizes(),
             "palette" => palette(),
             "command-wheel" => command_wheel_tests::command_wheel(),
+            "cell-menu" => cell_menu_tests::cell_menu(),
             "threat-arrow" => threat_arrow(),
             "threats" => threats_tests::threats(),
             "gamepad" => gamepad(),

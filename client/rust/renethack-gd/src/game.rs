@@ -3792,6 +3792,7 @@ impl RenethackGame {
                 Some("show") => PadCtx::Read,
                 Some("extcmd") => PadCtx::Palette,
                 Some("wheel") => PadCtx::Wheel,
+                Some("cellmenu") => PadCtx::Menu { any: false },
                 Some("choice") => PadCtx::Choice,
                 Some("text") => PadCtx::Text,
                 Some("picker") => PadCtx::Picker {
@@ -4406,8 +4407,12 @@ impl RenethackGame {
                     ClickPlan::Order(order) => {
                         self.start_order(order);
                     }
-                    // CLICK_1 is the engine's #therecmdmenu
-                    ClickPlan::Engine => self.reply(Reply::Click { x, y, modifier: 1 }),
+                    // CLICK_1 is the engine's #therecmdmenu: its menu by
+                    // the cell
+                    ClickPlan::Engine => {
+                        self.anchor_cell_menu(x, y);
+                        self.reply(Reply::Click { x, y, modifier: 1 });
+                    }
                     ClickPlan::Nothing(why) => {
                         let why = match why {
                             "unexplored" => tr!("click-unexplored"),
@@ -4419,6 +4424,33 @@ impl RenethackGame {
             }
             Some(Prompt::MapPause) => self.reply(Reply::Ack),
             _ => {}
+        }
+    }
+
+    /// The engine's menu of what can be done at cell (`x`, `y`), asked
+    /// for now, opens by the cell: where it is on screen, and what the
+    /// hero knows is there (the hover tooltip's names) on top.
+    fn anchor_cell_menu(&mut self, x: i32, y: i32) {
+        let at = self.base().get_viewport().and_then(|vp| {
+            let cam = vp.get_camera_3d()?;
+            let p = Vector3::new(x as f32, 0.3, y as f32);
+            (!cam.is_position_behind(p)).then(|| cam.unproject_position(p))
+        });
+        let look: Vec<String> = self
+            .world
+            .map
+            .cell(x, y)
+            .zip(self.catalog.as_deref())
+            .and_then(|(c, cat)| describe_cell(c, cat))
+            .map(|d| {
+                d.lines()
+                    .map(|l| i18n::engine(EngineKind::Name, l).into_owned())
+                    .map(|l| crate::dialogs::palette_row_words(&l))
+                    .collect()
+            })
+            .unwrap_or_default();
+        if let Some(at) = at {
+            self.ui_mut().dialogs.set_cell_anchor(at, look);
         }
     }
 
