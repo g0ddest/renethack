@@ -131,6 +131,17 @@ pub enum DialogEvent {
         pressed: bool,
         at: godot::builtin::Vector2,
     },
+    /// The container's panel: a row marked or unmarked (column 0 the
+    /// pack's, 1 the container's), how many of it, more or fewer.
+    LootToggle {
+        column: usize,
+        row: usize,
+    },
+    LootCount {
+        column: usize,
+        row: usize,
+        delta: i32,
+    },
 }
 
 /// Role, race, gender and alignment codes ("random" allowed).

@@ -100,6 +100,8 @@ mod late_tests;
 mod layouts_tests;
 #[path = "selftest_look.rs"]
 mod look_tests;
+#[path = "selftest_loot.rs"]
+mod loot_tests;
 #[path = "selftest_ordinals.rs"]
 mod ordinals_tests;
 #[path = "selftest_outfits.rs"]
@@ -5355,6 +5357,7 @@ impl SelfTest {
             "palette" => palette(),
             "command-wheel" => command_wheel_tests::command_wheel(),
             "cell-menu" => cell_menu_tests::cell_menu(),
+            "loot" => loot_tests::loot(),
             "threat-arrow" => threat_arrow(),
             "threats" => threats_tests::threats(),
             "gamepad" => gamepad(),

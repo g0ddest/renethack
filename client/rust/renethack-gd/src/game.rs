@@ -691,6 +691,10 @@ pub struct RenethackGame {
     /// The key or button holding the command wheel open (Tab, the middle
     /// mouse button): letting it go picks.
     wheel_held: Option<WheelHold>,
+    /// A container being looted through its panel (`nh_world::LootFlow`).
+    loot: Option<nh_world::LootFlow>,
+    /// The request open now is the looting's list, shown as that panel.
+    loot_open: bool,
     /// The start-up veil (the boot splash's colour), the cue pulsing on
     /// it, and when it began to lift (None: still down).
     veil: Option<Gd<godot::classes::ColorRect>>,
@@ -1070,6 +1074,8 @@ impl INode for RenethackGame {
             map_ms: 0.0,
             headless: false,
             wheel_held: None,
+            loot: None,
+            loot_open: false,
             veil: None,
             veil_cue: None,
             first_launch: false,
@@ -2453,6 +2459,33 @@ impl RenethackGame {
             self.reply(r);
             return;
         }
+        // a container's looting: its menus answered for the panel of two
+        // columns, the first list of things shown as that panel
+        self.loot_open = false;
+        if !self.macros.is_active()
+            && let Some((flow, r)) = nh_world::LootFlow::start(&prompt)
+        {
+            self.loot = Some(flow);
+            self.pending = Some((id, prompt));
+            self.reply(r);
+            return;
+        }
+        if let Some(flow) = self.loot.as_mut() {
+            match flow.on_prompt(&prompt) {
+                nh_world::LootStep::Reply(r) => {
+                    self.pending = Some((id, prompt));
+                    self.reply(r);
+                    return;
+                }
+                nh_world::LootStep::Open(view) => {
+                    let pack = self.world.inventory.items().to_vec();
+                    self.ui_mut().dialogs.set_loot(view, pack);
+                    self.loot_open = true;
+                }
+                nh_world::LootStep::Done => self.loot = None,
+                nh_world::LootStep::Pass => {}
+            }
+        }
         if let Some(cat) = self.catalog.clone() {
             if prompt == Prompt::Command && !self.world.getpos {
                 // the tick's moment: the mode, and whether the order goes on
@@ -2489,6 +2522,7 @@ impl RenethackGame {
         let inventory_menu = match &prompt {
             Prompt::Menu { how, items, .. } => {
                 *how != PickHow::None
+                    && !self.loot_open
                     && menu_kind(items, &self.world.inventory) == MenuKind::Inventory
             }
             _ => false,
@@ -3675,6 +3709,12 @@ impl RenethackGame {
         if let Some(m) = follow {
             self.deferred = Some(SlotUse::Macro(m));
         }
+        // the container's panel answered: its pack's marks go in next
+        if let Some(put) = self.ui_mut().dialogs.take_loot_put()
+            && let Some(flow) = self.loot.as_mut()
+        {
+            flow.answered(put);
+        }
         self.reply(r);
     }
 
@@ -3800,6 +3840,7 @@ impl RenethackGame {
                 Some("extcmd") => PadCtx::Palette,
                 Some("wheel") => PadCtx::Wheel,
                 Some("cellmenu") => PadCtx::Pick,
+                Some("loot") => PadCtx::Loot,
                 Some("choice") => PadCtx::Choice,
                 Some("text") => PadCtx::Text,
                 Some("picker") => PadCtx::Picker {
@@ -4212,7 +4253,9 @@ impl RenethackGame {
         let pad = self.pad.active.then_some(self.pad.kind);
         ui.dialogs.set_pad(pad.is_some());
         let owes = (self.world.inventory.items().iter()).any(|i| i.text.contains("(unpaid"));
+        let paying = owes && self.state == GameState::Playing;
         ui.dialogs.set_owes(owes);
+        ui.hud.set_owes(paying);
         ui.dialogs.set_energy(self.world.status.number("energy"));
         ui.help.set_pad(pad.is_some());
         ui.inventory.set_pad(pad);

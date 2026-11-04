@@ -183,6 +183,13 @@ pub fn hints(ctx: PadCtx) -> Vec<(Vec<PadButton>, &'static str)> {
             (vec![B], "hint-cancel"),
             (vec![Lb, Rb], "hint-page"),
         ],
+        PadCtx::Loot => vec![
+            (vec![A], "hint-toggle"),
+            (vec![Left, Right], "hint-count"),
+            (vec![Lb, Rb], "hint-column"),
+            (vec![Start], "hint-confirm"),
+            (vec![B], "hint-cancel"),
+        ],
         PadCtx::Pick => vec![
             (vec![Up, Down], "hint-choose"),
             (vec![A], "hint-ok"),
@@ -556,6 +563,7 @@ mod tests {
             PadCtx::Menu { any: true },
             PadCtx::Menu { any: false },
             PadCtx::Pick,
+            PadCtx::Loot,
             PadCtx::Choice,
             PadCtx::Message { letter: 'y' },
             PadCtx::Read,

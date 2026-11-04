@@ -37,6 +37,7 @@ use crate::i18n::{self, EngineKind, Lang};
 use crate::journal;
 use crate::journal_view::{self, JournalView};
 use crate::layouts::{self, Genocided, GoneRow, KillRow, OverviewRow, Vanquished};
+use crate::loot_view::LootPanel;
 use crate::pad_view;
 use crate::pickers::{self, Ask, ObjClass, Pick, Wish};
 use crate::sheet;
@@ -2058,7 +2059,13 @@ enum Kind {
     /// What can be done at a cell (the engine's #therecmdmenu), a popup
     /// by the cell.
     CellMenu(Box<CellMenu>),
+    /// A container's things beside the pack (the looting's list).
+    Loot(Box<LootPanel>),
 }
+
+/// The open container's panel as self-tests read it: each column's rows,
+/// those marked, the keys' row.
+pub type LootState = ([usize; 2], [Vec<usize>; 2], (usize, Option<usize>));
 
 /// The open command wheel as self-tests read it: its ring, its wedges'
 /// words, the one pointed at, its middle on screen, whether it is held.
@@ -2139,6 +2146,12 @@ pub struct Dialogs {
     /// The cell clicked (where on screen, what is known there) and when:
     /// the engine's menu of what can be done there opens by it.
     cell_anchor: Option<(Vector2, Vec<String>, std::time::Instant)>,
+    /// The looting's list opening next shows as the container's panel:
+    /// what it shows, the pack beside it.
+    loot_next: Option<(nh_world::LootView, Vec<nh_protocol::InvItem>)>,
+    /// The pack's marks, once the panel answered its list (the looting
+    /// puts them in next).
+    loot_put: Option<Vec<(char, Option<u32>)>>,
     /// The hero rendered in their gear (the inventory's doll): the
     /// character sheet's portrait.
     portrait: Option<Gd<Texture2D>>,
@@ -2280,6 +2293,8 @@ impl Dialogs {
             opening_english: Vec::new(),
             known_spells: Vec::new(),
             cell_anchor: None,
+            loot_next: None,
+            loot_put: None,
             portrait: None,
             sheet: None,
             opening_own: None,
@@ -3248,6 +3263,96 @@ impl Dialogs {
     pub fn wheel_items(&self) -> Option<Vec<command_wheel::WheelItem>> {
         match self.open.as_ref().map(|o| &o.kind) {
             Some(Kind::Wheel(w)) => Some(w.items().to_vec()),
+            _ => None,
+        }
+    }
+
+    /// The container's panel for the looting's list: the pack beside the
+    /// container's things (`view`); `items` the list's entries.
+    fn open_loot(
+        &mut self,
+        req: u64,
+        view: &nh_world::LootView,
+        pack: &[nh_protocol::InvItem],
+        items: &[nh_protocol::MenuItem],
+    ) -> (Kind, Gd<ColorRect>, Gd<PanelContainer>) {
+        let container = palette_row_words(&i18n::engine(EngineKind::Name, &view.container));
+        let width = 2.0 * crate::loot_view::COLUMN_W + 24.0;
+        let (shade, panel, mut col) = self.frame(width, Some(&container));
+        let mut body = HBoxContainer::new_alloc();
+        body.add_theme_constant_override("separation", 24);
+        let heads = [tr!("loot-pack"), tr!("loot-inside")];
+        let put_items: &[nh_protocol::MenuItem] = if view.putting { items } else { &[] };
+        let source = crate::loot_view::LootSource {
+            pack,
+            take: &view.take,
+            put_items,
+            putting: view.putting,
+        };
+        let loot = LootPanel::build(&mut body, heads, &source, &self.queue, req);
+        col.add_child(&body);
+        self.hint(&mut col, &tr!("loot-hint"), width);
+        let buttons = [
+            (tr!("loot-done"), dialog_ui(req, DialogEvent::MenuConfirm)),
+            (tr!("dlg-cancel"), dialog_ui(req, DialogEvent::MenuCancel)),
+        ];
+        let made = self.buttons(&mut col, &buttons);
+        for b in &made {
+            // a pad's Start and B say them (its strip)
+            pad_view::key_words(b, self.pad);
+        }
+        (Kind::Loot(Box::new(loot)), shade, panel)
+    }
+
+    /// The container's panel done (`done`) or given up: its answer to the
+    /// list; the pack's marks kept for the put-in list to come.
+    fn loot_end(&mut self, done: bool) -> Option<Reply> {
+        let Some(Kind::Loot(l)) = self.open.as_ref().map(|o| &o.kind) else {
+            return None;
+        };
+        let (reply, put) = match (done, l.putting()) {
+            (true, false) => (l.reply(), l.pack_marks()),
+            (true, true) => (l.reply(), Vec::new()),
+            (false, _) => (Reply::Cancel, Vec::new()),
+        };
+        self.loot_put = Some(put);
+        Some(reply)
+    }
+
+    /// The looting's next list shows as the container's panel.
+    pub fn set_loot(&mut self, view: nh_world::LootView, pack: Vec<nh_protocol::InvItem>) {
+        self.loot_next = Some((view, pack));
+    }
+
+    /// The pack's marks the container's panel left, once (the looting
+    /// puts them in).
+    pub fn take_loot_put(&mut self) -> Option<Vec<(char, Option<u32>)>> {
+        self.loot_put.take()
+    }
+
+    /// The open container's panel: each column's rows, those marked, the
+    /// keys' row (self-tests).
+    pub fn loot_state(&self) -> Option<LootState> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Loot(l)) => Some((l.lens(), l.marked(), l.focus())),
+            _ => None,
+        }
+    }
+
+    /// The open container's panel's pack column, its letters top down
+    /// (self-tests).
+    pub fn loot_pack_letters(&self) -> Option<Vec<char>> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Loot(l)) => Some(l.pack_letters()),
+            _ => None,
+        }
+    }
+
+    /// Where the open container's panel shows row `i` of column `col`
+    /// (self-tests).
+    pub fn loot_row_rect(&self, col: usize, i: usize) -> Option<Rect2> {
+        match self.open.as_ref().map(|o| &o.kind) {
+            Some(Kind::Loot(l)) => l.row_rect(col, i),
             _ => None,
         }
     }
@@ -5149,6 +5254,22 @@ impl Dialogs {
                 self.opening_cursor = (english_title == Some(THERE_MENU))
                     .then(|| texts.iter().position(|t| *t == LOOK_HERE))
                     .flatten();
+                // the looting's list: the container's panel
+                if let Some((view, pack)) = self.loot_next.take() {
+                    let (kind, shade, panel) = self.open_loot(req, &view, &pack, english);
+                    let pad_room = add_pad_room(&panel);
+                    self.open = Some(Open {
+                        req,
+                        prompt: original.clone(),
+                        kind,
+                        own: None,
+                        rpg: false,
+                        shade,
+                        panel,
+                        pad_room,
+                    });
+                    return;
+                }
                 // what can be done at the cell clicked: a popup by it
                 let anchor = (english_title == Some(cell_menu::TITLE) && *how == PickHow::One)
                     .then(|| self.cell_anchor.take())
@@ -5537,6 +5658,7 @@ impl Dialogs {
             Kind::MessageMenu { .. } => "message",
             Kind::Wheel(_) => "wheel",
             Kind::CellMenu(_) => "cellmenu",
+            Kind::Loot(_) => "loot",
         })
     }
 
@@ -6175,6 +6297,16 @@ impl Dialogs {
         if let Kind::CellMenu(m) = &mut open.kind {
             return m.key(input);
         }
+        if let Kind::Loot(l) = &mut open.kind {
+            match input.key {
+                Key::Escape if !input.echo => return self.loot_end(false),
+                Key::Enter | Key::KeypadEnter if !input.echo => return self.loot_end(true),
+                _ => {
+                    l.key(input);
+                    return None;
+                }
+            }
+        }
         let escape = open.prompt.escape_reply();
         // an RPG panel's own command, as the player presses it now
         if open.own.is_some() && !input.echo && self.keymap.translate(*input) == open.own {
@@ -6320,7 +6452,7 @@ impl Dialogs {
                 _ => None,
             },
             // answered above
-            Kind::Wheel(_) | Kind::CellMenu(_) => None,
+            Kind::Wheel(_) | Kind::CellMenu(_) | Kind::Loot(_) => None,
         }
     }
 
@@ -6385,6 +6517,16 @@ impl Dialogs {
             return self.osk(crate::gamepad::OskOp::Press);
         }
         let open = self.open.as_mut().filter(|o| o.req == req)?;
+        if let Kind::Loot(l) = &mut open.kind {
+            match ev {
+                DialogEvent::LootToggle { column, row } => l.toggle(*column, *row),
+                DialogEvent::LootCount { column, row, delta } => l.count(*column, *row, *delta),
+                DialogEvent::MenuConfirm => return self.loot_end(true),
+                DialogEvent::MenuCancel => return self.loot_end(false),
+                _ => {}
+            }
+            return None;
+        }
         if let Kind::CellMenu(m) = &mut open.kind {
             return match ev {
                 DialogEvent::MenuClick(i) => m.pick(*i),

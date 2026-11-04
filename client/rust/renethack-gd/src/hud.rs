@@ -1271,6 +1271,8 @@ pub struct Hud {
     minimap_caption: Gd<Label>,
     mode_panel: Gd<PanelContainer>,
     mode_label: Gd<Label>,
+    /// «Заплатить» under the mode badge, while goods are not paid for.
+    pay: Gd<Button>,
     order_label: Gd<Label>,
 
     // centre
@@ -1743,6 +1745,31 @@ impl Hud {
         order_label.set_autowrap_mode(AutowrapMode::WORD_SMART);
         order_label.set_visible(false);
         root.add_child(&order_label);
+        // goods not paid for: NetHack's `p`, a click away, under the order
+        // line (the shopkeeper's own words answer it)
+        let mut pay = theme::button("", &queue, key_event(KeyInput::plain(Key::Char('p'))));
+        i18n::text(&pay, "hud-pay");
+        pay.set_button_icon(&crate::icons::emblem(crate::icons::Glyph::Coins));
+        pay.add_theme_constant_override("icon_max_width", 22);
+        pay.set_mouse_filter(MouseFilter::STOP);
+        place(
+            &pay,
+            [1.0, 0.0, 1.0, 0.0],
+            [
+                -EDGE - MODE_W,
+                EDGE + MINIMAP_H + 76.0,
+                -EDGE,
+                EDGE + MINIMAP_H + 116.0,
+            ],
+        );
+        pay.set_visible(false);
+        keyed.push(Keyed::tip(
+            &pay,
+            "hud-pay-tip",
+            KeyInput::plain(Key::Char('p')),
+        ));
+        root.add_child(&pay);
+        solid.push(pay.clone().upcast());
 
         // ---- the prompt banner, top centre ----
         let mut prompt_row = hbox(0);
@@ -1952,6 +1979,7 @@ impl Hud {
             minimap_caption,
             mode_panel,
             mode_label,
+            pay,
             order_label,
             prompt_row,
             prompt_panel,
@@ -2084,6 +2112,20 @@ impl Hud {
     }
 
     /// Exploring or fighting; `announce` shows the big banner too.
+    /// «Заплатить» on screen, while it shows (self-tests).
+    pub fn pay_rect(&self) -> Option<Rect2> {
+        self.pay
+            .is_visible_in_tree()
+            .then(|| self.pay.get_global_rect())
+    }
+
+    /// Goods are not paid for: «Заплатить» shows.
+    pub fn set_owes(&mut self, owes: bool) {
+        if self.pay.is_visible() != owes {
+            self.pay.set_visible(owes);
+        }
+    }
+
     pub fn set_mode(&mut self, combat: bool, announce: bool) {
         if self.combat == Some(combat) && !announce {
             return;
@@ -3191,6 +3233,7 @@ impl Hud {
             ("portrait", self.portrait_panel.clone().upcast::<Control>()),
             ("minimap", self.minimap_panel.clone().upcast()),
             ("mode badge", self.mode_panel.clone().upcast()),
+            ("pay button", self.pay.clone().upcast()),
             ("log", self.log_panel.clone().upcast()),
             ("prompt", self.prompt_panel.clone().upcast()),
         ]

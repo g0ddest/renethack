@@ -46,6 +46,7 @@ mod journal;
 mod journal_view;
 mod kits;
 mod layouts;
+mod loot_view;
 mod map_view;
 mod meshes;
 mod minimap;

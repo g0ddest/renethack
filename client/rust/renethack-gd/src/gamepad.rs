@@ -294,6 +294,9 @@ pub enum PadCtx {
     /// A short list to pick one from, on one page: the cell's menu, a
     /// pick-one menu with no second page (no paging to hint at).
     Pick,
+    /// A container's panel: the bumpers go to the other column, A marks,
+    /// Start is done.
+    Loot,
     /// The command wheel: a stick points at a wedge, A picks it.
     Wheel,
     /// The spells' panel with its card: a menu, Y puts the card's spell
@@ -556,7 +559,8 @@ impl Pad {
                     | PadCtx::Help
                     | PadCtx::Read
                     | PadCtx::Palette
-                    | PadCtx::Spells => {
+                    | PadCtx::Spells
+                    | PadCtx::Loot => {
                         out.push(PadOut::Key(key(if b == Lb {
                             Key::PageUp
                         } else {
@@ -584,7 +588,9 @@ impl Pad {
             (A, PadCtx::World) => PadOut::Activate,
             (A, PadCtx::Getpos) => PadOut::Key(ch('.')),
             (A, PadCtx::Direction) => PadOut::Key(ch('.')),
-            (A, PadCtx::Menu { any: true }) | (A, PadCtx::PanelMenu) => PadOut::Key(ch(' ')),
+            (A, PadCtx::Menu { any: true } | PadCtx::PanelMenu | PadCtx::Loot) => {
+                PadOut::Key(ch(' '))
+            }
             (A, PadCtx::Message { letter }) => PadOut::Key(ch(letter)),
             (A, PadCtx::Text) => PadOut::Osk(OskOp::Press),
             (A, _) => PadOut::Key(key(Key::Enter)),
