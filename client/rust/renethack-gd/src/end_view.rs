@@ -92,6 +92,9 @@ pub struct EndSummary {
     /// The log's last messages: never shown, they tell a self-test how
     /// the game ended.
     pub last_messages: Vec<String>,
+    /// What the game said as the hero died (`final_words`), for the
+    /// death's beat.
+    pub final_words: Vec<nh_world::Message>,
     /// The lines raw_print printed (the top ten), true: in bold.
     pub printed: Vec<(String, bool)>,
     /// What the game last told: the turn, the deepest level, the score;
@@ -376,6 +379,102 @@ const RECORDS_RATIO: f32 = 1.15;
 /// title, the buttons and their hints.
 const CHROME: f32 = 280.0;
 
+/// How long the beat lasts, in seconds: the game darkens behind the words
+/// that ended it, the stone fades in, then the rest of the page. No input
+/// counts before it is over.
+pub const BEAT_SECS: f32 = 1.55;
+/// When each part of the beat comes and is whole, in seconds: the dark
+/// over the game, the words, the stone, the rest of the page (the words
+/// fade as it comes).
+const BACKDROP: (f32, f32) = (0.0, 0.45);
+const WORDS_IN: (f32, f32) = (0.15, 0.45);
+const STONE_IN: (f32, f32) = (0.4, 1.0);
+const PAGE_IN: (f32, f32) = (1.25, BEAT_SECS);
+
+/// How far along `span` the time `t` is, eased: 0 before, 1 after.
+fn ramp(t: f32, (from, to): (f32, f32)) -> f32 {
+    let x = ((t - from) / (to - from).max(1e-3)).clamp(0.0, 1.0);
+    x * x * (3.0 - 2.0 * x)
+}
+
+/// The end's beat on the page as built: what fades in and out of it.
+pub struct Beat {
+    /// The words that ended the game, where the story will be.
+    words: Gd<Control>,
+    /// The stone (a quit's, an escape's, an ascension's page).
+    stone: Gd<Control>,
+    /// The rest of the page: its title, rules, body, buttons and hints.
+    rest: Vec<Gd<Control>>,
+    /// The frame (its own drawing only: its children are above).
+    panel: Gd<PanelContainer>,
+    /// Over the page while it lasts: no click on a button not yet seen.
+    blocker: Gd<Control>,
+    over: bool,
+}
+
+impl Beat {
+    /// The page `t` seconds into the beat; how dark the backdrop over the
+    /// game is then (1: the game no longer shows).
+    pub fn show(&mut self, t: f32) -> f32 {
+        if self.over {
+            return 1.0;
+        }
+        let fade = |c: &mut Gd<Control>, a: f32| {
+            let mut m = c.get_modulate();
+            m.a = a;
+            c.set_modulate(m);
+        };
+        let page = ramp(t, PAGE_IN);
+        fade(&mut self.words, ramp(t, WORDS_IN) * (1.0 - page));
+        fade(&mut self.stone, ramp(t, STONE_IN));
+        for c in &mut self.rest {
+            fade(c, page);
+        }
+        let mut m = self.panel.get_self_modulate();
+        m.a = page;
+        self.panel.set_self_modulate(m);
+        if t >= BEAT_SECS {
+            self.over = true;
+            self.words.queue_free();
+            self.blocker.queue_free();
+        }
+        ramp(t, BACKDROP)
+    }
+
+    pub fn is_over(&self) -> bool {
+        self.over
+    }
+}
+
+/// What the game said last, from the log's last messages (newest last):
+/// up to two lines of the last turn, without the "You die..." that the
+/// beat says in its own words. For a death, the killer's line ("The
+/// soldier ant bites!", "You drown."); for an ascension, the choir.
+pub fn final_words(log: &[nh_world::Message]) -> Vec<nh_world::Message> {
+    let said = |m: &&nh_world::Message| !m.history_only && !m.from_history;
+    let Some(last) = log.iter().rposition(|m| said(&m)) else {
+        return Vec::new();
+    };
+    let turn = log[last].turn;
+    let restates = |t: &str| {
+        let t = t.trim();
+        t.is_empty()
+            || t == "You die..."
+            || t == "You turn to stone..."
+            || t.starts_with("Do not pass Go")
+    };
+    let mut out: Vec<nh_world::Message> = log[..=last]
+        .iter()
+        .rev()
+        .take_while(|m| m.turn == turn)
+        .filter(|m| said(m) && !restates(&m.text))
+        .take(2)
+        .cloned()
+        .collect();
+    out.reverse();
+    out
+}
+
 /// The end page as built: its controls for the screens' keys and pad.
 pub struct EndPage {
     pub root: Gd<Control>,
@@ -389,10 +488,20 @@ pub struct EndPage {
     pub foot: Gd<HBoxContainer>,
     /// NetHack's disclosures, a part a tab.
     pub sections: Option<end_disclosed::Sections>,
+    /// The beat it opens with (none when drawn again, in another
+    /// language).
+    pub beat: Option<Beat>,
 }
 
-/// The end page for `s` on a canvas of `canvas`, its hints for `pad`.
-pub fn build(s: &EndSummary, queue: &UiQueue, canvas: Vector2, pad: Option<PadKind>) -> EndPage {
+/// The end page for `s` on a canvas of `canvas`, its hints for `pad`;
+/// `beat`: it opens with the end's beat.
+pub fn build(
+    s: &EndSummary,
+    queue: &UiQueue,
+    canvas: Vector2,
+    pad: Option<PadKind>,
+    beat: bool,
+) -> EndPage {
     let mut root = MarginContainer::new_alloc();
     theme::full_rect_ignore(&root);
     let side = MARGIN.max((canvas.x - MAX_WIDTH) / 2.0).round() as i32;
@@ -410,7 +519,8 @@ pub fn build(s: &EndSummary, queue: &UiQueue, canvas: Vector2, pad: Option<PadKi
     let mut heading = theme::styled_label(&title, Face::Title, 34, theme::ACCENT);
     heading.set_horizontal_alignment(HorizontalAlignment::CENTER);
     col.add_child(&heading);
-    col.add_child(&rule(0.5));
+    let top_rule = rule(0.5);
+    col.add_child(&top_rule);
     // the body: the stone, still, beside the hero's story and the
     // records, scrolled when they are longer than the canvas, centred
     // when shorter
@@ -454,12 +564,22 @@ pub fn build(s: &EndSummary, queue: &UiQueue, canvas: Vector2, pad: Option<PadKi
     room.add_child(&parts);
     middle.add_child(&room);
     scroll.add_child(&middle);
-    body.add_child(&scroll);
+    // the beat's words where the story and the records will be
+    let mut stack = MarginContainer::new_alloc();
+    stack.set_h_size_flags(SizeFlags::EXPAND_FILL);
+    stack.add_child(&scroll);
+    let words = beat.then(|| {
+        let w = beat_words(s);
+        stack.add_child(&w);
+        w
+    });
+    body.add_child(&stack);
     col.add_child(&body);
-    col.add_child(&rule(0.5));
-    let mut buttons = HBoxContainer::new_alloc();
-    buttons.set_alignment(AlignmentMode::CENTER);
-    buttons.add_theme_constant_override("separation", 16);
+    let bottom_rule = rule(0.5);
+    col.add_child(&bottom_rule);
+    let mut row = HBoxContainer::new_alloc();
+    row.set_alignment(AlignmentMode::CENTER);
+    row.add_theme_constant_override("separation", 16);
     let mut made: Vec<Gd<Control>> = Vec::new();
     for (key, ev) in [
         ("end-new-game", UiEvent::NewGame),
@@ -468,10 +588,10 @@ pub fn build(s: &EndSummary, queue: &UiQueue, canvas: Vector2, pad: Option<PadKi
     ] {
         let mut b: Gd<Button> = theme::button(&i18n::tr(key), queue, ev);
         b.set_custom_minimum_size(Vector2::new(220.0, 46.0));
-        buttons.add_child(&b);
+        row.add_child(&b);
         made.push(b.upcast());
     }
-    col.add_child(&buttons);
+    col.add_child(&row);
     let mut foot = HBoxContainer::new_alloc();
     foot.set_alignment(AlignmentMode::CENTER);
     foot.set_mouse_filter(MouseFilter::IGNORE);
@@ -479,6 +599,28 @@ pub fn build(s: &EndSummary, queue: &UiQueue, canvas: Vector2, pad: Option<PadKi
     col.add_child(&foot);
     panel.add_child(&col);
     root.add_child(&panel);
+    let beat = words.map(|words| {
+        let mut blocker = Control::new_alloc();
+        blocker.set_mouse_filter(MouseFilter::STOP);
+        root.add_child(&blocker);
+        let mut b = Beat {
+            words: words.upcast(),
+            stone: stone.clone(),
+            rest: vec![
+                heading.upcast(),
+                top_rule.upcast(),
+                scroll.clone().upcast(),
+                bottom_rule.upcast(),
+                row.upcast(),
+                foot.clone().upcast(),
+            ],
+            panel: panel.clone(),
+            blocker,
+            over: false,
+        };
+        b.show(0.0);
+        b
+    });
     EndPage {
         root: root.upcast(),
         panel,
@@ -486,6 +628,62 @@ pub fn build(s: &EndSummary, queue: &UiQueue, canvas: Vector2, pad: Option<PadKi
         scroll,
         foot,
         sections,
+        beat,
+    }
+}
+
+/// The beat's words: what the game said as the hero died, then how the
+/// game ended («Вы погибли — убита муравьём-солдатом»), centred.
+fn beat_words(s: &EndSummary) -> Gd<Control> {
+    let mut col = VBoxContainer::new_alloc();
+    col.set_alignment(AlignmentMode::CENTER);
+    col.add_theme_constant_override("separation", 16);
+    col.set_mouse_filter(MouseFilter::IGNORE);
+    // what killed the hero (an ascension's god, not its "You ascend…",
+    // which the line under it says): an end the player chose says none
+    let told = matches!(s.how, EndHow::Died | EndHow::Ascended);
+    let shown = (s.final_words.iter())
+        .filter(|_| told)
+        .filter(|m| !m.text.starts_with("You ascend"));
+    for m in shown {
+        let said = layouts::upstart(&i18n::engine_message(m));
+        let mut l = wrapped(&said, Face::Body, 22, theme::TEXT_DIM);
+        l.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        col.add_child(&l);
+    }
+    let (line, color) = beat_line(s);
+    let mut l = wrapped(&line, Face::TitleBold, 44, color);
+    l.set_horizontal_alignment(HorizontalAlignment::CENTER);
+    col.add_child(&l);
+    col.upcast()
+}
+
+/// How the game ended, as the beat says it, and in what colour.
+pub fn beat_line(s: &EndSummary) -> (String, Color) {
+    let f = female(s);
+    match s.how {
+        EndHow::Died => {
+            let cause = death_words(s);
+            if cause.is_empty() {
+                (tr!("end-beat-died-bare"), theme::HP)
+            } else {
+                (tr!("end-beat-died", cause = cause), theme::HP)
+            }
+        }
+        EndHow::Quit => (tr!("end-beat-quit", female = f), theme::TEXT),
+        EndHow::Escaped => (tr!("end-beat-escaped", female = f), theme::TEXT),
+        EndHow::Ascended => (tr!("end-beat-ascended", female = f), theme::GOLD_BRIGHT),
+    }
+}
+
+/// A death's words as the stone has them, else as the chronicle ends
+/// (formatkiller's words both), in the language now.
+fn death_words(s: &EndSummary) -> String {
+    match s.stone() {
+        Some(t) if !t.death.is_empty() => layouts::death(&t.death),
+        _ => (s.chronicle.last())
+            .map(|(_, t)| layouts::death(t))
+            .unwrap_or_default(),
     }
 }
 
@@ -578,16 +776,7 @@ fn marker(s: &EndSummary, scale: f32) -> Gd<Control> {
             {
                 stone.name = s.name.clone();
             }
-            // a death's words as the stone has them, else as the
-            // chronicle ends (formatkiller's words both)
-            let death = if !stone.death.is_empty() {
-                layouts::death(&stone.death)
-            } else {
-                (s.chronicle.last())
-                    .map(|(_, t)| layouts::death(t))
-                    .unwrap_or_default()
-            };
-            tombstone::view_with(&stone, &death, rank.as_deref())
+            tombstone::view_with(&stone, &death_words(s), rank.as_deref())
         }
         // NetHack carves no stone for a quit (outrip only for a death)
         EndHow::Ascended | EndHow::Escaped | EndHow::Quit => honour(s, rank.as_deref()),
@@ -1311,6 +1500,50 @@ mod tests {
         let kept = conduct_kept(&ate_meat, true);
         assert!(!kept.iter().any(|k| k.contains("veg") || k.contains("food")));
         assert!(!kept.contains(&"end-conduct-wishless"));
+    }
+
+    #[test]
+    fn the_final_words_are_the_death_s_turn_before_you_die() {
+        let mut log = nh_world::MessageLog::new();
+        for (text, turn) in [
+            ("You see here a scroll.", 40),
+            ("You hit the soldier ant.", 41),
+            ("The soldier ant bites!", 41),
+            ("The soldier ant stings!", 41),
+            ("You die...", 41),
+        ] {
+            log.push(text.into(), 0, Some(turn), false);
+        }
+        let all: Vec<nh_world::Message> = log.iter().cloned().collect();
+        let words: Vec<String> = final_words(&all).into_iter().map(|m| m.text).collect();
+        assert_eq!(words, ["The soldier ant bites!", "The soldier ant stings!"]);
+        // only the death's turn
+        let mut log = nh_world::MessageLog::new();
+        log.push("You see here a scroll.".into(), 0, Some(40), false);
+        log.push("You die...".into(), 0, Some(41), false);
+        let all: Vec<nh_world::Message> = log.iter().cloned().collect();
+        assert!(final_words(&all).is_empty());
+        // a death without "You die...": its own line
+        let mut log = nh_world::MessageLog::new();
+        log.push(
+            "You begin eating the cockatrice corpse.".into(),
+            0,
+            Some(7),
+            false,
+        );
+        log.push("You turn to stone.".into(), 0, Some(8), false);
+        let all: Vec<nh_world::Message> = log.iter().cloned().collect();
+        let words: Vec<String> = final_words(&all).into_iter().map(|m| m.text).collect();
+        assert_eq!(words, ["You turn to stone."]);
+    }
+
+    #[test]
+    fn the_beat_comes_in_its_order() {
+        // the dark, then the words, the stone, the page; each eased
+        assert_eq!(ramp(0.0, WORDS_IN), 0.0);
+        assert_eq!(ramp(BEAT_SECS, PAGE_IN), 1.0);
+        assert!(BACKDROP.1 <= STONE_IN.1 && STONE_IN.1 <= PAGE_IN.0);
+        assert!((ramp(0.3, (0.2, 0.4)) - 0.5).abs() < 1e-6);
     }
 
     #[test]

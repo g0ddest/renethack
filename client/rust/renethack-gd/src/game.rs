@@ -507,6 +507,9 @@ pub struct RenethackGame {
     /// asks none: `disclose` says yes for the player), until the farewell.
     disclosed: Vec<crate::end_view::Disclosure>,
     farewell_seen: bool,
+    /// The game is still drawn behind the end's beat, until its backdrop
+    /// hides it.
+    end_behind: bool,
     /// The client's settings, as the profile keeps them (read at start,
     /// changed on the settings page).
     pub(crate) settings: Settings,
@@ -994,6 +997,7 @@ impl INode for RenethackGame {
             earned_in_game: (0, Vec::new()),
             disclosed: Vec::new(),
             farewell_seen: false,
+            end_behind: false,
             settings: Settings::default(),
             test_tick: None,
             settings_page: None,
@@ -1348,6 +1352,7 @@ impl INode for RenethackGame {
         self.sync_credits_page();
         self.sync_achievements_page();
         self.sync_pad_words();
+        self.end_beat_tick();
         parts.input = ms(t);
         self.lap("input", t);
         let t = Instant::now();
@@ -5261,6 +5266,8 @@ impl RenethackGame {
             return false;
         }
         let typing = ui.screens.typing();
+        // the end page: nothing during its beat, nor a key held from before
+        let held = self.ui_mut().screens.end_holds(event);
         let input = if let Ok(b) = event.clone().try_cast::<InputEventJoypadButton>() {
             self.pad.active = true;
             if !b.is_pressed() {
@@ -5353,6 +5360,9 @@ impl RenethackGame {
         } else {
             return false;
         };
+        if held {
+            return true;
+        }
         self.ui_mut().screens.nav_input(input)
     }
 
@@ -5967,13 +5977,36 @@ impl RenethackGame {
         }
     }
 
+    /// The end page, opening with the end's beat over the game as it was
+    /// last drawn: the game hides once the beat's backdrop covers it.
     fn show_end(&mut self) {
         // the last notice's achievements counted before the page lists them
         self.achieve(0.0);
         let summary = self.end_summary();
         self.state = GameState::Ended;
-        self.show_game(false);
-        self.ui_mut().screens.show_end(&summary);
+        self.clear_hover();
+        let ui = self.ui_mut();
+        ui.dialogs.close();
+        ui.inventory.reset();
+        ui.pad.radial_open(false);
+        ui.screens.show_end(&summary, true);
+        self.end_behind = true;
+        self.end_beat_tick();
+    }
+
+    /// The end's beat a frame along; the game hidden once it no longer
+    /// shows behind it.
+    fn end_beat_tick(&mut self) {
+        let Some(ui) = self.ui.as_mut() else {
+            return;
+        };
+        let dark = ui.screens.end_tick();
+        if self.end_behind && (dark || self.state != GameState::Ended) {
+            self.end_behind = false;
+            if self.state == GameState::Ended {
+                self.show_game(false);
+            }
+        }
     }
 
     /// What the end screen tells of the game just over, as the engine
@@ -6072,6 +6105,14 @@ impl RenethackGame {
                     .collect();
                 m.reverse();
                 m
+            },
+            final_words: {
+                let mut m: Vec<nh_world::Message> = (self.world.log.iter().rev())
+                    .take(END_MESSAGES)
+                    .cloned()
+                    .collect();
+                m.reverse();
+                crate::end_view::final_words(&m)
             },
             printed: self
                 .world

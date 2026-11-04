@@ -5329,6 +5329,7 @@ impl SelfTest {
             "layouts" => layouts_tests::layouts(),
             "end-death" => end_tests::end_death(),
             "end-tabs" => end_tests::end_tabs(),
+            "end-beat" => end_tests::end_beat(),
             "end-quit" => end_tests::end_quit(),
             "end-ascend" => end_tests::end_ascend(),
             "rim" => rim_tests::rim(),

@@ -305,6 +305,19 @@ end-escaped =
         [yes] Выбралась из подземелья живой
        *[other] Выбрался из подземелья живым
     }
+end-beat-died = Вы погибли — { $cause }
+end-beat-died-bare = Вы погибли
+end-beat-quit = Вы оставили свой поход
+end-beat-escaped =
+    { $female ->
+        [yes] Вы выбрались из подземелья живой
+       *[other] Вы выбрались из подземелья живым
+    }
+end-beat-ascended =
+    { $female ->
+        [yes] Вы вознеслись и стали полубогиней
+       *[other] Вы вознеслись и стали полубогом
+    }
 end-stat-turns = Ходы
 end-stat-deepest = Глубина
 end-stat-score = Очки

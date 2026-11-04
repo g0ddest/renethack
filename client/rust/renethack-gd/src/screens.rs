@@ -1,13 +1,14 @@
 //! Full-screen pages outside a game: title, settings, character creation,
 //! the end of a game and errors.
 
+use std::collections::HashSet;
 use std::rc::Rc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use godot::classes::control::{FocusMode, GrowDirection, MouseFilter};
 use godot::classes::{
     BaseButton, Button, CanvasLayer, CenterContainer, ColorRect, Control, Gradient,
-    GradientTexture2D, HBoxContainer, Label, LineEdit, MarginContainer, OptionButton,
+    GradientTexture2D, HBoxContainer, InputEvent, Label, LineEdit, MarginContainer, OptionButton,
     PanelContainer, RichTextLabel, ScrollContainer, StyleBox, TextureRect, VBoxContainer,
 };
 use godot::global::HorizontalAlignment;
@@ -58,10 +59,43 @@ pub struct Screens {
     end_page: Option<(Gd<ScrollContainer>, Gd<HBoxContainer>, Gd<PanelContainer>)>,
     /// The end page's disclosures, a part a tab (X and Y, [ and ]).
     end_sections: Option<end_view::Sections>,
+    /// The end's beat while it plays: when it began, what it fades.
+    end_beat: Option<(Instant, end_view::Beat)>,
+    /// The end page's input: nothing counts during the beat, nor a key
+    /// or button held from before it until let go.
+    end_gate: Option<EndGate>,
     /// A gamepad gives the input: the hints are its buttons.
     pad: Option<PadKind>,
     /// The creation form's on-screen keyboard, typing the hero's name.
     name_keys: Option<NameKeys>,
+}
+
+/// What the end page lets through: from `open` on, the presses of keys
+/// and buttons pressed since (`fresh`, until let go); a key held from
+/// before (its repeats) or pressed during the beat counts for nothing.
+struct EndGate {
+    open: Instant,
+    fresh: HashSet<i64>,
+}
+
+/// The gate's name for an input event's key or button; none for others.
+fn gate_code(event: &Gd<InputEvent>) -> Option<(i64, bool, bool)> {
+    use godot::classes::{InputEventJoypadButton, InputEventKey};
+    if let Ok(k) = event.clone().try_cast::<InputEventKey>() {
+        let code = match k.get_physical_keycode() {
+            godot::global::Key::NONE => k.get_keycode(),
+            c => c,
+        };
+        return Some((code.ord() as i64, k.is_pressed(), k.is_echo()));
+    }
+    if let Ok(b) = event.clone().try_cast::<InputEventJoypadButton>() {
+        return Some((
+            -1 - b.get_button_index().ord() as i64,
+            b.is_pressed(),
+            false,
+        ));
+    }
+    None
 }
 
 /// The on-screen keyboard over the creation form (A on the name field
@@ -324,6 +358,8 @@ impl Screens {
             nav: Nav::default(),
             end_page: None,
             end_sections: None,
+            end_beat: None,
+            end_gate: None,
             pad: None,
             name_keys: None,
         }
@@ -538,7 +574,7 @@ impl Screens {
             }
             Some("end") => {
                 if let Some(summary) = self.end.clone() {
-                    self.show_end(&summary);
+                    self.show_end(&summary, false);
                 }
             }
             _ => {}
@@ -640,21 +676,94 @@ impl Screens {
     }
 
     /// The end page: the stone, the story, the records and the buttons;
-    /// the focus on a new game.
-    pub fn show_end(&mut self, summary: &EndSummary) {
-        let page = end_view::build(summary, &self.queue, self.canvas(), self.pad);
+    /// the focus on the title's (a key pressed in haste starts nothing).
+    /// `beat`: it opens with the end's beat, over the game still drawn,
+    /// and takes no input until the beat is over.
+    pub fn show_end(&mut self, summary: &EndSummary, beat: bool) {
+        let mut page = end_view::build(summary, &self.queue, self.canvas(), self.pad, beat);
+        // drawn again (another language): its gate as it was
+        let kept = self.end_gate.take().filter(|_| !beat);
         self.end = Some(summary.clone());
         self.form = None;
         self.hide();
         self.root.add_child(&page.root);
         self.content = Some(page.root.clone());
         self.current = Some("end");
-        self.bg.set_color(theme::BG);
         self.root.set_visible(true);
         self.end_page = Some((page.scroll, page.foot, page.panel));
         self.end_sections = page.sections;
-        // Start: a new game; Esc or B: the title
-        self.set_nav(page.buttons, 0, Some(UiEvent::BackToTitle), Some(0));
+        let now = Instant::now();
+        self.end_beat = page.beat.take().map(|b| (now, b));
+        let dark = if self.end_beat.is_some() { 0.0 } else { 1.0 };
+        self.bg.set_color(theme::BG.with_alpha(dark));
+        let open = now + std::time::Duration::from_secs_f32(end_view::BEAT_SECS);
+        self.end_gate = Some(kept.unwrap_or(EndGate {
+            open: if self.end_beat.is_some() { open } else { now },
+            fresh: HashSet::new(),
+        }));
+        // on the title's; Start: a new game; Esc or B: the title
+        self.set_nav(page.buttons, 1, Some(UiEvent::BackToTitle), Some(0));
+    }
+
+    /// The end's beat a frame along. True: the game behind it no longer
+    /// shows (the backdrop is whole), or there is no beat.
+    pub fn end_tick(&mut self) -> bool {
+        let Some((at, beat)) = self.end_beat.as_mut() else {
+            return true;
+        };
+        let dark = beat.show(at.elapsed().as_secs_f32());
+        let over = beat.is_over();
+        self.bg.set_color(theme::BG.with_alpha(dark));
+        if over {
+            self.end_beat = None;
+        }
+        dark >= 1.0
+    }
+
+    /// The end's beat plays (its input not yet taken).
+    pub fn end_beat(&self) -> bool {
+        self.current == Some("end")
+            && self
+                .end_gate
+                .as_ref()
+                .is_some_and(|g| Instant::now() < g.open)
+    }
+
+    /// How far the end's beat is, in seconds, while it plays (self-tests).
+    pub fn end_beat_at(&self) -> Option<f32> {
+        self.end_beat
+            .as_ref()
+            .map(|(at, _)| at.elapsed().as_secs_f32())
+    }
+
+    /// `event` on the end page counts for nothing: it came during the
+    /// beat, or is the repeat of a key held from before it. Every press
+    /// and release is noted (a key let go may count again).
+    pub fn end_holds(&mut self, event: &Gd<InputEvent>) -> bool {
+        if self.current != Some("end") {
+            return false;
+        }
+        let Some(gate) = self.end_gate.as_mut() else {
+            return false;
+        };
+        let open = Instant::now() >= gate.open;
+        let Some((code, pressed, echo)) = gate_code(event) else {
+            // a stick's lean is told only as it changes: it counts once
+            // the beat is over
+            return !open;
+        };
+        match (pressed, echo) {
+            (false, _) => {
+                gate.fresh.remove(&code);
+                !open
+            }
+            (true, false) if open => {
+                gate.fresh.insert(code);
+                false
+            }
+            (true, false) => true,
+            (true, true) => !(open && gate.fresh.contains(&code)),
+        }
     }
 
     /// The canvas the pages are laid out on, in design pixels.
@@ -1218,6 +1327,8 @@ impl Screens {
         }
         self.end_page = None;
         self.end_sections = None;
+        self.end_beat = None;
+        self.end_gate = None;
         self.name_keys = None;
         self.nav = Nav::default();
         self.current = None;

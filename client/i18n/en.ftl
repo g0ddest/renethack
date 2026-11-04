@@ -303,6 +303,18 @@ end-escaped =
     { $female ->
        *[other] Escaped the dungeon alive
     }
+end-beat-died = You died — { $cause }
+end-beat-died-bare = You died
+end-beat-quit = You gave up the quest
+end-beat-escaped =
+    { $female ->
+       *[other] You escaped the dungeon alive
+    }
+end-beat-ascended =
+    { $female ->
+        [yes] You ascended to demigoddess-hood
+       *[other] You ascended to demigodhood
+    }
 end-stat-turns = Turns
 end-stat-deepest = Deepest
 end-stat-score = Score

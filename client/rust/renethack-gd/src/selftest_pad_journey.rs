@@ -904,9 +904,13 @@ pub(super) fn pad_journey() -> Vec<Step> {
         "the fight to the death, the end's questions let go",
         |g| fight_on(g, false),
     ));
-    steps.push(Step::Wait("the end page, on a new game", |g| {
-        focus_on(g, "end", &tr!("end-new-game"))
-    }));
+    steps.push(Step::Wait(
+        "the end page, its beat over, on the title's",
+        |g| {
+            let beat = g.ui.as_ref().is_some_and(|ui| ui.screens.end_beat());
+            Ok(!beat && focus_on(g, "end", &tr!("end-to-title"))?)
+        },
+    ));
     steps.extend(shot("journey-end"));
     // a new game from the end page, in normal mode
     steps.extend([
@@ -914,6 +918,10 @@ pub(super) fn pad_journey() -> Vec<Step> {
             g.debug_mode = false;
             g.prologue_forced = false;
             Ok(())
+        }),
+        tap(PadButton::Left),
+        Step::Wait("←: on a new game", |g| {
+            focus_on(g, "end", &tr!("end-new-game"))
         }),
         tap(PadButton::A),
         Step::Wait("A: the creation form again", |g| {

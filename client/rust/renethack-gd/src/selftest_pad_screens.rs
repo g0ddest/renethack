@@ -170,8 +170,9 @@ pub(super) fn pad_screens() -> Vec<Step> {
             }
             Ok(false)
         }),
-        Step::Wait("the end, on a new game", |g| {
-            focus_on(g, "end", &tr!("end-new-game"))
+        Step::Wait("the end, its beat over, on the title's", |g| {
+            let beat = g.ui.as_ref().is_some_and(|ui| ui.screens.end_beat());
+            Ok(!beat && focus_on(g, "end", &tr!("end-to-title"))?)
         }),
         Step::Shot("pad-end"),
         tap(PadButton::B),

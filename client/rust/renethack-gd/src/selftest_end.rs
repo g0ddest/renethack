@@ -11,8 +11,10 @@
 //! is an amulet of life saving) and offers the Amulet there:
 //! the ascension's page. Each time the page fits the canvas, its words
 //! are the language's (none left in English, on the way there either),
-//! the focus is on a new game, and the arrows or the pad scroll a body
-//! longer than the canvas.
+//! the focus is on the title's button, and the arrows or the pad scroll a
+//! body longer than the canvas. `end-beat` presses Space, Enter and the
+//! pad's A and B during the death's beat: the page stays, and starts
+//! nothing until a key is let go and pressed again.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicI64, AtomicUsize, Ordering};
@@ -226,6 +228,11 @@ fn end_page_ok(g: &RenethackGame, how: EndHow) -> Result<bool, String> {
         return Ok(false);
     }
     let ui = g.ui.as_ref().ok_or("no UI")?;
+    // the beat first: the page takes no input until it is over
+    if ui.screens.end_beat() {
+        SHOWN_AT.store(frames(), Ordering::Relaxed);
+        return Ok(false);
+    }
     let s = ui.screens.end_summary().ok_or("no summary")?;
     if s.how != how {
         return Err(format!("the game ended {:?}, not {how:?}", s.how));
@@ -276,9 +283,9 @@ fn end_page_ok(g: &RenethackGame, how: EndHow) -> Result<bool, String> {
             return Err(format!("no {name} button"));
         }
     }
-    if ui.screens.nav_focused().as_deref() != Some(tr!("end-new-game").as_str()) {
+    if ui.screens.nav_focused().as_deref() != Some(tr!("end-to-title").as_str()) {
         return Err(format!(
-            "the focus is on {:?}, not a new game",
+            "the focus is on {:?}, not the title's",
             ui.screens.nav_focused()
         ));
     }
@@ -335,6 +342,17 @@ fn end_page_ok(g: &RenethackGame, how: EndHow) -> Result<bool, String> {
 /// `name-scrolled`), LB and the d-pad back.
 fn end_page(name: &'static str, check: super::Check) -> Vec<Step> {
     vec![
+        // the beat: the words over the dark, the stone coming
+        Step::Wait("the end's beat along", |g| {
+            fail_on_error_screen(g)?;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.screens.end_beat_at().is_none_or(|t| t > 0.7))
+        }),
+        Step::ShotIf(name_beat(name), |g| {
+            Ok(g.ui
+                .as_ref()
+                .is_some_and(|ui| ui.screens.end_beat_at().is_some()))
+        }),
         Step::Wait("the end page laid out", check),
         Step::Shot(name),
         Step::Call("the body scrolled down if it is longer", |g| {
@@ -430,12 +448,21 @@ fn end_page(name: &'static str, check: super::Check) -> Vec<Step> {
             pad_event(PadEv::Button(PadButton::Up, false));
             Ok(())
         }),
-        Step::Wait("back at the top, the focus still on a new game", |g| {
+        Step::Wait("back at the top, the focus still on the title's", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
             Ok(ui.screens.end_scrolled().unwrap_or(0) == 0
-                && ui.screens.nav_focused().as_deref() == Some(tr!("end-new-game").as_str()))
+                && ui.screens.nav_focused().as_deref() == Some(tr!("end-to-title").as_str()))
         }),
     ]
+}
+
+fn name_beat(name: &'static str) -> &'static str {
+    match name {
+        "end-death" => "end-death-beat",
+        "end-quit" => "end-quit-beat",
+        "end-escape" => "end-escape-beat",
+        _ => "end-ascend-beat",
+    }
 }
 
 fn name_tab(name: &'static str) -> &'static str {
@@ -574,8 +601,14 @@ pub(super) fn end_quit() -> Vec<Step> {
         }
         Ok(())
     }));
-    // a new game with the pad's A, climbed out of the dungeon
+    // a new game with the pad (left of the title's, A), climbed out of
+    // the dungeon
     steps.extend([
+        tap(PadButton::Left),
+        Step::Wait("the focus on a new game", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.screens.nav_focused().as_deref() == Some(tr!("end-new-game").as_str()))
+        }),
         tap(PadButton::A),
         Step::Wait("the creation form", |g| Ok(screen(g) == Some("creation"))),
         Step::Push(UiEvent::StartCharacter(super::smoke_choice())),
@@ -961,9 +994,14 @@ pub(super) fn end_tabs() -> Vec<Step> {
         ),
         key('y'),
         on_the_way(),
-        Step::Wait("the end page laid out", |g| {
+        Step::Wait("the end page laid out, its beat over", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            Ok(ui.screens.end_section().is_some())
+            if ui.screens.end_beat() {
+                SHOWN_AT.store(frames(), Ordering::Relaxed);
+                return Ok(false);
+            }
+            Ok(ui.screens.end_section().is_some()
+                && frames() - SHOWN_AT.load(Ordering::Relaxed) > 4)
         }),
         Step::Shot("end-tabs-top"),
     ]);
@@ -980,5 +1018,139 @@ pub(super) fn end_tabs() -> Vec<Step> {
     ] {
         steps.extend(tab_shot(start, end));
     }
+    steps
+}
+
+/// A key through Godot's input as the keyboard sends it: pressed (a
+/// repeat of one held: `echo`) or let go.
+fn key_event(k: godot::global::Key, pressed: bool, echo: bool) {
+    let mut ev = godot::classes::InputEventKey::new_gd();
+    ev.set_keycode(k);
+    ev.set_physical_keycode(k);
+    ev.set_pressed(pressed);
+    ev.set_echo(echo);
+    godot::classes::Input::singleton().parse_input_event(&ev);
+}
+
+/// Still the end page, its focus on the title's: nothing was taken.
+fn still_the_end(g: &RenethackGame) -> Result<(), String> {
+    fail_on_error_screen(g)?;
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    if screen(g) != Some("end") {
+        return Err(format!("the end page left for {:?}", screen(g)));
+    }
+    let focused = ui.screens.nav_focused();
+    if focused.as_deref() != Some(tr!("end-to-title").as_str()) {
+        return Err(format!("the focus moved to {focused:?}"));
+    }
+    Ok(())
+}
+
+/// The death's beat takes no input: Space, Enter and the pad's A and B
+/// tapped as the page comes up, a Space and an arrow held through it.
+/// The page stays, nothing starts, the held keys' repeats count for
+/// nothing; let go and pressed again, Enter takes the focused button
+/// (the title's).
+pub(super) fn end_beat() -> Vec<Step> {
+    use godot::global::Key as GKey;
+    let mut steps = vec![set_up(true)];
+    steps.extend(start());
+    steps.push(in_asked_language());
+    steps.extend([
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::ExtCmd(Some("wizkill".into()))),
+        Step::Request("the monster to slay", command),
+        key('.'),
+        Step::Request("the suicide's question", |p| asking(p, "suicide")),
+        Step::Dialog(DialogEvent::TextSubmitted("yes".into())),
+        Step::Request(
+            "Die?",
+            |p| matches!(p, Prompt::Choice { query, .. } if query.contains("Die?")),
+        ),
+        key('y'),
+        on_the_way(),
+        Step::Call("keys and buttons pressed as the beat begins", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            if !ui.screens.end_beat() {
+                return Err("the end page came without its beat".into());
+            }
+            for k in [GKey::SPACE, GKey::ENTER, GKey::ESCAPE] {
+                key_event(k, true, false);
+                key_event(k, false, false);
+            }
+            for b in [
+                PadButton::A,
+                PadButton::B,
+                PadButton::Start,
+                PadButton::Left,
+            ] {
+                pad_event(PadEv::Button(b, true));
+                pad_event(PadEv::Button(b, false));
+            }
+            // held through the beat
+            key_event(GKey::SPACE, true, false);
+            key_event(GKey::LEFT, true, false);
+            Ok(())
+        }),
+        // the game darkening behind the words
+        Step::Shot("end-beat-dark"),
+        Step::Wait("the beat's words over the game", |g| {
+            still_the_end(g)?;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.screens.end_beat_at().is_some_and(|t| t > 0.7))
+        }),
+        Step::Shot("end-beat-words"),
+        Step::Call("Enter and A again in the beat", |g| {
+            still_the_end(g)?;
+            key_event(GKey::ENTER, true, false);
+            key_event(GKey::ENTER, false, false);
+            pad_event(PadEv::Button(PadButton::A, true));
+            pad_event(PadEv::Button(PadButton::A, false));
+            Ok(())
+        }),
+        Step::Wait("the beat over, the page as it came", |g| {
+            still_the_end(g)?;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            if ui.screens.end_beat() {
+                SHOWN_AT.store(frames(), Ordering::Relaxed);
+                return Ok(false);
+            }
+            Ok(frames() - SHOWN_AT.load(Ordering::Relaxed) > 4)
+        }),
+        Step::Shot("end-beat-page"),
+        Step::Call("the held keys repeat", |g| {
+            still_the_end(g)?;
+            for _ in 0..3 {
+                key_event(GKey::SPACE, true, true);
+                key_event(GKey::LEFT, true, true);
+            }
+            SHOWN_AT.store(frames(), Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::Wait("their repeats counted for nothing", |g| {
+            still_the_end(g)?;
+            let s = g.ui.as_ref().and_then(|ui| ui.screens.end_summary());
+            if s.is_none_or(|s| s.name.is_empty()) {
+                return Err("the end page lost its hero".into());
+            }
+            Ok(frames() - SHOWN_AT.load(Ordering::Relaxed) > 6)
+        }),
+        Step::Call("let go, Enter pressed anew", |_| {
+            key_event(GKey::SPACE, false, false);
+            key_event(GKey::LEFT, false, false);
+            key_event(GKey::ENTER, true, false);
+            key_event(GKey::ENTER, false, false);
+            Ok(())
+        }),
+        Step::Wait("the title, no new game", |g| {
+            fail_on_error_screen(g)?;
+            match screen(g) {
+                Some("title") => Ok(true),
+                Some("end") => Ok(false),
+                other => Err(format!("Enter on the end page led to {other:?}")),
+            }
+        }),
+    ]);
     steps
 }
