@@ -470,10 +470,11 @@ pub(super) fn settings() -> Vec<Step> {
             RIGHT,
             RIGHT
         ),
-        Step::Wait("the interface at 140 %, kept", |g| {
+        Step::Wait("the interface at 140 %, kept, ► dim at the end", |g| {
             Ok((content_scale(g)? - 1.4).abs() < 1e-3
                 && profile(g)?.settings.ui_scale == Some(140)
-                && shown(g, Field::UiScale)? == tr!("settings-percent", percent = 140))
+                && shown(g, Field::UiScale)? == tr!("settings-percent", percent = 140)
+                && page(g)?.arrows_lit(Field::UiScale) == Some((true, false)))
         }),
         Step::Shot("settings-interface-140"),
         // ← back down: Auto stands where its percent would
@@ -483,6 +484,29 @@ pub(super) fn settings() -> Vec<Step> {
                 return Ok((content_scale(g)? - auto).abs() < 1e-3);
             }
             tap_key(GKey::LEFT);
+            Ok(false)
+        }),
+        // on a Deck's screen: ← down to its 100 % floor, ◄ dim there; then
+        // → back to Auto
+        Step::Wait("the Deck's floor, ◄ dim (elsewhere: nothing)", |g| {
+            let p = page(g)?;
+            if p.view().window != crate::video::DECK_SCREEN {
+                return Ok(true);
+            }
+            if profile(g)?.settings.ui_scale == Some(crate::theme::DECK_SCALE_FLOOR) {
+                return Ok(p.arrows_lit(Field::UiScale) == Some((false, true)));
+            }
+            tap_key(GKey::LEFT);
+            Ok(false)
+        }),
+        Step::ShotIf("settings-scale-floor", |g| {
+            Ok(page(g)?.view().window == crate::video::DECK_SCREEN)
+        }),
+        Step::Wait("→ until Auto again", |g| {
+            if profile(g)?.settings.ui_scale.is_none() {
+                return Ok(true);
+            }
+            tap_key(GKey::RIGHT);
             Ok(false)
         }),
         keys!("↓ →", DOWN, RIGHT),

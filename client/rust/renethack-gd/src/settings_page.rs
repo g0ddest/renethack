@@ -743,6 +743,9 @@ struct Row {
     right: Gd<Button>,
 }
 
+/// An arrow with nothing beyond it, as dim as this.
+const ARROW_END_ALPHA: f32 = 0.3;
+
 /// Row height, and the gap between rows, in design pixels.
 const ROW_H: f32 = 44.0;
 const ROW_GAP: i32 = 4;
@@ -1486,7 +1489,17 @@ impl SettingsPage {
             self.fill_controls();
             self.scroll.set_v_scroll(0);
             self.style_rows();
+            // its arrows: one may have reached an end
+            let view = self.view.clone();
+            self.show(&view);
         }
+    }
+
+    /// Whether `field`'s row's arrows, ◄ and ►, are lit (dim at an end,
+    /// and both off while the row does nothing) (self-tests).
+    pub fn arrows_lit(&self, field: Field) -> Option<(bool, bool)> {
+        let r = self.rows.iter().find(|r| r.field == field)?;
+        Some((!r.left.is_disabled(), !r.right.is_disabled()))
     }
 
     /// The entry with the focus, and what it is.
@@ -1834,12 +1847,22 @@ impl SettingsPage {
             };
             r.name.add_theme_color_override("font_color", name);
             r.value.add_theme_color_override("font_color", value);
-            for a in [&mut r.left, &mut r.right] {
-                a.set_disabled(!live);
-                a.set_modulate(if live {
-                    Color::WHITE
-                } else {
+            // an arrow with nothing beyond it (a click does not wrap) dim
+            let ends = match r.field {
+                Field::Controls => {
+                    let at = Shown::ALL.iter().position(|&c| c == self.controls);
+                    [at == Some(0), at == Some(Shown::ALL.len() - 1)]
+                }
+                f => [-1, 1].map(|d| step(f, view, d, false).is_none()),
+            };
+            for (a, end) in [&mut r.left, &mut r.right].into_iter().zip(ends) {
+                a.set_disabled(!live || end);
+                a.set_modulate(if !live {
                     Color::from_rgba(1.0, 1.0, 1.0, 0.0)
+                } else if end {
+                    Color::from_rgba(1.0, 1.0, 1.0, ARROW_END_ALPHA)
+                } else {
+                    Color::WHITE
                 });
             }
         }
