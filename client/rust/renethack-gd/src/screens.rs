@@ -64,6 +64,9 @@ pub struct Screens {
     /// The end page's input: nothing counts during the beat, nor a key
     /// or button held from before it until let go.
     end_gate: Option<EndGate>,
+    /// Frames left to keep the disclosures' tabs at the body's top after
+    /// a switch (the new tab is laid out a frame or two later).
+    end_follow_tabs: u8,
     /// A gamepad gives the input: the hints are its buttons.
     pad: Option<PadKind>,
     /// The creation form's on-screen keyboard, typing the hero's name.
@@ -170,6 +173,8 @@ const GAME_NAME: &str = "renethack";
 
 /// How far an arrow scrolls the end page, in design pixels.
 const END_STEP: f32 = 90.0;
+/// Room above the end's tabs when a switch brings them to the body's top.
+const TABS_ROOM: f32 = 8.0;
 
 /// How much the settings page's backdrop hides of the scene behind it.
 const SETTINGS_SHADE: f32 = 0.62;
@@ -360,6 +365,7 @@ impl Screens {
             end_sections: None,
             end_beat: None,
             end_gate: None,
+            end_follow_tabs: 0,
             pad: None,
             name_keys: None,
         }
@@ -708,6 +714,10 @@ impl Screens {
     /// The end's beat a frame along. True: the game behind it no longer
     /// shows (the backdrop is whole), or there is no beat.
     pub fn end_tick(&mut self) -> bool {
+        if self.end_follow_tabs > 0 {
+            self.end_follow_tabs -= 1;
+            self.scroll_to_sections();
+        }
         let Some((at, beat)) = self.end_beat.as_mut() else {
             return true;
         };
@@ -807,8 +817,8 @@ impl Screens {
         self.end_sections.as_ref().map(|s| s.shown())
     }
 
-    /// The end page's body scrolled to its disclosures' tabs (self-tests:
-    /// a tab's start in a picture).
+    /// The end page's body scrolled to its disclosures' tabs, a little
+    /// room above them (as far as the body goes).
     pub fn scroll_to_sections(&mut self) {
         let (Some(sections), Some((scroll, _, _))) =
             (self.end_sections.as_ref(), self.end_page.as_mut())
@@ -816,13 +826,23 @@ impl Screens {
             return;
         };
         let top = sections.root.get_global_position().y - scroll.get_global_position().y;
-        let at = scroll.get_v_scroll() as f32 + top;
+        let at = scroll.get_v_scroll() as f32 + top - TABS_ROOM;
         scroll.set_v_scroll(at.max(0.0).round() as i32);
+    }
+
+    /// The disclosures' row of tabs and the body's view, on the screen
+    /// (self-tests).
+    pub fn end_tabs_in_view(&self) -> Option<(Rect2, Rect2)> {
+        let sections = self.end_sections.as_ref()?;
+        let (scroll, _, _) = self.end_page.as_ref()?;
+        Some((sections.bar_rect(), scroll.get_global_rect()))
     }
 
     /// The end page's body `by` pixels down (up when less than 0); a
     /// screen's worth for `page`.
     fn scroll_end(&mut self, by: f32, page: bool) {
+        // the player's own scroll: the tabs no longer kept at the top
+        self.end_follow_tabs = 0;
         let Some((scroll, _, _)) = self.end_page.as_mut() else {
             return;
         };
@@ -1072,12 +1092,16 @@ impl Screens {
             },
             NavInput::Start => self.nav_take(self.nav.start.unwrap_or(self.nav.at)),
             // the end's disclosures: the tab before, the next
+            // the end's disclosures: the tab before, the next, its row at
+            // the body's top (it may have been below the fold, or above)
             NavInput::X | NavInput::Y if end => {
                 let by = if input == NavInput::X { -1 } else { 1 };
                 match self.end_sections.as_ref() {
                     Some(s) => s.step(by),
                     None => return false,
                 }
+                self.end_follow_tabs = 3;
+                self.scroll_to_sections();
             }
             NavInput::X | NavInput::Y => return false,
         }
@@ -1329,6 +1353,7 @@ impl Screens {
         self.end_sections = None;
         self.end_beat = None;
         self.end_gate = None;
+        self.end_follow_tabs = 0;
         self.name_keys = None;
         self.nav = Nav::default();
         self.current = None;

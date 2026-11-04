@@ -434,24 +434,30 @@ fn end_page(name: &'static str, check: super::Check) -> Vec<Step> {
                 other => Err(format!("the disclosures' tabs: {other:?}")),
             }
         }),
-        Step::Call("Y: the next tab", |_| {
+        Step::Call("Y: the next tab, the body at its end if it scrolls", |_| {
+            SHOWN_AT.store(frames(), Ordering::Relaxed);
             pad_event(PadEv::Button(PadButton::Y, true));
             pad_event(PadEv::Button(PadButton::Y, false));
             Ok(())
         }),
-        Step::Wait("the second tab", |g| {
+        Step::Wait("the second tab, its row brought into view", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            Ok(ui.screens.end_section().is_some_and(|(at, _)| at == 1))
+            Ok(ui.screens.end_section().is_some_and(|(at, _)| at == 1) && tabs_in_view(g)?)
         }),
         Step::Shot(name_tab(name)),
-        Step::Call("X: back", |_| {
+        Step::Call("X: back, from the body's end", |_| {
+            SHOWN_AT.store(frames(), Ordering::Relaxed);
+            for _ in 0..12 {
+                pad_event(PadEv::Button(PadButton::Rb, true));
+                pad_event(PadEv::Button(PadButton::Rb, false));
+            }
             pad_event(PadEv::Button(PadButton::X, true));
             pad_event(PadEv::Button(PadButton::X, false));
             Ok(())
         }),
-        Step::Wait("the first tab again", |g| {
+        Step::Wait("the first tab again, its row in view", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
-            Ok(ui.screens.end_section().is_some_and(|(at, _)| at == 0))
+            Ok(ui.screens.end_section().is_some_and(|(at, _)| at == 0) && tabs_in_view(g)?)
         }),
         Step::Call("back to the top", |_| {
             for _ in 0..8 {
@@ -468,6 +474,22 @@ fn end_page(name: &'static str, check: super::Check) -> Vec<Step> {
                 && ui.screens.nav_focused().as_deref() == Some(tr!("end-to-title").as_str()))
         }),
     ]
+}
+
+/// The disclosures' row of tabs inside the body's view: false while it
+/// is still on its way there, an error after a while.
+fn tabs_in_view(g: &RenethackGame) -> Result<bool, String> {
+    let ui = g.ui.as_ref().ok_or("no UI")?;
+    let (bar, view) = ui.screens.end_tabs_in_view().ok_or("no tabs")?;
+    if view.grow(1.0).encloses(bar) {
+        return Ok(true);
+    }
+    if frames() - SHOWN_AT.load(Ordering::Relaxed) > 240 {
+        return Err(format!(
+            "the tabs at {bar:?}, out of the body's view {view:?}"
+        ));
+    }
+    Ok(false)
 }
 
 fn name_beat(name: &'static str) -> &'static str {
@@ -502,6 +524,10 @@ pub(super) fn end_death() -> Vec<Step> {
     steps.extend(start());
     steps.push(earns());
     steps.extend(wish("blessed rustproof +2 Mjollnir"));
+    // a long chronicle: the tabs below the fold at the page's top (DF6)
+    for _ in 0..12 {
+        steps.extend(wish("uncursed rock"));
+    }
     steps.extend([
         key('#'),
         Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
@@ -608,6 +634,24 @@ pub(super) fn end_death() -> Vec<Step> {
         }
         Ok(())
     }));
+    // at the page's top, the tabs below the fold under the long
+    // chronicle: ] brings the next tab's row into view
+    steps.extend([
+        Step::Call("] at the page's top", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let (bar, view) = ui.screens.end_tabs_in_view().ok_or("no tabs")?;
+            let below = bar.end().y > view.end().y + 1.0;
+            godot_print!("selftest: the tabs below the fold before ]: {below}");
+            SHOWN_AT.store(frames(), Ordering::Relaxed);
+            press(godot::global::Key::BRACKETRIGHT, false);
+            Ok(())
+        }),
+        Step::Wait("]: the next tab, its row in view", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui.screens.end_section().is_some_and(|(at, _)| at == 1) && tabs_in_view(g)?)
+        }),
+        Step::Shot("end-death-tab-top"),
+    ]);
     steps
 }
 

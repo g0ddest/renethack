@@ -110,6 +110,8 @@ pub fn conduct_lines(disclosed: &[Disclosure]) -> Option<Vec<(String, bool)>> {
 /// shown.
 pub struct Sections {
     pub root: Gd<VBoxContainer>,
+    /// The row of tabs.
+    bar: Gd<HBoxContainer>,
     buttons: Vec<Gd<Button>>,
     pages: Vec<Gd<Control>>,
     at: Rc<Cell<usize>>,
@@ -126,6 +128,11 @@ impl Sections {
     /// The tab shown and how many there are (self-tests).
     pub fn shown(&self) -> (usize, usize) {
         (self.at.get(), self.pages.len())
+    }
+
+    /// Where the row of tabs is on the screen.
+    pub fn bar_rect(&self) -> Rect2 {
+        self.bar.get_global_rect()
     }
 }
 
@@ -211,6 +218,7 @@ pub fn sections(disclosed: &[Disclosure], ratio: f32) -> Option<Sections> {
     show(&buttons, &pages, &at, 0);
     Some(Sections {
         root,
+        bar,
         buttons,
         pages,
         at,
