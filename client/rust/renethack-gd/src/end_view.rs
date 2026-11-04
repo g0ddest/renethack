@@ -133,6 +133,7 @@ pub struct Numbers {
     pub place: Option<u32>,
     pub gold: Option<i64>,
     pub level: Option<i64>,
+    pub hpmax: Option<i64>,
 }
 
 impl EndSummary {
@@ -161,6 +162,58 @@ impl EndSummary {
             place: self.place(),
             gold: told.gold.or(self.stone().map(|t| t.gold)).or(self.gold),
             level: told.level.or(self.level),
+            hpmax: told.hpmax,
+        }
+    }
+
+    /// The start of NetHack's summary, up to its points (what became of
+    /// the hero and where: "You and the little dog" / "escaped from the
+    /// dungeon with 2 points,"), as written; its numbers, and the
+    /// valuables an escape lists with them, are the plates' and the pack's.
+    pub fn story_head(&self) -> Vec<&str> {
+        let lines = self.summary();
+        match lines
+            .iter()
+            .position(|l| number_between(l, " with ", " point").is_some())
+        {
+            Some(at) => lines[..=at].to_vec(),
+            None => lines.into_iter().take(1).collect(),
+        }
+    }
+
+    /// The chronicle as the page shows it: without its last event when that
+    /// is the end itself (really_done's line: what killed the hero, or
+    /// "quit", "escaped", "ascended"), which the stone says.
+    pub fn chronicle_shown(&self) -> &[(i64, String)] {
+        let Some(((_, last), before)) = self.chronicle.split_last() else {
+            return &self.chronicle;
+        };
+        let t = last.trim().trim_end_matches('.').to_lowercase();
+        let ends = match self.how {
+            EndHow::Died => match self.stone().map(|st| st.death.trim().to_lowercase()) {
+                Some(d) if !d.is_empty() => t.starts_with(&d) || d.starts_with(&t),
+                // no stone: its words came from here (`death_words`)
+                _ => true,
+            },
+            EndHow::Quit => t.starts_with("quit"),
+            EndHow::Escaped => t == "escaped",
+            EndHow::Ascended => t == "ascended",
+        };
+        if ends { before } else { &self.chronicle }
+    }
+
+    /// The top ten's row of this game (when the hero's best stood too,
+    /// the one without a place).
+    pub fn this_game_row(rows: &[ScoreRow]) -> Option<usize> {
+        let mine: Vec<usize> = (0..rows.len()).filter(|&i| rows[i].mine).collect();
+        match mine.as_slice() {
+            [] => None,
+            [one] => Some(*one),
+            more => more
+                .iter()
+                .copied()
+                .find(|&i| rows[i].rank.is_none())
+                .or(more.last().copied()),
         }
     }
 
@@ -208,6 +261,48 @@ pub fn place(rows: &[ScoreRow]) -> Option<u32> {
         return None;
     }
     mine.first().and_then(|r| r.rank)
+}
+
+/// The words of a top-ten entry without what killed the hero ("… on level
+/// 1.  Killed by a jackal." → "… on level 1."): the stone says it.
+pub fn without_cause(words: &str) -> String {
+    match words.find(".  ") {
+        Some(at) => words[..=at].to_string(),
+        None => words.to_string(),
+    }
+}
+
+/// The story's sentence in the language now: where the game ended,
+/// without its points ("You died in … on dungeon level 1 with 0 points,"
+/// → "You died in … on dungeon level 1."). The translator reads the lines
+/// whole; the points' clause goes after, in the language's words.
+fn story_sentence(head: &[&str]) -> String {
+    let cut = |t: &str, at: &str| t.rfind(at).map(|k| t[..k].trim_end().to_string());
+    let joined = |lines: &[String]| {
+        (lines.iter())
+            .map(|l| l.trim())
+            .filter(|l| !l.is_empty())
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    let shown = match i18n::lang() {
+        Lang::Ru => {
+            let said = i18n::engine_window(head)
+                .unwrap_or_else(|| head.iter().map(|l| l.to_string()).collect());
+            let said = joined(&said);
+            match said.find(", набрав") {
+                Some(k) => said[..k].to_string(),
+                None => said,
+            }
+        }
+        _ => {
+            let english = joined(&head.iter().map(|l| l.to_string()).collect::<Vec<_>>());
+            let english = cut(&english, " with ").unwrap_or(english);
+            i18n::engine(EngineKind::Window, &english).into_owned()
+        }
+    };
+    let shown = shown.trim_end_matches([',', ' ', '.']);
+    format!("{shown}.")
 }
 
 /// The numbers really_done's summary tells.
@@ -936,20 +1031,14 @@ fn story(s: &EndSummary) -> Gd<VBoxContainer> {
             theme::TEXT_DIM,
         ));
     }
-    // NetHack's own summary, in the language now
-    let lines = s.summary();
-    if !lines.is_empty() {
-        let shown = i18n::engine_window(&lines)
-            .unwrap_or_else(|| lines.iter().map(|l| l.to_string()).collect());
-        let prose = shown
-            .iter()
-            .map(|l| l.trim())
-            .filter(|l| !l.is_empty())
-            .collect::<Vec<_>>()
-            .join(" ");
+    // NetHack's own summary, in the language now: where the game ended
+    // (its numbers are the plates')
+    let head = s.story_head();
+    if !head.is_empty() {
+        let prose = story_sentence(&head);
         col.add_child(&wrapped(&prose, Face::Body, 17, theme::TEXT));
     }
-    // the numbers, three a row
+    // the numbers, three a row; the gold is the stone's
     let mut facts = GridContainer::new_alloc();
     facts.set_columns(3);
     facts.add_theme_constant_override("h_separation", 10);
@@ -960,8 +1049,8 @@ fn story(s: &EndSummary) -> Gd<VBoxContainer> {
         ("end-stat-deepest", n.deepest),
         ("end-stat-score", n.score),
         ("end-stat-place", n.place.map(i64::from)),
-        ("end-stat-gold", n.gold),
         ("end-stat-level", n.level),
+        ("end-stat-hpmax", n.hpmax),
     ] {
         if let Some(v) = value {
             facts.add_child(&fact(&i18n::tr(key), &v.to_string()));
@@ -1123,7 +1212,8 @@ fn records(s: &EndSummary) -> Gd<VBoxContainer> {
 
 /// The chronicle's major events: the turn, then what happened.
 fn chronicle(s: &EndSummary) -> Gd<Control> {
-    if s.chronicle.is_empty() {
+    let events = s.chronicle_shown();
+    if events.is_empty() {
         return wrapped(&tr!("end-chronicle-none"), Face::Body, 16, theme::TEXT_DIM).upcast();
     }
     let mut grid = GridContainer::new_alloc();
@@ -1131,7 +1221,7 @@ fn chronicle(s: &EndSummary) -> Gd<Control> {
     grid.add_theme_constant_override("h_separation", 14);
     grid.add_theme_constant_override("v_separation", 5);
     grid.set_h_size_flags(SizeFlags::EXPAND_FILL);
-    for (turn, text) in &s.chronicle {
+    for (turn, text) in events {
         let mut t = theme::styled_label(&turn.to_string(), Face::BodyBold, 15, theme::GOLD);
         t.set_horizontal_alignment(HorizontalAlignment::RIGHT);
         t.set_v_size_flags(SizeFlags::SHRINK_BEGIN);
@@ -1176,7 +1266,21 @@ fn topten(s: &EndSummary) -> Gd<Control> {
     ] {
         grid.add_child(&cell(&i18n::tr(key), Face::Caps, theme::GOLD_DIM, right));
     }
-    for r in &rows {
+    // this game's row without what killed the hero: the stone says it
+    let this = (s.how == EndHow::Died && !death_words(s).is_empty())
+        .then(|| EndSummary::this_game_row(&rows))
+        .flatten();
+    for (i, r) in rows.iter().enumerate() {
+        let cut;
+        let r = if this == Some(i) {
+            cut = ScoreRow {
+                words: without_cause(&r.words),
+                ..r.clone()
+            };
+            &cut
+        } else {
+            r
+        };
         let color = if r.mine {
             theme::GOLD_BRIGHT
         } else {
@@ -1463,6 +1567,148 @@ mod tests {
         let reward = summary_numbers(&["You went to your reward with 98765 points,"]);
         assert_eq!(reward.score, Some(98765));
         assert_eq!(summary_numbers(&["nothing here"]), Told::default());
+    }
+
+    #[test]
+    fn each_fact_is_told_once() {
+        let text: Vec<String> = [
+            "You died in The Dungeons of Doom on dungeon level 2 with 312 points,",
+            "and 7 pieces of gold, after 540 moves.",
+            "You were level 3 with a maximum of 28 hit points when you died.",
+        ]
+        .iter()
+        .map(|l| l.to_string())
+        .collect();
+        let s = EndSummary {
+            text,
+            chronicle: vec![
+                (1, "Hero entered the dungeon".into()),
+                (540, "killed by a jackal, while helpless".into()),
+            ],
+            ..EndSummary::default()
+        };
+        assert_eq!(
+            story_sentence(&s.story_head()),
+            "You died in The Dungeons of Doom on dungeon level 2."
+        );
+        assert_eq!(s.numbers().hpmax, Some(28));
+        // no stone here: the chronicle's last line is what the page carves
+        assert_eq!(s.chronicle_shown().len(), 1);
+        let quit = EndSummary {
+            how: EndHow::Quit,
+            chronicle: vec![(1, "entered".into()), (3, "quit".into())],
+            ..EndSummary::default()
+        };
+        assert_eq!(quit.chronicle_shown().len(), 1);
+        // an escape with a pet: its two lines; its valuables the pack's
+        let escaped = EndSummary {
+            how: EndHow::Escaped,
+            text: vec![
+                "You and the little dog".into(),
+                "escaped from the dungeon with 2 points,".into(),
+                "        1 amulet of life saving (worth 150 zorkmids),".into(),
+                "and 0 pieces of gold, after 3 moves.".into(),
+            ],
+            chronicle: vec![(1, "a wish".into())],
+            ..EndSummary::default()
+        };
+        assert_eq!(
+            story_sentence(&escaped.story_head()),
+            "You and the little dog escaped from the dungeon."
+        );
+        assert_eq!(escaped.chronicle_shown().len(), 1, "not the end's: kept");
+        assert_eq!(
+            without_cause(
+                "Hero-Val-Hum-Fem-Neu died in The Dungeons of Doom on level 2.  Killed by a jackal."
+            ),
+            "Hero-Val-Hum-Fem-Neu died in The Dungeons of Doom on level 2."
+        );
+        assert_eq!(
+            without_cause("Hero quit on level 1."),
+            "Hero quit on level 1."
+        );
+        let rows = vec![
+            ScoreRow {
+                rank: Some(1),
+                points: 9,
+                words: String::new(),
+                hp: String::new(),
+                mine: true,
+            },
+            ScoreRow {
+                rank: None,
+                points: 4,
+                words: String::new(),
+                hp: String::new(),
+                mine: true,
+            },
+        ];
+        assert_eq!(EndSummary::this_game_row(&rows), Some(1));
+    }
+
+    /// The engine's translator in this test's thread, loaded; Russian.
+    fn russian() {
+        use crate::i18n::EngineText;
+        let t = crate::engine_text::EngineTranslator::new();
+        let start = std::time::Instant::now();
+        while t.translate(Lang::Ru, EngineKind::Name, "newt").is_none() {
+            assert!(
+                start.elapsed() < std::time::Duration::from_secs(120),
+                "the translator does not load"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        i18n::set_engine_text(Some(Box::new(t)));
+        i18n::set_lang(Lang::Ru);
+    }
+
+    #[test]
+    fn each_fact_once_in_russian() {
+        russian();
+        let story = |lines: &[&str]| {
+            let s = EndSummary {
+                text: lines.iter().map(|l| l.to_string()).collect(),
+                ..EndSummary::default()
+            };
+            story_sentence(&s.story_head())
+        };
+        let died = story(&[
+            "You died in The Dungeons of Doom on dungeon level 2 with 312 points,",
+            "and 7 pieces of gold, after 540 moves.",
+            "You were level 3 with a maximum of 28 hit points when you died.",
+        ]);
+        let escaped = story(&[
+            "You and the little dog",
+            "escaped from the dungeon with 2 points,",
+            "and 0 pieces of gold, after 1 move.",
+        ]);
+        let row = ScoreRow {
+            rank: Some(3),
+            points: 312,
+            words: without_cause(
+                "Hero-Val-Hum-Fem-Neu died in The Dungeons of Doom on level 2.  Killed by a jackal.",
+            ),
+            hp: String::new(),
+            mine: true,
+        };
+        let entry = entry_words(&row);
+        i18n::set_lang(Lang::En);
+        i18n::set_engine_text(None);
+        // the translator joins "2-м" with a word joiner
+        assert_eq!(
+            died.replace('\u{2060}', ""),
+            "Вы умерли в Подземельях Рока на 2-м уровне подземелья."
+        );
+        assert!(
+            escaped.starts_with("Вы и ") && escaped.ends_with("из подземелья."),
+            "{escaped}"
+        );
+        // the entry without its cause still reads as the list's
+        assert!(entry.contains("Подземельях Рока"), "{entry}");
+        assert!(
+            !entry.contains("шакал") && !entry.contains("died"),
+            "{entry}"
+        );
     }
 
     #[test]

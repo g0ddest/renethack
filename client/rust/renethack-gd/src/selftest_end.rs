@@ -17,7 +17,7 @@
 //! nothing until a key is let go and pressed again.
 
 use std::sync::Mutex;
-use std::sync::atomic::{AtomicI64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicI64, AtomicU64, AtomicUsize, Ordering};
 
 use godot::classes::{Control, Engine, Label};
 use godot::obj::Singleton;
@@ -1093,30 +1093,135 @@ fn still_the_end(g: &RenethackGame) -> Result<(), String> {
     Ok(())
 }
 
-/// The death's beat takes no input: Space, Enter and the pad's A and B
-/// tapped as the page comes up, a Space and an arrow held through it.
-/// The page stays, nothing starts, the held keys' repeats count for
-/// nothing; let go and pressed again, Enter takes the focused button
-/// (the title's).
+/// The request a real key last went to, the frame it went, and the
+/// searches left while the hero's legs heal.
+static KICK_REQ: AtomicU64 = AtomicU64::new(0);
+static KICK_FRAME: AtomicI64 = AtomicI64::new(0);
+static KICK_REST: AtomicUsize = AtomicUsize::new(0);
+static KICK_SEQ: AtomicU64 = AtomicU64::new(0);
+
+/// A key pressed and let go through Godot's input, `ctrl` held or not.
+fn press(k: godot::global::Key, ctrl: bool) {
+    for pressed in [true, false] {
+        let mut ev = godot::classes::InputEventKey::new_gd();
+        ev.set_keycode(k);
+        ev.set_physical_keycode(k);
+        ev.set_ctrl_pressed(ctrl);
+        ev.set_pressed(pressed);
+        godot::classes::Input::singleton().parse_input_event(&ev);
+    }
+}
+
+/// The vi-key's Godot key for a step `d`.
+fn step_key(d: char) -> godot::global::Key {
+    use godot::global::Key as K;
+    match d {
+        'h' => K::H,
+        'j' => K::J,
+        'k' => K::K,
+        'l' => K::L,
+        'y' => K::Y,
+        'u' => K::U,
+        'b' => K::B,
+        _ => K::N,
+    }
+}
+
+/// A normal game's death, as a player meets it (qa-2's): the hero kicks
+/// a wall beside them with real keys (^D, its direction) until "Ouch!
+/// That hurts!" kills them; with no wall beside them, a step toward the
+/// nearest; with wounded legs, searches while they heal. True once the
+/// end page is up.
+fn kicked_to_death(g: &RenethackGame) -> Result<bool, String> {
+    use godot::global::Key as K;
+    fail_on_error_screen(g)?;
+    if screen(g) == Some("end") {
+        return Ok(true);
+    }
+    let Some((id, prompt)) = g.pending.as_ref() else {
+        return Ok(false);
+    };
+    // one key a request; again when a card or a hint took it
+    let sent = KICK_REQ.load(Ordering::Relaxed);
+    if sent == *id && frames() - KICK_FRAME.load(Ordering::Relaxed) < 30 {
+        return Ok(false);
+    }
+    let hero = g.world.map.hero().ok_or("no hero")?;
+    let walls: Vec<(i32, i32)> = terrain_cells(g)
+        .into_iter()
+        .filter(|(_, t)| *t == Terrain::Wall)
+        .map(|(xy, _)| xy)
+        .collect();
+    let beside = walls.iter().copied().find(|&w| adjacent(hero, w));
+    let key = match prompt {
+        Prompt::FreeKey {
+            directions: true, ..
+        } => {
+            let wall = beside.ok_or("a direction asked, no wall beside the hero")?;
+            (step_key(toward(hero, wall).ok_or("no step")?), false)
+        }
+        Prompt::Command => {
+            let seq = KICK_SEQ.load(Ordering::Relaxed);
+            if g.world
+                .log
+                .since(seq)
+                .any(|m| m.text.contains("no shape for kicking"))
+            {
+                KICK_REST.store(12, Ordering::Relaxed);
+            }
+            KICK_SEQ.store(g.world.log.last_seq(), Ordering::Relaxed);
+            let rest = KICK_REST.load(Ordering::Relaxed);
+            if rest > 0 {
+                KICK_REST.store(rest - 1, Ordering::Relaxed);
+                (K::S, false)
+            } else if beside.is_some() {
+                (K::D, true)
+            } else {
+                let near = (walls.iter())
+                    .min_by_key(|w| (w.0 - hero.0).abs().max((w.1 - hero.1).abs()))
+                    .copied()
+                    .ok_or("no walls seen")?;
+                (step_key(toward(hero, near).ok_or("no step")?), false)
+            }
+        }
+        // a question on the way (none expected): no
+        Prompt::Choice { .. } => (K::N, false),
+        _ => (K::ESCAPE, false),
+    };
+    KICK_REQ.store(*id, Ordering::Relaxed);
+    KICK_FRAME.store(frames(), Ordering::Relaxed);
+    press(key.0, key.1);
+    Ok(false)
+}
+
+/// The death's beat takes no input. A normal game over a top ten: the
+/// hero kicked to death with real keys; Space, Enter, Esc and the pad's
+/// A, B, Start and ← tapped as the page comes up, a Space and an arrow
+/// held through it. The page stays, nothing starts, the held keys'
+/// repeats count for nothing; let go and pressed again, Enter takes the
+/// focused button (the title's). On the page the cause of death is the
+/// stone's alone.
 pub(super) fn end_beat() -> Vec<Step> {
     use godot::global::Key as GKey;
-    let mut steps = vec![set_up(true)];
+    let mut steps = vec![
+        set_up(false),
+        Step::Call("five games before this one", |g| {
+            KICK_REQ.store(0, Ordering::Relaxed);
+            KICK_REST.store(0, Ordering::Relaxed);
+            KICK_SEQ.store(0, Ordering::Relaxed);
+            let pg = g.playground();
+            std::fs::create_dir_all(&pg).map_err(|e| e.to_string())?;
+            std::fs::write(pg.join("record"), RECORD).map_err(|e| e.to_string())
+        }),
+    ];
     steps.extend(start());
     steps.push(in_asked_language());
     steps.extend([
-        key('#'),
-        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
-        Step::Dialog(DialogEvent::ExtCmd(Some("wizkill".into()))),
-        Step::Request("the monster to slay", command),
-        key('.'),
-        Step::Request("the suicide's question", |p| asking(p, "suicide")),
-        Step::Dialog(DialogEvent::TextSubmitted("yes".into())),
-        Step::Request(
-            "Die?",
-            |p| matches!(p, Prompt::Choice { query, .. } if query.contains("Die?")),
-        ),
-        key('y'),
-        on_the_way(),
+        Step::Wait("the hero kicked to death", kicked_to_death),
+        Step::Call("the end page's beat begun", |g| {
+            SHOWN_AT.store(frames(), Ordering::Relaxed);
+            fail_on_error_screen(g)
+        }),
         Step::Call("keys and buttons pressed as the beat begins", |g| {
             let ui = g.ui.as_ref().ok_or("no UI")?;
             if !ui.screens.end_beat() {
@@ -1147,15 +1252,24 @@ pub(super) fn end_beat() -> Vec<Step> {
             let ui = g.ui.as_ref().ok_or("no UI")?;
             Ok(ui.screens.end_beat_at().is_some_and(|t| t > 0.7))
         }),
-        Step::Shot("end-beat-words"),
+        // before the picture, which may take the rest of the beat
         Step::Call("Enter and A again in the beat", |g| {
             still_the_end(g)?;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            if !ui
+                .screens
+                .end_beat_at()
+                .is_some_and(|t| t < end_view::BEAT_SECS - 0.3)
+            {
+                return Err("the beat is nearly over: no press in it to test".into());
+            }
             key_event(GKey::ENTER, true, false);
             key_event(GKey::ENTER, false, false);
             pad_event(PadEv::Button(PadButton::A, true));
             pad_event(PadEv::Button(PadButton::A, false));
             Ok(())
         }),
+        Step::Shot("end-beat-words"),
         Step::Wait("the beat over, the page as it came", |g| {
             still_the_end(g)?;
             let ui = g.ui.as_ref().ok_or("no UI")?;
@@ -1166,6 +1280,27 @@ pub(super) fn end_beat() -> Vec<Step> {
             Ok(frames() - SHOWN_AT.load(Ordering::Relaxed) > 4)
         }),
         Step::Shot("end-beat-page"),
+        Step::Call("the cause of death the stone's alone", |g| {
+            still_the_end(g)?;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let s = ui.screens.end_summary().ok_or("no summary")?;
+            let stone = s.stone().ok_or("no stone")?;
+            let death = crate::layouts::death(&stone.death).to_lowercase();
+            let root = ui.screens.end_root().ok_or("no end page")?;
+            let mut shown = Vec::new();
+            labels(&root.upcast(), &mut shown);
+            let told: Vec<&String> = (shown.iter())
+                .map(|(t, _)| t)
+                .filter(|t| t.to_lowercase().contains(&death))
+                .collect();
+            if told.len() != 1 {
+                return Err(format!("{death:?} is told {} times: {told:?}", told.len()));
+            }
+            if !s.scores().iter().any(|r| r.mine) {
+                return Err("this game is not in the top ten".into());
+            }
+            Ok(())
+        }),
         Step::Call("the held keys repeat", |g| {
             still_the_end(g)?;
             for _ in 0..3 {
