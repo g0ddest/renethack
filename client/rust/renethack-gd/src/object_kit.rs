@@ -700,6 +700,10 @@ impl Kit<'_> {
                     FLAT,
                     [1.0, 1.0, 1.1],
                 );
+                if shape == "hardhat" {
+                    // an iron one's band riveted round
+                    self.rivets(root, &skin, 0.315, 0.1, 1.1, 8);
+                }
             }
             "pointed" => {
                 // a wizard's: tall, its tip bent back a little, a brim
@@ -1030,6 +1034,20 @@ impl Kit<'_> {
                     [-10.0, 0.0, 0.0],
                     ONE,
                 );
+                // forged, not spun: a comb raised from brow to nape (the
+                // winged one has its own, gilt) and the rim riveted round,
+                // edges for the light to catch
+                if shape != "winged" {
+                    self.part(
+                        root,
+                        dome(0.4),
+                        &skin,
+                        [0.0, 0.1, 0.0],
+                        FLAT,
+                        [0.07, 1.42, 1.15],
+                    );
+                }
+                self.rivets(root, &skin, 0.455, 0.1, 1.12, 10);
                 if shape != "winged" {
                     self.part(
                         root,
@@ -1075,6 +1093,24 @@ impl Kit<'_> {
                     _ => {}
                 }
             }
+        }
+    }
+
+    /// `n` rivets round a rim `r` across at height `y` (its depth `z` times
+    /// its width), none at the very front, where a nose guard goes.
+    fn rivets(
+        &mut self,
+        root: &mut Gd<Node3D>,
+        mat: &Gd<Material>,
+        r: f32,
+        y: f32,
+        z: f32,
+        n: usize,
+    ) {
+        let step = 360.0 / (n + 1) as f32;
+        for i in 1..=n {
+            let (s, c) = (i as f32 * step).to_radians().sin_cos();
+            self.part(root, sphere(0.028), mat, [s * r, y, c * r * z], FLAT, ONE);
         }
     }
 

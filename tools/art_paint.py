@@ -362,3 +362,82 @@ def floral(size=512, seed="floral"):
     rough = Image.new("L", (size, size), 222)
     arm = Image.merge("RGB", [ao, rough, Image.new("L", (size, size), 0)])
     return {"albedo": albedo, "normal": normals(height, 1.0), "arm": arm}
+
+
+def stamp_max(canvas, image, x, y):
+    """`image` laid on `canvas` at (x, y), the lighter of the two kept, so
+    what crosses an edge comes in at the other (the canvas is square)."""
+    size = canvas.size[0]
+    w, h = image.size
+    for dx in (-size, 0, size):
+        for dy in (-size, 0, size):
+            x0, y0 = x + dx, y + dy
+            if x0 + w <= 0 or y0 + h <= 0 or x0 >= size or y0 >= size:
+                continue
+            box = (x0, y0, x0 + w, y0 + h)
+            canvas.paste(ImageChops.lighter(canvas.crop(box), image), box[:2])
+
+
+def forged(size=512, seed="forged"):
+    """Hammered steel that takes a tint: the faces of a great many
+    overlapping blows, the ridges between them, fine scratches across all,
+    and patches of dark scale where it was never polished. The rubbed metal
+    is glossy (roughness about 0.3), the blows' hollows rougher, the scale
+    rough and barely metal (about 0.75). It tiles. The albedo, normal and
+    ORM maps."""
+    rng = random.Random(seed)
+
+    def blow(r):
+        # a shallow round hollow, deepest in its middle
+        n = 2 * r + 1
+        image = Image.new("L", (n, n), 0)
+        px = image.load()
+        for y in range(n):
+            for x in range(n):
+                d = math.hypot(x - r, y - r) / r
+                if d < 1:
+                    px[x, y] = round(255 * (1 - d * d) ** 1.5)
+        return image
+
+    blows = [blow(r) for r in range(7, 24, 2)]
+    depth = Image.new("L", (size, size), 0)
+    for _ in range(size * size // 240):
+        b = rng.choice(blows)
+        k = rng.uniform(0.3, 0.65)
+        r = b.size[0] // 2
+        stamp_max(depth, b.point(lambda v, k=k: round(v * k)), rng.randrange(size) - r,
+                  rng.randrange(size) - r)
+    depth = tiled(depth, lambda i: i.filter(ImageFilter.GaussianBlur(1.0)))
+    scratch = Image.new("L", (size, size), 0)
+    d = ImageDraw.Draw(scratch)
+    lean = rng.uniform(0, math.pi)
+    for _ in range(170):
+        x, y = rng.random() * size, rng.random() * size
+        a = lean + rng.gauss(0, 0.5)
+        n = size * rng.uniform(0.03, 0.16)
+        v = rng.randint(120, 255)
+        ex, ey = x + math.cos(a) * n, y + math.sin(a) * n
+        at_every_wrap(size, lambda dx, dy: d.line([(x + dx, y + dy), (ex + dx, ey + dy)], fill=v, width=1))
+    scratch = tiled(scratch, lambda i: i.filter(ImageFilter.GaussianBlur(0.45)))
+    # the scale: soft-edged patches over a fifth or so of it
+    scale = above(tiled(noise(rng, (size, size), 10), lambda i: i.filter(ImageFilter.GaussianBlur(3))), 165, 60)
+    mottle = noise(rng, (size, size), 28)
+    height = ImageChops.subtract(Image.new("L", (size, size), 225), depth)
+    height = ImageChops.subtract(height, scratch.point(lambda v: round(v * 0.12)))
+    # albedo: bright metal, darker in the blows' bottoms and the scale,
+    # the scratches bare and bright
+    grey = ImageChops.subtract(Image.new("L", (size, size), 205), depth.point(lambda v: round(v * 0.22)))
+    grey = ImageChops.subtract(grey, scale.point(lambda v: round(v * 0.22)))
+    grey = ImageChops.add(grey, mottle.point(lambda v: v * 18 // 255))
+    grey = ImageChops.add(grey, scratch.point(lambda v: round(v * 0.16)))
+    # (the scale a cold blue-black, the metal itself neutral)
+    albedo = Image.merge("RGB", [ImageChops.subtract(grey, scale.point(lambda v: round(v * 0.04))),
+                                 ImageChops.subtract(grey, scale.point(lambda v: round(v * 0.02))), grey])
+    rough = Image.new("L", (size, size), 70)
+    rough = ImageChops.add(rough, depth.point(lambda v: round(v * 0.2)))
+    rough = ImageChops.add(rough, scale.point(lambda v: round(v * 0.45)))
+    rough = ImageChops.add(rough, mottle.point(lambda v: v * 30 // 255))
+    rough = ImageChops.subtract(rough, scratch.point(lambda v: round(v * 0.12)))
+    metal = ImageChops.subtract(Image.new("L", (size, size), 255), scale.point(lambda v: round(v * 0.35)))
+    arm = Image.merge("RGB", [hollows(height, 5, 0.6), rough, metal])
+    return {"albedo": albedo, "normal": normals(height, 2.2), "arm": arm}

@@ -299,7 +299,7 @@
   {"id": "Chainmail004", "url": "https://ambientcg.com/get?file=Chainmail004_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "metal": "*_Metalness.jpg"}, "gain": {"albedo": 1.75, "roughness": 1.9}, "floor": {"roughness": 0.45}, "dest": "ambientcg", "use": "chain and ring mail on the hero"},
   {"id": "Metal038", "url": "https://ambientcg.com/get?file=Metal038_1K-JPG.zip", "maps": {"albedo": "*_Color.jpg", "normal": "*_NormalGL.jpg", "roughness": "*_Roughness.jpg", "metal": "*_Metalness.jpg"}, "gain": {"albedo": 2.2, "roughness": 1.3}, "floor": {"roughness": 0.45}, "dest": "ambientcg", "use": "plate, splint, scale and dragon scale mail on the hero"}
  ],
- "painted_comment": "Textures painted by tools/art_paint.py, from one written before in the run when `from` names it (`image`: one inside a GLB): `rot` turns a base character's skin into a corpse's (`eyes`: where they lie in the image, to sink them), `bone` into a lich's (`nose`: where it lies, a hole), `wraps` winds linen over the image (open at the `eyes`), `pale` takes a coat's colour away so that a tint shows as itself, `lift` lights a dark coat up (to about `light` on the whole) so that it takes a tint and stays seen on a dark floor; `fur`, `scales`, `weave` and `floral` paint a material's three maps (`out` + _albedo, _normal, _arm) from nothing, `size` square.",
+ "painted_comment": "Textures painted by tools/art_paint.py, from one written before in the run when `from` names it (`image`: one inside a GLB): `rot` turns a base character's skin into a corpse's (`eyes`: where they lie in the image, to sink them), `bone` into a lich's (`nose`: where it lies, a hole), `wraps` winds linen over the image (open at the `eyes`), `pale` takes a coat's colour away so that a tint shows as itself, `lift` lights a dark coat up (to about `light` on the whole) so that it takes a tint and stays seen on a dark floor; `fur`, `scales`, `weave`, `floral` and `forged` paint a material's three maps (`out` + _albedo, _normal, _arm) from nothing, `size` square.",
  "painted": [
   {"paint": "rot", "from": "cc0/quaternius/base/T_Superhero_Male_Ligh.png", "eyes": [[0.137, 0.178], [0.235, 0.178]], "out": "made/skins/zombie_m.jpg",
    "use": "zombies: the base character's skin, dead"},
@@ -322,7 +322,9 @@
   {"paint": "weave", "size": 512, "out": "made/textures/woven/woven",
    "use": "a hero's cloak, cape and robe: a wool twill, pale to take a tint"},
   {"paint": "floral", "size": 512, "out": "made/textures/floral/floral",
-   "use": "a Tourist's Hawaiian shirt: hibiscus and leaves on red, in its own colours"}
+   "use": "a Tourist's Hawaiian shirt: hibiscus and leaves on red, in its own colours"},
+  {"paint": "forged", "size": 512, "out": "made/textures/forged/forged",
+   "use": "helmets: hammered steel, scratched, with patches of dark scale; glossy where rubbed, rough in the scale"}
  ],
  "turned_comment": "Rigged models written before in the run (`from`) with bones turned in every clip by tools/gltf_turn.py: `raise` {bone: degrees} about the body's forward axis (from `back` to `front`), the way that lifts the bone's tip; `stretch` {bone: factor} sets a bone that much further from its parent, the skin between drawn out.",
  "turned": [

@@ -1306,8 +1306,8 @@ impl Art {
     /// The matte twin of a metal material (`keep_metal`'s): no metal at
     /// all, so it mirrors nothing, its colour darkened to the share of it
     /// a metal's diffuse kept before it mirrored anything (1 -
-    /// `DULL_METALLIC`): remembered gold reads as it did then, dim and
-    /// without glints. The same shader (only its values differ).
+    /// `DULL_METALLIC`), and no glow: remembered gold reads as it did then,
+    /// dim and without glints. The same shader (only its values differ).
     fn matte_twin(&mut self, lit: &Gd<Material>) -> Option<Gd<Material>> {
         if !lit.has_meta(METAL_LIT) || self.untwin.contains_key(&lit.instance_id()) {
             return None;
@@ -1318,6 +1318,9 @@ impl Art {
         let mut twin = lit.duplicate_resource().try_cast::<BaseMaterial3D>().ok()?;
         twin.remove_meta(METAL_LIT);
         twin.set_metallic(0.0);
+        // (gold's own glow is for the coins seen, not those remembered;
+        // put out, not taken away, so that the shader stays the same)
+        twin.set_emission_energy_multiplier(0.0);
         let a = twin.get_albedo();
         let k = 1.0 - DULL_METALLIC;
         twin.set_albedo(Color::from_rgba(a.r * k, a.g * k, a.b * k, a.a));
