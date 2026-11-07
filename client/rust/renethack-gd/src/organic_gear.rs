@@ -66,6 +66,15 @@ pub enum Part {
     Braid,
     /// The leather thong tying the plait's end.
     BraidTie,
+    /// A samurai's kusazuri round the hips (the origin at the hips' bone,
+    /// y up, z forward): panels of lacquered lames hanging from under the
+    /// cuirass to the thighs, each lame a little further out than the one
+    /// over it.
+    KusazuriLames,
+    /// The silk braid laced down the kusazuri's lames.
+    KusazuriLacing,
+    /// The cross-knots along the foot of each panel.
+    KusazuriKnots,
 }
 
 const UP: Vector3 = Vector3::UP;
@@ -104,6 +113,9 @@ pub(super) fn build(m: &mut Merge, part: Part) {
         Part::Hakama => hakama(m),
         Part::Braid => braid_hair(m),
         Part::BraidTie => braid_tie(m),
+        Part::KusazuriLames => kusazuri_lames(m),
+        Part::KusazuriLacing => kusazuri_lacing(m),
+        Part::KusazuriKnots => kusazuri_knots(m),
     }
 }
 
@@ -351,6 +363,131 @@ fn hakama(m: &mut Merge) {
     let n = 48;
     let waist: Vec<Vector3> = (0..n).map(|k| hakama_at(0.0, frac(k, n))).collect();
     m.sweep(&waist, |_| (0.02, 0.05), 6.0, true, UP);
+}
+
+/// The kusazuri round the hips: half their breadth and depth (clear of
+/// the hips), the middle of that ellipse in front of the bone, and their
+/// top; how many panels round, and half the angle each spans (radians);
+/// lames to a panel, each one's height, how far under the last one's top
+/// the next one's starts, how much further out each hangs.
+const KUSA_X: f32 = 0.2;
+const KUSA_Z: f32 = 0.16;
+const KUSA_FRONT: f32 = 0.03;
+const KUSA_TOP: f32 = 0.025;
+const PANELS: usize = 5;
+const PANEL_HALF: f32 = 0.54;
+const KUSA_LAMES: usize = 5;
+const KUSA_H: f32 = 0.05;
+const KUSA_STEP: f32 = 0.044;
+const KUSA_OUT: f32 = 0.012;
+const KUSA_CORDS: usize = 9;
+
+/// A point of panel `k`'s curve at `a` (radians from the panel's middle),
+/// `out` further out than the ellipse, `y` up.
+fn kusa_at(k: usize, a: f32, out: f32, y: f32) -> Vector3 {
+    let t = k as f32 / PANELS as f32 * TAU + a;
+    v(
+        (KUSA_X + out) * t.sin(),
+        y,
+        KUSA_FRONT + (KUSA_Z + out) * t.cos(),
+    )
+}
+
+/// Out from panel `k`'s face at `a`.
+fn kusa_outward(k: usize, a: f32) -> Vector3 {
+    (kusa_at(k, a, 1.0, 0.0) - kusa_at(k, a, 0.0, 0.0)).normalized()
+}
+
+/// The top of a panel's lame `i` (0 the highest), and how far out it
+/// hangs.
+fn kusa_lame(i: usize) -> (f32, f32) {
+    (KUSA_TOP - i as f32 * KUSA_STEP, 0.008 + i as f32 * KUSA_OUT)
+}
+
+fn kusazuri_lames(m: &mut Merge) {
+    for k in 0..PANELS {
+        for i in 0..KUSA_LAMES {
+            let (top, out) = kusa_lame(i);
+            let n = 12;
+            let path: Vec<Vector3> = (0..=n)
+                .map(|j| {
+                    kusa_at(
+                        k,
+                        (frac(j, n) * 2.0 - 1.0) * PANEL_HALF,
+                        out,
+                        top - KUSA_H / 2.0,
+                    )
+                })
+                .collect();
+            m.sweep(&path, |_| (LAME_THICK, KUSA_H / 2.0), 8.0, false, UP);
+        }
+    }
+}
+
+/// Where the `j`th of `n` things across a panel lies (radians from its
+/// middle), clear of its ends.
+fn kusa_across(j: usize, n: usize) -> f32 {
+    ((j as f32 + 0.5) / n as f32 * 2.0 - 1.0) * PANEL_HALF * 0.93
+}
+
+fn kusazuri_lacing(m: &mut Merge) {
+    for k in 0..PANELS {
+        // (the lowest lame is cross-knotted instead)
+        for i in 0..KUSA_LAMES - 1 {
+            let (top, out) = kusa_lame(i);
+            let face = out + LAME_THICK + CORD_THICK;
+            let from = top - CORD_FROM * KUSA_H;
+            let foot = top - KUSA_H;
+            for j in 0..KUSA_CORDS {
+                let a = kusa_across(j, KUSA_CORDS);
+                let path = [
+                    kusa_at(k, a, face - 0.002, from + 0.003),
+                    kusa_at(k, a, face, from),
+                    kusa_at(k, a, face, foot + 0.003),
+                    kusa_at(k, a, out + 0.001, foot - 0.003),
+                ];
+                let width =
+                    (kusa_at(k, a + 0.01, 0.0, 0.0) - kusa_at(k, a - 0.01, 0.0, 0.0)).normalized();
+                braid(
+                    m,
+                    &path,
+                    width,
+                    kusa_outward(k, a),
+                    (CORD_HALF * 1.3, CORD_THICK),
+                );
+            }
+        }
+    }
+}
+
+fn kusazuri_knots(m: &mut Merge) {
+    let (top, out) = kusa_lame(KUSA_LAMES - 1);
+    let face = out + LAME_THICK + CORD_THICK;
+    let (hi, lo) = (top - 0.012, top - KUSA_H + 0.01);
+    let knots = 3;
+    let d = PANEL_HALF / knots as f32 * 0.5;
+    for k in 0..PANELS {
+        for j in 0..knots {
+            let a = kusa_across(j, knots);
+            for (a0, a1) in [(a - d, a + d), (a + d, a - d)] {
+                let path: Vec<Vector3> = (0..=4)
+                    .map(|q| {
+                        let t = frac(q, 4);
+                        let lift = 0.0015 * (PI * t).sin();
+                        kusa_at(k, a0 + (a1 - a0) * t, face + lift, hi + (lo - hi) * t)
+                    })
+                    .collect();
+                let width = (path[4] - path[0]).cross(kusa_outward(k, a));
+                braid(
+                    m,
+                    &path,
+                    width,
+                    kusa_outward(k, a),
+                    (CORD_HALF, CORD_THICK * 1.3),
+                );
+            }
+        }
+    }
 }
 
 /// Where a plait runs, from the nape down the back, clear of it, to its

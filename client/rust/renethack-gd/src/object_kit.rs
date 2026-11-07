@@ -1711,6 +1711,26 @@ impl Kit<'_> {
                     );
                 }
             }
+            "kusazuri" => {
+                // a samurai's kusazuri: lacquered lames in panels round the
+                // hips, laced as his sode are, cross-knotted at their feet
+                let lacquer = self.plain("lacquer_black", Color::from_rgb(0.1, 0.06, 0.05));
+                let knots = self.plain("silk_ivory", Color::from_rgb(0.85, 0.8, 0.7));
+                for (part, mat) in [
+                    (GearPart::KusazuriLames, &lacquer),
+                    (GearPart::KusazuriLacing, &skin),
+                    (GearPart::KusazuriKnots, &knots),
+                ] {
+                    self.part(
+                        root,
+                        MeshKey::Organic(Organic::Gear(part)),
+                        mat,
+                        [0.0, 0.0, 0.0],
+                        FLAT,
+                        ONE,
+                    );
+                }
+            }
             "braid" => {
                 // a plait of the look's hair down the back, tied in leather
                 let thong = self.leather();
