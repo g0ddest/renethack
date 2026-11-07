@@ -15,7 +15,9 @@ first drawn in), and this merges them into the list.
 
 The scenes to take a census of: `variants` (every creature and thing, with
 the hover's outline and the x-ray), `deep`, the soaks, the effects and
-rays, the states, the branches.
+rays, the states, the branches. An environment's sky (`sky|`, what metal
+mirrors) is not the rehearsal's to make: the map makes its environment
+under the start-up veil, and `check` names a sky first drawn after it.
 """
 
 import argparse
@@ -44,6 +46,8 @@ def makeable(v):
     parts = v.split("|")
     if parts[0] == "shown":
         return "shown"
+    if parts[0] == "sky":
+        return "a sky, made with its environment"
     if parts[0] == "canvas":
         if len(parts) == 3 and (parts[1].startswith("shader:res://") or parts[1] == "default"):
             return None
@@ -128,9 +132,12 @@ def check(args):
         print(f"{path.parent.name}: drawn first after the veil, not listed:")
         for f, v, by in late:
             missing += 1
-            print(f"  #{f} {v}    ({by})")
+            # a sky the rehearsal cannot make: its environment came late
+            why = "    a sky: its environment made after the veil" if v.startswith("sky|") else ""
+            print(f"  #{f} {v}    ({by}){why}")
     if missing:
-        print("variants: `tools/variants.py merge` adds them (then the rehearsal makes them)")
+        print("variants: `tools/variants.py merge` adds them (then the rehearsal makes them);"
+              " a sky is made with its environment, under the veil")
         sys.exit(1)
     print("variants: everything drawn after the veil is listed")
 

@@ -87,11 +87,15 @@ SCENES = {
     # dragons, the titan): for the census, not timed
     "outfits": ("outfits", [], 600),
     "late-monsters": ("late-monsters", [], 600),
+    # the command wheel (its radial rings, the spells' ring, a spell's aim)
+    # and the spells' cards: for the census, not timed
+    "command-wheel": ("command-wheel", [], 600),
+    "spells": ("spells", [], 600),
     # every creature and thing a batch at a time: with --census, what the
     # game can draw (not a timing)
     "variants": ("variants", [], 1800),
 }
-CENSUS_ONLY = ("through", "outfits", "late-monsters")
+CENSUS_ONLY = ("through", "outfits", "late-monsters", "command-wheel", "spells")
 DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants", *CENSUS_ONLY)]
 
 

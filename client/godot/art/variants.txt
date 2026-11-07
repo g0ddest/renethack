@@ -13,6 +13,7 @@ canvas|shader:res://ui/ui_frame.gdshader|ColorRect
 canvas|shader:res://ui/ui_frame.gdshader|PanelContainer
 canvas|shader:res://ui/ui_icon.gdshader|ColorRect
 canvas|shader:res://ui/ui_orb.gdshader|ColorRect
+canvas|shader:res://ui/ui_radial.gdshader|ColorRect
 canvas|shader:res://ui/ui_ring.gdshader|ColorRect
 canvas|shader:res://ui/ui_tombstone.gdshader|ColorRect
 default|800001017/3
@@ -318,6 +319,8 @@ std:1.1.0.0.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.1.0.0.0.0:f4:g10002|800001c3f/3+inst
 std:1.1.0.0.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.1.0.0.0.1:f2:g10000|800001017/3
 std:1.1.0.0.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.1.0.0.0.1:f2:g10040|800001017/3
 std:1.1.0.0.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.1.0.0.0.1:f2:g10040|800001017/3|fade
+std:1.1.0.0.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.1.0.0.0.1:f6:g10040|800001c1f/3+inst
+std:1.1.0.0.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.1.0.0.0.1:f6:g10040|800001c3f/3+inst
 std:1.1.0.0.0.0.0.3.0.0.0.0.0.0.0.1.0.0.0.1.0.0.0.0:f26:g10042|80000101f/3
 std:1.1.0.0.0.0.0.3.0.0.0.0.0.0.0.1.0.0.0.1.0.0.0.0:f26:g10042|80000101f/3|fade
 std:1.1.0.0.0.0.0.3.0.0.0.0.0.0.0.1.0.0.0.1.0.0.0.0:f26:g10042|800001c1f/3+inst

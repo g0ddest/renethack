@@ -7,7 +7,10 @@
 //! (skinned), and whether it is faded (drawn in the transparent pass).
 //! A canvas item's is its material's shader, or a 2D node's kind (one of
 //! Godot's own shaders draws a polygon); a control shown with neither is
-//! noted (`shown|`) to tell what a frame showed, nothing to make.
+//! noted (`shown|`) to tell what a frame showed, nothing to make. An
+//! environment's sky (a WorldEnvironment's, a camera's: what metal
+//! mirrors) is its material's shader (`sky|`): its radiance pipelines are
+//! compiled where it is first in the tree, and the rehearsal makes none.
 //!
 //! Every frame it walks the tree and writes the variants it has not seen
 //! before, with the frame (numbered as the frame log numbers it), the
@@ -23,9 +26,9 @@ use std::io::{BufWriter, Write};
 use godot::classes::geometry_instance_3d::VisibilityRangeFadeMode;
 use godot::classes::sprite_base_3d::DrawFlags;
 use godot::classes::{
-    ArrayMesh, BaseMaterial3D, CanvasItem, CpuParticles3D, GeometryInstance3D, GpuParticles3D,
-    Label3D, Material, Mesh, MeshInstance3D, MultiMeshInstance3D, Node, RenderingServer,
-    ShaderMaterial, SpriteBase3D,
+    ArrayMesh, BaseMaterial3D, Camera3D, CanvasItem, CpuParticles3D, Environment,
+    GeometryInstance3D, GpuParticles3D, Label3D, Material, Mesh, MeshInstance3D,
+    MultiMeshInstance3D, Node, RenderingServer, ShaderMaterial, SpriteBase3D, WorldEnvironment,
 };
 use godot::obj::{EngineBitfield, EngineEnum, Singleton};
 
@@ -102,6 +105,19 @@ impl Census {
                     .done()
                     .iter_shared(),
             );
+            // the environment's sky, a world's or a camera's own
+            let env = if let Ok(w) = node.clone().try_cast::<WorldEnvironment>() {
+                w.get_environment()
+            } else if let Ok(c) = node.clone().try_cast::<Camera3D>() {
+                c.get_environment()
+            } else {
+                None
+            };
+            if let Some(v) = env.and_then(|e| self.sky(&e))
+                && !self.seen.contains(&v)
+            {
+                found.push((v, owner(&node)));
+            }
             if let Ok(g) = node.clone().try_cast::<GeometryInstance3D>() {
                 for v in self.variants(&g) {
                     if !self.seen.contains(&v) {
@@ -135,6 +151,12 @@ impl Census {
         if frame.is_multiple_of(64) {
             let _ = self.out.flush();
         }
+    }
+
+    /// An environment's sky, by its material's shader (`sky|...`).
+    fn sky(&mut self, env: &Gd<Environment>) -> Option<String> {
+        let material = env.get_sky()?.get_material()?;
+        Some(format!("sky|{}", self.name(&material)))
     }
 
     fn name(&mut self, m: &Gd<Material>) -> String {
