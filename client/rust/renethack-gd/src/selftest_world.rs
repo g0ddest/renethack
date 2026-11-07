@@ -403,23 +403,31 @@ fn light_visit(
     shot: &'static str,
     wish: bool,
 ) {
-    light_visit_at(steps, pick, depth, shot, wish, false);
+    light_visit_at(steps, pick, depth, shot, wish, None);
 }
 
-/// Where the hero is teleported to beside an altar (`by_altar`).
-static BY_ALTAR: std::sync::Mutex<Option<(i32, i32)>> = std::sync::Mutex::new(None);
+/// Where the hero was before a teleport beside a feature (`by`).
+static BY_FROM: std::sync::Mutex<Option<(i32, i32)>> = std::sync::Mutex::new(None);
+/// The feature the hero is teleported beside (set as a tour's steps are
+/// laid out: one kind of feature a tour).
+static BY: std::sync::Mutex<Option<nh_world::Terrain>> = std::sync::Mutex::new(None);
 
-/// The bare floor beside the level's altar (west of it first), the
-/// hero's place for the near field's picture in a temple.
-fn beside_altar(g: &RenethackGame) -> Result<(i32, i32), String> {
+/// The bare floor beside the level's first feature of the kind `BY`
+/// holds (west of it first): the hero's place for a picture in a temple
+/// (an altar) or a town's street (a fountain).
+fn beside_feature(g: &RenethackGame) -> Result<(i32, i32), String> {
     use nh_world::Terrain;
+    let feature = BY
+        .lock()
+        .map_err(|e| e.to_string())?
+        .ok_or("no feature asked")?;
     let cat = g.catalog.clone().ok_or("no catalog")?;
     let map = &g.world.map;
     let t = |x: i32, y: i32| map.cell(x, y).and_then(|c| nh_world::cell_terrain(c, &cat));
     let (ax, ay) = (0..nh_world::ROWNO)
         .flat_map(|y| (0..nh_world::COLNO).map(move |x| (x, y)))
-        .find(|&(x, y)| t(x, y) == Some(Terrain::Altar))
-        .ok_or("no altar known")?;
+        .find(|&(x, y)| t(x, y) == Some(feature))
+        .ok_or_else(|| format!("no {feature:?} known"))?;
     [
         (ax - 1, ay),
         (ax + 1, ay),
@@ -432,21 +440,22 @@ fn beside_altar(g: &RenethackGame) -> Result<(i32, i32), String> {
         matches!(t(x, y), Some(Terrain::Floor | Terrain::DarkFloor))
             && map.cell(x, y).is_some_and(|c| c.entity().is_none())
     })
-    .ok_or_else(|| "no bare floor beside the altar".into())
+    .ok_or_else(|| format!("no bare floor beside the {feature:?}"))
 }
 
-/// As `light_visit`; with `by_altar`, once mapped the hero is teleported
-/// toward the level's altar too (Orcus' town, where the art director
-/// measures its near field; from its maze the engine puts the hero
-/// elsewhere in the town, the same for a seed) for another picture at 7 m
-/// (`shot`-town).
+/// As `light_visit`; with `by` a feature, once mapped the hero is
+/// teleported beside the level's first one too (Orcus' altar, where the
+/// art director measures its near field: from its maze the engine puts
+/// the hero elsewhere in the town, the same for a seed; Minetown's
+/// fountain, its street) for another picture at 7 m (`shot`-town), and
+/// the overview's picture is taken from there.
 fn light_visit_at(
     steps: &mut Vec<Step>,
     pick: Option<KeyCheck>,
     depth: &'static str,
     shot: &'static str,
     wish: bool,
-    by_altar: bool,
+    by: Option<nh_world::Terrain>,
 ) {
     let named =
         |suffix: &str| -> &'static str { Box::leak(format!("{shot}-{suffix}").into_boxed_str()) };
@@ -494,27 +503,28 @@ fn light_visit_at(
         Step::Call("the camera back", |g| far(g, 11.0)),
         Step::Wait("the camera back", drawn_here),
     ]);
-    if by_altar {
+    if let Some(feature) = by {
+        *BY.lock().unwrap_or_else(|e| e.into_inner()) = Some(feature);
         steps.extend([
             Step::Key(ctrl_key('t')),
             Step::Request("getpos's cursor", |p| matches!(p, Prompt::Command)),
             Step::Wait("where to teleport", |g| {
                 Ok(matches!(g.pending, Some((_, Prompt::Command))) && g.world.getpos)
             }),
-            Step::Call("a click beside the altar", |g| {
-                let (x, y) = beside_altar(g)?;
-                *BY_ALTAR.lock().map_err(|e| e.to_string())? = g.world.map.hero();
-                godot_print!("selftest: gehennom: to ({x},{y}) beside the altar");
+            Step::Call("a click beside the feature", |g| {
+                let (x, y) = beside_feature(g)?;
+                *BY_FROM.lock().map_err(|e| e.to_string())? = g.world.map.hero();
+                godot_print!("selftest: light: to ({x},{y}) beside the feature");
                 g.push_ui(UiEvent::MapClick { x, y, button: 1 });
                 Ok(())
             }),
             // (where something unseen stands there, the engine puts the
             // hero somewhere else, the same for a seed)
             Step::Wait("the hero teleported", |g| {
-                let from = *BY_ALTAR.lock().map_err(|e| e.to_string())?;
+                let from = *BY_FROM.lock().map_err(|e| e.to_string())?;
                 let moved = at_command(g)? && !g.world.getpos && g.world.map.hero() != from;
                 if moved {
-                    godot_print!("selftest: gehennom: the hero at {:?}", g.world.map.hero());
+                    godot_print!("selftest: light: the hero at {:?}", g.world.map.hero());
                 }
                 Ok(moved)
             }),
@@ -688,12 +698,14 @@ pub(super) fn mines() -> Vec<Step> {
     steps.push(Step::Wait("the first level drawn", |g| {
         drawn_in(g, Branch::Main)
     }));
-    light_visit(
+    // (its street, by a fountain: the overview's cells in view)
+    light_visit_at(
         &mut steps,
         Some(|g| entry_key(g, "minetn")),
         "",
         "mines-minetown",
         false,
+        Some(nh_world::Terrain::Fountain),
     );
     light_visit(&mut steps, None, "9", "mines-9", false);
     light_visit(
@@ -756,8 +768,8 @@ pub(super) fn gehennom() -> Vec<Step> {
     ];
     for (pick, shot) in lairs.into_iter().filter(|(_, s)| gehennom_wanted(s)) {
         // (Orcus' temple: the art director's near field)
-        let by_altar = shot == "gehennom-orcus";
-        light_visit_at(&mut steps, Some(pick), "", shot, false, by_altar);
+        let by = (shot == "gehennom-orcus").then_some(nh_world::Terrain::Altar);
+        light_visit_at(&mut steps, Some(pick), "", shot, false, by);
     }
     // (each its fire: blood, brimstone, embers)
     for (depth, shot) in [

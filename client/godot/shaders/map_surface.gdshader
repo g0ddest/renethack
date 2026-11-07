@@ -634,9 +634,11 @@ void fragment() {
 	relief *= mix(1.0, orm.r, 0.7);
 	float own_light = memory_glow * (grime > 0.0 ? mix(branch_floor_memory, 1.0, overview) : 1.0);
 	vec3 emission = color * mix(own_light * relief * (1.0 + overview), glow, seen) + lift;
-	// and what is in view as plain as what is remembered, far from any
-	// torch (the ground under the level stays in its dark)
-	emission += albedo * relief * seen * overview * memory * 0.45;
+	// and what is in view at least as plain as what is remembered, far
+	// from any torch, in its own colour (less, a town's street in view
+	// read as a burnt smear among the houses remembered); the ground
+	// under the level stays in its dark
+	emission += albedo * relief * seen * overview * memory * 1.5 * own_light;
 	float near = 1.0;
 	if (void_fade > 0.0) {
 		near = mix(1.0, fow.a, void_fade);
