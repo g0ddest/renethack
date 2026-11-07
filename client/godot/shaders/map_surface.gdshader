@@ -577,10 +577,11 @@ void fragment() {
 		rough = mix(rough, 0.35, w);
 	}
 	// along a shore: soaked dark and glossy by the water, frosted white by
-	// ice, scorched black by lava (whose own edge glows)
+	// ice, scorched black by lava (whose own edge glows); not so glossy the
+	// hero's light whitens it (a pale rim round each pool, as foam)
 	if (near_water > 0.0) {
 		albedo *= mix(1.0, 0.5, near_water);
-		rough = mix(rough, 0.18, near_water);
+		rough = mix(rough, 0.3, near_water);
 	}
 	if (near_ice > 0.0) {
 		float luma = dot(albedo, vec3(0.299, 0.587, 0.114));

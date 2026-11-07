@@ -20,6 +20,15 @@ uniform vec4 sheen : source_color = vec4(0.16, 0.2, 0.26, 1.0);
 // metres of water over which it turns from shallow to deep
 uniform float depth_range = 0.4;
 uniform float ripple = 1.0;
+// how far toward the cold grey of memory it turns where it is
+// remembered (a swamp keeps more of its own hue)
+uniform float memory_tint = 0.8;
+// the misty air over still water mirrored softly over all of it, in
+// drifting patches (a swamp's; 0: only at a glance, as the sea's)
+uniform float sky_reflect = 0.0;
+// the least colour it shows by in the overview (a swamp's dark water
+// read as holes in the ground)
+uniform vec4 overview_min : source_color = vec4(0.0, 0.0, 0.0, 1.0);
 uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 // per cell, full in the channel of its ground: water, lava, ice, land
 uniform sampler2D ground_tex : filter_linear, repeat_disable;
@@ -132,6 +141,13 @@ void fragment() {
 		shore = 1.0 - smoothstep(0.0, 0.3, v.r - max(max(v.g, v.b), v.a));
 	}
 	float seen = texture(fow_tex, (wpos.xz + 0.5) / FIELD).r;
+	// what the hero sees of it meets what they remember wandering through
+	// the cells (a square of brighter water round them)
+	if (seen > 0.0 && seen < 1.0) {
+		float s = seen + (tl2(wpos.xz * 1.7 + vec2(41.3, 17.9)) - 0.5) * 0.5
+			+ (tl2(wpos.xz * 0.42 + vec2(9.7, 33.1)) - 0.5) * 0.3;
+		seen = smoothstep(0.3, 0.7, s);
+	}
 	const float DS = 0.02;
 	float h = waves(wpos.xz, t);
 	float hx = waves(wpos.xz + vec2(DS, 0.0), t);
@@ -155,7 +171,7 @@ void fragment() {
 	// a moat or a sea read as a hole)
 	float luma = dot(col, vec3(0.299, 0.587, 0.114));
 	vec3 own = col;
-	col = mix(mix(col, luma * vec3(0.54, 0.59, 0.72), mix(0.8, 0.15, overview))
+	col = mix(mix(col, luma * vec3(0.54, 0.59, 0.72), mix(memory_tint, 0.15, overview))
 		* mix(0.4, 0.75, overview), col, seen);
 
 	// the dark above it, mirrored more the flatter it is seen
@@ -163,8 +179,10 @@ void fragment() {
 	float fresnel = 0.04 + 0.96 * pow(1.0 - facing, 5.0);
 	// and broken up by the ripples into bands of sheen
 	float streak = smoothstep(0.5, 0.75, n2(wpos.xz * 0.8 + wn.xz * 3.0 + t * 0.01));
+	float mist = smoothstep(0.42, 0.85, n2(wpos.xz * 0.12 + wn.xz * 0.6 + vec2(t * 0.004, t * 0.003)));
 	EMISSION = sheen.rgb * (fresnel * 3.0 + 0.08 + streak * 0.4) * mix(0.3, 1.0, seen)
-		+ own * overview * OVERVIEW_GLOW;
+		+ sheen.rgb * sky_reflect * mist * mix(0.6, 1.0, seen)
+		+ max(own, overview_min.rgb) * overview * OVERVIEW_GLOW;
 
 	// foam lapping at the shore: a band at its very edge, its reach
 	// breathing, broken up by the noise; none on a swamp (`foam_amount`:

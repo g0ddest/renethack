@@ -44,7 +44,7 @@ float threads(vec2 p, float t) {
 			}
 		}
 	}
-	return 1.0 - smoothstep(0.0, 0.07, d2 - d1);
+	return 1.0 - smoothstep(0.0, 0.1, d2 - d1);
 }
 
 // the water about a point as the bubble's edge reads it: bilinear between
@@ -85,12 +85,17 @@ void fragment() {
 	p += vec2(sin(p.y * 2.3 + TIME * 0.7), cos(p.x * 2.1 - TIME * 0.6)) * 0.18;
 	float c = threads(p, TIME * 0.5) * 0.6
 		+ threads(p * 1.6 + 3.1, TIME * 0.65 + 1.3) * 0.4;
+	// the light gathers in patches drifting with the water, never one
+	// net over all the floor (at 7 m it read as cracked glass)
+	float patch = smoothstep(0.35, 0.7,
+		textureLod(noise_tex, wpos.xz * 0.09 + vec2(TIME * 0.006, -TIME * 0.004), 0.0).r);
+	c *= mix(0.4, 1.0, patch);
 	// how much water is about this point (half at a side meeting it, more
 	// at a corner), unevenly
 	float water = bubble_water(wpos.xz);
 	water += (textureLod(noise_tex, wpos.xz * 0.21, 0.0).r - 0.5) * 0.18;
 	float inside = smoothstep(0.62, 0.44, water);
 	// (faint: brighter, they were a white web over the floor)
-	ALBEDO = vec3(0.3, 0.55, 0.7) + vec3(0.55, 0.85, 1.0) * c * 0.45;
-	ALPHA = (0.26 + c * 0.18) * inside;
+	ALBEDO = vec3(0.3, 0.55, 0.7) + vec3(0.55, 0.85, 1.0) * c * 0.25;
+	ALPHA = (0.26 + c * 0.09) * inside;
 }

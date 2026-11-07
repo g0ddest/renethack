@@ -652,6 +652,59 @@ const EMBER_BACK: (Vector3, Color, f32) = (
 /// Depth fog and the background: never pure black.
 const DARKNESS: Color = Color::from_rgb(0.008, 0.009, 0.013);
 
+/// Water as water.gdshader has it, and a swamp's (Juiblex's): still,
+/// murky and green-black, darker the deeper, the misty air over it mirrored
+/// softly at a glance, and its own hue kept as it is remembered (cold and
+/// grey, the swamp's pools read as patches of asphalt).
+struct WaterLook {
+    shallow: Color,
+    deep: Color,
+    /// The air it mirrors, and how much over all of it (not only at a
+    /// glance).
+    sheen: Color,
+    sky: f32,
+    ripple: f32,
+    /// How far toward grey it is remembered.
+    memory: f32,
+    /// The least colour the overview shows it by.
+    overview: Color,
+}
+
+const WATER_LOOK: WaterLook = WaterLook {
+    shallow: Color::from_rgb(0.1, 0.22, 0.24),
+    deep: Color::from_rgb(0.015, 0.05, 0.075),
+    sheen: Color::from_rgb(0.16, 0.2, 0.26),
+    sky: 0.0,
+    ripple: 1.0,
+    memory: 0.8,
+    overview: Color::from_rgb(0.0, 0.0, 0.0),
+};
+const SWAMP_WATER_LOOK: WaterLook = WaterLook {
+    shallow: Color::from_rgb(0.05, 0.09, 0.07),
+    deep: Color::from_rgb(0.006, 0.02, 0.018),
+    sheen: Color::from_rgb(0.2, 0.25, 0.21),
+    sky: 0.6,
+    ripple: 0.8,
+    memory: 0.35,
+    overview: Color::from_rgb(0.1, 0.19, 0.19),
+};
+
+/// The water material's colours, a swamp's or the usual.
+fn set_water_colour(m: &mut Gd<ShaderMaterial>, swamp: bool) {
+    let w = if swamp {
+        &SWAMP_WATER_LOOK
+    } else {
+        &WATER_LOOK
+    };
+    m.set_shader_parameter("shallow", &w.shallow.to_variant());
+    m.set_shader_parameter("deep", &w.deep.to_variant());
+    m.set_shader_parameter("sheen", &w.sheen.to_variant());
+    m.set_shader_parameter("sky_reflect", &w.sky.to_variant());
+    m.set_shader_parameter("ripple", &w.ripple.to_variant());
+    m.set_shader_parameter("memory_tint", &w.memory.to_variant());
+    m.set_shader_parameter("overview_min", &w.overview.to_variant());
+}
+
 /// What covers a solid: a manifest material (index, brightness %, how the
 /// surface shader treats it) or a plain colour.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -6315,15 +6368,18 @@ impl MapView {
         if self.swamp { 0.0 } else { 1.0 }
     }
 
-    /// The water's foam as the level is now (a swamp seen, or not).
+    /// The water's foam and colour as the level is now (a swamp seen, or
+    /// not).
     fn still_water(&mut self) {
         let foam = self.foam_amount();
+        let swamp = self.swamp;
         if let Some(mut m) = self
             .liquids
             .get(&Liquid::Water)
             .and_then(|m| m.clone().try_cast::<ShaderMaterial>().ok())
         {
             m.set_shader_parameter("foam_amount", &foam.to_variant());
+            set_water_colour(&mut m, swamp);
         }
     }
 
@@ -6369,6 +6425,7 @@ impl MapView {
                 }
                 if l == Liquid::Water {
                     m.set_shader_parameter("foam_amount", &self.foam_amount().to_variant());
+                    set_water_colour(&mut m, self.swamp);
                 }
                 if l == Liquid::Basin {
                     m.set_shader_parameter("basin", &true.to_variant());
