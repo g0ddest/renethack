@@ -385,6 +385,18 @@ const FLIGHT_MIN: f32 = 0.09;
 const HERO_LIGHT: Color = Color::from_rgb(0.9, 0.84, 0.76);
 const HERO_LIGHT_ENERGY: f32 = 2.4;
 const HERO_LIGHT_RANGE: f32 = 5.5;
+/// How much brighter the level's own lights burn than the branch looks
+/// were tuned at: its torches, its lit rooms' fill (not the gallery's)
+/// and the hero's pool. The frame lived in the bottom 40 % of the range
+/// (at 11 m its brightest 1 % reached 61-98 of 255): lit by them, a room
+/// now has highlights, while what no light reaches keeps its dark.
+const TORCH_GAIN: f32 = 5.0;
+/// What blooms: the HDR threshold and the glow's intensity. Over 1.1 only
+/// the flames did; the deep keeps that (`set_branch`).
+const GLOW: (f32, f32) = (0.45, 1.8);
+const GLOW_DEEP: (f32, f32) = (1.1, 0.9);
+const FILL_GAIN: f32 = 3.0;
+const HERO_GAIN: f32 = 2.0;
 /// How high the hero's light and their rim light hang; over a polymorphed
 /// hero's form, this far over its head when that is higher (a flying
 /// dragon's face lit from a hand away came out pink).
@@ -4130,17 +4142,18 @@ impl MapView {
         env.set_fog_light_color(DARKNESS);
         env.set_fog_density(1.0);
         env.set_fog_depth_curve(1.6);
-        // only flames and glowing things bloom
+        // flames and glowing things bloom, and so do the highlights torches
+        // throw on metal and wet stone (over 1.1 only the flames did)
         env.set_glow_enabled(true);
         env.set_glow_normalized(false);
         for (level, intensity) in [0.0, 0.0, 0.6, 1.0, 0.8, 0.3, 0.0].into_iter().enumerate() {
             env.set_glow_level(level as i32, intensity);
         }
-        env.set_glow_intensity(0.9);
+        env.set_glow_intensity(GLOW.1);
         env.set_glow_strength(1.0);
         env.set_glow_bloom(0.0);
         env.set_glow_blend_mode(GlowBlendMode::SOFTLIGHT);
-        env.set_glow_hdr_bleed_threshold(1.1);
+        env.set_glow_hdr_bleed_threshold(GLOW.0);
         env.set_glow_hdr_bleed_scale(2.0);
         env.set_glow_hdr_luminance_cap(12.0);
         // contact shadows in corners and at the foot of walls
@@ -5167,6 +5180,16 @@ impl MapView {
         } else {
             l.ambient_energy
         });
+        // the highlights bloom (`GLOW`); in the deep only what glows by
+        // itself does (a bubble's pale floor bloomed over the dark water
+        // beside it, which then read as more of the bubble)
+        let (threshold, intensity) = if l.under == Under::Deep {
+            GLOW_DEEP
+        } else {
+            GLOW
+        };
+        env.set_glow_hdr_bleed_threshold(threshold);
+        env.set_glow_intensity(intensity);
         env.set_volumetric_fog_albedo(l.fog);
         env.set_volumetric_fog_density(l.fog_density);
         // the air's own faint glow, in its colour: what no light reaches
@@ -5210,7 +5233,7 @@ impl MapView {
         // hand keeps its own)
         if !self.hero_gear.lamp() {
             self.hero_light
-                .set_param(Param::ENERGY, HERO_LIGHT_ENERGY * l.hero_light);
+                .set_param(Param::ENERGY, HERO_LIGHT_ENERGY * HERO_GAIN * l.hero_light);
             self.hero_light.set_param(Param::RANGE, l.hero_range);
         }
         self.show_reflect();
@@ -5520,7 +5543,11 @@ impl MapView {
                 self.root.add_child(&l);
                 self.room_lights.push(l);
             }
-            let showcase = if self.showcase { GALLERY_FILL } else { 1.0 };
+            let showcase = if self.showcase {
+                GALLERY_FILL
+            } else {
+                FILL_GAIN
+            };
             let base = energy * self.branch_look.fill_scale * showcase;
             let at = Vector3::new(cx, 2.6, cy);
             let wave = self.wave_k(at);
@@ -5857,7 +5884,10 @@ impl MapView {
         };
         let shadowed: HashSet<usize> = near.iter().take(shadows).map(|&(_, i)| i).collect();
         let clock = self.clock;
-        let (color, energy) = (self.branch_look.torch, self.branch_look.torch_energy);
+        let (color, energy) = (
+            self.branch_look.torch,
+            self.branch_look.torch_energy * TORCH_GAIN,
+        );
         self.spread_light();
         let waves: Vec<f32> = self.torches.iter().map(|t| self.wave_k(t.at)).collect();
         for (i, t) in self.torches.iter_mut().enumerate() {
@@ -7195,7 +7225,8 @@ impl MapView {
                 (LAMP_POOL, LAMP_POOL_ENERGY, LAMP_POOL_RANGE)
             } else {
                 let l = &self.branch_look;
-                (HERO_LIGHT, HERO_LIGHT_ENERGY * l.hero_light, l.hero_range)
+                let energy = HERO_LIGHT_ENERGY * HERO_GAIN * l.hero_light;
+                (HERO_LIGHT, energy, l.hero_range)
             };
             self.hero_light.set_color(color);
             self.hero_light.set_param(Param::ENERGY, energy);

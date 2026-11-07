@@ -384,20 +384,23 @@ pub fn look_of(branch: Branch) -> BranchLook {
         Branch::Gehennom => BranchLook {
             remap: FIRES[0].remap,
             torch: rgb(1.0, 0.42, 0.18),
-            torch_energy: 2.8,
+            // (its fires a half brighter than they were: map_view's gains
+            // brighten the main dungeon's more, tuned without them)
+            torch_energy: 0.84,
             // (further: its walls and floors are dark stone)
             torch_range: 7.0,
             // the hero's pool bright round their feet and gone three
             // cells off, the floors remembered beyond it dim: lit as far
             // as a lit room's, its near field read flat (the art
             // director's recheck: 62-69 at the hero, 46-52 three cells
-            // off, against 45-60 and 18-25)
-            hero_light: 2.8,
+            // off, against 45-60 and 18-25); as it was before map_view's
+            // gain
+            hero_light: 1.4,
             hero_range: 4.0,
             floor_memory: 0.55,
             under: Under::Chasm,
             fill: rgb(1.0, 0.45, 0.25),
-            fill_scale: 1.5,
+            fill_scale: 0.75,
             // the dark is dark: red in the haze over the fire, not a red
             // light over everything
             ambient: rgb(0.4, 0.26, 0.22),
@@ -591,6 +594,9 @@ fn plane_look(plane: Plane) -> BranchLook {
         // a bubble of air drifting in the deep: motes in the water about
         // it, the dark closing in
         Plane::Water => BranchLook {
+            // (the hero's pool as it was before map_view's gain: brighter,
+            // the deep beside them read as a bubble's pale floor)
+            hero_light: 0.5,
             ambient: rgb(0.2, 0.36, 0.6),
             ambient_energy: 0.35,
             fog: rgb(0.3, 0.5, 0.75),
