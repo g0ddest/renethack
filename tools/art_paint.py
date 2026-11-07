@@ -441,3 +441,193 @@ def forged(size=512, seed="forged"):
     metal = ImageChops.subtract(Image.new("L", (size, size), 255), scale.point(lambda v: round(v * 0.35)))
     arm = Image.merge("RGB", [hollows(height, 5, 0.6), rough, metal])
     return {"albedo": albedo, "normal": normals(height, 2.2), "arm": arm}
+
+
+def gltf_mesh(path, name):
+    """A mesh of a .gltf (its .bin beside it), as triangles of (position,
+    UV) corners in its rest pose: pure Python, for a bake by the mesh's
+    UVs."""
+    import json
+    import os
+    import struct
+    doc = json.load(open(path))
+    base = os.path.dirname(path)
+    bufs = [open(os.path.join(base, b["uri"]), "rb").read() for b in doc["buffers"]]
+    kinds = {5121: "B", 5123: "H", 5125: "I", 5126: "f"}
+    widths = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}
+
+    def read(i):
+        a = doc["accessors"][i]
+        view = doc["bufferViews"][a["bufferView"]]
+        n, c = widths[a["type"]], kinds[a["componentType"]]
+        size = struct.calcsize("<" + c) * n
+        stride = view.get("byteStride", size)
+        at = view.get("byteOffset", 0) + a.get("byteOffset", 0)
+        buf = bufs[view["buffer"]]
+        out = [struct.unpack_from("<" + c * n, buf, at + k * stride) for k in range(a["count"])]
+        return [v if n > 1 else v[0] for v in out]
+
+    mesh = next(m for m in doc["meshes"] if m["name"] == name)
+    tris = []
+    for p in mesh["primitives"]:
+        pos, uv = read(p["attributes"]["POSITION"]), read(p["attributes"]["TEXCOORD_0"])
+        idx = read(p["indices"])
+        for t in range(0, len(idx), 3):
+            tris.append([(pos[k], uv[k]) for k in idx[t:t + 3]])
+    return tris
+
+
+def bake(tris, size, paint):
+    """Each texel inside a triangle of `tris` (by its UVs, v down the
+    image) gets `paint(position, density)`: the rest-pose point there and
+    texels to a metre; returns {(x, y): what paint gave}."""
+    out = {}
+    for corners in tris:
+        (p0, (u0, v0)), (p1, (u1, v1)), (p2, (u2, v2)) = corners
+        x0, y0, x1, y1, x2, y2 = u0 * size, v0 * size, u1 * size, v1 * size, u2 * size, v2 * size
+        den = (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2)
+        if abs(den) < 1e-9:
+            continue
+        # texels to a metre over this triangle
+        e1 = [p1[k] - p0[k] for k in range(3)]
+        e2 = [p2[k] - p0[k] for k in range(3)]
+        cr = (e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0])
+        area = math.sqrt(sum(c * c for c in cr)) / 2
+        if area < 1e-12:
+            continue
+        density = math.sqrt(abs(den) / 2 / area)
+        for py in range(max(0, int(min(y0, y1, y2))), min(size - 1, int(max(y0, y1, y2)) + 1) + 1):
+            for px in range(max(0, int(min(x0, x1, x2))), min(size - 1, int(max(x0, x1, x2)) + 1) + 1):
+                sx, sy = px + 0.5, py + 0.5
+                l0 = ((y1 - y2) * (sx - x2) + (x2 - x1) * (sy - y2)) / den
+                l1 = ((y2 - y0) * (sx - x2) + (x0 - x2) * (sy - y2)) / den
+                l2 = 1 - l0 - l1
+                if min(l0, l1, l2) < -0.01:
+                    continue
+                q = tuple(l0 * p0[k] + l1 * p1[k] + l2 * p2[k] for k in range(3))
+                out[(px, py)] = paint(q, density)
+    return out
+
+
+def grown(texels, size, steps):
+    """`texels` ({(x, y): value}) grown `steps` texels out over what is
+    round them, each new one the value of a neighbour: an atlas's islands
+    padded, so that a far mip of them never takes their gaps' colour."""
+    texels = dict(texels)
+    edge = set(texels)
+    for _ in range(steps):
+        new = {}
+        for (x, y) in edge:
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                q = (x + dx, y + dy)
+                if 0 <= q[0] < size and 0 <= q[1] < size and q not in texels and q not in new:
+                    new[q] = texels[(x, y)]
+        texels.update(new)
+        edge = set(new)
+    return texels
+
+
+def lames(path, mesh, size=1024):
+    """A samurai's cuirass painted on an outfit's body by its own UVs: from
+    the waist up, lacquered lames, each laced with crimson silk braid below
+    the black lacquer of its top edge, every lame a step further out than
+    the one over it (its top edge catches the light); the lowest
+    cross-knotted in ivory; a lacquered plate over the chest, rimmed in
+    gilt, a gilt crest on it. The pattern is laid by each texel's place on the body in its
+    rest pose, so it runs on across the atlas's seams. In its own colours
+    (tint it white); the lacquer glossy, the silk matte. The albedo,
+    normal and ORM maps."""
+    rng = random.Random("lames")
+    tris = gltf_mesh(path, mesh)
+    waist, high, plate_top = 0.935, 0.06, 1.455
+    pitch, cord = 0.02, 0.0165
+    lacquer, wear = (20, 12, 10), (62, 34, 24)
+    silk, gap = (92, 15, 12), (14, 8, 7)
+    ivory, gilt = (214, 200, 172), (176, 132, 52)
+    grain = noise(rng, (size, size), 48).load()
+
+    def paint(q, density):
+        x, y, z = q
+        # round the body: its arc from the front, a cord's width apart
+        s = math.atan2(x, z) * 0.17
+        h = 0.0
+        if y >= plate_top:
+            # the plate over the chest, its gilt rim along its foot, a
+            # crest on its front: a ring round three commas
+            rim = y < plate_top + 0.007
+            dx, dy = x, y - (plate_top + 0.045)
+            r = math.hypot(dx, dy)
+            spin = math.atan2(dy, dx)
+            commas = r < 0.026 and z > 0 and math.cos(3 * spin + r * 90) > 0.35
+            crest = z > 0 and (0.028 < r < 0.034 or commas)
+            if rim or crest:
+                return gilt, 0.35, 1.0, 0.0045, density
+            return lacquer, 0.2, 1.0, 0.003, density
+        u = (y - waist) / high
+        i, f = math.floor(u), u - math.floor(u)
+        # each lame further out than the one over it; its top edge rounded
+        h = -(i + max(0.0, (f - 0.84) / 0.16) ** 2) * 0.0075
+        if f > 0.7 or i < 0:
+            # the lacquer above the braid, worn to the undercoat at its edge
+            k = max(0.0, (f - 0.9) / 0.1)
+            colour = tuple(round(a + (b - a) * k) for a, b in zip(lacquer, wear))
+            return colour, 0.18 + 0.3 * k, 1.0, h, density
+        # the braid: cords side by side, each a herringbone of threads
+        c = (s / pitch) % 1.0
+        half = cord / pitch / 2
+        d = abs(c - 0.5)
+        if d > half:
+            return gap, 0.8, 0.45, h - 0.002, density
+        across = d / half
+        herring = 0.5 + 0.5 * math.sin((y / 0.006 + across * 0.8) * math.tau)
+        lift = 0.0016 * math.sqrt(max(0.0, 1 - across * across)) + 0.0004 * herring
+        shade = 0.82 + 0.22 * herring - 0.25 * across ** 3
+        colour = tuple(min(255, round(v * shade)) for v in silk)
+        # the lowest lame cross-knotted
+        if i == 0:
+            kx = (s / 0.06) % 1.0 - 0.5
+            ky = (f - 0.35) / 0.3
+            if abs(ky) < 1 and min(abs(kx * 0.06 - ky * 0.014), abs(kx * 0.06 + ky * 0.014)) < 0.005:
+                return ivory, 0.6, 1.0, h + 0.0025, density
+        return colour, 0.72, 0.85 + 0.15 * shade, h + lift, density
+
+    texels = grown(bake(tris, size, paint), size, 6)
+    albedo = Image.new("RGB", (size, size), lacquer)
+    arm = Image.new("RGB", (size, size), (255, 51, 0))
+    a, r = albedo.load(), arm.load()
+    height = {}
+    for (px, py), (colour, rough, ao, h, density) in texels.items():
+        g = 0.92 + 0.16 * grain[px, py] / 255
+        a[px, py] = tuple(min(255, round(v * g)) for v in colour)
+        r[px, py] = (round(255 * ao), round(255 * rough), 0)
+        # in texels, so the slope is the body's own
+        height[(px, py)] = h * density
+    normal = Image.new("RGB", (size, size), (128, 128, 255))
+    n = normal.load()
+    for (px, py), h in height.items():
+        left = height.get((px - 1, py), h)
+        right = height.get((px + 1, py), h)
+        up = height.get((px, py - 1), h)
+        down = height.get((px, py + 1), h)
+        nx, ny = (left - right) / 2, (down - up) / 2
+        k = 1 / math.sqrt(nx * nx + ny * ny + 1)
+        n[px, py] = (round(128 + 127 * nx * k), round(128 + 127 * ny * k), round(128 + 127 * k))
+    return {"albedo": albedo, "normal": normal, "arm": arm}
+
+
+def relief(coat, radius, light):
+    """An outfit's painting without its colours: only what is lighter or
+    darker than what is round it within `radius` pixels (its seams,
+    stitches, folds, worn edges and the shade of its hollows), about
+    `light` (0..1) everywhere, so that a dye over it shows as itself on
+    cloth and leather alike."""
+    grey = ImageOps.grayscale(coat.convert("RGB"))
+    around = grey.filter(ImageFilter.GaussianBlur(radius))
+    g, a = grey.load(), around.load()
+    w, h = grey.size
+    out = Image.new("L", grey.size)
+    o = out.load()
+    for y in range(h):
+        for x in range(w):
+            o[x, y] = max(0, min(255, round(255 * light * (g[x, y] + 4) / (a[x, y] + 4))))
+    return Image.merge("RGB", [out] * 3)

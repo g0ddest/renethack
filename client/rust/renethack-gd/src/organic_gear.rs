@@ -40,6 +40,26 @@ pub enum Part {
     /// a panel down the chest and one down the back to the hips, joined
     /// over the shoulders.
     Tabard,
+    /// One of a samurai's sode, worn on either upper arm (the origin at
+    /// the shoulder, out from the arm +x, up the arm +y): lacquered lames
+    /// curved round the arm under a broader top plate, each hanging a
+    /// little further out than the one over it, so that every lame's top
+    /// edge catches the light.
+    SodeLames,
+    /// The silk braid laced down its lames (odoshi), the lacquer showing
+    /// above it on each.
+    SodeLacing,
+    /// The cross-knots along the foot of its lowest lame.
+    SodeKnots,
+    /// The rim rolled along its top plate.
+    SodeRim,
+    /// A sash round the waist (the origin): a flat band of cloth, its
+    /// knot in front a little to the side.
+    Obi,
+    /// A samurai's hakama from the waist (the origin) to the ankles: wide
+    /// trousers falling like a skirt in knife pleats, pressed flat at the
+    /// waist and opening toward the hem.
+    Hakama,
 }
 
 const UP: Vector3 = Vector3::UP;
@@ -70,7 +90,259 @@ pub(super) fn build(m: &mut Merge, part: Part) {
         Part::Cape => cloth(m, &CAPE),
         Part::Cloak => cloth(m, &CLOAK),
         Part::Tabard => tabard(m),
+        Part::SodeLames => sode_lames(m),
+        Part::SodeLacing => sode_lacing(m),
+        Part::SodeKnots => sode_knots(m),
+        Part::SodeRim => sode_rim(m),
+        Part::Obi => obi(m),
+        Part::Hakama => hakama(m),
     }
+}
+
+/// A sode's curve round the arm: its radius, how far in from the arm's
+/// outside the curve's centre lies, and half the angle it spans
+/// (radians): a broad plate, clear of the arm.
+const SODE_R: f32 = 0.24;
+const SODE_IN: f32 = 0.135;
+const SODE_SPAN: f32 = 0.62;
+/// How far its foot swings out from the shoulder (radians about the
+/// front-back axis through the origin).
+const SODE_TILT: f32 = 0.2;
+/// Its top plate: its top over the shoulder, its height, half its
+/// thickness.
+const SODE_TOP: f32 = 0.05;
+const PLATE_H: f32 = 0.045;
+const PLATE_THICK: f32 = 0.0065;
+/// The lames under it: how many, each one's height, how far under the
+/// last one's top the next one's starts (they overlap), how much further
+/// out each hangs, half a lame's thickness.
+const LAMES: usize = 6;
+const LAME_H: f32 = 0.05;
+const LAME_STEP: f32 = 0.043;
+const LAME_OUT: f32 = 0.0075;
+const LAME_THICK: f32 = 0.0045;
+/// Cords of braid down each lame, close side by side, from this share of
+/// its height below its top (the lacquer shows above them) to its foot;
+/// half a cord's width and thickness.
+const CORDS: usize = 19;
+const CORD_FROM: f32 = 0.3;
+const CORD_HALF: f32 = 0.0064;
+const CORD_THICK: f32 = 0.0015;
+/// Cross-knots along the lowest lame.
+const KNOTS: usize = 6;
+
+/// A point of the sode's curve at `a` (radians, 0 in the middle, + to the
+/// front), `out` further out than the curve, `y` up, its foot swung out.
+fn sode_at(a: f32, out: f32, y: f32) -> Vector3 {
+    let r = SODE_R + out;
+    let (x, z) = (r * a.cos() - SODE_IN, r * a.sin());
+    let (s, c) = SODE_TILT.sin_cos();
+    v(x * c - y * s, x * s + y * c, z)
+}
+
+/// The top of lame `i` (0 the highest, under the plate), and how far out
+/// it hangs.
+fn lame(i: usize) -> (f32, f32) {
+    let top = SODE_TOP - PLATE_H + 0.007 - i as f32 * LAME_STEP;
+    (top, (i + 1) as f32 * LAME_OUT)
+}
+
+/// Out from the sode's face at `a`.
+fn outward(a: f32) -> Vector3 {
+    (sode_at(a, 1.0, 0.0) - sode_at(a, 0.0, 0.0)).normalized()
+}
+
+/// The sode's up at its foot's swing.
+fn sode_up() -> Vector3 {
+    let (s, c) = SODE_TILT.sin_cos();
+    v(-s, c, 0.0)
+}
+
+/// A curved slab along the sode's curve, `half_h` high round `y`, `out`
+/// further out, `half_t` thick: square-cut with rounded edges.
+fn sode_slab(m: &mut Merge, y: f32, out: f32, half_h: f32, half_t: f32) {
+    let n = 18;
+    let path: Vec<Vector3> = (0..=n)
+        .map(|k| sode_at((frac(k, n) * 2.0 - 1.0) * SODE_SPAN, out, y))
+        .collect();
+    m.sweep(&path, |_| (half_t, half_h), 8.0, false, sode_up());
+}
+
+fn sode_lames(m: &mut Merge) {
+    sode_slab(m, SODE_TOP - PLATE_H / 2.0, 0.0, PLATE_H / 2.0, PLATE_THICK);
+    for i in 0..LAMES {
+        let (top, out) = lame(i);
+        sode_slab(m, top - LAME_H / 2.0, out, LAME_H / 2.0, LAME_THICK);
+    }
+}
+
+/// Where the `k`th of `n` things across the sode lies (radians), clear of
+/// its ends.
+fn across(k: usize, n: usize) -> f32 {
+    ((k as f32 + 0.5) / n as f32 * 2.0 - 1.0) * SODE_SPAN * 0.95
+}
+
+/// A flat braid along `path`, `half_w` wide across `width` (square to the
+/// path) and `half_t` thick, lying on a surface whose outside is
+/// `toward`: six sides, its normals as a flat cord's, rounded a little
+/// toward its edges (whole faces lit, not stripes).
+fn braid(
+    m: &mut Merge,
+    path: &[Vector3],
+    width: Vector3,
+    toward: Vector3,
+    (half_w, half_t): (f32, f32),
+) {
+    const SIDES: usize = 6;
+    let n = path.len();
+    let along = |i: usize| (path[(i + 1).min(n - 1)] - path[i.saturating_sub(1)]).normalized();
+    m.rings(n, SIDES, |i, j| {
+        let t = along(i);
+        let w = (width - t * t.dot(width)).normalized();
+        let mut out = t.cross(w).normalized();
+        if out.dot(toward) < 0.0 {
+            out = -out;
+        }
+        let a = TAU * j as f32 / SIDES as f32;
+        let (s, c) = a.sin_cos();
+        let face = if s >= -1e-3 { 1.0 } else { -1.0 };
+        (
+            path[i] + w * (c * half_w) + out * (s * half_t),
+            (w * (c * 0.35) + out * face).normalized(),
+        )
+    });
+}
+
+fn sode_lacing(m: &mut Merge) {
+    // (the lowest lame is cross-knotted instead)
+    for i in 0..LAMES - 1 {
+        let (top, out) = lame(i);
+        let face = out + LAME_THICK + CORD_THICK;
+        let from = top - CORD_FROM * LAME_H;
+        let foot = top - LAME_H;
+        for k in 0..CORDS {
+            let a = across(k, CORDS);
+            // out of the lame's face, down it and round under its foot
+            let path = [
+                sode_at(a, face - 0.002, from + 0.003),
+                sode_at(a, face, from),
+                sode_at(a, face, foot + 0.003),
+                sode_at(a, out + 0.001, foot - 0.003),
+            ];
+            let width = v(-a.sin(), 0.0, a.cos());
+            braid(m, &path, width, outward(a), (CORD_HALF, CORD_THICK));
+        }
+    }
+}
+
+fn sode_knots(m: &mut Merge) {
+    let (top, out) = lame(LAMES - 1);
+    let face = out + LAME_THICK + CORD_THICK;
+    let (hi, lo) = (top - 0.012, top - LAME_H + 0.01);
+    let d = SODE_SPAN / KNOTS as f32 * 0.5;
+    for k in 0..KNOTS {
+        let a = across(k, KNOTS);
+        for (a0, a1) in [(a - d, a + d), (a + d, a - d)] {
+            let path: Vec<Vector3> = (0..=4)
+                .map(|j| {
+                    let t = frac(j, 4);
+                    // a little proud of the lame where the two cross
+                    let lift = 0.0015 * (PI * t).sin();
+                    sode_at(a0 + (a1 - a0) * t, face + lift, hi + (lo - hi) * t)
+                })
+                .collect();
+            let width = (path[4] - path[0]).cross(outward(a));
+            braid(m, &path, width, outward(a), (CORD_HALF, CORD_THICK * 1.3));
+        }
+    }
+}
+
+fn sode_rim(m: &mut Merge) {
+    let n = 18;
+    let path: Vec<Vector3> = (0..=n)
+        .map(|k| sode_at((frac(k, n) * 2.0 - 1.0) * SODE_SPAN, 0.0, SODE_TOP))
+        .collect();
+    m.sweep(
+        &path,
+        |_| (PLATE_THICK * 1.25, 0.0045),
+        2.0,
+        false,
+        sode_up(),
+    );
+}
+
+/// An obi's round the waist: half its width across and front to back,
+/// half its height, half its thickness.
+const OBI_X: f32 = 0.465;
+const OBI_Z: f32 = 0.363;
+const OBI_HALF: f32 = 0.11;
+const OBI_THICK: f32 = 0.028;
+
+fn obi(m: &mut Merge) {
+    let n = 48;
+    let round: Vec<Vector3> = (0..n)
+        .map(|k| {
+            let a = frac(k, n) * TAU;
+            v(OBI_X * a.sin(), 0.0, OBI_Z * a.cos())
+        })
+        .collect();
+    m.sweep(&round, |_| (OBI_THICK, OBI_HALF), 8.0, true, UP);
+    // its knot, a flat bow off to one side of the front
+    let (s, c) = 0.3f32.sin_cos();
+    let at = v(OBI_X * s, 0.0, OBI_Z * c + OBI_THICK * 2.0);
+    let front = v(s * 0.4, 0.0, c).normalized();
+    let side = UP.cross(front).normalized();
+    for k in [-1.0f32, 1.0] {
+        let lobe: Vec<Vector3> = (0..=6)
+            .map(|j| {
+                let t = frac(j, 6);
+                at + side * (k * 0.12 * t)
+                    + UP * (0.03 * (PI * t).sin() * k)
+                    + front * (0.03 * (PI * t).sin())
+            })
+            .collect();
+        m.sweep(&lobe, |j| (0.022, 0.07 + 0.02 * frac(j, 6)), 6.0, false, UP);
+    }
+    m.sweep(
+        &[at - front * 0.01, at + front * 0.03],
+        |_| (0.05, 0.06),
+        6.0,
+        false,
+        UP,
+    );
+}
+
+/// A hakama's height, its girth at the waist and how far it flares out
+/// to the hem, its pleats round it and how deep they open at the hem.
+const HAKAMA_LEN: f32 = 1.6;
+const HAKAMA_TOP: f32 = 0.36;
+const HAKAMA_FLARE: f32 = 0.31;
+const PLEATS: f32 = 16.0;
+const PLEAT_DEEP: f32 = 0.06;
+
+/// A point of the hakama `s` down from the waist (0) to the hem (1), `t`
+/// round it from the back (0, 1), through the front (0.5).
+fn hakama_at(s: f32, t: f32) -> Vector3 {
+    let a = (t * 2.0 - 1.0) * PI;
+    let r = HAKAMA_TOP + HAKAMA_FLARE * s.powf(0.75);
+    // knife pleats: each a long slope ending in a sharp fold, pressed
+    // flat at the waist
+    let x = (t * PLEATS).fract();
+    let fold = if x < 0.8 { x / 0.8 } else { (1.0 - x) / 0.2 };
+    let deep = PLEAT_DEEP * smoothstep(0.03, 0.5, s) * (0.4 + 0.6 * s);
+    let r = r + deep * (fold - 0.5);
+    let hem = 0.012 * s.powi(4) * (a * 5.0).sin();
+    v(r * a.sin(), 0.08 - HAKAMA_LEN * s + hem, 0.8 * r * a.cos())
+}
+
+fn hakama(m: &mut Merge) {
+    for face in [1.0f32, -1.0] {
+        sheet(m, 22, 16 * 10, &hakama_at, face);
+    }
+    // the band at the waist
+    let n = 48;
+    let waist: Vec<Vector3> = (0..n).map(|k| hakama_at(0.0, frac(k, n))).collect();
+    m.sweep(&waist, |_| (0.02, 0.05), 6.0, true, UP);
 }
 
 /// A wing's long feathers, front to back: how far back from straight up

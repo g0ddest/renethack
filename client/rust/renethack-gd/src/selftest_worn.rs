@@ -8,7 +8,7 @@
 //! cover the hands until they
 //! are taken off, and the title's hero, dressed again in the role's kit,
 //! wears them too; a Knight's and a Barbarian's ring mail is chain mail
-//! over the tunic, a Samurai's splint mail is plate, and the tunic is the
+//! over the tunic, a Samurai's splint mail is laced lames, and the tunic is the
 //! outfit's own again with the armour off.
 
 use godot::classes::base_material_3d::TextureParam;
@@ -755,11 +755,11 @@ pub(super) fn worn() -> Vec<Step> {
         "worn-barbarian-m-unarmoured",
     ));
     steps.extend(next_hero());
-    // a Samurai: splint mail is plate
+    // a Samurai: splint mail is his laced lacquered lames
     steps.extend(hero("samurai", "male", "lawful"));
     steps.extend(shown(
-        "plate over the tunic",
-        |g| shows(g, &[], Some("Metal038"), false),
+        "laced lames over the tunic",
+        |g| shows(g, &[], Some("do_lames"), false),
         "worn-samurai-m",
     ));
     steps.extend(next_hero());

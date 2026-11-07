@@ -2233,6 +2233,9 @@ impl Art {
                 Some((k.clone(), m, rgb(d.tint_rgb())))
             })
             .collect();
+        // the outfit's own painting under the dyes (its seams and folds)
+        let relief = spec.relief.clone();
+        let relief = relief.as_deref().and_then(|p| self.texture(p));
         let plain = tint == Color::WHITE
             && !ghost
             && r.skin == Skin::Own
@@ -2288,7 +2291,12 @@ impl Art {
                             return self.derive(&src, tone, ghost, None);
                         }
                         if let Some((m, c)) = made {
-                            return self.surface(m, 100, false, c);
+                            return match &relief {
+                                Some(t) if !self.manifest.material_at(m).1.is_metal() => {
+                                    self.relieved(&src, t, m, c)
+                                }
+                                _ => self.surface(m, 100, false, c),
+                            };
                         }
                         // a surface dyed by its material's name ("@Main"):
                         // one mesh of several materials, its coat apart
@@ -2302,7 +2310,11 @@ impl Art {
                             Some((_, c, true)) => (mul(look.tint, *c), true),
                             None => (tint, flat),
                         };
-                        let src = if flat { self.undyed(&src) } else { src };
+                        let src = match (flat, &relief) {
+                            (true, Some(t)) => self.undyed_over(&src, Some(t)),
+                            (true, None) => self.undyed(&src),
+                            _ => src,
+                        };
                         self.derive(&src, tint, ghost, finish)
                     }),
                 };
@@ -2874,13 +2886,23 @@ impl Art {
     /// A material without its albedo texture (to be dyed a flat colour);
     /// one per source material.
     fn undyed(&mut self, src: &Gd<Material>) -> Gd<Material> {
-        let key = (src.instance_id().to_i64(), 0, true, Some(usize::MAX));
+        self.undyed_over(src, None)
+    }
+
+    /// As `undyed`, its colour over `relief` (the outfit's own painting
+    /// without its colours: `ModelSpec::relief`) when given.
+    fn undyed_over(&mut self, src: &Gd<Material>, relief: Option<&Gd<Texture2D>>) -> Gd<Material> {
+        let over = relief.map_or(usize::MAX, |t| t.instance_id().to_i64() as usize);
+        let key = (src.instance_id().to_i64(), 0, true, Some(over));
         if let Some(m) = self.derived.get(&key) {
             return m.clone();
         }
         let out = match src.duplicate_resource().try_cast::<BaseMaterial3D>() {
             Ok(mut m) => {
-                m.set_texture(TextureParam::ALBEDO, Gd::null_arg());
+                match relief {
+                    Some(t) => m.set_texture(TextureParam::ALBEDO, t),
+                    None => m.set_texture(TextureParam::ALBEDO, Gd::null_arg()),
+                }
                 m.set_albedo(Color::WHITE);
                 m.upcast::<Material>()
             }
@@ -2889,6 +2911,23 @@ impl Art {
         self.keep_metal(&out, Some(src));
         self.derived.insert(key, out.clone());
         out
+    }
+
+    /// An outfit's own material `src` dressed in the manifest material `m`
+    /// (cloth, leather, fur: not metal) dyed `tint`: its colour over the
+    /// outfit's painting without its colours (`relief`), the outfit's
+    /// relief and gloss kept (its seams, folds, stitches and worn edges),
+    /// where the material's own maps would tile a pattern over them.
+    fn relieved(
+        &mut self,
+        src: &Gd<Material>,
+        relief: &Gd<Texture2D>,
+        m: usize,
+        tint: Color,
+    ) -> Gd<Material> {
+        let colour = mul(rgb(self.manifest.material_at(m).1.albedo()), tint);
+        let under = self.undyed_over(src, Some(relief));
+        self.derive(&under, colour, false, None)
     }
 
     /// `finish`: the model whose metal, roughness and glow replace the

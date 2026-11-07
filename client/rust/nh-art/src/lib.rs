@@ -301,6 +301,13 @@ pub struct ModelSpec {
     /// over a body. Their relief, gloss and glow stay.
     #[serde(default)]
     pub albedo: Option<String>,
+    /// The outfit's own painting without its colours (relative to
+    /// `client/godot/art`: seams, stitches, folds, worn edges): what it
+    /// dresses in a material that is not metal (`dress`), or dyes outright
+    /// (`recolor` "="), keeps its relief, gloss and this under the dye, not
+    /// a pattern tiled over it or a flat colour.
+    #[serde(default)]
+    pub relief: Option<String>,
     /// Things worn on the rig's bones: a hat, a winged helm, a cape.
     #[serde(default)]
     pub extras: Vec<Extra>,
@@ -674,6 +681,12 @@ pub struct MaterialSpec {
 }
 
 impl MaterialSpec {
+    /// Metal (mail, plate, gilt): it lays its own maps over an outfit, a
+    /// dyed cloth's painting never shows through it.
+    pub fn is_metal(&self) -> bool {
+        self.metallic.unwrap_or(0.0) >= 0.5
+    }
+
     pub fn albedo_path(&self) -> Option<String> {
         self.textures.as_ref().map(|t| format!("{t}_albedo.jpg"))
     }
@@ -1463,6 +1476,7 @@ impl ArtManifest {
             dress: BTreeMap::new(),
             armour: BTreeMap::new(),
             albedo: None,
+            relief: None,
             extras: Vec::new(),
             neck: Vec::new(),
             bare_arms: None,
@@ -1660,7 +1674,8 @@ mod tests {
         let own = role("role_samurai_f")
             .armour_for(rule("splint mail"))
             .unwrap();
-        assert_eq!(own.material, "lacquer");
+        // its laced lames, painted on the outfit's body
+        assert_eq!(own.material, "do_lames");
         assert_eq!(own.parts, ["_Body"]);
         assert!(
             role("role_samurai_m")

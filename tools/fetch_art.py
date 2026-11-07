@@ -467,9 +467,15 @@ def do_painted(w, item):
         image = art_paint.pale(source(), item["light"])
     elif item["paint"] == "lift":
         image = art_paint.lift(source(), item["light"])
-    elif item["paint"] in ("fur", "scales", "weave", "floral", "forged"):
-        # a material's maps from nothing: `out` and the map's name
-        maps = getattr(art_paint, item["paint"])(item.get("size", 512))
+    elif item["paint"] == "relief":
+        image = art_paint.relief(source(), item["radius"], item["light"])
+    elif item["paint"] in ("fur", "scales", "weave", "floral", "forged", "lames"):
+        # a material's maps from nothing (or baked on a mesh of a .gltf
+        # under ART by its UVs: `from`, `mesh`): `out` and the map's name
+        if item["paint"] == "lames":
+            maps = art_paint.lames(os.path.join(ART, item["from"]), item["mesh"], item.get("size", 1024))
+        else:
+            maps = getattr(art_paint, item["paint"])(item.get("size", 512))
         for name, image in maps.items():
             out = io.BytesIO()
             image.save(out, "JPEG", quality=88, optimize=True)

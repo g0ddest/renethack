@@ -1667,38 +1667,38 @@ impl Kit<'_> {
                 );
             }
             "sode" => {
-                // a samurai's shoulder guards: lacquered plates laced in
-                // rows, hanging out over each upper arm
-                for side in [-1.0f32, 1.0] {
-                    for (i, k) in [(0.0f32, 1.0f32), (1.0, 1.08), (2.0, 1.16)] {
-                        self.part(
-                            root,
-                            cuboid(0.3 * k, 0.13, 0.42 * k),
-                            &skin,
-                            [side * (0.5 + i * 0.07), 0.38 - i * 0.12, 0.0],
-                            [0.0, 0.0, side * -32.0],
-                            ONE,
-                        );
-                        self.part(
-                            root,
-                            cuboid(0.31 * k, 0.02, 0.43 * k),
-                            &dark,
-                            [side * (0.5 + i * 0.07), 0.32 - i * 0.12, 0.0],
-                            [0.0, 0.0, side * -32.0],
-                            ONE,
-                        );
-                    }
+                // one of a samurai's shoulder guards (the manifest hangs one
+                // on each shoulder): glossy lacquered lames under a top
+                // plate with a rolled rim, laced with matte silk braid of
+                // the look's colour, cross-knotted in ivory at the foot
+                let lacquer = self.plain("lacquer_black", Color::from_rgb(0.1, 0.06, 0.05));
+                let knots = self.plain("silk_ivory", Color::from_rgb(0.85, 0.8, 0.7));
+                for (part, mat) in [
+                    (GearPart::SodeLames, &lacquer),
+                    (GearPart::SodeLacing, &skin),
+                    (GearPart::SodeKnots, &knots),
+                    (GearPart::SodeRim, &lacquer),
+                ] {
+                    self.part(
+                        root,
+                        MeshKey::Organic(Organic::Gear(part)),
+                        mat,
+                        [0.0, 0.0, 0.0],
+                        FLAT,
+                        ONE,
+                    );
                 }
             }
             "obi" => {
-                // a broad sash round the waist, its ends hanging in front
+                // a broad flat sash round the waist, knotted in front to
+                // one side, its ends hanging from the knot
                 self.part(
                     root,
-                    torus(0.43, 0.5),
+                    MeshKey::Organic(Organic::Gear(GearPart::Obi)),
                     &skin,
                     [0.0, 0.0, 0.0],
                     FLAT,
-                    [1.0, 3.2, 0.78],
+                    ONE,
                 );
                 for (x, a) in [(0.1f32, 8.0f32), (0.2, 16.0)] {
                     self.part(
@@ -1710,6 +1710,17 @@ impl Kit<'_> {
                         ONE,
                     );
                 }
+            }
+            "pleats" => {
+                // a samurai's hakama, falling in knife pleats to the ankles
+                self.part(
+                    root,
+                    MeshKey::Organic(Organic::Gear(GearPart::Hakama)),
+                    &skin,
+                    [0.0, 0.0, 0.0],
+                    FLAT,
+                    ONE,
+                );
             }
             "hakama" | "loincloth" => {
                 // wide trousers like a pleated skirt to the ankles, or a
