@@ -2484,14 +2484,15 @@ impl Art {
         };
         let hose = dye(self, &feet.hose);
         let shoe = dye(self, &feet.shoe);
+        let sock = feet.sock.as_ref().and_then(|w| dye(self, w));
         for region in Region::footwear(feet) {
             let Some(parts) = self.head_parts(kind, region, Lean::Upright, None) else {
                 continue;
             };
-            let dyed = if region == Region::Shins {
-                hose.clone()
-            } else {
-                None
+            let dyed = match region {
+                Region::Shins => hose.clone(),
+                Region::Feet => sock.clone(),
+                _ => None,
             };
             for (i, (mesh, skin, materials, _)) in parts.iter().enumerate() {
                 let mut mi = MeshInstance3D::new_alloc();

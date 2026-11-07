@@ -75,6 +75,13 @@ pub enum Part {
     KusazuriLacing,
     /// The cross-knots along the foot of each panel.
     KusazuriKnots,
+    /// A sandal under a bare foot (the origin at the ankle's bone, y up, z
+    /// toward the toes): a leather sole and straps over the forefoot and
+    /// round the ankle.
+    Sandal,
+    /// A waraji: a thick sole of plaited straw, its cords crossed over
+    /// the foot from the toes to the ankle.
+    Waraji,
 }
 
 const UP: Vector3 = Vector3::UP;
@@ -116,6 +123,8 @@ pub(super) fn build(m: &mut Merge, part: Part) {
         Part::KusazuriLames => kusazuri_lames(m),
         Part::KusazuriLacing => kusazuri_lacing(m),
         Part::KusazuriKnots => kusazuri_knots(m),
+        Part::Sandal => sandal(m, false),
+        Part::Waraji => sandal(m, true),
     }
 }
 
@@ -487,6 +496,110 @@ fn kusazuri_knots(m: &mut Merge) {
                 );
             }
         }
+    }
+}
+
+/// A sole under a foot, from its ankle's bone: where its bottom and top
+/// lie, its heel and its toe, half its breadth at the ball and the heel.
+const SOLE_LOW: f32 = -0.097;
+const SOLE_TOP: f32 = -0.085;
+const SOLE_HEEL: f32 = -0.06;
+const SOLE_TOE: f32 = 0.22;
+const SOLE_BALL: f32 = 0.052;
+const SOLE_HEEL_HALF: f32 = 0.037;
+/// How high over the sole the foot's top is along it (its instep is
+/// higher than its toes).
+fn instep(z: f32) -> f32 {
+    let t = ((z - SOLE_HEEL) / (SOLE_TOE - SOLE_HEEL)).clamp(0.0, 1.0);
+    0.085 * (1.0 - t).powf(0.6) + 0.025
+}
+
+/// Half the sole's breadth at `z`.
+fn sole_half(z: f32) -> f32 {
+    let t = ((z - SOLE_HEEL) / (SOLE_TOE - SOLE_HEEL)).clamp(0.0, 1.0);
+    let ball = (PI * (0.25 + 0.55 * t)).sin();
+    let toe = (1.0 - ((t - 0.88) / 0.12).max(0.0).powi(2)).max(0.0).sqrt();
+    (SOLE_HEEL_HALF + (SOLE_BALL - SOLE_HEEL_HALF) * ball) * toe.max(0.35)
+}
+
+/// A strap over the foot at `z`, from the sole's edge on one side over to
+/// the other; `lift` raises its top, `half` is half its width.
+fn strap(m: &mut Merge, z: f32, lift: f32, half: f32, thick: f32) {
+    let w = sole_half(z) * 0.95;
+    let h = instep(z) + lift;
+    let n = 10;
+    let path: Vec<Vector3> = (0..=n)
+        .map(|k| {
+            let a = frac(k, n) * PI;
+            v(w * a.cos(), SOLE_TOP + h * a.sin().powf(0.8), z)
+        })
+        .collect();
+    m.sweep(&path, |_| (thick, half), 2.0, false, Vector3::BACK);
+}
+
+fn sandal(m: &mut Merge, straw: bool) {
+    // the sole, round its outline
+    let n = 20;
+    let rim = |k: usize| {
+        let a = frac(k, n) * TAU;
+        let z = SOLE_HEEL + (SOLE_TOE - SOLE_HEEL) * (0.5 - 0.5 * a.cos());
+        v(sole_half(z) * a.sin(), 0.0, z)
+    };
+    let thick = if straw { 0.009 } else { 0.006 };
+    let mid = (SOLE_LOW + SOLE_TOP) / 2.0;
+    let edge: Vec<Vector3> = (0..n).map(|k| rim(k) + v(0.0, mid, 0.0)).collect();
+    m.sweep(&edge, |_| (0.012, thick), 4.0, true, UP);
+    // its face, a flat fan from the middle
+    for (y, up) in [(SOLE_TOP + thick - 0.006, 1.0f32), (SOLE_LOW, -1.0)] {
+        let c = m.vertex(
+            v(0.0, y, (SOLE_HEEL + SOLE_TOE) / 2.0),
+            v(0.0, up, 0.0),
+            Vector2::new(0.5, 0.5),
+        );
+        for k in 0..n {
+            m.vertex(
+                rim(k) + v(0.0, y, 0.0),
+                v(0.0, up, 0.0),
+                Vector2::new(0.5, 0.5),
+            );
+        }
+        for k in 0..n as i32 {
+            m.tri(c, c + 1 + k, c + 1 + (k + 1) % n as i32);
+        }
+    }
+    if straw {
+        // cords crossed over the foot: from beside the toes to the ankle,
+        // round the heel, and a loop over the toes
+        for side in [-1.0f32, 1.0] {
+            let path: Vec<Vector3> = (0..=8)
+                .map(|k| {
+                    let t = frac(k, 8);
+                    let z = 0.15 + (0.0 - 0.15) * t;
+                    let x = side * sole_half(z) * (0.9 - 1.6 * t);
+                    v(x, SOLE_TOP + instep(z) * (0.15 + 0.95 * t.sqrt()), z)
+                })
+                .collect();
+            m.sweep(&path, |_| (0.004, 0.004), 2.0, false, UP);
+        }
+        strap(m, 0.17, 0.004, 0.005, 0.004);
+        let heel: Vec<Vector3> = (0..=10)
+            .map(|k| {
+                let a = frac(k, 10) * PI;
+                v(0.05 * a.cos(), SOLE_TOP + 0.05, -0.02 - 0.045 * a.sin())
+            })
+            .collect();
+        m.sweep(&heel, |_| (0.004, 0.004), 2.0, false, UP);
+    } else {
+        // two straps over the forefoot and one round the ankle
+        strap(m, 0.12, 0.004, 0.011, 0.004);
+        strap(m, 0.05, 0.005, 0.009, 0.004);
+        let ankle: Vec<Vector3> = (0..=16)
+            .map(|k| {
+                let a = frac(k, 16) * TAU;
+                v(0.048 * a.cos(), SOLE_TOP + 0.07, 0.005 + 0.05 * a.sin())
+            })
+            .collect();
+        m.sweep(&ankle, |_| (0.004, 0.008), 2.0, true, UP);
     }
 }
 

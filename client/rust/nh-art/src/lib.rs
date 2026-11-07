@@ -403,6 +403,10 @@ pub struct Coat {
 pub struct Footwear {
     pub shoe: Wear,
     pub hose: Wear,
+    /// On bare feet (`shoe` "skin"): the feet themselves dyed so (a
+    /// Samurai's tabi); none, they show bare.
+    #[serde(default)]
+    pub sock: Option<Wear>,
 }
 
 /// Bare ("skin"), or a manifest material, its colour multiplied by a
@@ -1629,8 +1633,11 @@ mod tests {
         let art = manifest();
         for (name, spec) in art.models.iter().filter(|(n, _)| n.starts_with("role_")) {
             for e in &spec.extras {
+                // (a role's own sandals go under boots worn, as its bare
+                // feet do)
+                let footwear = e.model.starts_with("sandal") || e.model.starts_with("waraji");
                 assert!(
-                    e.slot.is_none(),
+                    e.slot.is_none() || footwear && e.slot.as_deref() == Some("boots"),
                     "{name} {}: shown till something is worn",
                     e.model
                 );

@@ -1711,6 +1711,23 @@ impl Kit<'_> {
                     );
                 }
             }
+            "sandal" | "waraji" => {
+                // under a bare foot (or a tabi): a leather sandal, or a
+                // samurai's straw waraji
+                let part = if shape == "waraji" {
+                    GearPart::Waraji
+                } else {
+                    GearPart::Sandal
+                };
+                self.part(
+                    root,
+                    MeshKey::Organic(Organic::Gear(part)),
+                    &skin,
+                    [0.0, 0.0, 0.0],
+                    FLAT,
+                    ONE,
+                );
+            }
             "kusazuri" => {
                 // a samurai's kusazuri: lacquered lames in panels round the
                 // hips, laced as his sode are, cross-knotted at their feet
