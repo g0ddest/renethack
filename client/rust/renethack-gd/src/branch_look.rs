@@ -200,8 +200,13 @@ pub struct BranchLook {
     /// How far a torch's light reaches, in metres.
     pub torch_range: f32,
     /// How much brighter the hero's own pool of light is than in the main
-    /// dungeon (its floors darker stone, its levels mostly unlit).
+    /// dungeon (its floors darker stone, its levels mostly unlit), and how
+    /// far it reaches (metres from the light over their head).
     pub hero_light: f32,
+    pub hero_range: f32,
+    /// How much of their own faint light remembered floors show (1: the
+    /// main dungeon's; the overview shows them all alike).
+    pub floor_memory: f32,
     /// The light creatures alone take (map_view's creature light): None,
     /// a cold rim from behind; or its way, colour and energy (the Plane of
     /// Fire's neutral key from the front, so the fire's air does not turn
@@ -262,6 +267,8 @@ const MAIN: BranchLook = BranchLook {
     torch_energy: 2.4,
     torch_range: 5.5,
     hero_light: 1.0,
+    hero_range: 5.5,
+    floor_memory: 1.0,
     creature_key: None,
     fill: Color::from_rgb(0.86, 0.80, 0.72),
     fill_scale: 1.0,
@@ -375,7 +382,14 @@ pub fn look_of(branch: Branch) -> BranchLook {
             torch_energy: 2.8,
             // (further: its walls and floors are dark stone)
             torch_range: 7.0,
-            hero_light: 1.6,
+            // the hero's pool bright round their feet and gone three
+            // cells off, the floors remembered beyond it dim: lit as far
+            // as a lit room's, its near field read flat (the art
+            // director's recheck: 62-69 at the hero, 46-52 three cells
+            // off, against 45-60 and 18-25)
+            hero_light: 2.8,
+            hero_range: 4.0,
+            floor_memory: 0.55,
             under: Under::Chasm,
             fill: rgb(1.0, 0.45, 0.25),
             fill_scale: 1.5,

@@ -236,13 +236,7 @@ fn luma_marks(g: &mut RenethackGame) -> Result<(), String> {
     let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
     let wall = north_wall_near_hero(g)?;
     let map = &g.world.map;
-    // (the nearest: in a maze the floor out of sight is none drawn)
-    let mut near: Vec<(i32, i32)> = (-3..=3)
-        .flat_map(|dy| (-3..=3).map(move |dx| (hx + dx, hy + dy)))
-        .filter(|&at| at != (hx, hy))
-        .collect();
-    near.sort_by_key(|&(x, y)| (x - hx).abs().max((y - hy).abs()));
-    let bare = near.into_iter().find(|&(x, y)| {
+    let bare_at = |x: i32, y: i32| {
         map.cell(x, y).is_some_and(|c| {
             c.entity().is_none()
                 && matches!(
@@ -250,7 +244,14 @@ fn luma_marks(g: &mut RenethackGame) -> Result<(), String> {
                     Some(Terrain::Floor | Terrain::DarkFloor)
                 )
         })
-    });
+    };
+    // (the nearest: in a maze the floor out of sight is none drawn)
+    let mut near: Vec<(i32, i32)> = (-3..=3)
+        .flat_map(|dy| (-3..=3).map(move |dx| (hx + dx, hy + dy)))
+        .filter(|&at| at != (hx, hy))
+        .collect();
+    near.sort_by_key(|&(x, y)| (x - hx).abs().max((y - hy).abs()));
+    let bare = near.into_iter().find(|&(x, y)| bare_at(x, y));
     let ui = g.ui.as_ref().ok_or("no UI")?;
     let mark = |what: &str, at: Option<Vector3>| {
         if let Some(p) = at.and_then(|at| ui.map.on_screen(at)) {
@@ -266,6 +267,30 @@ fn luma_marks(g: &mut RenethackGame) -> Result<(), String> {
         "floor",
         bare.map(|(x, y)| Vector3::new(x as f32, 0.0, y as f32)),
     );
+    // the near field's fall-off (the art director's Gehennom targets):
+    // each bare floor one or two cells from the hero (their pool), and
+    // three off
+    for (what, from, to) in [("near", 1i32, 2i32), ("off3", 3, 3)] {
+        for dy in -to..=to {
+            for dx in -to..=to {
+                let d = dx.abs().max(dy.abs());
+                // (not hidden by a wall on the camera's side of it, nor
+                // behind the hero)
+                let (x, y) = (hx + dx, hy + dy);
+                let hidden = (dx, dy) == (0, -1)
+                    || map.cell(x, y + 1).is_none_or(|c| {
+                        matches!(
+                            nh_world::cell_terrain(c, &cat),
+                            None | Some(Terrain::Wall | Terrain::Stone)
+                        )
+                    });
+                if d >= from && !hidden && bare_at(x, y) {
+                    let at = Vector3::new((hx + dx) as f32, 0.0, (hy + dy) as f32);
+                    mark(what, Some(at));
+                }
+            }
+        }
+    }
     Ok(())
 }
 
@@ -378,6 +403,51 @@ fn light_visit(
     shot: &'static str,
     wish: bool,
 ) {
+    light_visit_at(steps, pick, depth, shot, wish, false);
+}
+
+/// Where the hero is teleported to beside an altar (`by_altar`).
+static BY_ALTAR: std::sync::Mutex<Option<(i32, i32)>> = std::sync::Mutex::new(None);
+
+/// The bare floor beside the level's altar (west of it first), the
+/// hero's place for the near field's picture in a temple.
+fn beside_altar(g: &RenethackGame) -> Result<(i32, i32), String> {
+    use nh_world::Terrain;
+    let cat = g.catalog.clone().ok_or("no catalog")?;
+    let map = &g.world.map;
+    let t = |x: i32, y: i32| map.cell(x, y).and_then(|c| nh_world::cell_terrain(c, &cat));
+    let (ax, ay) = (0..nh_world::ROWNO)
+        .flat_map(|y| (0..nh_world::COLNO).map(move |x| (x, y)))
+        .find(|&(x, y)| t(x, y) == Some(Terrain::Altar))
+        .ok_or("no altar known")?;
+    [
+        (ax - 1, ay),
+        (ax + 1, ay),
+        (ax - 1, ay + 1),
+        (ax + 1, ay + 1),
+        (ax, ay + 1),
+    ]
+    .into_iter()
+    .find(|&(x, y)| {
+        matches!(t(x, y), Some(Terrain::Floor | Terrain::DarkFloor))
+            && map.cell(x, y).is_some_and(|c| c.entity().is_none())
+    })
+    .ok_or_else(|| "no bare floor beside the altar".into())
+}
+
+/// As `light_visit`; with `by_altar`, once mapped the hero is teleported
+/// toward the level's altar too (Orcus' town, where the art director
+/// measures its near field; from its maze the engine puts the hero
+/// elsewhere in the town, the same for a seed) for another picture at 7 m
+/// (`shot`-town).
+fn light_visit_at(
+    steps: &mut Vec<Step>,
+    pick: Option<KeyCheck>,
+    depth: &'static str,
+    shot: &'static str,
+    wish: bool,
+    by_altar: bool,
+) {
     let named =
         |suffix: &str| -> &'static str { Box::leak(format!("{shot}-{suffix}").into_boxed_str()) };
     steps.extend([
@@ -415,7 +485,47 @@ fn light_visit(
         Step::Wait("the level drawn", drawn_here),
         Step::Call("where to measure", luma_marks),
         Step::Shot(shot),
+        // the near field at 7 m on the hero, where the art director
+        // measures the fall-off from the hero's pool
+        Step::Call("the camera close", |g| far(g, 7.0)),
+        Step::Wait("the camera close", drawn_here),
+        Step::Call("where to measure", luma_marks),
+        Step::Shot(named("near")),
+        Step::Call("the camera back", |g| far(g, 11.0)),
+        Step::Wait("the camera back", drawn_here),
     ]);
+    if by_altar {
+        steps.extend([
+            Step::Key(ctrl_key('t')),
+            Step::Request("getpos's cursor", |p| matches!(p, Prompt::Command)),
+            Step::Wait("where to teleport", |g| {
+                Ok(matches!(g.pending, Some((_, Prompt::Command))) && g.world.getpos)
+            }),
+            Step::Call("a click beside the altar", |g| {
+                let (x, y) = beside_altar(g)?;
+                *BY_ALTAR.lock().map_err(|e| e.to_string())? = g.world.map.hero();
+                godot_print!("selftest: gehennom: to ({x},{y}) beside the altar");
+                g.push_ui(UiEvent::MapClick { x, y, button: 1 });
+                Ok(())
+            }),
+            // (where something unseen stands there, the engine puts the
+            // hero somewhere else, the same for a seed)
+            Step::Wait("the hero teleported", |g| {
+                let from = *BY_ALTAR.lock().map_err(|e| e.to_string())?;
+                let moved = at_command(g)? && !g.world.getpos && g.world.map.hero() != from;
+                if moved {
+                    godot_print!("selftest: gehennom: the hero at {:?}", g.world.map.hero());
+                }
+                Ok(moved)
+            }),
+            Step::Call("the camera close", |g| far(g, 7.0)),
+            Step::Wait("the camera close in the town", drawn_here),
+            Step::Call("where to measure", luma_marks),
+            Step::Shot(named("town")),
+            Step::Call("the camera back", |g| far(g, 11.0)),
+            Step::Wait("the camera back", drawn_here),
+        ]);
+    }
     close_on_wall(steps, shot);
     steps.extend([
         Step::Call("the overview", |g| {
@@ -644,19 +754,35 @@ pub(super) fn gehennom() -> Vec<Step> {
         (|g| entry_key(g, "wizard1"), "gehennom-wizard"),
         (|g| entry_key(g, "juiblex"), "gehennom-juiblex"),
     ];
-    for (pick, shot) in lairs {
-        light_visit(&mut steps, Some(pick), "", shot, false);
+    for (pick, shot) in lairs.into_iter().filter(|(_, s)| gehennom_wanted(s)) {
+        // (Orcus' temple: the art director's near field)
+        let by_altar = shot == "gehennom-orcus";
+        light_visit_at(&mut steps, Some(pick), "", shot, false, by_altar);
     }
     // (each its fire: blood, brimstone, embers)
     for (depth, shot) in [
         ("33", "gehennom-33"),
         ("34", "gehennom-34"),
         ("36", "gehennom-36"),
-    ] {
+    ]
+    .into_iter()
+    .filter(|(_, s)| gehennom_wanted(s))
+    {
         light_visit(&mut steps, None, depth, shot, false);
     }
     steps.extend(quit());
     steps
+}
+
+/// The `gehennom` tour's levels after the Valley: all of them, or those
+/// `RENETHACK_GEHENNOM` names (a comma list: "orcus,34"), for a quicker
+/// run while tuning the light.
+fn gehennom_wanted(shot: &str) -> bool {
+    let Ok(only) = std::env::var("RENETHACK_GEHENNOM") else {
+        return true;
+    };
+    let name = shot.trim_start_matches("gehennom-");
+    only.split(',').any(|w| w.trim() == name)
 }
 
 /// The terrain's looks where the critics met them, for pictures (not part

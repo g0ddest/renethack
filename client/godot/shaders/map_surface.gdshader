@@ -112,6 +112,10 @@ global uniform vec4 branch_chasm;
 // a cave's branch (the Gnomish Mines): its floors meet the rock as a
 // shore, not along the cells' edges
 global uniform float branch_cave;
+// how much of their own faint light remembered floors show (Gehennom's
+// dimmer, its hero's pool bright against them); the overview shows them
+// all alike
+global uniform float branch_floor_memory;
 // the whole level framed (map_view's overview): what is remembered shows
 // nearly as it is, lit by its own faint light
 global uniform float overview;
@@ -627,7 +631,8 @@ void fragment() {
 	// the same stone, not a flat box
 	float relief = 0.45 + 0.8 * clamp(dot(wn, normalize(vec3(-0.35, 0.75, 0.55))), 0.0, 1.0);
 	relief *= mix(1.0, orm.r, 0.7);
-	vec3 emission = color * mix(memory_glow * relief * (1.0 + overview), glow, seen) + lift;
+	float own_light = memory_glow * (grime > 0.0 ? mix(branch_floor_memory, 1.0, overview) : 1.0);
+	vec3 emission = color * mix(own_light * relief * (1.0 + overview), glow, seen) + lift;
 	// and what is in view as plain as what is remembered, far from any
 	// torch (the ground under the level stays in its dark)
 	emission += albedo * relief * seen * overview * memory * 0.45;

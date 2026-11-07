@@ -80,6 +80,12 @@ branch_cave={
 "type": "float",
 "value": 0.0
 }
+; how much of their own faint light remembered floors show (1: the main
+; dungeon's; Gehennom's dimmer, its hero's pool the brighter by it)
+branch_floor_memory={
+"type": "float",
+"value": 1.0
+}
 ; the whole level framed: what is remembered shows nearly as it is
 overview={
 "type": "float",

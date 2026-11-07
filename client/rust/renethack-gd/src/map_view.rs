@@ -5136,6 +5136,7 @@ impl MapView {
         if !self.hero_gear.lamp() {
             self.hero_light
                 .set_param(Param::ENERGY, HERO_LIGHT_ENERGY * l.hero_light);
+            self.hero_light.set_param(Param::RANGE, l.hero_range);
         }
         self.show_reflect();
         self.show_sky_sea(match l.under {
@@ -5154,6 +5155,8 @@ impl MapView {
             "branch_cave",
             &(if l.cave { 1.0f32 } else { 0.0 }).to_variant(),
         );
+        RenderingServer::singleton()
+            .global_shader_parameter_set("branch_floor_memory", &l.floor_memory.to_variant());
         self.vfx.set_dust(l.dust, l.embers);
         self.lights_dirty = true;
         self.bedrock_dirty = true;
@@ -7095,8 +7098,8 @@ impl MapView {
             let (color, energy, range) = if lamp {
                 (LAMP_POOL, LAMP_POOL_ENERGY, LAMP_POOL_RANGE)
             } else {
-                let energy = HERO_LIGHT_ENERGY * self.branch_look.hero_light;
-                (HERO_LIGHT, energy, HERO_LIGHT_RANGE)
+                let l = &self.branch_look;
+                (HERO_LIGHT, HERO_LIGHT_ENERGY * l.hero_light, l.hero_range)
             };
             self.hero_light.set_color(color);
             self.hero_light.set_param(Param::ENERGY, energy);
