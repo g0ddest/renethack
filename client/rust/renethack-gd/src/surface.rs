@@ -147,6 +147,12 @@ impl Surfaces {
         self.ground.clone()
     }
 
+    /// What stands on each cell and where nothing is drawn, for the
+    /// liquids' shaders of the map's own.
+    pub fn stand_texture(&self) -> Gd<ImageTexture> {
+        self.standing.clone()
+    }
+
     /// The ground of some cells changed: the shaders see the new texture.
     pub fn show_ground(&mut self, ground: &mut GroundField) {
         if ground.write() {

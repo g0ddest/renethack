@@ -14,6 +14,8 @@ uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 uniform sampler2D fow_tex : filter_linear, repeat_disable;
 // per cell, full in the channel of its ground: water, lava, ice, land
 uniform sampler2D ground_tex : filter_linear, repeat_disable;
+// per cell: G full where nothing is drawn at all (surface.rs `StandField`)
+uniform sampler2D stand_tex : filter_linear, repeat_disable;
 // a photographed flow (TextureCan's Volcanic Lava Flow): its crust and
 // its molten channels; without it the crust is all noise
 uniform sampler2D flow_albedo : source_color, filter_linear_mipmap, repeat_enable;
@@ -115,6 +117,27 @@ void fragment() {
 		}
 		shore = 1.0 - smoothstep(0.0, 0.3, v.g - max(max(v.r, v.b), v.a));
 	}
+	// where nothing is drawn beside it (past what the hero has seen) its
+	// edge frays as a floor's does, wandering over a couple of metres and
+	// its corners rounded over a cell or so, its crust cooling dark there
+	// (a field half seen stepped along the cells); each cell's middle
+	// keeps its lava
+	vec2 uv = (wpos.xz + 0.5) / FIELD;
+	float empty = texture(stand_tex, uv).g;
+	float fray = 0.0;
+	if (empty > 0.001) {
+		vec2 d = vec2(1.0) / FIELD;
+		float wide = (empty * 4.0
+			+ (texture(stand_tex, uv + vec2(d.x, 0.0)).g + texture(stand_tex, uv - vec2(d.x, 0.0)).g
+			+ texture(stand_tex, uv + vec2(0.0, d.y)).g + texture(stand_tex, uv - vec2(0.0, d.y)).g) * 2.0
+			+ texture(stand_tex, uv + d).g + texture(stand_tex, uv - d).g
+			+ texture(stand_tex, uv + vec2(d.x, -d.y)).g
+			+ texture(stand_tex, uv + vec2(-d.x, d.y)).g) / 16.0;
+		vec2 middle = floor(wpos.xz + 0.5);
+		float core = 1.0 - smoothstep(0.15, 0.4, length(wpos.xz - middle));
+		fray = mix(empty, wide, 0.6) + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.45
+			+ (tl2(wpos.xz * 0.42 + vec2(5.3, 17.9)) - 0.5) * 0.3 - core;
+	}
 	vec2 flow = vec2(t * 0.015, t * 0.008);
 	float plates = texture(noise_tex, wpos.xz * 0.45 + flow).r;
 	float fine = texture(noise_tex, wpos.xz * 1.7 - flow * 2.0).r;
@@ -141,6 +164,16 @@ void fragment() {
 	crack *= 1.0 - smoothstep(0.2, 0.75, shore) * (1.0 - rim);
 	glow = molten.rgb * max(crack, rim * 0.8) * seethe;
 
+	// toward what nothing is known of its crust closes over it, a thin
+	// line of glow where it does, and past that it lies cooled black (a
+	// hole there showed the ground under the level lit, a square of it)
+	if (fray > 0.0) {
+		float line = smoothstep(0.27, 0.33, fray) * (1.0 - smoothstep(0.33, 0.39, fray));
+		float cooled = smoothstep(0.33, 0.39, fray);
+		crack *= 1.0 - smoothstep(0.05, 0.3, fray);
+		glow = molten.rgb * max(max(crack, rim * 0.8), line * 0.45) * seethe * (1.0 - cooled);
+		rock *= mix(1.0 - 0.5 * smoothstep(0.1, 0.33, fray), 0.06, cooled);
+	}
 	float seen = texture(fow_tex, (wpos.xz + 0.5) / FIELD).r;
 	ALBEDO = mix(rock, molten.rgb * 0.3, crack);
 	ROUGHNESS = mix(0.9, 0.4, crack);

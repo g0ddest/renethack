@@ -1148,6 +1148,8 @@ struct Around {
     floor: [bool; 4],
     /// The ground of each (`Ground::None`: a wall, the rock, unknown).
     ground: [Ground; 4],
+    /// Which of them nothing is known of (nothing drawn there).
+    unknown: [bool; 4],
     /// A door or a feature (`may_matter`) here or round here, diagonals
     /// too.
     matters: bool,
@@ -1191,9 +1193,11 @@ impl Around {
         let mut liquid = [false; 4];
         let mut floor = [false; 4];
         let mut ground = [Ground::None; 4];
+        let mut unknown = [false; 4];
         for (i, side) in sides.iter_mut().enumerate() {
             let cell = near.cells[i];
             let t = cell.and_then(|c| cell_terrain(c, catalog));
+            unknown[i] = t.is_none() && cell.is_none_or(|c| c.entity().is_none());
             liquid[i] = matches!(t, Some(Terrain::Pool | Terrain::Water | Terrain::Lava));
             floor[i] = matches!(t, Some(Terrain::Floor | Terrain::DarkFloor));
             ground[i] = cell.map_or(Ground::None, |c| cell_ground(c, catalog));
@@ -1211,6 +1215,7 @@ impl Around {
             liquid,
             floor,
             ground,
+            unknown,
             matters: near
                 .cells
                 .iter()
@@ -1579,15 +1584,17 @@ fn mine_support(look: &mut Look, around: &Around, ctx: &Ctx) {
 /// What holds water or lava: a bed of stone `depth` down, and a bank of
 /// stone on each side where a wall or the rock stands (where ground lies
 /// the shore wanders over both cells: `ground_layers`).
-fn liquid_bed(look: &mut Look, around: &Around, ctx: &Ctx, depth: f32) {
+fn liquid_bed(look: &mut Look, around: &Around, ctx: &Ctx, depth: f32, lava: bool) {
     let Some(m) = ctx.mat("bedrock") else {
         return;
     };
     // dark and wet under the water: a bed, not a pale tank
     let stone = Paint::Pbr(m, 45, Role::Prop);
     look.ground_tile(plane(1.0, 1.0), stone, at(0.0, -depth, 0.0));
+    // (no bank where nothing is known beside lava: its crust cools black
+    // there, lava.gdshader, and a lip of stone stepped along the cells)
     for (i, (dx, dz)) in SIDES.iter().enumerate() {
-        if around.liquid[i] || around.ground[i] != Ground::None {
+        if around.liquid[i] || around.ground[i] != Ground::None || (lava && around.unknown[i]) {
             continue;
         }
         let (mesh, pos) = if *dx == 0.0 {
@@ -2345,6 +2352,7 @@ fn terrain_base(
                 around,
                 ctx,
                 if t == Terrain::Water { 0.9 } else { 0.5 },
+                false,
             );
             look.ground = -deep;
             look.sunk = true;
@@ -2359,7 +2367,7 @@ fn terrain_base(
                 Paint::Liquid(Liquid::Lava),
                 at(0.0, SURFACE_Y, 0.0),
             );
-            liquid_bed(look, around, ctx, 0.12);
+            liquid_bed(look, around, ctx, 0.12, true);
             // the air shimmers over it, and it lights its banks: every
             // third cell of a lake, every cell of a narrow flow
             let banks = around.liquid.iter().filter(|l| !**l).count();
@@ -6350,6 +6358,11 @@ impl MapView {
                 ) {
                     let ground = self.surfaces.ground_texture();
                     m.set_shader_parameter("ground_tex", &ground.to_variant());
+                }
+                // (its edge frays where nothing is drawn beside it)
+                if l == Liquid::Lava {
+                    let stand = self.surfaces.stand_texture();
+                    m.set_shader_parameter("stand_tex", &stand.to_variant());
                 }
                 if l == Liquid::Membrane {
                     m.set_shader_parameter("tall", &MEMBRANE_TALL.to_variant());
