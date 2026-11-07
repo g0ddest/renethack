@@ -207,7 +207,7 @@ pub(super) fn motion() -> Vec<Step> {
                     if n > 400 {
                         return Err("she never died".into());
                     }
-                    Ok(Some(KeyInput::plain(Key::Char(if n % 2 == 0 {
+                    Ok(Some(KeyInput::plain(Key::Char(if n.is_multiple_of(2) {
                         'm'
                     } else {
                         's'
