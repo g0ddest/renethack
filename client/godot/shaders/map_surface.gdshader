@@ -547,8 +547,10 @@ void fragment() {
 	vec2 cell = wpos.xz + 0.5;
 	vec4 fow = texture(fow_tex, (cell - n.xz * 0.3) / FIELD);
 	if (grime > 0.0) {
-		float g = smoothstep(0.12, 0.5, texture(fow_tex, cell / FIELD).b) * grime;
-		albedo *= 1.0 - 0.32 * g;
+		// (a band about the room's edge, the darker the nearer the wall:
+		// fainter, a small room's floor read as one flat slab)
+		float g = smoothstep(0.06, 0.5, texture(fow_tex, cell / FIELD).b) * grime;
+		albedo *= 1.0 - 0.45 * g * g;
 		rough = min(rough + 0.1 * g, 1.0);
 	}
 	vec3 lava = vec3(0.0);

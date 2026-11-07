@@ -129,6 +129,9 @@ pub struct Dress {
     pub corners: bool,
     /// Rock grown into a cave's walls.
     pub formations: bool,
+    /// A worn rug laid in a small room's middle (one too small for a band
+    /// inlaid): its cloth and its border's (manifest names).
+    pub rug: Option<(&'static str, &'static str)>,
 }
 
 /// What a wall's brazier holds: never a light (a lit-looking brazier in a
@@ -163,6 +166,7 @@ impl Dress {
         embers: false,
         corners: false,
         formations: false,
+        rug: None,
     };
 }
 
@@ -304,6 +308,7 @@ const MAIN: BranchLook = BranchLook {
         embers: false,
         corners: true,
         formations: false,
+        rug: Some(("banner_red", "banner_ochre")),
     },
     under: Under::Rock,
     reflect: 1.0,

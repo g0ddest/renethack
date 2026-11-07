@@ -11031,7 +11031,9 @@ mod tests {
                     corners += usize::from(corner.is_some());
                 }
                 // a small room's: there is none in the hall
-                dressing::Volume::North(_) | dressing::Volume::Pier => {
+                dressing::Volume::North(_)
+                | dressing::Volume::Pier
+                | dressing::Volume::Rug { .. } => {
                     panic!("{x},{y}: {v:?} in a hall")
                 }
             }
@@ -11096,6 +11098,54 @@ mod tests {
         // a branch that builds none of it
         let sokoban = crate::branch_look::look_of(Branch::Sokoban).dress;
         let map = level(&f.cat, &["r-----7", "|.....|", "|.....|", "L-----J"]);
+        assert!(dressing::plan(|x, y| plan_cell(&map, &f.cat, x, y), &sokoban).is_empty());
+    }
+
+    #[test]
+    fn a_small_rooms_rug_lies_only_on_bare_floor_known_whole() {
+        let f = Fixture::new();
+        let dress = crate::branch_look::look_of(Branch::Main).dress;
+        let rugs = |rows: &[&str]| {
+            let map = level(&f.cat, rows);
+            dressing::plan(|x, y| plan_cell(&map, &f.cat, x, y), &dress)
+                .into_iter()
+                .filter_map(|(k, v)| match v {
+                    dressing::Volume::Rug { rect } => Some((k, rect)),
+                    _ => None,
+                })
+                .collect::<HashMap<_, _>>()
+        };
+        let at = |c: i32, r: i32| (PICTURE_AT.0 + c, PICTURE_AT.1 + r);
+        // three by two: on every floor cell, one rectangle a margin in
+        // from the walls, the same in the level's metres from each cell
+        let plan = rugs(&["r---7", "|...|", "|...|", "L---J"]);
+        assert_eq!(plan.len(), 6);
+        let [x0, z0, x1, z1] = plan[&at(1, 1)];
+        assert!((x0 + 0.5 - 0.55).abs() < 1e-4 && (z0 + 0.5 - 0.55).abs() < 1e-4);
+        assert!((x1 - 2.5 + 0.55).abs() < 1e-4 && (z1 - 1.5 + 0.55).abs() < 1e-4);
+        assert_eq!(plan[&at(3, 2)][0], x0 - 2.0);
+        // a door in its wall is beside it, not under it: still laid
+        assert_eq!(rugs(&["r-+-7", "|...|", "|...|", "L---J"]).len(), 6);
+        // stairs in its corner: over the biggest stretch beside them, a
+        // little in from them
+        let plan = rugs(&["r----7", "|>...|", "|....|", "|....|", "L----J"]);
+        assert_eq!(plan.len(), 9);
+        assert!(!plan.contains_key(&at(1, 1)) && !plan.contains_key(&at(1, 3)));
+        assert!((plan[&at(2, 1)][0] + 0.2).abs() < 1e-4);
+        // a feature or a pool leaving no stretch of two by two: none
+        // (nothing is laid over them)
+        assert!(rugs(&["r---7", "|._.|", "|...|", "L---J"]).is_empty());
+        assert!(rugs(&["r---7", "|...|", "|.}.|", "L---J"]).is_empty());
+        // its walls not all seen yet: none
+        assert!(rugs(&["r---7", "|...|", "|...|"]).is_empty());
+        // a room big enough for a band: the band, no rug
+        let big = [
+            "r-----7", "|.....|", "|.....|", "|.....|", "|.....|", "L-----J",
+        ];
+        assert!(rugs(&big).is_empty());
+        // a branch that lays none
+        let sokoban = crate::branch_look::look_of(Branch::Sokoban).dress;
+        let map = level(&f.cat, &["r---7", "|...|", "|...|", "L---J"]);
         assert!(dressing::plan(|x, y| plan_cell(&map, &f.cat, x, y), &sokoban).is_empty());
     }
 

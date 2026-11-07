@@ -728,10 +728,19 @@ fn cobweb(look: &mut Look, ctx: &Ctx, sx: f32) {
 /// the cell taller to the pointer.
 pub(super) fn floor(look: &mut Look, around: &Around, ctx: &Ctx) {
     let dress = &ctx.branch.dress;
+    let (first, top) = (look.solids.len(), look.top);
+    // (a rug goes on up to a door's side; nothing else of the floor's
+    // dressing on it)
+    if rug(look, ctx) {
+        for s in &mut look.solids[first..] {
+            s.shadow = false;
+        }
+        look.top = top;
+        return;
+    }
     if !around.plain() {
         return;
     }
-    let (first, top) = (look.solids.len(), look.top);
     inlay(look, ctx);
     if dress.cracks {
         cracks(look, around, ctx);
@@ -888,6 +897,11 @@ pub(super) enum Volume {
     North(Option<Piece>),
     /// A pier built into a small room's corner.
     Pier,
+    /// A rug laid in a small room's floor: its rectangle in the cell's own
+    /// metres (x0, z0, x1, z1), reaching past the cell where it goes on.
+    Rug {
+        rect: [f32; 4],
+    },
 }
 
 /// The least run of north wall over a room's floor that has arches, the
@@ -909,6 +923,21 @@ const FILLET: f32 = 0.04;
 const FILLET_IN: f32 = 0.13;
 const LOZENGE: f32 = 0.1;
 const CORNER: f32 = 0.2;
+/// A rug's margin to its room's walls (metres from the room's edge) and to
+/// what it leaves bare beside it, and the least stretch of bare floor it
+/// lies on (cells); its border's width and how far in from its edge it
+/// runs, and how dark its cloths lie (worn, never a bright
+/// patch that could pass for something lying there).
+const RUG_MARGIN: f32 = 0.55;
+const RUG_BESIDE: f32 = 0.3;
+const RUG_LEAST: (i32, i32) = (2, 2);
+const RUG_BORDER: f32 = 0.09;
+const RUG_BORDER_IN: f32 = 0.07;
+/// The thin line inside the border: its width, and its gap to the border.
+const RUG_LINE: f32 = 0.025;
+const RUG_LINE_IN: f32 = 0.06;
+const RUG_SHADE: u8 = 48;
+const RUG_BORDER_SHADE: u8 = 52;
 
 /// What the plan reads of a cell: its terrain as known; whether something
 /// stands or lies on ground never shown bare (it is inside a room all the
@@ -1023,7 +1052,7 @@ pub(super) fn plan(
     // the rooms known whole, their walls seen all round (a dark one's
     // floor seen in part is a rectangle too, its edge no wall)
     let rooms: Vec<(i32, i32, i32, i32)> =
-        if dress.inlay.is_some() || dress.pilasters || dress.piers {
+        if dress.inlay.is_some() || dress.pilasters || dress.piers || dress.rug.is_some() {
             rooms(&inside)
                 .into_iter()
                 .filter(|&(x0, y0, x1, y1)| {
@@ -1070,6 +1099,44 @@ pub(super) fn plan(
         for (x, piece) in pieces.into_iter().flatten() {
             if plain(x, y) {
                 out.insert((x, y), Volume::North(Some(piece)));
+            }
+        }
+    }
+    // a small room's rug: over its biggest stretch of bare floor known (no
+    // feature, stairs, door nor trap under it, nothing hidden by it: what
+    // lies on it is drawn on it), a margin in from the walls and less
+    // from what it leaves bare beside it
+    if dress.rug.is_some() {
+        let bare = |x: i32, y: i32| floor(x, y) && !cell(x, y).matters;
+        for &room in &rooms {
+            let (rx0, ry0, rx1, ry1) = room;
+            let (w, h) = (rx1 - rx0 + 1, ry1 - ry0 + 1);
+            let small = dress.inlay.is_none() || w < BAND_LEAST.0 || h < BAND_LEAST.1;
+            if !small {
+                continue;
+            }
+            let Some((x0, y0, x1, y1)) = bare_stretch(room, &bare) else {
+                continue;
+            };
+            let side = |at_wall: bool| if at_wall { RUG_MARGIN } else { RUG_BESIDE };
+            let (rx0, ry0) = (
+                x0 as f32 - 0.5 + side(x0 == rx0),
+                y0 as f32 - 0.5 + side(y0 == ry0),
+            );
+            let (rx1, ry1) = (
+                x1 as f32 + 0.5 - side(x1 == rx1),
+                y1 as f32 + 0.5 - side(y1 == ry1),
+            );
+            for x in x0..=x1 {
+                for y in y0..=y1 {
+                    let (fx, fy) = (x as f32, y as f32);
+                    out.insert(
+                        (x, y),
+                        Volume::Rug {
+                            rect: [rx0 - fx, ry0 - fy, rx1 - fx, ry1 - fy],
+                        },
+                    );
+                }
             }
         }
     }
@@ -1162,6 +1229,41 @@ pub(super) fn plan(
     out
 }
 
+/// A rectangle of cells (x0, y0, x1, y1), its corners' cells in it.
+type Rect = (i32, i32, i32, i32);
+
+/// The biggest rectangle of cells in `room` (x0, y0, x1, y1) all `bare`,
+/// at least `RUG_LEAST` (cells, either way round), the one nearest the
+/// room's middle among the biggest.
+fn bare_stretch(room: Rect, bare: &impl Fn(i32, i32) -> bool) -> Option<Rect> {
+    let (x0, y0, x1, y1) = room;
+    let (mx, my) = ((x0 + x1) as f32 / 2.0, (y0 + y1) as f32 / 2.0);
+    // (the rectangle, its area, how far off the middle)
+    let mut best: Option<(Rect, i32, f32)> = None;
+    for ax in x0..=x1 {
+        for ay in y0..=y1 {
+            for bx in ax..=x1 {
+                for by in ay..=y1 {
+                    let (w, h) = (bx - ax + 1, by - ay + 1);
+                    let fits = (w >= RUG_LEAST.0 && h >= RUG_LEAST.1)
+                        || (w >= RUG_LEAST.1 && h >= RUG_LEAST.0);
+                    if !fits || !(ax..=bx).all(|x| (ay..=by).all(|y| bare(x, y))) {
+                        continue;
+                    }
+                    let off =
+                        ((ax + bx) as f32 / 2.0 - mx).abs() + ((ay + by) as f32 / 2.0 - my).abs();
+                    let better =
+                        best.is_none_or(|(_, area, o)| w * h > area || (w * h == area && off < o));
+                    if better {
+                        best = Some(((ax, ay, bx, by), w * h, off));
+                    }
+                }
+            }
+        }
+    }
+    best.map(|(r, _, _)| r)
+}
+
 /// The rooms of the level as their floors show (`floor`: inside a room):
 /// each area of it known that is a whole rectangle (x0, y0, x1, y1).
 fn rooms(floor: &impl Fn(i32, i32) -> bool) -> Vec<(i32, i32, i32, i32)> {
@@ -1232,6 +1334,53 @@ fn clip(a: (f32, f32), b: (f32, f32), x: i32, y: i32) -> Option<[f32; 4]> {
         a.0 + dx * t1 - x as f32,
         a.1 + dy * t1 - y as f32,
     ])
+}
+
+/// The part of the rug the plan lays on this cell (`Volume::Rug`): its
+/// cloth, flat on the floor, and its border's strips a little in from its
+/// edge. Whether there was one.
+fn rug(look: &mut Look, ctx: &Ctx) -> bool {
+    let Some(Volume::Rug { rect }) = ctx.volume else {
+        return false;
+    };
+    let Some((cloth, edge)) = ctx.branch.dress.rug else {
+        return false;
+    };
+    let (Some(cloth), Some(edge)) = (
+        trim(ctx, cloth, RUG_SHADE),
+        trim(ctx, edge, RUG_BORDER_SHADE),
+    ) else {
+        return false;
+    };
+    // a rectangle (x0, z0, x1, z1) in the cell's own metres, cut to the
+    // cell, laid `y` up
+    let lay = |look: &mut Look, r: [f32; 4], paint: Paint, y: f32| {
+        let [x0, z0, x1, z1] = [r[0].max(-0.5), r[1].max(-0.5), r[2].min(0.5), r[3].min(0.5)];
+        if x1 - x0 > 0.005 && z1 - z0 > 0.005 {
+            look.solid(
+                cuboid(x1 - x0, 0.004, z1 - z0),
+                paint,
+                at((x0 + x1) / 2.0, y, (z0 + z1) / 2.0),
+            );
+        }
+    };
+    lay(look, rect, cloth, 0.003);
+    let [x0, z0, x1, z1] = rect;
+    // its border, and a thin line inside it
+    for (i, b) in [
+        (RUG_BORDER_IN, RUG_BORDER),
+        (RUG_BORDER_IN + RUG_BORDER + RUG_LINE_IN, RUG_LINE),
+    ] {
+        for strip in [
+            [x0 + i, z0 + i, x1 - i, z0 + i + b],
+            [x0 + i, z1 - i - b, x1 - i, z1 - i],
+            [x0 + i, z0 + i + b, x0 + i + b, z1 - i - b],
+            [x1 - i - b, z0 + i + b, x1 - i, z1 - i - b],
+        ] {
+            lay(look, strip, edge, 0.0045);
+        }
+    }
+    true
 }
 
 /// How light an inlay's stone is: held down, so it reads as another stone
