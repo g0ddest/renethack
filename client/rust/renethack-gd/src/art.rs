@@ -101,6 +101,14 @@ pub enum Sheen {
 /// roughness its materials keep at most for the rim to stay round its
 /// edges (Godot narrows a rim on a smoother surface).
 const RIM: f32 = 0.6;
+/// How much light skin scatters under it, and how bright its rim is
+/// (`skin_lit`).
+const SKIN_SCATTER: f32 = 0.15;
+/// A creature whose colour is darker than this (its luminance) gets the
+/// brighter edge, so strong.
+const DARK_EDGE: f32 = 0.22;
+const DARK_EDGE_STRENGTH: f32 = 0.7;
+const SKIN_RIM: f32 = 0.14;
 const RIM_TINT: f32 = 0.5;
 const RIM_ROUGHNESS: f32 = 0.95;
 /// The specular a rimmed material keeps at most: smoother for its rim, it
@@ -268,6 +276,7 @@ impl Slotted {
 /// mesh.
 struct CoatMaps {
     scale: f32,
+    uv: bool,
     albedo: Option<Gd<Texture2D>>,
     normal: Option<Gd<Texture2D>>,
     orm: Option<Gd<Texture2D>>,
@@ -278,7 +287,7 @@ impl CoatMaps {
     /// Over `m`: its shading under the dye, its relief, its gloss (the
     /// map's alone) and its hollows.
     fn lay_on(&self, m: &mut Gd<BaseMaterial3D>) {
-        m.set_flag(Flags::UV1_USE_TRIPLANAR, true);
+        m.set_flag(Flags::UV1_USE_TRIPLANAR, !self.uv);
         m.set_uv1_scale(Vector3::splat(self.scale));
         if let Some(a) = &self.albedo {
             m.set_texture(TextureParam::ALBEDO, a);
@@ -495,6 +504,8 @@ pub struct Art {
     /// The pass that edges them (`EDGE_SHADER`), once loaded (None: not
     /// yet asked for; Some(None): missing).
     edge: Option<Option<Gd<Material>>>,
+    /// The same, brighter, for a dark creature (`DARK_EDGE`).
+    dark_edge: Option<Option<Gd<Material>>>,
     /// A thing on the floor's glint (`GLINT_SHADER`), the same way, and
     /// gold's (warmer and smaller).
     glint: Option<Option<Gd<Material>>>,
@@ -613,6 +624,7 @@ impl Art {
             untwin: HashMap::new(),
             matte: HashSet::new(),
             edge: None,
+            dark_edge: None,
             glint: None,
             coin_glint: None,
             contact: None,
@@ -2003,16 +2015,26 @@ impl Art {
         }
     }
 
-    /// The pass a creature's rimmed materials draw its edge in.
-    fn edge_pass(&mut self) -> Option<Gd<Material>> {
-        self.edge
-            .get_or_insert_with(|| {
-                let shader = godot::tools::try_load::<Shader>(EDGE_SHADER).ok()?;
-                let mut m = ShaderMaterial::new_gd();
-                m.set_shader(&shader);
-                Some(m.upcast())
-            })
-            .clone()
+    /// The pass a creature's rimmed materials draw its edge in; a dark
+    /// one's (its colour under `DARK_EDGE`) brighter, so that a black
+    /// dragon or a shade reads on a dark floor.
+    fn edge_pass(&mut self, dark: bool) -> Option<Gd<Material>> {
+        let slot = if dark {
+            &mut self.dark_edge
+        } else {
+            &mut self.edge
+        };
+        slot.get_or_insert_with(|| {
+            let shader = godot::tools::try_load::<Shader>(EDGE_SHADER).ok()?;
+            let mut m = ShaderMaterial::new_gd();
+            m.set_shader(&shader);
+            if dark {
+                m.set_shader_parameter("strength", &DARK_EDGE_STRENGTH.to_variant());
+                m.set_shader_parameter("from", &0.3f32.to_variant());
+            }
+            Some(m.upcast())
+        })
+        .clone()
     }
 
     fn rimmed_material(&mut self, src: &Gd<Material>) -> Gd<Material> {
@@ -2033,9 +2055,11 @@ impl Art {
                 m.set_specular(specular);
                 // (never on a see-through one: the pass knows nothing of
                 // the cut-outs of a card of feathers or hair)
+                let c = m.get_albedo();
+                let dark = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b < DARK_EDGE;
                 if m.get_transparency() == Transparency::DISABLED
                     && m.get_next_pass().is_none()
-                    && let Some(edge) = self.edge_pass()
+                    && let Some(edge) = self.edge_pass(dark)
                 {
                     m.set_next_pass(&edge);
                 }
@@ -2288,7 +2312,8 @@ impl Art {
                         // never the cloth's dye
                         if is_skin(&src) {
                             let tone = mul(look.tint, skin_tone);
-                            return self.derive(&src, tone, ghost, None);
+                            let m = self.derive(&src, tone, ghost, None);
+                            return if ghost { m } else { skin_lit(&m) };
                         }
                         if let Some((m, c)) = made {
                             return match &relief {
@@ -2683,7 +2708,12 @@ impl Art {
                     (false, false) => hair_tint,
                 };
                 let texture = if body { skin_tex.clone() } else { None };
-                let materials = recoloured(&worn, colour, texture);
+                let mut materials = recoloured(&worn, colour, texture);
+                if body {
+                    for m in materials.iter_mut().flatten() {
+                        *m = skin_lit(m);
+                    }
+                }
                 for (m, src) in materials.iter().zip(&worn) {
                     if let Some(m) = m {
                         self.keep_metal(m, src.as_ref());
@@ -3011,6 +3041,7 @@ impl Art {
         let mut load = |p: Option<String>| p.and_then(|p| self.texture(&p));
         Some(CoatMaps {
             scale: coat.scale,
+            uv: coat.uv,
             albedo: load(spec.albedo_path()),
             normal: load(spec.normal_path()),
             orm: load(spec.arm_path()),
@@ -5021,6 +5052,33 @@ fn recoloured(
             Some(out.upcast())
         })
         .collect()
+}
+
+/// A base character's skin (a face, bare arms, an outfit's bare hands)
+/// lit as skin, not wax: light scattered under it warms and softens its
+/// shading, and a faint warm rim holds its outline against a dark floor.
+/// A copy, unless it is already so (or not a plain material: a ghost's,
+/// a statue's).
+fn skin_lit(m: &Gd<Material>) -> Gd<Material> {
+    let Ok(b) = m.clone().try_cast::<BaseMaterial3D>() else {
+        return m.clone();
+    };
+    if b.get_feature(Feature::SUBSURFACE_SCATTERING)
+        || b.get_transparency() != Transparency::DISABLED
+        || b.get_shading_mode() == ShadingMode::UNSHADED
+    {
+        return m.clone();
+    }
+    let Ok(mut out) = b.duplicate_resource().try_cast::<BaseMaterial3D>() else {
+        return m.clone();
+    };
+    out.set_feature(Feature::SUBSURFACE_SCATTERING, true);
+    out.set_subsurface_scattering_strength(SKIN_SCATTER);
+    out.set_flag(Flags::SUBSURFACE_MODE_SKIN, true);
+    out.set_feature(Feature::RIM, true);
+    out.set_rim(SKIN_RIM);
+    out.set_rim_tint(0.85);
+    out.upcast()
 }
 
 /// Skin: light scattered under it softens the shading (a face, not a

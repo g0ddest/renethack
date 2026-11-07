@@ -470,6 +470,20 @@ def do_painted(w, item):
     elif item["paint"] == "face":
         image = art_paint.face(source().resize(size, Image.LANCZOS), eyes, tuple(item["nose"]), tuple(item["mouth"]),
                                item.get("stubble", False), item.get("war"))
+    elif item["paint"] == "warts":
+        # over a creature's own maps: its albedo painted before in this
+        # run (`albedo`), its normal and ORM maps inside its GLB (`from`)
+        with open(os.path.join(ART, item["from"]), "rb") as f:
+            inside = glb_images(f.read())
+        own = {k: Image.open(io.BytesIO(next(d for n, d in sorted(inside.items()) if item[k] in n)))
+               for k in ("normal", "orm")}
+        coat = Image.open(os.path.join(ART, item["albedo"]))
+        maps = art_paint.warts(coat, own["normal"], own["orm"])
+        for name, image in maps.items():
+            out = io.BytesIO()
+            image.save(out, "JPEG", quality=88, optimize=True)
+            w.put(f"{item['out']}_{name}.jpg", out.getvalue())
+        return
     elif item["paint"] == "relief":
         image = art_paint.relief(source(), item["radius"], item["light"])
     elif item["paint"] in ("fur", "scales", "weave", "floral", "forged", "winingas", "lames", "ringmail"):

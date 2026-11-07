@@ -824,3 +824,58 @@ def face(skin, eyes, nose, mouth, stubble=False, paint=None):
         line = ImageChops.lighter(line.filter(ImageFilter.GaussianBlur(0.0015 * w)), soft(lash, 0.002))
         out = shade(out, line.point(lambda v: v * 4 // 5), "#3a2a2a")
     return out
+
+
+def warts(coat, normal, orm, seed="warts"):
+    """A coarse hide over a creature's own maps (a troll's): warts and
+    knobs scattered over it, dark round their feet and lighter on their
+    crowns, and creased between; its own relief kept under them. The
+    hide is rough in its creases and a little glossy on its knobs. The
+    albedo, normal and ORM maps, the size of `coat`."""
+    rng = random.Random(seed)
+    coat = coat.convert("RGB")
+    size = coat.size
+    w, h = size
+    normal = normal.convert("RGB").resize(size, Image.LANCZOS)
+    orm = orm.convert("RGB").resize(size, Image.LANCZOS)
+    # the knobs: soft domes of many sizes; the creases: ridged noise
+    knobs = Image.new("L", size, 0)
+    d = ImageDraw.Draw(knobs)
+    for _ in range(w * h // 2600):
+        x, y = rng.random() * w, rng.random() * h
+        r = rng.choice((2, 3, 3, 4, 5, 7)) * w / 1024
+        d.ellipse([x - r, y - r, x + r, y + r], fill=rng.randint(150, 255))
+    knobs = knobs.filter(ImageFilter.GaussianBlur(1.6 * w / 1024))
+    crease = noise(rng, size, 60)
+    crease = crease.point(lambda v: 255 - abs(v - 128) * 2).filter(ImageFilter.GaussianBlur(1.2))
+    # (none over what is lightest: eyes, teeth, claws)
+    bare = above(ImageOps.grayscale(coat), 205, 20).filter(ImageFilter.GaussianBlur(3))
+    keep = ImageChops.invert(bare)
+    knobs = ImageChops.multiply(knobs, keep)
+    crease = ImageChops.multiply(crease, keep)
+    height = ImageChops.add(knobs.point(lambda v: v * 3 // 4), crease.point(lambda v: v // 5))
+    # the colour: darker round each knob's foot and in the creases
+    feet = ImageChops.subtract(knobs.filter(ImageFilter.GaussianBlur(3 * w / 1024)), knobs)
+    shade = ImageChops.subtract(Image.new("L", size, 255), feet.point(lambda v: min(255, v * 3)))
+    shade = ImageChops.multiply(shade, crease.point(lambda v: 215 + v // 6))
+    shade = ImageChops.add(shade, knobs.point(lambda v: v // 10))
+    albedo = ImageChops.multiply(coat, Image.merge("RGB", [shade] * 3))
+    # the hide's slopes over its own: tilts added
+    bump = normals(height, 2.5).load()
+    own = normal.load()
+    out = Image.new("RGB", size)
+    px = out.load()
+    for y in range(h):
+        for x in range(w):
+            br, bg, _ = bump[x, y]
+            r, g, b = own[x, y]
+            nx = (r - 128) + (br - 128)
+            ny = (g - 128) + (bg - 128)
+            nz = max(1, b - 128)
+            k = 127 / max(1.0, math.sqrt(nx * nx + ny * ny + nz * nz))
+            px[x, y] = (round(128 + nx * k), round(128 + ny * k), round(128 + nz * k))
+    o_r, o_g, o_b = orm.split()
+    ao = ImageChops.multiply(o_r, hollows(height, 4, 0.8))
+    rough = ImageChops.subtract(Image.new("L", size, 230), knobs.point(lambda v: v // 4))
+    rough = ImageChops.add(rough.point(lambda v: v * 3 // 4), o_g.point(lambda v: v // 4))
+    return {"albedo": albedo, "normal": out, "arm": Image.merge("RGB", [ao, rough, Image.new("L", size, 0)])}

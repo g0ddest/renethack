@@ -393,6 +393,10 @@ pub struct Coat {
     pub on: Vec<String>,
     #[serde(default = "one")]
     pub scale: f32,
+    /// By the mesh's own UVs, not laid across it: maps painted on the
+    /// model's own (a troll's hide over its painting).
+    #[serde(default)]
+    pub uv: bool,
 }
 
 /// What a role wears on its feet without boots (`ModelSpec::feet`): the
