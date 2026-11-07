@@ -423,7 +423,8 @@ fn glow_on(slot: &Slot) -> Option<GlowOn> {
 fn glow_color(word: &str) -> Color {
     let rgb = Color::from_rgb;
     match word {
-        "silver" | "silvery" => rgb(0.85, 0.9, 1.0),
+        // (a cold steel blue: a silver near white flared as a white blob)
+        "silver" | "silvery" => rgb(0.62, 0.78, 1.0),
         "blue" => rgb(0.4, 0.62, 1.0),
         "black" => rgb(0.45, 0.25, 0.6),
         "gold" | "golden" | "amber" => rgb(1.0, 0.78, 0.35),

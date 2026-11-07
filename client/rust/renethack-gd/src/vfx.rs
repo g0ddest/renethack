@@ -907,13 +907,24 @@ fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
         VfxKind::Shock(c) => (Recipe::Ring, c, Some((c, 2.0, 0.2))),
         // (its light its own: wide, `LIT_LIGHT`)
         VfxKind::Lit => (Recipe::Glints, LIT, None),
-        VfxKind::Gleam(c) => (Recipe::Glow, c, Some((c, 4.5, 1.3))),
+        VfxKind::Gleam(c) => {
+            let rich = richer(c);
+            (Recipe::Swirl, rich, Some((rich, 3.5, 1.3)))
+        }
         VfxKind::Force(c, _) => (Recipe::Flash, c, Some((c, 5.0, 0.3))),
         VfxKind::Bless => {
             let gold = rgb(1.0, 0.84, 0.45);
             (Recipe::Mend, gold, Some((gold, 2.2, 1.1)))
         }
     }
+}
+
+/// A glow's colour the richer in its hue (a silver or a white glow
+/// still a pale colour, not white), its brightest channel full.
+fn richer(c: Color) -> Color {
+    let luma = c.r * 0.3 + c.g * 0.59 + c.b * 0.11;
+    let push = |v: f32| (luma + (v - luma) * 2.2).clamp(0.0, 1.0);
+    vivid(Color::from_rgb(push(c.r), push(c.g), push(c.b)))
 }
 
 /// A colour as bright as its hue goes (its brightest channel full), a
@@ -1051,6 +1062,14 @@ const SPLAT_SECS: f32 = 14.0;
 /// its light this many times brighter and longer, and for a kind with no
 /// light of its own (a glint) one: its energy and seconds.
 const LARGE: f32 = 4.0;
+/// The level's stone where no other is told (the main dungeon's walls).
+const STONE: Color = Color::from_rgb(0.42, 0.4, 0.37);
+/// A curse lifted: the golden glow round the body this many times the
+/// size of a healing's (the same size, at the game's camera it was barely
+/// seen).
+const BLESS_SIZE: f32 = 2.0;
+/// The light force's dust holds after the strike: its energy and seconds.
+const FORCE_DUST_LIGHT: (f32, f32) = (1.6, 1.1);
 const LARGE_GLOW: f32 = 1.25;
 const LARGE_LIGHT_UP: (f32, f32) = (2.5, 1.5);
 const LARGE_LIGHT: (f32, f32) = (0.6, 0.45);
@@ -1170,6 +1189,9 @@ pub struct Vfx {
     ember_ramp: Gd<Texture2D>,
     ember_mat: Gd<Material>,
     embers_in_air: bool,
+    /// The colour of the level's stone (its walls'): the dust and chips
+    /// force strikes from it.
+    stone: Color,
     /// Decals land on these render layers only (the level, not models).
     decal_mask: u32,
     clock: f32,
@@ -1482,6 +1504,7 @@ impl Vfx {
             ember_ramp,
             ember_mat,
             embers_in_air: false,
+            stone: STONE,
             decal_mask,
             clock: 0.0,
             solids: HashMap::new(),
@@ -1558,6 +1581,11 @@ impl Vfx {
     ) {
         let (recipe, color, light) = look_of(kind);
         let color = tint.unwrap_or(color);
+        let k = if matches!(kind, VfxKind::Bless) {
+            k * BLESS_SIZE
+        } else {
+            k
+        };
         // a dark potion's glow still a glow, in its hue
         let (color, light) = match recipe.ring() {
             Some(_) => (vivid(color), light.map(|(c, e, s)| (vivid(c), e, s))),
@@ -1600,20 +1628,40 @@ impl Vfx {
                 let (energy, secs, range) = LIT_LIGHT;
                 self.flash(at + Vector3::UP * 1.4, LIT, energy, secs, range);
             }
-            // an item's glow: motes swirling round it, glints and a flare
+            // an item's glow, in its colour (a white flare over it read as
+            // a white blob): a small soft glow on it, motes swirling round
+            // it and glints, its light round it (map_view's rim on the
+            // hero in the same colour)
             VfxKind::Gleam(_) => {
-                self.emit_by(Recipe::Swirl, bright, at, None, k * 0.6);
-                self.emit_by(Recipe::Glints, bright, at, None, k * 2.0);
-                self.emit_by(Recipe::Flash, bright, at, None, k * 0.8);
+                self.emit_by(Recipe::Glow, color, at, None, k * 0.6);
+                self.emit_by(Recipe::Glints, color, at, None, k * 2.0);
             }
-            // force striking: a flare, the dust it throws up, and on stone
-            // chips of it flung back (the bolt's own rings came before)
+            // force striking: a flare, the dust it throws up in the colour
+            // of the level's stone, lit by the strike a moment, and on
+            // stone chips of it flung back (the bolt's own rings came
+            // before; the dust a flat grey sprite read as nothing struck)
             VfxKind::Force(_, stone) => {
                 self.emit_by(Recipe::Flare, bright, at, None, k * 1.5);
-                self.emit_by(Recipe::Puff, color, at, dir, k * 1.4);
+                let s = self.stone;
+                let dust = Color::from_rgb(
+                    (s.r * 1.5 + color.r * 0.15).min(1.0),
+                    (s.g * 1.5 + color.g * 0.15).min(1.0),
+                    (s.b * 1.5 + color.b * 0.15).min(1.0),
+                );
+                self.emit_by(Recipe::Puff, dust, at, dir, k * 1.4);
                 if stone {
-                    self.emit_by(Recipe::Chips, color, at, dir, k * 1.3);
+                    let chips = Color::from_rgb(s.r * 0.8, s.g * 0.8, s.b * 0.8);
+                    self.emit_by(Recipe::Chips, chips, at, dir, k * 1.3);
                 }
+                // the strike's glow lingering in the dust it raised
+                let warm = Color::from_rgb(1.0, 0.82, 0.6);
+                self.flash(
+                    at + Vector3::UP * 0.2,
+                    warm,
+                    FORCE_DUST_LIGHT.0,
+                    FORCE_DUST_LIGHT.1,
+                    2.2,
+                );
             }
             _ => {}
         }
@@ -2511,6 +2559,12 @@ impl Vfx {
     }
 
     /// `embers`: glowing embers rising slowly instead (the fire below).
+    /// The colour of the level's stone (its walls'), for the dust force
+    /// strikes from it.
+    pub fn set_stone(&mut self, color: Color) {
+        self.stone = color;
+    }
+
     pub fn set_dust(&mut self, thickness: f32, embers: bool) {
         // a new amount restarts the emitter, and its 8 s of pre-process
         // run on the GPU in one frame: the ratio of a fixed amount does not

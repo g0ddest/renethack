@@ -402,6 +402,15 @@ const LAMP_POOL: Color = Color::from_rgb(1.0, 0.72, 0.46);
 const LAMP_POOL_ENERGY: f32 = 0.8;
 const LAMP_POOL_RANGE: f32 = 4.5;
 const RIM_LIGHT: Color = Color::from_rgb(0.62, 0.70, 1.0);
+const RIM_ENERGY: f32 = 3.0;
+/// An item of the hero's glowing (`show_glow`): their rim light turns its
+/// colour a moment, this much stronger at most, over these seconds (the
+/// item's own glow comes `GLOW_AT` after the line).
+const RIM_GLOW_ENERGY: f32 = 16.0;
+const RIM_GLOW_SECS: f32 = 1.6;
+/// How light a stone texture is on average, against its material's
+/// colour: the dust force strikes from it.
+const STONE_TONE: f32 = 0.55;
 const RIM_LAYER: u32 = 1 << 1;
 /// The steed the hero rides: two of the hero's own fills light it with
 /// them (`STEED_STUDIO`; a dark pony under a knight showed only its legs
@@ -3565,6 +3574,9 @@ pub struct MapView {
     hero_light: Gd<OmniLight3D>,
     /// The glow from below round the hero where the floors burn.
     underglow: Gd<OmniLight3D>,
+    /// An item's glow on the hero's rim light: its colour and the seconds
+    /// left of it (`pulse_rim`).
+    rim_glow: Option<(Color, f32)>,
     rim: Gd<OmniLight3D>,
     /// The hero's key and fills (`HERO_STUDIO`), off while they are
     /// polymorphed.
@@ -4286,7 +4298,7 @@ impl MapView {
 
         let mut rim = OmniLight3D::new_alloc();
         rim.set_color(RIM_LIGHT);
-        rim.set_param(Param::ENERGY, 3.0);
+        rim.set_param(Param::ENERGY, RIM_ENERGY);
         rim.set_param(Param::RANGE, 3.0);
         rim.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
         rim.set_shadow(false);
@@ -4414,6 +4426,7 @@ impl MapView {
             ring_tex,
             hero_light,
             underglow,
+            rim_glow: None,
             rim,
             hero_studio: studio_frame,
             creature_light,
@@ -4850,6 +4863,7 @@ impl MapView {
                 self.rim
                     .set_position(p + at(0.0, over(RIM_HEIGHT, FORM_RIM_OVER), -0.9));
                 self.rim.set_visible(true);
+                self.pulse_rim(delta as f32);
                 if self.hero_studio.is_visible() == form {
                     self.hero_studio.set_visible(!form);
                 }
@@ -5219,6 +5233,18 @@ impl MapView {
         RenderingServer::singleton()
             .global_shader_parameter_set("branch_floor_memory", &l.floor_memory.to_variant());
         self.vfx.set_dust(l.dust, l.embers);
+        // the dust force strikes from the level's stone, in its colour
+        // (the walls' material's, by the texture's middle tone)
+        let stone = self
+            .art
+            .manifest()
+            .material_index(l.material("masonry"))
+            .map(|i| self.art.manifest().material_at(i).1.albedo());
+        if let Some(c) = stone {
+            let k = STONE_TONE;
+            self.vfx
+                .set_stone(Color::from_rgb(c[0] * k, c[1] * k, c[2] * k));
+        }
         self.lights_dirty = true;
         self.bedrock_dirty = true;
         // (a prologue's scene keeps its own air)
@@ -9484,6 +9510,7 @@ impl MapView {
         let Some((feet, tall)) = self.hero_stands() else {
             return;
         };
+        self.rim_glow = Some((color, RIM_GLOW_SECS + GLOW_AT));
         let node = self.hero_model().map(|m| m.node.clone());
         let bone = |name: &str| node.as_ref().and_then(|n| crate::art::bone_at(n, name));
         let up = |share: f32| feet + Vector3::UP * tall * share;
@@ -9510,6 +9537,29 @@ impl MapView {
                 },
             );
         }
+    }
+
+    /// The hero's rim light in an item's glow colour a moment, from when
+    /// the item glows (`GLOW_AT` after the line): their outline, the item
+    /// on them with it, lit in its colour (a white flare over the item
+    /// read as a white blob).
+    fn pulse_rim(&mut self, delta: f32) {
+        let Some((color, left)) = self.rim_glow else {
+            return;
+        };
+        let left = left - delta;
+        let elapsed = RIM_GLOW_SECS + GLOW_AT - left;
+        let w = if left <= 0.0 || elapsed < GLOW_AT {
+            0.0
+        } else {
+            let t = (elapsed - GLOW_AT) / RIM_GLOW_SECS;
+            (t / 0.12).min(1.0) * (1.0 - t).powf(1.4)
+        };
+        self.rim_glow = (left > 0.0).then_some((color, left));
+        self.rim
+            .set_color(RIM_LIGHT.lerp(color, f64::from(w.min(1.0))));
+        self.rim
+            .set_param(Param::ENERGY, RIM_ENERGY + RIM_GLOW_ENERGY * w);
     }
 
     /// A curse lifted: a golden glow and stars round the hero.
