@@ -382,8 +382,8 @@ def forged(size=512, seed="forged"):
     """Hammered steel that takes a tint: the faces of a great many
     overlapping blows, the ridges between them, fine scratches across all,
     and patches of dark scale where it was never polished. The rubbed metal
-    is glossy (roughness about 0.3), the blows' hollows rougher, the scale
-    rough and barely metal (about 0.75). It tiles. The albedo, normal and
+    is satin (roughness about 0.4), the blows' hollows rougher, the scale
+    rough and barely metal (about 0.85). It tiles. The albedo, normal and
     ORM maps."""
     rng = random.Random(seed)
 
@@ -427,13 +427,13 @@ def forged(size=512, seed="forged"):
     # albedo: bright metal, darker in the blows' bottoms and the scale,
     # the scratches bare and bright
     grey = ImageChops.subtract(Image.new("L", (size, size), 205), depth.point(lambda v: round(v * 0.22)))
-    grey = ImageChops.subtract(grey, scale.point(lambda v: round(v * 0.22)))
+    grey = ImageChops.subtract(grey, scale.point(lambda v: round(v * 0.35)))
     grey = ImageChops.add(grey, mottle.point(lambda v: v * 18 // 255))
     grey = ImageChops.add(grey, scratch.point(lambda v: round(v * 0.16)))
     # (the scale a cold blue-black, the metal itself neutral)
     albedo = Image.merge("RGB", [ImageChops.subtract(grey, scale.point(lambda v: round(v * 0.04))),
                                  ImageChops.subtract(grey, scale.point(lambda v: round(v * 0.02))), grey])
-    rough = Image.new("L", (size, size), 70)
+    rough = Image.new("L", (size, size), 100)
     rough = ImageChops.add(rough, depth.point(lambda v: round(v * 0.2)))
     rough = ImageChops.add(rough, scale.point(lambda v: round(v * 0.45)))
     rough = ImageChops.add(rough, mottle.point(lambda v: v * 30 // 255))

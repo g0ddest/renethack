@@ -52,7 +52,7 @@
   "slime": {"color": "#8a9a70", "roughness": 0.1, "alpha": 0.8},
   "metal": {"color": "#a8abb0", "metallic": 0.75, "roughness": 0.3},
   "bright_steel": {"color": "#c4c8d0", "metallic": 0.75, "roughness": 0.3},
-  "forged_steel": {"textures": "cc0/made/textures/forged/forged", "uv_scale": 2.5, "color": "#bcc0c6", "metallic": 0.6, "roughness": 1.0},
+  "forged_steel": {"textures": "cc0/made/textures/forged/forged", "uv_scale": 1.5, "color": "#686c72", "metallic": 0.6, "roughness": 1.0},
   "steel": {"textures": "cc0/ambientcg/Metal038/Metal038", "uv_scale": 6.0, "color": "#b4bcc8", "metallic": 0.8, "roughness": 0.6, "normal_scale": 0.6},
   "silver": {"color": "#eef2f8", "metallic": 0.8, "roughness": 0.3},
   "dark_iron": {"color": "#4a4541", "metallic": 0.6, "roughness": 0.6},

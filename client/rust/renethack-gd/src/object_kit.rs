@@ -672,6 +672,7 @@ impl Kit<'_> {
     fn helm(&mut self, root: &mut Gd<Node3D>) {
         let skin = self.skin.clone();
         let dark = self.dark();
+        let edge = self.edge();
         let shape = self.shape.clone().unwrap_or_default();
         match shape.as_str() {
             "hat" | "hardhat" => {
@@ -702,7 +703,7 @@ impl Kit<'_> {
                 );
                 if shape == "hardhat" {
                     // an iron one's band riveted round
-                    self.rivets(root, &skin, 0.315, 0.1, 1.1, 8);
+                    self.rivets(root, &edge, 0.315, 0.1, 1.1, 8);
                 }
             }
             "pointed" => {
@@ -1009,7 +1010,10 @@ impl Kit<'_> {
                 );
             }
             _ => {
-                // a helmet: skull, rim, nose guard, and what its name says
+                // a helmet: skull, rim, nose guard, and what its name says;
+                // forged, not spun: a comb raised from brow to nape (the
+                // winged one has its own, gilt) and the rim riveted round,
+                // their edges rubbed bright against the duller skull
                 self.part(
                     root,
                     dome(0.4),
@@ -1021,7 +1025,7 @@ impl Kit<'_> {
                 self.part(
                     root,
                     torus(0.37, 0.45),
-                    &skin,
+                    &edge,
                     [0.0, 0.1, 0.0],
                     FLAT,
                     [1.0, 1.0, 1.12],
@@ -1029,25 +1033,22 @@ impl Kit<'_> {
                 self.part(
                     root,
                     cuboid(0.07, 0.3, 0.05),
-                    &skin,
+                    &edge,
                     [0.0, 0.08, 0.46],
                     [-10.0, 0.0, 0.0],
                     ONE,
                 );
-                // forged, not spun: a comb raised from brow to nape (the
-                // winged one has its own, gilt) and the rim riveted round,
-                // edges for the light to catch
                 if shape != "winged" {
                     self.part(
                         root,
                         dome(0.4),
-                        &skin,
+                        &edge,
                         [0.0, 0.1, 0.0],
                         FLAT,
                         [0.07, 1.42, 1.15],
                     );
                 }
-                self.rivets(root, &skin, 0.455, 0.1, 1.12, 10);
+                self.rivets(root, &edge, 0.455, 0.1, 1.12, 10);
                 if shape != "winged" {
                     self.part(
                         root,
@@ -1093,6 +1094,22 @@ impl Kit<'_> {
                     _ => {}
                 }
             }
+        }
+    }
+
+    /// A metal helmet's edges (rim, comb, rivets, nose guard), rubbed
+    /// brighter than its skull; any other keeps its own skin (a crystal
+    /// helmet's glass, a hat's leather).
+    fn edge(&mut self) -> Gd<Material> {
+        let metal = self
+            .skin
+            .clone()
+            .try_cast::<BaseMaterial3D>()
+            .is_ok_and(|m| m.get_metallic() > 0.3);
+        if metal {
+            self.plain("bright_steel", Color::from_rgb(0.77, 0.78, 0.82))
+        } else {
+            self.skin.clone()
         }
     }
 
