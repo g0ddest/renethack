@@ -745,3 +745,82 @@ def winingas(size=512, seed="winingas"):
     arm = Image.merge("RGB", [ao, rough, metal])
     rgb = Image.merge("RGB", [albedo, albedo.point(lambda v: round(v * 0.97)), albedo.point(lambda v: round(v * 0.93))])
     return {"albedo": rgb, "normal": normals(height, 2.0), "arm": arm}
+
+
+def face(skin, eyes, nose, mouth, stubble=False, paint=None):
+    """A base character's skin with a face that reads at a distance: the
+    eyes sunk in shadowed sockets with a dark lash line, hollows under the
+    cheekbones, the nose's bridge lit and its sides shaded, a shadow under
+    the nose and the lower lip, the lips a little deeper; on a man, `stubble`
+    on the jaw and the lip; and war paint by `paint`: "woad" (a band of blue
+    across the eyes, running down the cheeks) or "kohl" (the eyes lined, the
+    line drawn out past their corners). Positions are shares of the image."""
+    rng = random.Random("face" + (paint or "") + ("s" if stubble else ""))
+    skin = skin.convert("RGB")
+    size = skin.size
+    w, h = size
+
+    def soft(shapes, blur):
+        """A soft mask of ellipses ((x, y, rx, ry, level) in shares)."""
+        m = Image.new("L", size, 0)
+        d = ImageDraw.Draw(m)
+        for x, y, rx, ry, level in shapes:
+            d.ellipse([(x - rx) * w, (y - ry) * h, (x + rx) * w, (y + ry) * h], fill=level)
+        return m.filter(ImageFilter.GaussianBlur(blur * w))
+
+    def shade(image, mask, colour):
+        """`image` multiplied toward `colour` where `mask` is."""
+        dark = ImageChops.multiply(image, Image.new("RGB", size, colour))
+        return Image.composite(dark, image, mask)
+
+    (lx, ly), (rx_, ry_) = sorted(eyes)
+    span = rx_ - lx
+    out = skin
+    # the sockets, deepest above the eye and toward its outer corner
+    sockets_ = [(x + side * 0.005, y - 0.005, 0.04, 0.028, 235) for (x, y), side in (((lx, ly), -1), ((rx_, ry_), 1))]
+    out = shade(out, soft(sockets_, 0.007), "#7a5450")
+    lash = [(x, y, 0.02, 0.012, 245) for x, y in eyes]
+    out = shade(out, soft(lash, 0.002), "#4a302c")
+    # the brow's ridge: a dark line along each brow
+    brows = [(x + side * 0.003, y - 0.026, 0.032, 0.007, 200) for (x, y), side in (((lx, ly), -1), ((rx_, ry_), 1))]
+    out = shade(out, soft(brows, 0.003), "#8a6058")
+    # the cheekbones' hollows, the nose's sides, under the nose and the lip
+    nx, ny = nose
+    mx, my = mouth
+    hollows_ = [(lx - 0.016, ly + 0.075, 0.034, 0.016, 70), (rx_ + 0.016, ry_ + 0.075, 0.034, 0.016, 70),
+                (nx - 0.022, ny - 0.02, 0.008, 0.03, 110), (nx + 0.022, ny - 0.02, 0.008, 0.03, 110),
+                (nx, ny + 0.018, 0.016, 0.006, 120), (mx, my + 0.02, 0.022, 0.007, 120)]
+    out = shade(out, soft(hollows_, 0.008), "#a88070")
+    # the bridge of the nose and the tops of the cheekbones lit
+    lit = soft([(nx, (ly + ny) / 2, 0.006, (ny - ly) / 2, 90), (lx - 0.006, ly + 0.035, 0.022, 0.01, 60),
+                (rx_ + 0.006, ry_ + 0.035, 0.022, 0.01, 60)], 0.004)
+    out = Image.composite(ImageChops.screen(out, Image.new("RGB", size, "#3a2a20")), out, lit)
+    # the lips a shade deeper
+    out = shade(out, soft([(mx, my, 0.026, 0.01, 110)], 0.003), "#c08080")
+    if stubble:
+        random.seed(rng.random())
+        dots = Image.effect_noise(size, 60).point(lambda v: 255 if v > 175 else 0)
+        dots = dots.filter(ImageFilter.GaussianBlur(0.5))
+        jaw = soft([(mx, my + 0.03, span * 0.6, 0.05, 255), (mx, (ny + my) / 2 + 0.004, 0.032, 0.008, 255)], 0.01)
+        jaw = ImageChops.subtract(jaw, soft([(mx, my, 0.03, 0.012, 255), (nx, ny, 0.03, 0.02, 255)], 0.004))
+        out = shade(out, ImageChops.multiply(jaw, dots).point(lambda v: v * 2 // 5), "#6a5a58")
+    if paint == "woad":
+        band = soft([(nx, ly + 0.003, span * 0.98, 0.026, 255)], 0.002)
+        ragged = noise(rng, size, 70).point(lambda v: 255 if v > 30 else 0).filter(ImageFilter.GaussianBlur(0.001 * w))
+        drips = Image.new("L", size, 0)
+        d = ImageDraw.Draw(drips)
+        for x in (lx - 0.012, lx + 0.008, rx_ - 0.008, rx_ + 0.012):
+            d.line([(x * w, ly * h), ((x + rng.uniform(-0.003, 0.003)) * w, (ly + 0.06) * h)], fill=255,
+                   width=max(2, round(0.007 * w)))
+        drips = drips.filter(ImageFilter.GaussianBlur(0.002 * w))
+        woad = ImageChops.multiply(ImageChops.lighter(band, drips), ragged).point(lambda v: v * 9 // 10)
+        out = Image.composite(Image.new("RGB", size, "#1a2a4e"), out, woad)
+    elif paint == "kohl":
+        line = Image.new("L", size, 0)
+        d = ImageDraw.Draw(line)
+        for (x, y), side in (((lx, ly), -1), ((rx_, ry_), 1)):
+            d.line([((x - side * 0.014) * w, (y + 0.007) * h), ((x + side * 0.04) * w, (y - 0.005) * h)], fill=255,
+                   width=max(3, round(0.007 * w)))
+        line = ImageChops.lighter(line.filter(ImageFilter.GaussianBlur(0.0015 * w)), soft(lash, 0.002))
+        out = shade(out, line.point(lambda v: v * 4 // 5), "#3a2a2a")
+    return out

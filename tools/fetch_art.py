@@ -467,6 +467,9 @@ def do_painted(w, item):
         image = art_paint.pale(source(), item["light"])
     elif item["paint"] == "lift":
         image = art_paint.lift(source(), item["light"])
+    elif item["paint"] == "face":
+        image = art_paint.face(source().resize(size, Image.LANCZOS), eyes, tuple(item["nose"]), tuple(item["mouth"]),
+                               item.get("stubble", False), item.get("war"))
     elif item["paint"] == "relief":
         image = art_paint.relief(source(), item["radius"], item["light"])
     elif item["paint"] in ("fur", "scales", "weave", "floral", "forged", "winingas", "lames", "ringmail"):
