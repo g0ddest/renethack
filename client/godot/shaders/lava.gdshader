@@ -58,6 +58,19 @@ vec4 ground_blur(vec2 p) {
 	float second = max(min(hi, hi2), max(lo, lo2));
 	float big = smoothstep(0.2, 0.35, second);
 	vec4 f = mix(near, wide, big);
+	// and a big field's shore smoothed over a couple of cells more, by the
+	// ground two cells about: its steps of two and three cells run smooth
+	// (a stream a cell or two wide holds too little of that ground to)
+	vec2 d2 = d * 2.0;
+	vec4 wider = (wide * 4.0
+		+ (texture(ground_tex, uv + vec2(d2.x, 0.0)) + texture(ground_tex, uv - vec2(d2.x, 0.0))
+		+ texture(ground_tex, uv + vec2(0.0, d2.y)) + texture(ground_tex, uv - vec2(0.0, d2.y))) * 2.0
+		+ texture(ground_tex, uv + d2) + texture(ground_tex, uv - d2)
+		+ texture(ground_tex, uv + vec2(d2.x, -d2.y))
+		+ texture(ground_tex, uv + vec2(-d2.x, d2.y))) / 16.0;
+	float second_w = max(min(max(wider.r, wider.g), max(wider.b, wider.a)),
+		max(min(wider.r, wider.g), min(wider.b, wider.a)));
+	f = mix(f, wider, smoothstep(0.38, 0.48, second_w) * big);
 	// and there wandering on a larger scale too, a long shore never
 	// straight along the cells
 	vec2 q = p * 0.42;
