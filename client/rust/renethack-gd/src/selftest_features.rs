@@ -240,13 +240,21 @@ fn judge_view(g: &mut RenethackGame) -> Result<(), String> {
             .iter()
             .filter_map(|f| f.get(i).copied().flatten())
             .collect();
-        if seen_on.len() < SAMPLE_FRAMES {
+        // (most of the frames at least: a frame may miss one)
+        if seen_on.len() * 2 <= SAMPLE_FRAMES {
             continue;
         }
-        let c = if shows == Shows::Lava {
-            median(&seen_on)
-        } else {
-            seen_on[0]
+        // (the deep by its darkest frame: something pale passing over a
+        // deep cell beside the hero, now and then, read as a bubble's
+        // floor; the deep turned pale for good stays pale in every frame)
+        let c = match shows {
+            Shows::Lava => median(&seen_on),
+            Shows::Deep => seen_on
+                .iter()
+                .copied()
+                .min_by(|a, b| a.r.total_cmp(&b.r))
+                .unwrap_or(seen_on[0]),
+            _ => seen_on[0],
         };
         let spread: Vec<String> = seen_on
             .iter()
