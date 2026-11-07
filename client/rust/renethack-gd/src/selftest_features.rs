@@ -14,7 +14,7 @@
 //! is judged). With `--screenshots`, the pictures `features-close`,
 //! `features`, `features-lone-close`, `features-lone` and `liquids-*`.
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
 use godot::classes::DisplayServer;
 use godot::obj::Singleton;
@@ -128,9 +128,35 @@ fn reads(c: Color, plane_water: bool) -> Option<Reads> {
     }
 }
 
-/// Every cell the view shows must show its own kind where it is looked
-/// at; what is wrong is told cell by cell.
-fn judge_view(g: &mut RenethackGame) -> Result<(), String> {
+/// The colours each cell of the view was sampled as, frame by frame
+/// (`sample_view`), for `judge_view`.
+static SAMPLES: std::sync::Mutex<Vec<Vec<Option<Color>>>> = std::sync::Mutex::new(Vec::new());
+
+/// How many frames a view is sampled on, and how far apart (seconds):
+/// lava's glow seethes and its cracks drift, and on one frame a bright
+/// crack under the point (pale in the tonemap) read as warm floor.
+const SAMPLE_FRAMES: usize = 5;
+const SAMPLE_APART: f32 = 0.35;
+/// How far from the point a sample reaches (pixels, either way): a few
+/// pixels; on lava wide enough to take in a crack's crust about it (a
+/// bright crack alone read pale), well inside the cell (about 80 pixels
+/// across at the view's distance). Wide everywhere, a deep cell beside a
+/// bubble took in the bubble's floor.
+const SAMPLE_BOX: i32 = 2;
+const LAVA_BOX: i32 = 7;
+
+/// When the view was last sampled (seconds; steps are plain functions).
+static SAMPLED_AT: AtomicU32 = AtomicU32::new(0);
+
+fn clock() -> f32 {
+    godot::classes::Time::singleton().get_ticks_msec() as f32 / 1000.0
+}
+
+/// Each cell of the view as it is drawn now, where it is looked at: the
+/// mean colour of a box about the point (None off the frame or under the
+/// HUD), added to `SAMPLES`.
+fn sample_view(g: &mut RenethackGame) -> Result<(), String> {
+    SAMPLED_AT.store(clock().to_bits(), Ordering::Relaxed);
     if DisplayServer::singleton().get_name() == "headless" {
         return Ok(());
     }
@@ -141,11 +167,10 @@ fn judge_view(g: &mut RenethackGame) -> Result<(), String> {
     let image = drawn_image().ok_or("no picture of the frame")?;
     let (w, h) = (image.get_width(), image.get_height());
     let map = &g.ui.as_ref().ok_or("no UI")?.map;
-    let water_plane = v.plane == Some("water");
-    let mut wrong = Vec::new();
-    let mut judged = 0;
+    let mut frame = Vec::new();
     for ((x, y), (dx, dz), shows) in checks {
         let Some(p) = map.on_screen(Vector3::new(x as f32 + dx, 0.0, y as f32 + dz)) else {
+            frame.push(None);
             continue;
         };
         let (px, py) = (p.x as i32, p.y as i32);
@@ -155,16 +180,83 @@ fn judge_view(g: &mut RenethackGame) -> Result<(), String> {
             || (px > w * 75 / 100 && py < h * 22 / 100)
             || py > h * 82 / 100;
         if !clear || hud {
+            frame.push(None);
             continue;
         }
         let mut sum = Color::from_rgba(0.0, 0.0, 0.0, 0.0);
-        for oy in -2..=2 {
-            for ox in -2..=2 {
+        let b = if shows == Shows::Lava {
+            LAVA_BOX
+        } else {
+            SAMPLE_BOX
+        };
+        for oy in -b..=b {
+            for ox in -b..=b {
                 let c = image.get_pixel(px + ox, py + oy);
                 sum = Color::from_rgba(sum.r + c.r, sum.g + c.g, sum.b + c.b, 0.0);
             }
         }
-        let c = Color::from_rgb(sum.r / 25.0, sum.g / 25.0, sum.b / 25.0);
+        let n = ((2 * b + 1) * (2 * b + 1)) as f32;
+        frame.push(Some(Color::from_rgb(sum.r / n, sum.g / n, sum.b / n)));
+    }
+    SAMPLES.lock().map_err(|e| e.to_string())?.push(frame);
+    Ok(())
+}
+
+/// `SAMPLE_APART` since the last sample.
+fn apart(_: &RenethackGame) -> Result<bool, String> {
+    Ok(clock() - f32::from_bits(SAMPLED_AT.load(Ordering::Relaxed)) >= SAMPLE_APART)
+}
+
+/// The median of each channel over the frames a cell was sampled on.
+fn median(frames: &[Color]) -> Color {
+    let mid = |f: fn(&Color) -> f32| {
+        let mut v: Vec<f32> = frames.iter().map(f).collect();
+        v.sort_by(f32::total_cmp);
+        v[v.len() / 2]
+    };
+    Color::from_rgb(mid(|c| c.r), mid(|c| c.g), mid(|c| c.b))
+}
+
+/// Every cell the view shows must show its own kind where it is looked
+/// at, judged on the frame right after the picture; lava by the median
+/// of its samples over `SAMPLE_FRAMES` frames (`sample_view`). (Every
+/// kind over the frames, a deep cell beside the hero read pale as the
+/// level's lights came up after the picture.) What is wrong is told cell
+/// by cell.
+fn judge_view(g: &mut RenethackGame) -> Result<(), String> {
+    let frames = std::mem::take(&mut *SAMPLES.lock().map_err(|e| e.to_string())?);
+    if DisplayServer::singleton().get_name() == "headless" {
+        return Ok(());
+    }
+    let v = &LIQUID_VIEWS[VIEW.load(Ordering::Relaxed)];
+    let cat = g.catalog.clone().ok_or("no catalog")?;
+    let checks =
+        crate::gallery::lay_out_liquids(&mut g.world.clone(), &cat, v.rows, v.hero, v.view)?;
+    let water_plane = v.plane == Some("water");
+    let mut wrong = Vec::new();
+    let mut judged = 0;
+    for (i, ((x, y), _, shows)) in checks.into_iter().enumerate() {
+        let seen_on: Vec<Color> = frames
+            .iter()
+            .filter_map(|f| f.get(i).copied().flatten())
+            .collect();
+        if seen_on.len() < SAMPLE_FRAMES {
+            continue;
+        }
+        let c = if shows == Shows::Lava {
+            median(&seen_on)
+        } else {
+            seen_on[0]
+        };
+        let spread: Vec<String> = seen_on
+            .iter()
+            .map(|c| format!("{:.2}/{:.2}/{:.2}", c.r, c.g, c.b))
+            .collect();
+        godot_print!(
+            "selftest: liquids: {} {x},{y} frames {}",
+            v.shot,
+            spread.join(" ")
+        );
         let seen = reads(c, water_plane);
         let want = reads_as(shows);
         godot_print!(
@@ -249,6 +341,14 @@ pub(super) fn features() -> Vec<Step> {
             }),
             Step::Wait("the camera on it", camera_settled),
             Step::Shot(v.shot),
+        ]);
+        for _ in 0..SAMPLE_FRAMES {
+            steps.extend([
+                Step::Wait("a while between samples", apart),
+                Step::Call("each cell as drawn now", sample_view),
+            ]);
+        }
+        steps.extend([
             Step::Call("each cell its own kind", judge_view),
             Step::Call("the next view", |_| {
                 VIEW.fetch_add(1, Ordering::Relaxed);
