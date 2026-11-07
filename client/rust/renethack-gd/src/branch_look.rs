@@ -208,6 +208,11 @@ pub struct BranchLook {
     /// far it reaches (metres from the light over their head).
     pub hero_light: f32,
     pub hero_range: f32,
+    /// A low light all round the hero where they stand in no lit room,
+    /// reaching about three cells and casting no shadow, so what is drawn
+    /// there (the rock, the walls, the floor remembered) reads in the
+    /// dark: its energy (0: none).
+    pub near_fill: f32,
     /// How much of their own faint light remembered floors show (1: the
     /// main dungeon's; the overview shows them all alike).
     pub floor_memory: f32,
@@ -272,6 +277,7 @@ const MAIN: BranchLook = BranchLook {
     torch_range: 5.5,
     hero_light: 1.0,
     hero_range: 5.5,
+    near_fill: 1.2,
     floor_memory: 1.0,
     creature_key: None,
     fill: Color::from_rgb(0.86, 0.80, 0.72),
@@ -397,6 +403,8 @@ pub fn look_of(branch: Branch) -> BranchLook {
             // gain
             hero_light: 1.4,
             hero_range: 4.0,
+            // (its near field tuned by its own pool and fall-off)
+            near_fill: 0.0,
             floor_memory: 0.55,
             under: Under::Chasm,
             fill: rgb(1.0, 0.45, 0.25),
@@ -597,6 +605,7 @@ fn plane_look(plane: Plane) -> BranchLook {
             // (the hero's pool as it was before map_view's gain: brighter,
             // the deep beside them read as a bubble's pale floor)
             hero_light: 0.5,
+            near_fill: 0.0,
             ambient: rgb(0.2, 0.36, 0.6),
             ambient_energy: 0.35,
             fog: rgb(0.3, 0.5, 0.75),

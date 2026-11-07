@@ -301,6 +301,11 @@ const SHOW_ALL: u8 = 4;
 /// reaches and how bright.
 const UNDERGLOW_RANGE: f32 = 4.5;
 const UNDERGLOW_ENERGY: f32 = 0.9;
+/// The low light round the hero outside a lit room: its colour, how far
+/// it reaches (about three cells about them) and how high it hangs.
+const NEAR_FILL: Color = Color::from_rgb(0.86, 0.84, 0.82);
+const NEAR_FILL_RANGE: f32 = 4.0;
+const NEAR_FILL_HEIGHT: f32 = 1.6;
 const GALLERY_FILL: f32 = 2.5;
 /// The faces of the rock mass, a little over the material's own colour:
 /// in the hero's light they are what shows of the rock (its tops and the
@@ -3592,6 +3597,9 @@ pub struct MapView {
     hero_light: Gd<OmniLight3D>,
     /// The glow from below round the hero where the floors burn.
     underglow: Gd<OmniLight3D>,
+    /// The low light all round the hero outside a lit room
+    /// (`BranchLook::near_fill`).
+    near_fill: Gd<OmniLight3D>,
     /// An item's glow on the hero's rim light: its colour and the seconds
     /// left of it (`pulse_rim`).
     rim_glow: Option<(Color, f32)>,
@@ -4310,6 +4318,15 @@ impl MapView {
         root.add_child(&hero_light);
 
         // the glow of the fire under a branch's floors, low round the hero
+        let mut near_fill = OmniLight3D::new_alloc();
+        near_fill.set_color(NEAR_FILL);
+        near_fill.set_param(Param::RANGE, NEAR_FILL_RANGE);
+        near_fill.set_param(Param::ATTENUATION, 0.7);
+        near_fill.set_param(Param::SPECULAR, 0.0);
+        near_fill.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
+        near_fill.set_shadow(false);
+        near_fill.set_visible(false);
+        root.add_child(&near_fill);
         let mut underglow = OmniLight3D::new_alloc();
         underglow.set_param(Param::RANGE, UNDERGLOW_RANGE);
         underglow.set_param(Param::ENERGY, UNDERGLOW_ENERGY);
@@ -4449,6 +4466,7 @@ impl MapView {
             ring_tex,
             hero_light,
             underglow,
+            near_fill,
             rim_glow: None,
             rim,
             hero_studio: studio_frame,
@@ -4885,6 +4903,18 @@ impl MapView {
                     }
                     None => self.underglow.set_visible(false),
                 }
+                // outside a lit room a low light all round them, so what
+                // is drawn about them reads in the dark
+                let in_lit = self.cells.get(&(x, y)).is_some_and(|n| n.look.lit);
+                let fill = self.branch_look.near_fill;
+                if fill > 0.0 && !in_lit {
+                    self.near_fill.set_param(Param::ENERGY, fill);
+                    self.near_fill
+                        .set_position(p + at(0.0, NEAR_FILL_HEIGHT, 0.0));
+                    self.near_fill.set_visible(true);
+                } else {
+                    self.near_fill.set_visible(false);
+                }
                 // behind the hero, on the far side from the camera
                 self.rim
                     .set_position(p + at(0.0, over(RIM_HEIGHT, FORM_RIM_OVER), -0.9));
@@ -4911,6 +4941,7 @@ impl MapView {
                 self.hero_ring.set_visible(false);
                 self.hero_light.set_visible(false);
                 self.underglow.set_visible(false);
+                self.near_fill.set_visible(false);
                 self.rim.set_visible(false);
                 self.unshow_behind(&[]);
                 RenderingServer::singleton()
@@ -6950,6 +6981,7 @@ impl MapView {
         self.hero_ring.set_visible(false);
         self.hero_light.set_visible(false);
         self.underglow.set_visible(false);
+        self.near_fill.set_visible(false);
         self.rim.set_visible(false);
         self.hero_studio.set_visible(true);
         if let Some(old) = self.rim_model.take().filter(|n| n.is_instance_valid()) {
