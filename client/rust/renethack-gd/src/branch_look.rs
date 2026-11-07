@@ -369,17 +369,24 @@ pub fn look_of(branch: Branch) -> BranchLook {
             rubble: false,
             cap: "iron",
             bands: Some("iron"),
-            torch: rgb(0.86, 0.9, 1.0),
+            // warm lamps over its planks, the shadows cool (the art loop's
+            // first critique: it read as the Oracle's and the Castle's grey
+            // stone room, in an even cold light)
+            lanterns: true,
+            torch: rgb(1.0, 0.74, 0.46),
             torch_energy: 1.8,
-            fill: rgb(0.8, 0.86, 0.96),
-            fill_scale: 3.0,
-            ambient: rgb(0.32, 0.38, 0.52),
-            ambient_energy: 0.2,
+            fill: rgb(1.0, 0.86, 0.68),
+            fill_scale: 2.0,
+            // (lamplight lingering in it: in a cold one its planks read as
+            // grey stone)
+            ambient: rgb(0.44, 0.37, 0.3),
+            ambient_energy: 0.3,
+            fog: rgb(0.66, 0.6, 0.52),
             grade: Grade {
-                saturation: 0.8,
+                saturation: 0.95,
                 contrast: 1.0,
-                shadows: rgb(0.96, 0.99, 1.06),
-                highlights: rgb(0.98, 1.0, 1.04),
+                shadows: rgb(0.97, 0.99, 1.05),
+                highlights: rgb(1.04, 1.0, 0.94),
                 ..NEUTRAL
             },
             ..MAIN
