@@ -4143,8 +4143,20 @@ fn check_dialog(g: &RenethackGame, id: u64, prompt: &Prompt) -> Result<(), Strin
         }
         _ => false,
     };
+    // #therecmdmenu's menu is the popup by the cell (`cellmenu`); a
+    // container's lists are the loot panel (`loot`)
+    let title = match prompt {
+        Prompt::Menu { title, .. } => title.as_deref().unwrap_or(""),
+        _ => "",
+    };
+    let menu_kind = match title {
+        "What do you want to do?" => "cellmenu",
+        "Take out what?" | "Put in what?" => "loot",
+        _ => "menu",
+    };
     let ok = match want {
         Some("show") if skills_panel => open == (Some("menu"), Some(id)),
+        Some("menu") => open == (Some(menu_kind), Some(id)),
         Some(kind) => open == (Some(kind), Some(id)),
         None => open == (None, None),
     };
