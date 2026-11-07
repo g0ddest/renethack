@@ -60,6 +60,12 @@ pub enum Part {
     /// trousers falling like a skirt in knife pleats, pressed flat at the
     /// waist and opening toward the hem.
     Hakama,
+    /// A plait of hair from the nape down the back (the origin at the
+    /// upper chest's bone, y up, z forward): three strands wound over one
+    /// another, thinning to a tuft below its tie.
+    Braid,
+    /// The leather thong tying the plait's end.
+    BraidTie,
 }
 
 const UP: Vector3 = Vector3::UP;
@@ -96,6 +102,8 @@ pub(super) fn build(m: &mut Merge, part: Part) {
         Part::SodeRim => sode_rim(m),
         Part::Obi => obi(m),
         Part::Hakama => hakama(m),
+        Part::Braid => braid_hair(m),
+        Part::BraidTie => braid_tie(m),
     }
 }
 
@@ -343,6 +351,88 @@ fn hakama(m: &mut Merge) {
     let n = 48;
     let waist: Vec<Vector3> = (0..n).map(|k| hakama_at(0.0, frac(k, n))).collect();
     m.sweep(&waist, |_| (0.02, 0.05), 6.0, true, UP);
+}
+
+/// Where a plait runs, from the nape down the back, clear of it, to its
+/// tie; how far apart its strands' crossings are.
+const PLAIT: [[f32; 3]; 5] = [
+    [0.0, 0.2, -0.095],
+    [0.0, 0.12, -0.13],
+    [0.004, 0.0, -0.145],
+    [0.008, -0.12, -0.14],
+    [0.01, -0.2, -0.13],
+];
+const PLAIT_TWIST: f32 = 0.05;
+
+/// A point `u` (0 at the nape, 1 at the tie) down the plait.
+fn plait_at(u: f32) -> Vector3 {
+    let n = PLAIT.len() - 1;
+    let f = u.clamp(0.0, 1.0) * n as f32;
+    let i = (f.floor() as usize).min(n - 1);
+    let t = f - i as f32;
+    let (a, b) = (PLAIT[i], PLAIT[i + 1]);
+    let k = t * t * (3.0 - 2.0 * t);
+    v(
+        a[0] + (b[0] - a[0]) * k,
+        a[1] + (b[1] - a[1]) * k,
+        a[2] + (b[2] - a[2]) * k,
+    )
+}
+
+fn braid_hair(m: &mut Merge) {
+    let n = 48;
+    let length: f32 = (0..n)
+        .map(|k| (plait_at(frac(k + 1, n)) - plait_at(frac(k, n))).length())
+        .sum();
+    for strand in 0..3 {
+        let phase = strand as f32 * TAU / 3.0;
+        let path: Vec<Vector3> = (0..=n)
+            .map(|k| {
+                let u = frac(k, n);
+                let half = 0.026 - 0.01 * u;
+                let a = u * length / PLAIT_TWIST * TAU + phase;
+                // side to side across the back, a little in and out
+                plait_at(u) + v(half * a.sin(), 0.0, 0.45 * half * a.cos())
+            })
+            .collect();
+        m.sweep(
+            &path,
+            |k| {
+                let r = 0.014 - 0.005 * frac(k, n);
+                (r, r * 0.8)
+            },
+            2.0,
+            false,
+            Vector3::BACK,
+        );
+    }
+    // the tuft below the tie
+    let end = plait_at(1.0);
+    for k in 0..6 {
+        let a = k as f32 / 6.0 * TAU;
+        let out = v(a.cos() * 0.4, -1.0, a.sin() * 0.25).normalized();
+        let path: Vec<Vector3> = (0..=4)
+            .map(|j| end + out * (0.016 * j as f32) + v(0.0, -0.002 * (j * j) as f32, 0.0))
+            .collect();
+        m.sweep(
+            &path,
+            |j| (0.008 * (1.0 - frac(j, 5)), 0.006),
+            2.0,
+            false,
+            Vector3::BACK,
+        );
+    }
+}
+
+fn braid_tie(m: &mut Merge) {
+    let at = plait_at(1.0) + v(0.0, 0.006, 0.0);
+    let ring: Vec<Vector3> = (0..16)
+        .map(|k| {
+            let a = frac(k, 16) * TAU;
+            at + v(0.014 * a.cos(), 0.0, 0.011 * a.sin())
+        })
+        .collect();
+    m.sweep(&ring, |_| (0.004, 0.007), 2.0, true, UP);
 }
 
 /// A wing's long feathers, front to back: how far back from straight up

@@ -591,15 +591,24 @@ def lames(path, mesh, size=1024):
                 return ivory, 0.6, 1.0, h + 0.0025, density
         return colour, 0.72, 0.85 + 0.15 * shade, h + lift, density
 
-    texels = grown(bake(tris, size, paint), size, 6)
-    albedo = Image.new("RGB", (size, size), lacquer)
-    arm = Image.new("RGB", (size, size), (255, 51, 0))
+    return baked(grown(bake(tris, size, paint), size, 6), size, lacquer, grain)
+
+
+def baked(texels, size, ground, grain, metal_ground=0):
+    """The albedo, normal and ORM maps of texels a bake painted ({(x, y):
+    (colour, roughness, occlusion, height in metres, texels to a metre[,
+    metal])}), over `ground` where none is; `grain` (a loaded noise image)
+    mottles the colour a little."""
+    albedo = Image.new("RGB", (size, size), ground)
+    arm = Image.new("RGB", (size, size), (255, 51, metal_ground))
     a, r = albedo.load(), arm.load()
     height = {}
-    for (px, py), (colour, rough, ao, h, density) in texels.items():
+    for (px, py), texel in texels.items():
+        colour, rough, ao, h, density = texel[:5]
+        metal = texel[5] if len(texel) > 5 else 0.0
         g = 0.92 + 0.16 * grain[px, py] / 255
         a[px, py] = tuple(min(255, round(v * g)) for v in colour)
-        r[px, py] = (round(255 * ao), round(255 * rough), 0)
+        r[px, py] = (round(255 * ao), round(255 * rough), round(255 * metal))
         # in texels, so the slope is the body's own
         height[(px, py)] = h * density
     normal = Image.new("RGB", (size, size), (128, 128, 255))
@@ -631,3 +640,108 @@ def relief(coat, radius, light):
         for x in range(w):
             o[x, y] = max(0, min(255, round(255 * light * (g[x, y] + 4) / (a[x, y] + 4))))
     return Image.merge("RGB", [out] * 3)
+
+
+def ringmail(path, meshes, size=1024):
+    """Ring mail painted on an outfit's body and sleeves by their own UVs:
+    iron rings sewn flat on leather in rows, each row lapping the one below
+    it, every other row half a ring along, the leather showing through the
+    rings and between them. Laid by each texel's place on the body in its
+    rest pose (round the trunk and up it; round each arm and along it), so
+    the rings are the same size everywhere and run on across the atlas's
+    seams. In its own colours (tint it white); the iron metal and fairly
+    glossy, the leather rough. The albedo, normal and ORM maps."""
+    rng = random.Random("ringmail")
+    grain = noise(rng, (size, size), 64).load()
+    rust = noise(rng, (size, size), 24).load()
+    pitch, row = 0.017, 0.0125
+    outer, inner = 0.0084, 0.0056
+    leather, iron = (58, 40, 28), (150, 150, 146)
+
+    def paint(s, t, density, px):
+        best = None
+        r0 = math.floor(t / row)
+        # the higher rows lie over the lower
+        for r in (r0 + 2, r0 + 1, r0, r0 - 1):
+            cy = r * row
+            shift = 0.5 * pitch * (r % 2)
+            c = round((s - shift) / pitch)
+            cx = c * pitch + shift
+            d = math.hypot(s - cx, t - cy)
+            if inner < d < outer:
+                best = (d, cy)
+                break
+        if best is None:
+            return leather, 0.72, 0.7, 0.0, density
+        d, cy = best
+        across = (d - (inner + outer) / 2) / ((outer - inner) / 2)
+        lift = 0.0016 * math.sqrt(max(0.0, 1 - across * across))
+        # each ring tipped, its lower edge over the row below
+        tip = 0.0012 * (cy - t) / outer
+        dirt = rust[px] / 255
+        shade = 0.75 + 0.3 * math.sqrt(max(0.0, 1 - across * across)) - 0.25 * dirt
+        colour = tuple(min(255, round(v * shade + 18 * dirt * k)) for v, k in zip(iron, (1.0, 0.6, 0.2)))
+        return colour, 0.34 + 0.3 * dirt, 1.0, lift + tip + 0.002, density, 1.0
+
+    texels = {}
+    for name in meshes:
+        arm = "Arms" in name
+
+        def at(q, density, arm=arm):
+            x, y, z = q
+            if arm:
+                # round the arm (radius about 5 cm) and along it
+                return math.atan2(y - 1.45, z) * 0.05, abs(x), density
+            return math.atan2(x, z) * 0.17, y, density
+
+        tris = gltf_mesh(path, name)
+        texels.update(bake(tris, size, lambda q, density: ("q", at(q, density))))
+    painted = {}
+    for (px, py), (_, (s, t, density)) in texels.items():
+        painted[(px, py)] = paint(s, t, density, (px, py))
+    return baked(grown(painted, size, 6), size, leather, grain)
+
+
+def winingas(size=512, seed="winingas"):
+    """Wool bands wound round a leg, each lapping the one under it, held by
+    leather thongs crossed over them; pale to take a tint (the thongs
+    darker). It tiles. The albedo, normal and ORM maps."""
+    rng = random.Random(seed)
+    bands = 8
+    band = size / bands
+    height = Image.new("L", (size, size), 0)
+    albedo = Image.new("L", (size, size), 0)
+    hp, ap = height.load(), albedo.load()
+    tone = [rng.uniform(0.85, 1.0) for _ in range(bands)]
+    for y in range(size):
+        for x in range(size):
+            # a band's top a little wavy, the same at both edges (tiles)
+            yy = y + band * 0.12 * math.sin(math.tau * x / size + y / size * 3)
+            k = int(yy // band) % bands
+            f = (yy % band) / band
+            # it rises from where it comes out from under the one over it
+            # to its own lapping lower edge
+            hp[x, y] = round(60 + 150 * f ** 0.6)
+            ap[x, y] = round((150 + 60 * f ** 0.5) * tone[k])
+    weave = noise(rng, (size, size), 160).point(lambda v: 205 + v * 50 // 255)
+    albedo = ImageChops.multiply(albedo, weave)
+    rough = Image.new("L", (size, size), 236)
+    metal = Image.new("L", (size, size), 0)
+    # the thongs: crossed over the bands, once each way
+    thong = Image.new("L", (size, size), 0)
+    d = ImageDraw.Draw(thong)
+    w = max(3, size // 36)
+    # (each way round once while it goes twice down the image: two
+    # crossings in it, and it tiles)
+    for k in range(2):
+        for a, b in (((0, k * size), (size, k * size + 2 * size)), ((size, k * size), (0, k * size + 2 * size))):
+            for dy in (-2 * size, -size, 0):
+                d.line([(a[0], a[1] + dy), (b[0], b[1] + dy)], fill=255, width=w)
+    thong = thong.filter(ImageFilter.GaussianBlur(0.8))
+    height = Image.composite(Image.new("L", (size, size), 245), height, thong)
+    albedo = Image.composite(Image.new("L", (size, size), 62), albedo, thong)
+    rough = Image.composite(Image.new("L", (size, size), 150), rough, thong)
+    ao = hollows(height, 6, 0.7)
+    arm = Image.merge("RGB", [ao, rough, metal])
+    rgb = Image.merge("RGB", [albedo, albedo.point(lambda v: round(v * 0.97)), albedo.point(lambda v: round(v * 0.93))])
+    return {"albedo": rgb, "normal": normals(height, 2.0), "arm": arm}

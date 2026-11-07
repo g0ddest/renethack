@@ -469,11 +469,14 @@ def do_painted(w, item):
         image = art_paint.lift(source(), item["light"])
     elif item["paint"] == "relief":
         image = art_paint.relief(source(), item["radius"], item["light"])
-    elif item["paint"] in ("fur", "scales", "weave", "floral", "forged", "lames"):
-        # a material's maps from nothing (or baked on a mesh of a .gltf
-        # under ART by its UVs: `from`, `mesh`): `out` and the map's name
+    elif item["paint"] in ("fur", "scales", "weave", "floral", "forged", "winingas", "lames", "ringmail"):
+        # a material's maps from nothing (or baked on meshes of a .gltf
+        # under ART by their UVs: `from`, `mesh` or `meshes`): `out` and
+        # the map's name
         if item["paint"] == "lames":
             maps = art_paint.lames(os.path.join(ART, item["from"]), item["mesh"], item.get("size", 1024))
+        elif item["paint"] == "ringmail":
+            maps = art_paint.ringmail(os.path.join(ART, item["from"]), item["meshes"], item.get("size", 1024))
         else:
             maps = getattr(art_paint, item["paint"])(item.get("size", 512))
         for name, image in maps.items():

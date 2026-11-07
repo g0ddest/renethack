@@ -7,9 +7,9 @@
 //! below the chin, and its strap never comes up across the face. Gloves
 //! cover the hands until they
 //! are taken off, and the title's hero, dressed again in the role's kit,
-//! wears them too; a Knight's and a Barbarian's ring mail is chain mail
-//! over the tunic, a Samurai's splint mail is laced lames, and the tunic is the
-//! outfit's own again with the armour off.
+//! wears them too; a Knight's and a Barbarian's ring mail is rings sewn
+//! on leather over the tunic, a Samurai's splint mail is laced lames, and
+//! the tunic is the outfit's own again with the armour off.
 
 use godot::classes::base_material_3d::TextureParam;
 use godot::classes::mesh::ArrayType;
@@ -92,7 +92,7 @@ fn shows(
     }
     let tunic = match armour {
         Some(a) => l.tunic.starts_with(a),
-        None => !["Chainmail", "Metal"]
+        None => !["Chainmail", "Metal", "ring_mail", "do_lames"]
             .iter()
             .any(|a| l.tunic.starts_with(a)),
     };
@@ -721,8 +721,8 @@ pub(super) fn worn() -> Vec<Step> {
     // a Knight: ring mail over the tunic, gloves; the gloves off
     steps.extend(hero("knight", "female", "lawful"));
     steps.extend(shown(
-        "chain mail over the tunic, the hands gloved",
-        |g| shows(g, &[], Some("Chainmail004"), true),
+        "ring mail over the tunic, the hands gloved",
+        |g| shows(g, &[], Some("ring_mail"), true),
         "worn-knight-f",
     ));
     steps.extend([
@@ -733,7 +733,7 @@ pub(super) fn worn() -> Vec<Step> {
     ]);
     steps.extend(shown(
         "the hands bare",
-        |g| shows(g, &[], Some("Chainmail004"), false),
+        |g| shows(g, &[], Some("ring_mail"), false),
         "worn-knight-f-bare-hands",
     ));
     steps.extend(next_hero());
@@ -741,8 +741,8 @@ pub(super) fn worn() -> Vec<Step> {
     // the outfit's own again
     steps.extend(hero("barbarian", "male", "neutral"));
     steps.extend(shown(
-        "chain mail over the tunic",
-        |g| shows(g, &[], Some("Chainmail004"), false),
+        "ring mail over the tunic",
+        |g| shows(g, &[], Some("ring_mail"), false),
         "worn-barbarian-m",
     ));
     steps.extend([

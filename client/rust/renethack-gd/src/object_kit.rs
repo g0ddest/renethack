@@ -1711,6 +1711,26 @@ impl Kit<'_> {
                     );
                 }
             }
+            "braid" => {
+                // a plait of the look's hair down the back, tied in leather
+                let thong = self.leather();
+                self.part(
+                    root,
+                    MeshKey::Organic(Organic::Gear(GearPart::Braid)),
+                    &skin,
+                    [0.0, 0.0, 0.0],
+                    FLAT,
+                    ONE,
+                );
+                self.part(
+                    root,
+                    MeshKey::Organic(Organic::Gear(GearPart::BraidTie)),
+                    &thong,
+                    [0.0, 0.0, 0.0],
+                    FLAT,
+                    ONE,
+                );
+            }
             "pleats" => {
                 // a samurai's hakama, falling in knife pleats to the ankles
                 self.part(
