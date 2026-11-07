@@ -234,6 +234,12 @@ const HOODED_FIGURE: &str = "figure_hooded";
 
 /// Seconds from the start of a strike to the blow landing.
 const CONTACT_SECS: f32 = 0.16;
+/// A blow landing flashes the one it struck for this long, the hero red,
+/// any other warm white (`FLASH_SHADER`, an overlay on its meshes).
+const FLASH_SECS: f32 = 0.3;
+const FLASH_SHADER: &str = "res://shaders/hit_flash.gdshader";
+const FLASH_HERO: Color = Color::from_rgb(1.0, 0.3, 0.2);
+const FLASH_FOE: Color = Color::from_rgb(1.0, 0.86, 0.7);
 /// Descent per step when a pointer ray is walked through the raised geometry.
 const PICK_STEP: f32 = 0.05;
 /// Nothing drawn reaches higher (a giant on an altar).
@@ -3796,6 +3802,10 @@ pub struct MapView {
     /// Models on their way to the cell an entity stepped to (this batch).
     incoming: HashMap<(i32, i32), Carried>,
     motions: Vec<Motion>,
+    /// The meshes of the ones a blow just struck, flashing, and the
+    /// seconds left; the overlay they flash in.
+    flashes: Vec<(Vec<Gd<GeometryInstance3D>>, f32)>,
+    flash: Option<Gd<Material>>,
     /// Cells whose step was cut short by the next batch, and when.
     interrupted: HashSet<(i32, i32)>,
     cut_at: f64,
@@ -4564,6 +4574,8 @@ impl MapView {
             facing: HashMap::new(),
             incoming: HashMap::new(),
             motions: Vec::new(),
+            flashes: Vec::new(),
+            flash: None,
             interrupted: HashSet::new(),
             cut_at: 0.0,
             log_seq: None,
@@ -4797,6 +4809,7 @@ impl MapView {
         self.claim_falls(catalog);
         self.greet_summoned();
         self.advance_motions(delta as f32);
+        self.advance_flashes(delta as f32);
         self.advance_falls(delta as f32);
         self.advance_drops(delta as f32, catalog);
         self.advance_acts(delta as f32);
@@ -9642,7 +9655,15 @@ impl MapView {
         let mut deaths = Vec::new();
         let mut struck: Option<(String, (i32, i32))> = None;
         let mut unplaced = Vec::new();
+        let mut hero_dies = None;
         for m in world.log.since(seen).filter(|m| !m.from_history) {
+            // the hero dies: they fall (after the blows that killed them);
+            // saved by an amulet, they stand
+            if m.text.starts_with("You die") {
+                hero_dies = Some(true);
+            } else if m.text.starts_with("But wait...") {
+                hero_dies = Some(false);
+            }
             // what a monster does that the hero sees: a spell cast
             self.watch_act(&m.text, world, catalog);
             if crate::hero::healed(&m.text) {
@@ -9734,17 +9755,30 @@ impl MapView {
                         Some(r) => &r.model,
                         None => m,
                     };
-                    if self.art.flinch(m) {
+                    // (a hero struck dead falls instead)
+                    let dying = at_hero && hero_dies == Some(true);
+                    if !dying && self.art.flinch(m) {
                         self.stats.flinches += 1;
                     }
                     let toward = Vector3::new((from.0 - to.0) as f32, 0.0, (from.1 - to.1) as f32)
                         .normalized();
+                    // and is knocked back, flashing
+                    let node = m.node.clone();
+                    if !dying {
+                        self.reel(to, -toward, at_hero);
+                    }
+                    self.flash_struck(&node, at_hero);
                     let chest = Vector3::new(to.0 as f32, self.ground(to.0, to.1), to.1 as f32)
                         + Vector3::new(0.0, height * 0.6, 0.0)
                         + toward * 0.25;
                     self.vfx.burst_after(VfxKind::Sparkle, chest, CONTACT_SECS);
                 }
             }
+        }
+        match hero_dies {
+            Some(true) => self.hero_falls(),
+            Some(false) => self.settle_hero(),
+            None => {}
         }
         for (at, hit, a) in unplaced {
             let start = self.sounds.len();
@@ -10065,6 +10099,98 @@ impl MapView {
         self.art
             .hold_for(&mut r.model, h, secs, "hand_r", None, Some(&mounted));
         Some(clip)
+    }
+
+    /// The hero's model falls dead (its death clip, held at its end): what
+    /// the map shows while the game asks its last questions.
+    fn hero_falls(&mut self) {
+        let Some(cell) = self.hero_at else {
+            return;
+        };
+        if let Some(i) = self.motions.iter().position(|m| m.cell == cell) {
+            self.motions.swap_remove(i).finish(false);
+        }
+        let Some(model) = self.hero_model() else {
+            return;
+        };
+        let Some((clip, _)) = self.art.death(model) else {
+            return;
+        };
+        if let Some(mut p) = model.player().cloned() {
+            p.clear_queue();
+            p.play_ex().name(clip.as_str()).custom_blend(0.12).done();
+        }
+    }
+
+    /// The one struck at `cell` knocked back along `away` and back again
+    /// (`Motion::reel`), unless it is already moving (a blow of its own),
+    /// or rides (the steed under it stands).
+    fn reel(&mut self, cell: (i32, i32), away: Vector3, hero: bool) {
+        if self.motions.iter().any(|m| m.cell == cell) || (hero && self.rider.is_some()) {
+            return;
+        }
+        let Some(nodes) = self.cells.get(&cell) else {
+            return;
+        };
+        let Some(i) = nodes.look.entity.filter(|&i| i < nodes.models.len()) else {
+            return;
+        };
+        let placed = &nodes.look.models[i];
+        let at = Vector3::new(cell.0 as f32, 0.0, cell.1 as f32) + placed.pos;
+        let yaw = placed.yaw;
+        let model = &nodes.models[i];
+        let node = model.node.clone();
+        let clips = self.art.clips(model, false);
+        self.motions
+            .push(Motion::reel(node, cell, hero, at, yaw, away, clips));
+    }
+
+    /// The model under `node` flashes (`FLASH_SECS`): an overlay of the
+    /// flash's colour on each of its meshes, fading.
+    fn flash_struck(&mut self, node: &Gd<Node3D>, hero: bool) {
+        if self.flash.is_none() {
+            let Ok(shader) = godot::tools::try_load::<Shader>(FLASH_SHADER) else {
+                return;
+            };
+            let mut m = ShaderMaterial::new_gd();
+            m.set_shader(&shader);
+            self.flash = Some(m.upcast());
+        }
+        let Some(overlay) = self.flash.clone() else {
+            return;
+        };
+        let colour = if hero { FLASH_HERO } else { FLASH_FOE };
+        let meshes: Vec<Gd<GeometryInstance3D>> = node
+            .find_children_ex("*")
+            .type_("MeshInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+            .filter_map(|n| n.try_cast::<GeometryInstance3D>().ok())
+            .filter(|g| g.is_visible_in_tree())
+            .collect();
+        for mut g in meshes.iter().cloned() {
+            g.set_material_overlay(&overlay);
+            g.set_instance_shader_parameter("flash_color", &colour.to_variant());
+            g.set_instance_shader_parameter("flash", &1.0f32.to_variant());
+        }
+        self.flashes.push((meshes, FLASH_SECS));
+    }
+
+    /// The flashes fade; a spent one takes its overlay off.
+    fn advance_flashes(&mut self, delta: f32) {
+        for (meshes, left) in &mut self.flashes {
+            *left -= delta;
+            let k = (*left / FLASH_SECS).max(0.0).powf(1.5);
+            for g in meshes.iter_mut().filter(|g| g.is_instance_valid()) {
+                if k > 0.0 {
+                    g.set_instance_shader_parameter("flash", &k.to_variant());
+                } else {
+                    g.set_material_overlay(Gd::null_arg());
+                }
+            }
+        }
+        self.flashes.retain(|(_, left)| *left > 0.0);
     }
 
     fn advance_motions(&mut self, delta: f32) {

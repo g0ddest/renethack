@@ -37,6 +37,10 @@ const NUDGE: f32 = 0.08;
 const AFTER_BLOW: f64 = 0.15;
 /// Roll of a swaying body (degrees).
 const SWAY_ROLL: f32 = 6.0;
+/// A blow's reel: how far the one struck is knocked back (metres), and
+/// for how long, out and back.
+const REEL: f32 = 0.16;
+const REEL_SECS: f32 = 0.32;
 
 /// The walk clip's speed for a step of `secs`: the stride keeps up with
 /// a slower or quicker step (an order's step lasts its tick).
@@ -88,6 +92,7 @@ pub fn progress(elapsed: f32, duration: f32, hold: Option<f32>) -> f32 {
 enum Kind {
     Step { hop: f32 },
     Strike { toward: Vector3, reach: f32 },
+    Reel { away: Vector3 },
 }
 
 pub struct Motion {
@@ -208,6 +213,36 @@ impl Motion {
         m
     }
 
+    /// The node at `cell` (standing at `at`, facing `yaw`) is knocked back
+    /// along `away` (a flat unit vector) by a blow, and comes back: fast
+    /// out, slower back. Its hit clip plays on (`Art::flinch`).
+    pub fn reel(
+        node: Gd<Node3D>,
+        cell: (i32, i32),
+        hero: bool,
+        at: Vector3,
+        yaw: f32,
+        away: Vector3,
+        clips: Clips,
+    ) -> Motion {
+        let mut m = Motion {
+            node,
+            cell,
+            hero,
+            kind: Kind::Reel { away },
+            from: at,
+            to: at,
+            yaw_from: yaw,
+            yaw_to: yaw,
+            elapsed: 0.0,
+            duration: REEL_SECS,
+            clips,
+            base: at,
+        };
+        m.apply(0.0);
+        m
+    }
+
     /// (the gait clip a step plays, the clip playing now) (self-tests).
     pub fn clips_now(&self) -> (Option<String>, Option<String>) {
         let now = self
@@ -236,6 +271,12 @@ impl Motion {
                 self.base = self.to;
                 let out = reach * (std::f32::consts::PI * t).sin();
                 place(&mut self.node, self.to + toward * out, yaw, 0.0);
+            }
+            Kind::Reel { away } => {
+                // (the camera, the ring and the torch stay where it stands)
+                self.base = self.to;
+                let out = REEL * (std::f32::consts::PI * t.powf(0.55)).sin();
+                place(&mut self.node, self.to + away * out, yaw, 0.0);
             }
         }
     }

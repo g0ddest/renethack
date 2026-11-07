@@ -104,6 +104,8 @@ mod layouts_tests;
 mod look_tests;
 #[path = "selftest_loot.rs"]
 mod loot_tests;
+#[path = "selftest_motion.rs"]
+mod motion_tests;
 #[path = "selftest_ordinals.rs"]
 mod ordinals_tests;
 #[path = "selftest_outfits.rs"]
@@ -5335,6 +5337,7 @@ impl SelfTest {
             "portrait" => portrait_tests::portrait(),
             "overhang" => overhang_tests::overhang(),
             "outfits" => outfits_tests::outfits(),
+            "motion" => motion_tests::motion(),
             "late-monsters" => late_tests::late_monsters(),
             "helm-hair" => helm_hair_tests::helm_hair(),
             "feet" => feet_tests::feet(),
