@@ -317,6 +317,8 @@
    "use": "the rats' coats lit up: a rat stays seen on a brown floor, each kind in its tint"},
   {"paint": "relief", "from": "cc0/quaternius/outfits/Outfits/textures/T_Ranger_BaseColor.jpg", "radius": 14, "light": 0.78, "out": "made/skins/ranger_relief.jpg",
    "use": "the Ranger outfit's painting without its colours (seams, stitches, folds, worn edges): what its heroes dress in cloth or leather keeps it under the dye"},
+  {"paint": "relief", "from": "cc0/quaternius/outfits/Outfits/textures/T_Peasant_BaseColor.jpg", "radius": 14, "light": 0.78, "out": "made/skins/peasant_relief.jpg",
+   "use": "the Peasant outfit's painting without its colours, as the Ranger's"},
   {"paint": "fur", "size": 512, "out": "made/textures/pelt/pelt",
    "use": "a pelt worn by a hero (a Valkyrie's, a Barbarian's): locks of hair lying down the cape, pale to take a tint"},
   {"paint": "scales", "size": 512, "out": "made/textures/dragon_scales/dragon_scales",

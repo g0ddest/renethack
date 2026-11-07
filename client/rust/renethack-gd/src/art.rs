@@ -2292,7 +2292,7 @@ impl Art {
                         }
                         if let Some((m, c)) = made {
                             return match &relief {
-                                Some(t) if !self.manifest.material_at(m).1.is_metal() => {
+                                Some(t) if !self.manifest.material_at(m).1.covers() => {
                                     self.relieved(&src, t, m, c)
                                 }
                                 _ => self.surface(m, 100, false, c),
@@ -2914,7 +2914,7 @@ impl Art {
     }
 
     /// An outfit's own material `src` dressed in the manifest material `m`
-    /// (cloth, leather, fur: not metal) dyed `tint`: its colour over the
+    /// (cloth, leather: neither metal nor a pattern) dyed `tint`: its colour over the
     /// outfit's painting without its colours (`relief`), the outfit's
     /// relief and gloss kept (its seams, folds, stitches and worn edges),
     /// where the material's own maps would tile a pattern over them.

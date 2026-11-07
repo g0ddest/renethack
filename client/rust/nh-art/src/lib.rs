@@ -678,6 +678,11 @@ pub struct MaterialSpec {
     /// of the PBR material; it takes the colour and the roughness.
     #[serde(default)]
     pub shader: Option<String>,
+    /// Its maps are what it is (a printed shirt, a pelt): an outfit
+    /// dressed in it shows them, never the outfit's own painting under a
+    /// dye (`ModelSpec::relief`).
+    #[serde(default)]
+    pub pattern: bool,
 }
 
 impl MaterialSpec {
@@ -685,6 +690,12 @@ impl MaterialSpec {
     /// dyed cloth's painting never shows through it.
     pub fn is_metal(&self) -> bool {
         self.metallic.unwrap_or(0.0) >= 0.5
+    }
+
+    /// Laid over an outfit as itself, its maps and all (metal, a pattern),
+    /// not as a dye over the outfit's own painting.
+    pub fn covers(&self) -> bool {
+        self.is_metal() || self.pattern
     }
 
     pub fn albedo_path(&self) -> Option<String> {
