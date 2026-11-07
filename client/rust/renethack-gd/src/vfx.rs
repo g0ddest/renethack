@@ -4,7 +4,9 @@
 //! light, rays drawn as what they are of (`Ray`: a stream of flame, an
 //! icy core shedding shards, a drifting haze, darts of light, a black ray,
 //! a spray, rock dust, rings of force) with a light on them and particles
-//! shed along them, blood splats on the floor that fade, and the dust in
+//! shed along them, blood splats on the floor that fade, the marks effects
+//! leave there a while (`Mark`: scorch, frost, etching, glitter, dust), and
+//! the dust in
 //! the air that shows only where light falls. Emitters, lights and decals
 //! are pooled per kind; nothing here is ever more than a picture of what
 //! the game already said.
@@ -15,6 +17,10 @@
 //! `MapView::burst_at` and `MapView::beam_between`.
 
 use std::collections::HashMap;
+
+#[path = "vfx_marks.rs"]
+mod marks;
+pub use marks::Mark;
 
 use godot::classes::base_material_3d::{
     BillboardMode, BlendMode, Flags, ShadingMode, Transparency,
@@ -114,6 +120,25 @@ pub enum Ray {
 }
 
 impl Ray {
+    /// What a ray of this kind (`color` its glyph's) leaves on the floor
+    /// under its way and where it strikes, and how wide (metres).
+    fn mark(self, color: Color) -> Option<(Mark, f32)> {
+        let rgb = Color::from_rgb;
+        match self {
+            Ray::Fire => Some((Mark::Scorch(EMBER), 0.9)),
+            Ray::Cold => Some((Mark::Frost, 1.0)),
+            Ray::Lightning => Some((Mark::Scorch(rgb(0.6, 0.75, 1.0)), 0.55)),
+            Ray::Acid => Some((Mark::Etch(rgb(0.6, 0.95, 0.2)), 0.8)),
+            Ray::Poison => Some((Mark::Etch(rgb(0.5, 0.8, 0.2)), 0.7)),
+            Ray::Death => Some((Mark::Soot, 0.8)),
+            Ray::MagicMissile | Ray::Plain | Ray::Sleep => {
+                Some((Mark::Glitter(self.look().color.unwrap_or(color)), 0.8))
+            }
+            Ray::Dig => Some((Mark::Dust(rgb(0.45, 0.4, 0.34)), 0.9)),
+            Ray::Force => None,
+        }
+    }
+
     /// Every kind (the effects' rehearsal draws each once).
     pub const ALL: [Ray; 11] = [
         Ray::Plain,
@@ -867,7 +892,7 @@ impl Recipe {
 fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
     let rgb = Color::from_rgb;
     match kind {
-        VfxKind::Quaff(c) => (Recipe::Motes, c, Some((c, 0.5, 0.5))),
+        VfxKind::Quaff(c) => (Recipe::Motes, c, Some((c, 1.8, 0.8))),
         VfxKind::Read => {
             let gold = rgb(1.0, 0.8, 0.4);
             (Recipe::Runes, gold, Some((gold, 0.8, 0.5)))
@@ -880,13 +905,16 @@ fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
         }
         VfxKind::Frost => {
             let c = rgb(0.56, 0.88, 1.0);
-            (Recipe::Shards, c, Some((c, 1.2, 0.3)))
+            (Recipe::Shards, c, Some((c, 3.0, 0.6)))
         }
         VfxKind::Lightning => {
             let c = rgb(0.91, 0.94, 1.0);
             (Recipe::Bolts, c, Some((c, 4.0, 0.12)))
         }
-        VfxKind::Poison => (Recipe::Cloud, rgb(0.56, 1.0, 0.25), None),
+        VfxKind::Poison => {
+            let c = rgb(0.56, 1.0, 0.25);
+            (Recipe::Cloud, c, Some((c, 1.6, 0.8)))
+        }
         VfxKind::Explosion(c) => (Recipe::Blast, c, Some((c, 4.0, 0.3))),
         VfxKind::Heal => {
             let c = rgb(0.75, 1.0, 0.7);
@@ -898,10 +926,13 @@ fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
             (Recipe::Halo, gold, Some((gold, 2.4, 0.9)))
         }
         VfxKind::Impact(c) => (Recipe::Sparks, c, Some((c, 9.0, 0.35))),
-        VfxKind::Sparkle => (Recipe::Glints, rgb(1.0, 0.95, 0.8), None),
+        VfxKind::Sparkle => {
+            let c = rgb(1.0, 0.95, 0.8);
+            (Recipe::Glints, c, Some((c, 1.6, 0.35)))
+        }
         VfxKind::Sparks => {
             let c = rgb(1.0, 0.6, 0.22);
-            (Recipe::Sparks, c, Some((c, 5.0, 0.1)))
+            (Recipe::Sparks, c, Some((c, 6.0, 0.2)))
         }
         VfxKind::Blood(c) => (Recipe::Droplets, c, None),
         VfxKind::Shock(c) => (Recipe::Ring, c, Some((c, 2.0, 0.2))),
@@ -1081,6 +1112,12 @@ const BODY_TALL: f32 = 1.75;
 const CAP_REACH: f32 = 0.3;
 /// A strike's flash, this many times a blow's.
 const IMPACT_FLASH: f32 = 2.2;
+/// The embers glowing in a fire's scorch a moment.
+const EMBER: Color = Color::from_rgb(1.0, 0.36, 0.07);
+/// A strike's mark, this many times its ray's, and this far back from the
+/// stone it struck (metres) at its foot.
+const STRIKE_MARK: f32 = 1.7;
+const STRIKE_MARK_BACK: f32 = 0.35;
 /// A strike's flash this far off the stone it strikes (metres): half of
 /// it was buried in the wall.
 const IMPACT_OFF: f32 = 0.25;
@@ -1180,6 +1217,8 @@ pub struct Vfx {
     last_fire: f32,
     splats: Vec<Splat>,
     next_splat: usize,
+    /// What effects leave on the floor a while.
+    marks: marks::Marks,
     pending: Vec<Pending>,
     beam_shader: Option<Gd<Shader>>,
     dust: Gd<GpuParticles3D>,
@@ -1496,6 +1535,7 @@ impl Vfx {
             last_fire: f32::NEG_INFINITY,
             splats: Vec::new(),
             next_splat: 0,
+            marks: marks::Marks::new(),
             pending: Vec::new(),
             beam_shader,
             dust,
@@ -1550,6 +1590,87 @@ impl Vfx {
         // a grey wand's strike still flashes white
         let at = at + back * IMPACT_OFF;
         self.burst_dir(VfxKind::Impact(vivid(color)), at, None, Some(dir));
+    }
+
+    /// A ray of `kind`'s strike on something solid at `at` from `from`'s
+    /// side (the hero's own beam at arm's length from a wall).
+    pub fn impact_of(&mut self, kind: VfxKind, at: Vector3, from: Vector3) {
+        self.strike(ray_of(kind), beam_color(kind), at, from);
+    }
+
+    /// A ray of `kind` and `color` striking stone at `at` from `from`'s
+    /// side: the flash and sparks of any strike, then what is its own: a
+    /// fire's flames and embers, frost's shards and rime, a bolt's forks,
+    /// acid's spatter, gas, glitter; its own light; and its mark at the
+    /// foot of what it struck. (At point-blank a cold ray was a small
+    /// sparkle.)
+    fn strike(&mut self, kind: Ray, color: Color, at: Vector3, from: Vector3) {
+        self.impact(color, at, from);
+        let back = Vector3::new(from.x - at.x, 0.0, from.z - at.z).normalized();
+        let out = (back + Vector3::UP * 0.6).normalized();
+        let near = at + back * IMPACT_OFF;
+        let foot = Vector3::new(at.x, 0.0, at.z) + back * STRIKE_MARK_BACK;
+        let rgb = Color::from_rgb;
+        match kind {
+            Ray::Fire => {
+                let fire = rgb(1.0, 0.48, 0.13);
+                self.emit_by(Recipe::Flames, fire, near, Some(Vector3::UP), 1.3);
+                self.emit_by(Recipe::Embers, rgb(1.0, 0.55, 0.2), near, Some(out), 1.2);
+                self.flash(near, fire, 5.0, 0.9, 4.0);
+            }
+            Ray::Cold => {
+                let ice = rgb(0.56, 0.88, 1.0);
+                self.emit_by(Recipe::Shards, ice, near, Some(out), 1.6);
+                self.emit_by(Recipe::Glints, ice, near, None, 2.2);
+                self.emit_by(Recipe::Cloud, rgb(0.78, 0.9, 1.0), near, Some(out), 1.2);
+                self.flash(near, ice, 5.0, 0.8, 4.0);
+            }
+            Ray::Lightning => {
+                let bolt = rgb(0.85, 0.9, 1.0);
+                self.emit_by(Recipe::Bolts, bolt, near, None, 1.4);
+                self.flash(near, bolt, 7.0, 0.3, 4.5);
+            }
+            Ray::Acid => {
+                let acid = rgb(0.6, 0.95, 0.2);
+                self.emit_by(Recipe::Droplets, acid, near, Some(out), 1.3);
+                self.flash(near, acid, 2.0, 0.6, 3.0);
+            }
+            Ray::Poison => {
+                let gas = rgb(0.56, 1.0, 0.25);
+                self.emit_by(Recipe::Cloud, gas, near, Some(out), 1.3);
+                self.flash(near, gas, 2.0, 0.8, 3.0);
+            }
+            Ray::MagicMissile | Ray::Plain | Ray::Sleep => {
+                let c = vivid(kind.look().color.unwrap_or(color));
+                self.emit_by(Recipe::Glints, c, near, None, 2.4);
+                self.flash(near, c, 3.0, 0.5, 3.5);
+            }
+            Ray::Death => self.shade(near, 3.0, 0.8, 3.5),
+            Ray::Dig | Ray::Force => {}
+        }
+        if let Some((mark, size)) = kind.mark(color) {
+            self.mark(mark, foot, size * STRIKE_MARK);
+        }
+    }
+
+    /// A body come down on the floor at `at` (its feet), `size` metres
+    /// across: dust of the level's stone thrown up round it and left
+    /// lying a while.
+    pub fn thud(&mut self, at: Vector3, size: f32) {
+        let s = self.stone;
+        let dust = Color::from_rgb(
+            (s.r * 1.6).min(1.0),
+            (s.g * 1.6).min(1.0),
+            (s.b * 1.6).min(1.0),
+        );
+        self.emit_by(
+            Recipe::Puff,
+            dust,
+            at + Vector3::UP * 0.1,
+            Some(Vector3::UP),
+            size,
+        );
+        self.mark(Mark::Dust(s), Vector3::new(at.x, 0.0, at.z), size * 1.3);
     }
 
     /// A blow landing at `at`, its sparks thrown out towards `toward` (the
@@ -1612,6 +1733,13 @@ impl Vfx {
             // a glow rising with the runes; wisps turning in a drink's
             // glow, and in a healing's with its stars
             VfxKind::Halo => self.emit_by(Recipe::Aura, color, at, None, k),
+            // cold: glinting ice and a breath of frost about the shards
+            // (at point-blank it was a small sparkle)
+            VfxKind::Frost => {
+                self.emit_by(Recipe::Glints, bright, at, None, k * 2.0);
+                let mist = Color::from_rgb(0.78, 0.9, 1.0);
+                self.emit_by(Recipe::Cloud, mist, at, None, k * 1.2);
+            }
             VfxKind::Aura(_) => self.emit_by(Recipe::Wisps, bright, at, None, k),
             VfxKind::Heal | VfxKind::Bless => {
                 self.emit_by(Recipe::Aura, color, at, None, k);
@@ -1652,6 +1780,8 @@ impl Vfx {
                 if stone {
                     let chips = Color::from_rgb(s.r * 0.8, s.g * 0.8, s.b * 0.8);
                     self.emit_by(Recipe::Chips, chips, at, dir, k * 1.3);
+                    // and its dust settles at the stone's foot
+                    self.mark(Mark::Dust(s), Vector3::new(at.x, 0.0, at.z), 1.2 * k);
                 }
                 // the strike's glow lingering in the dust it raised
                 let warm = Color::from_rgb(1.0, 0.82, 0.6);
@@ -1682,13 +1812,14 @@ impl Vfx {
             let dark = Color::from_rgb(c.r * k, c.g * k, c.b * k);
             self.splat(Vector3::new(at.x, 0.0, at.z), dark, 1.0);
         }
-        if let VfxKind::Explosion(_) = kind {
-            // the scorch of the blast, fading like blood
-            self.splat(
-                Vector3::new(at.x, 0.0, at.z),
-                Color::from_rgb(0.05, 0.04, 0.035),
-                1.0,
-            );
+        // what it leaves on the floor under it a while
+        let ground = Vector3::new(at.x, 0.0, at.z);
+        match kind {
+            VfxKind::Explosion(_) => self.mark(Mark::Scorch(EMBER), ground, 1.4),
+            VfxKind::Fire => self.mark(Mark::Scorch(EMBER), ground, 1.0 * k),
+            VfxKind::Frost => self.mark(Mark::Frost, ground, 1.1 * k),
+            VfxKind::Poison => self.mark(Mark::Etch(color), ground, 0.9 * k),
+            _ => {}
         }
     }
 
@@ -1709,9 +1840,10 @@ impl Vfx {
                     self.emit(Recipe::Pillar, fire, at + Vector3::new(0.0, 0.3, 0.0), None);
                     self.emit(Recipe::Embers, rgb(1.0, 0.55, 0.2), mid, None);
                     self.flash(at + Vector3::new(0.0, 1.4, 0.0), fire, 7.0, 1.3, 5.0);
-                    self.splat(at, rgb(0.04, 0.03, 0.025), 2.4);
+                    self.mark(Mark::Scorch(EMBER), at, 2.4);
                 } else {
                     self.emit(Recipe::Blaze, fire, at + Vector3::new(0.0, 0.25, 0.0), None);
+                    self.mark(Mark::Scorch(EMBER), at, 1.2);
                 }
             }
             Blast::Frosty => {
@@ -1722,6 +1854,7 @@ impl Vfx {
                 if heart {
                     self.flash(mid, ice, 3.0, 0.5, 4.0);
                 }
+                self.mark(Mark::Frost, at, if heart { 1.8 } else { 1.2 });
             }
             // a cloud of its gas over the cell, lit green from within
             Blast::Noxious => {
@@ -1729,6 +1862,7 @@ impl Vfx {
                 self.emit_in_cell(Recipe::Gas, gas, mid, BLAST_SHARE);
                 if heart {
                     self.flash(mid, gas, 2.5, 0.9, 4.0);
+                    self.mark(Mark::Etch(gas), at, 1.4);
                 }
             }
             // black smoke, the light round it put out a moment
@@ -1766,6 +1900,7 @@ impl Vfx {
                 if heart {
                     self.flash(mid, color, 4.0, 0.4, 4.0);
                 }
+                self.mark(Mark::Glitter(color), at, 1.2);
             }
         }
     }
@@ -1950,6 +2085,7 @@ impl Vfx {
             ends.push((b.from, -out));
         }
         let color = b.kind.look().color.unwrap_or(b.color);
+        let kind = b.kind;
         for (end, out) in ends {
             let beyond = end + out * CAP_REACH;
             let cell = (beyond.x.round() as i32, beyond.z.round() as i32);
@@ -1958,7 +2094,7 @@ impl Vfx {
                 continue;
             }
             self.beams[i].capped.push(cell);
-            self.impact(color, end, end - out);
+            self.strike(kind, color, end, end - out);
         }
     }
 
@@ -2155,6 +2291,10 @@ impl Vfx {
             e.node.restart();
             e.node.set_emitting(true);
             e.busy = recipe.shows();
+        }
+        // and what it leaves on the floor under its way a while
+        if let Some((mark, size)) = kind.mark(color) {
+            self.mark_along(mark, from, to, size);
         }
     }
 
@@ -2478,6 +2618,7 @@ impl Vfx {
                 }
             }
         }
+        self.age_marks(delta);
         let mut due = Vec::new();
         self.pending.retain_mut(|p| {
             p.left -= delta;
@@ -2548,6 +2689,7 @@ impl Vfx {
             s.age = SPLAT_SECS;
             s.decal.set_visible(false);
         }
+        self.clear_marks();
     }
 
     /// How thick the dust in the air is (1: the main dungeon's).

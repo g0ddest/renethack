@@ -308,7 +308,8 @@ impl MapView {
             (_, FallKind::Blink) => BLINK_SECS,
             _ => TOPPLE_SECS,
         };
-        if kind == FallKind::Blink {
+        // a body blinking out or dissolving goes in a sparkle and its light
+        if matches!(kind, FallKind::Blink | FallKind::Dissolve) {
             let middle = model.node.get_global_position()
                 + Vector3::new(0.0, placed.look.art.height * 0.5, 0.0);
             self.vfx.burst(crate::vfx::VfxKind::Sparkle, middle);
@@ -415,6 +416,7 @@ impl MapView {
             kind,
             corpse,
             meshes: f_meshes,
+            height: f_height,
             ..
         } = f;
         let still = corpse.filter(|c| {
@@ -443,6 +445,11 @@ impl MapView {
             corpse: still.is_some(),
             off,
         });
+        // a body come down raises the dust where it lies
+        if matches!(kind, FallKind::Topple | FallKind::Clip | FallKind::Slump) {
+            let at = model.node.get_global_position();
+            self.vfx.thud(at, f_height.clamp(0.6, 2.2));
+        }
         set_overlay(&model.node, None);
         let mut meshes = f_meshes;
         see_through(&mut meshes, 0.0);

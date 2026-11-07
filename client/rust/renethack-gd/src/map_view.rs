@@ -5463,6 +5463,11 @@ impl MapView {
         self.vfx.splats_shown()
     }
 
+    /// Marks effects left on the floor showing now (self-tests).
+    pub fn marks_shown(&self) -> usize {
+        self.vfx.marks_shown()
+    }
+
     /// How far above the floor the hero floats now (self-tests).
     pub fn hero_lift(&self) -> f32 {
         self.hero_pose.lift

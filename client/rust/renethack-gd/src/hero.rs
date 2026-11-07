@@ -8,7 +8,7 @@ use nh_art::{ArtManifest, Gear};
 use nh_protocol::{Catalog, InvItem, ObjectTile, Slot};
 use nh_world::{ItemUse, Pack, UseKind};
 
-use crate::vfx::{Vfx, VfxKind, beam_color};
+use crate::vfx::{Vfx, VfxKind};
 
 /// The hero's gear, as of the last pack it was read from.
 #[derive(Default)]
@@ -269,7 +269,7 @@ impl HeroFx {
                 if struck && (at - from).dot(way) < POINT_BLANK {
                     match kind {
                         VfxKind::Shock(c) => vfx.burst(VfxKind::Force(c, true), at - way * 0.2),
-                        _ => vfx.impact(beam_color(kind), at, at - way),
+                        _ => vfx.impact_of(kind, at, at - way),
                     }
                     return;
                 }

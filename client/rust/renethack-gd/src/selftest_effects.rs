@@ -1,17 +1,17 @@
 //! `effects`: the corridors' stretch of level (`gallery::lay_out_corridors`)
 //! with the effects that read wrong in play: a bolt of lightning across the
-//! lit room, blood of three colours fallen on its floor, something unseen
-//! remembered in the room and in the corridor's dark, a fountain and an
-//! up stair in the light; then the level unlit, an up stair a few steps
-//! into the dark, remembered. `rays`: a ray of every kind the engine draws
-//! across the lit room, cell by cell. `blasts`: an explosion of every kind
-//! in it, a scroll of fire's about the hero. `engulfed`: the hero inside
-//! each of NetHack's engulfers. `magic`: the magic a first hour shows
-//! worked on the hero in the corridors' west room, as its lines tell it: a
-//! scroll of light read in the dark, enchant armour on the shield, enchant
-//! weapon on the spear in hand, a curse lifted, a bolt of force cast at
-//! the wall. Pictures only (`--screenshots`): not part of `make
-//! test-client`.
+//! lit room and the scorch it leaves under it, blood of three colours fallen
+//! on its floor, something unseen remembered in the room and in the
+//! corridor's dark, a fountain and an up stair in the light; then the level
+//! unlit, an up stair a few steps into the dark, remembered. `rays`: a ray
+//! of every kind the engine draws across the lit room, cell by cell.
+//! `blasts`: an explosion of every kind in it, a scroll of fire's about the
+//! hero. `engulfed`: the hero inside each of NetHack's engulfers. `magic`:
+//! the magic a first hour shows worked on the hero in the corridors' west
+//! room, as its lines tell it: a scroll of light read in the dark, enchant
+//! armour on the shield, enchant weapon on the spear in hand, a curse
+//! lifted, a bolt of force cast at the wall. Pictures only
+//! (`--screenshots`): not part of `make test-client`.
 
 use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
@@ -75,6 +75,9 @@ pub(super) fn effects() -> Vec<Step> {
             Ok(())
         }),
         Step::Shot("effects-lightning"),
+        Step::Wait("the bolt's scorch on the floor under it", |g| {
+            Ok(map_view(g)?.marks_shown() >= 2)
+        }),
         Step::Call("another strike", |g| {
             let (from, to) = (corridor_cell((8, 3)), corridor_cell((4, 2)));
             ui_map(g)?.beam_between(VfxKind::Lightning, from, to);
