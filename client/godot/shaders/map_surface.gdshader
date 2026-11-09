@@ -109,6 +109,9 @@ global uniform vec3 eye_pos;
 global uniform float branch_cracks;
 global uniform vec4 branch_crack_color;
 global uniform vec4 branch_chasm;
+// what the ground under the level shows where nothing is known, the same
+// everywhere (alpha: shown at all; none over a chasm, its own)
+global uniform vec4 branch_void;
 // a cave's branch (the Gnomish Mines): its floors meet the rock as a
 // shore, not along the cells' edges
 global uniform float branch_cave;
@@ -693,6 +696,16 @@ void fragment() {
 			float deep = smoothstep(0.35, 0.75, tn2(wpos.xz * 0.11 + 7.0 - TIME * 0.006));
 			emission += branch_chasm.rgb * mix(0.45, 1.0, deep) * mix(0.6, 1.0, smoke)
 				* (1.0 - near);
+		}
+		// elsewhere the unknown is a faint dark smoky rock, never black:
+		// one plane under the whole level, a slow drift over it, the same
+		// everywhere (no cell's edge, nothing of the map); none in the
+		// overview, whose dark frames what is known
+		if (branch_void.a > 0.0) {
+			float drift = tn2(wpos.xz * 0.045 + TIME * vec2(0.008, 0.003));
+			float grain = tn2(wpos.xz * 0.23 + vec2(3.1, 7.7));
+			emission += branch_void.rgb * mix(0.55, 1.0, drift) * mix(0.8, 1.0, grain)
+				* (1.0 - overview);
 		}
 	}
 

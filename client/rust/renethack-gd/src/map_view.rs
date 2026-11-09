@@ -591,6 +591,10 @@ const SKY_SEA: f32 = 1400.0;
 /// and in alpha how much of its own light that ground shows near what is
 /// known (a maze's remembered floor, which NetHack leaves unmapped).
 const CHASM: Color = Color::from_rgba(0.019, 0.0048, 0.0024, 0.6);
+/// What nothing known is over the rock (map_surface.gdshader's
+/// `branch_void`): a faint dark smoky rock, the same everywhere under the
+/// level, reading 8-12 of 255 (it was black), never in the overview.
+const UNKNOWN: Color = Color::from_rgba(0.0062, 0.0059, 0.0058, 1.0);
 /// The light from above on the Planes of Air and Water (the moon's, the
 /// level's own elsewhere): its way, colour and energy.
 const SUN: (Vector3, Color, f32) = (
@@ -5639,6 +5643,13 @@ impl MapView {
         };
         RenderingServer::singleton()
             .global_shader_parameter_set("branch_chasm", &chasm.to_variant());
+        // (over the rock the unknown is a faint smoky dark, never black)
+        let void = if l.under == Under::Rock {
+            UNKNOWN
+        } else {
+            Color::from_rgba(0.0, 0.0, 0.0, 0.0)
+        };
+        RenderingServer::singleton().global_shader_parameter_set("branch_void", &void.to_variant());
         RenderingServer::singleton().global_shader_parameter_set(
             "branch_cave",
             &(if l.cave { 1.0f32 } else { 0.0 }).to_variant(),

@@ -74,6 +74,12 @@ branch_chasm={
 "type": "color",
 "value": Color(0, 0, 0, 0)
 }
+; what the ground under the level shows where nothing is known, the same
+; everywhere: a faint dark smoky rock (alpha 0: nothing, black)
+branch_void={
+"type": "color",
+"value": Color(0, 0, 0, 0)
+}
 ; a cave's branch (the Gnomish Mines): its floors meet the rock as a
 ; shore does (1), or along the cells' edges (0)
 branch_cave={
