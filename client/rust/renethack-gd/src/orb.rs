@@ -11,6 +11,9 @@ use crate::theme::{self, Face, place};
 
 /// The orb's side in design pixels.
 pub const SIZE: f32 = 148.0;
+/// The shader's rect over the orb's side: the glow round the ring is drawn
+/// outside the orb (and takes no room in the layout).
+const REACH: f32 = 1.16;
 /// Seconds the level takes to settle (ease-out).
 const SETTLE: f64 = 0.25;
 /// Seconds the ghost of a loss holds before it drains.
@@ -61,16 +64,21 @@ impl Orb {
         root.set_mouse_filter(MouseFilter::STOP);
         let mut disc = ColorRect::new_alloc();
         disc.set_mouse_filter(MouseFilter::IGNORE);
-        place(&disc, [0.0, 0.0, 1.0, 1.0], [0.0; 4]);
         let material = theme::ui_material("ui_orb");
         match &material {
             Some(m) => {
                 let mut m = m.clone();
                 m.set_shader_parameter("deep", &deep.to_variant());
                 m.set_shader_parameter("bright", &bright.to_variant());
+                m.set_shader_parameter("reach", &REACH.to_variant());
                 disc.set_material(&m);
+                let e = (REACH - 1.0) * SIZE / 2.0;
+                place(&disc, [0.0, 0.0, 1.0, 1.0], [-e, -e, e, e]);
             }
-            None => disc.set_color(deep),
+            None => {
+                disc.set_color(deep);
+                place(&disc, [0.0, 0.0, 1.0, 1.0], [0.0; 4]);
+            }
         }
         root.add_child(&disc);
         let mut text = theme::styled_label("", Face::Black, 22, theme::TEXT);
