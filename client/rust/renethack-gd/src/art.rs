@@ -16,7 +16,7 @@ use std::collections::{HashMap, HashSet};
 
 use godot::classes::animation::{LoopMode, TrackType};
 use godot::classes::base_material_3d::{
-    CullMode, Feature, Flags, ShadingMode, TextureChannel, TextureParam, Transparency,
+    CullMode, DiffuseMode, Feature, Flags, ShadingMode, TextureChannel, TextureParam, Transparency,
 };
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::{
@@ -101,9 +101,12 @@ pub enum Sheen {
 /// roughness its materials keep at most for the rim to stay round its
 /// edges (Godot narrows a rim on a smoother surface).
 const RIM: f32 = 0.6;
-/// How much light skin scatters under it, and how bright its rim is
-/// (`skin_lit`).
-const SKIN_SCATTER: f32 = 0.15;
+/// The light that comes through skin's thin parts (ears, fingers, a
+/// nose) from behind, warmed by the blood under it, and how bright its rim
+/// is (`skin_lit`). Not subsurface scattering: that switches every surface
+/// of the frame to Godot's separate-specular pipelines, and the first
+/// start's warm-up and the title took three times as long for it.
+const SKIN_BACKLIGHT: Color = Color::from_rgb(0.3, 0.1, 0.06);
 /// A creature whose colour is darker than this (its luminance) gets the
 /// brighter edge, so strong, from so far off facing the eye: an outline,
 /// not a wash (wider and stronger, a raven's wings and a black unicorn's
@@ -5058,15 +5061,16 @@ fn recoloured(
 }
 
 /// A base character's skin (a face, bare arms, an outfit's bare hands)
-/// lit as skin, not wax: light scattered under it warms and softens its
-/// shading, and a faint warm rim holds its outline against a dark floor.
-/// A copy, unless it is already so (or not a plain material: a ghost's,
-/// a statue's).
+/// lit as skin, not wax: the light wraps softly past its shading's edge
+/// (`LAMBERT_WRAP`), shines warm through its thin parts from behind
+/// (`SKIN_BACKLIGHT`), and a faint warm rim holds its outline against a
+/// dark floor. A copy, unless it is already so (or not a plain material:
+/// a ghost's, a statue's).
 fn skin_lit(m: &Gd<Material>) -> Gd<Material> {
     let Ok(b) = m.clone().try_cast::<BaseMaterial3D>() else {
         return m.clone();
     };
-    if b.get_feature(Feature::SUBSURFACE_SCATTERING)
+    if b.get_feature(Feature::BACKLIGHT)
         || b.get_transparency() != Transparency::DISABLED
         || b.get_shading_mode() == ShadingMode::UNSHADED
     {
@@ -5075,24 +5079,32 @@ fn skin_lit(m: &Gd<Material>) -> Gd<Material> {
     let Ok(mut out) = b.duplicate_resource().try_cast::<BaseMaterial3D>() else {
         return m.clone();
     };
-    out.set_feature(Feature::SUBSURFACE_SCATTERING, true);
-    out.set_subsurface_scattering_strength(SKIN_SCATTER);
-    out.set_flag(Flags::SUBSURFACE_MODE_SKIN, true);
+    skin_shading(&mut out, SKIN_BACKLIGHT);
     out.set_feature(Feature::RIM, true);
     out.set_rim(SKIN_RIM);
     out.set_rim_tint(0.85);
     out.upcast()
 }
 
-/// Skin: light scattered under it softens the shading (a face, not a
-/// painted mask), a faint rim holds its outline, and `glow` lifts it a
-/// little from inside (a face in a hood's shadow).
+/// Skin's shading, with no subsurface scattering (`SKIN_BACKLIGHT`): the
+/// light wrapped past the terminator, and `through` shining from behind.
+fn skin_shading(m: &mut Gd<BaseMaterial3D>, through: Color) {
+    m.set_diffuse_mode(DiffuseMode::LAMBERT_WRAP);
+    m.set_feature(Feature::BACKLIGHT, true);
+    m.set_backlight(through);
+}
+
+/// Skin: the light wrapped soft past its shading's edge and through it
+/// from behind (a face, not a painted mask), a faint rim holds its
+/// outline, and `glow` lifts it a little from inside (a face in a hood's
+/// shadow).
 fn lit_skin(color: Color, glow: f32) -> Gd<Material> {
     let mut m = StandardMaterial3D::new_gd();
     m.set_albedo(color);
     m.set_roughness(0.55);
-    m.set_feature(Feature::SUBSURFACE_SCATTERING, true);
-    m.set_subsurface_scattering_strength(0.45);
+    // (the same material, seen as its base class)
+    let mut base = m.clone().upcast::<BaseMaterial3D>();
+    skin_shading(&mut base, Color::from_rgb(0.36, 0.13, 0.08));
     m.set_feature(Feature::RIM, true);
     m.set_rim(0.25);
     m.set_rim_tint(0.6);
@@ -5164,6 +5176,40 @@ pub fn set_layer_mask(v: &mut Gd<VisualInstance3D>, mask: u32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// No material and no shader scatters light under its surface: one
+    /// that does switches every surface of the frame to Godot's
+    /// separate-specular pipelines, and the first start's warm-up (5-6 s)
+    /// and the title (10 s) took three times as long for skin's
+    /// (`SKIN_BACKLIGHT` instead). The client's sources and shaders, read.
+    #[test]
+    fn nothing_scatters_light_under_its_surface() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let needles = [
+            concat!("SUBSURFACE", "_SCATTERING"),
+            concat!("set_subsurface", "_scattering"),
+            concat!("SSS", "_STRENGTH"),
+            concat!("subsurf", "_scatter"),
+        ];
+        let mut dirs = vec![root.join("src"), root.join("../../godot/shaders")];
+        let mut found = Vec::new();
+        while let Some(dir) = dirs.pop() {
+            for entry in std::fs::read_dir(&dir).expect("a source folder") {
+                let path = entry.expect("an entry").path();
+                if path.is_dir() {
+                    dirs.push(path);
+                    continue;
+                }
+                let Ok(text) = std::fs::read_to_string(&path) else {
+                    continue;
+                };
+                for n in needles.iter().filter(|n| text.contains(*n)) {
+                    found.push(format!("{}: {n}", path.display()));
+                }
+            }
+        }
+        assert!(found.is_empty(), "{found:#?}");
+    }
 
     #[test]
     fn metal_is_dulled_where_the_level_mirrors_less() {
