@@ -434,43 +434,176 @@ pub fn framed(kind: Frame) -> Gd<PanelContainer> {
 
 // ---- buttons: generated bevel textures ----
 
-/// A w×h RGBA image of a bevelled plate: vertical gradient `top`→`bottom`,
-/// an outer dark line, a `border`, a light line under the top edge and
-/// chamfered corners.
-fn bevel_image(
-    w: i32,
-    h: i32,
+/// The chamfer at a button plate's corners, in texture pixels.
+const PLATE_CUT: f32 = 4.0;
+/// Depths in from a plate's edge: the dark outline ends, the bronze rim
+/// ends, the groove inside it ends (the face begins).
+const PLATE_OUTLINE: f32 = 1.2;
+const PLATE_RIM: f32 = 5.0;
+const PLATE_GROOVE: f32 = 6.0;
+/// How far in the face is shadowed under the rim.
+const PLATE_RECESS: f32 = 6.0;
+/// The corner caps' radius, and where their rivets sit (along both edges).
+const PLATE_CAP: f32 = 10.0;
+const PLATE_RIVET: f32 = 4.0;
+/// The plate's nine-slice margins, with caps and without: the corners kept
+/// whole, the edges drawn out.
+const PLATE_MARGIN: f32 = 11.0;
+const PLATE_MARGIN_BARE: f32 = 7.0;
+/// The plate texture's size (without its glow).
+const PLATE_W: i32 = 96;
+const PLATE_H: i32 = 40;
+/// How far the focused plate's glow reaches outside it.
+const PLATE_GLOW: i32 = 6;
+
+/// A button plate's look (`bevel_image`).
+#[derive(Clone, Copy)]
+struct Plate {
+    /// The face's gradient, top to bottom.
     top: Color,
     bottom: Color,
+    /// The rim's metal.
     border: Color,
+    /// What catches the face's bottom and right edge.
     light: Color,
-) -> Gd<Image> {
-    let cut = 3;
+    /// Pressed: lit from the other side, sunk.
+    press: bool,
+    /// Capped corners.
+    caps: bool,
+    /// A glow of `border` this many pixels round it (the focus).
+    glow: i32,
+}
+
+/// An RGBA image of a carved plate (a button), lit from the top left: a
+/// dark iron outline; a rounded rim of `border` metal (its outer half
+/// facing out, its inner half in, so the top and left rims are bright
+/// outside and the bottom and right ones inside; the other way round when
+/// `press`ed); a dark groove; the face sunk inside it, a vertical gradient
+/// `top`→`bottom` with a fine grain, shadowed under its top and left rim
+/// and caught by `light` along its bottom and right; with `caps`, a
+/// rounded bronze cap over each corner, as on a chest, with a rivet; with
+/// a `glow`, a soft one of the rim's colour round it. Chamfered corners,
+/// the outline's edge smoothed.
+fn bevel_image(plate: Plate) -> Gd<Image> {
+    let Plate {
+        top,
+        bottom,
+        border,
+        light,
+        press,
+        caps,
+        glow,
+    } = plate;
+    let (w, h) = (PLATE_W + 2 * glow, PLATE_H + 2 * glow);
+    let (wf, hf) = (PLATE_W as f32, PLATE_H as f32);
+    let g = glow as f32;
+    let hash = |x: i32, y: i32| {
+        let mut n = (x.wrapping_mul(374_761_393) ^ y.wrapping_mul(668_265_263)) as u32;
+        n = (n ^ (n >> 13)).wrapping_mul(1_274_126_177);
+        ((n ^ (n >> 16)) & 0xff) as f32 / 255.0
+    };
+    let smooth = |e0: f32, e1: f32, x: f32| {
+        let t = ((x - e0) / (e1 - e0)).clamp(0.0, 1.0);
+        t * t * (3.0 - 2.0 * t)
+    };
     let mut data = Vec::with_capacity((w * h * 4) as usize);
     for y in 0..h {
         for x in 0..w {
-            let (dx, dy) = (x.min(w - 1 - x), y.min(h - 1 - y));
-            // distance from the edge along the chamfer
-            let depth = dx.min(dy).min(dx + dy - cut);
-            let c = if depth < 0 {
-                Color::from_rgba(0.0, 0.0, 0.0, 0.0)
-            } else if depth == 0 {
-                IRON_DARK
-            } else if depth == 1 {
-                border
-            } else if depth == 2 && y < h / 2 {
-                light
-            } else if depth == 2 {
-                bottom.darkened(0.35)
+            let (px, py) = (x as f32 + 0.5 - g, y as f32 + 0.5 - g);
+            let (dl, dr, dt, db) = (px, wf - px, py, hf - py);
+            let (dx, dy) = (dl.min(dr), dt.min(db));
+            // the depth in from the edge, along the chamfer at the corners
+            let depth = dx
+                .min(dy)
+                .min((dx + dy - PLATE_CUT) * std::f32::consts::FRAC_1_SQRT_2 + 0.5);
+            // the nearest edge faces the light (the top, the left: 1) or
+            // away from it (-1)
+            let toward = if dx < dy { dl < dr } else { dt < db };
+            let side = if toward != press { 1.0 } else { -1.0 };
+            let c = if depth < 0.0 {
+                // outside: the glow, if any, fading out
+                let t = if glow > 0 {
+                    (1.0 + depth / g).clamp(0.0, 1.0)
+                } else {
+                    0.0
+                };
+                let mut c = border;
+                c.a = t * t * 0.55;
+                c
+            } else if depth < PLATE_OUTLINE {
+                let mut c = IRON_DARK;
+                c.a = (depth / PLATE_OUTLINE + 0.25).clamp(0.0, 1.0);
+                c
+            } else if depth < PLATE_RIM {
+                // across the rim: its outer half faces out, its inner in
+                let t = (depth - PLATE_OUTLINE) / (PLATE_RIM - PLATE_OUTLINE);
+                let lit = 0.5 + 0.5 * side * (1.0 - 2.0 * t);
+                let crest = 1.0 - smooth(0.0, 0.5, (t - 0.35).abs());
+                let shine = if side > 0.0 { 0.25 * crest } else { 0.0 };
+                scaled(border, 0.42 + 0.95 * lit + shine)
+            } else if depth < PLATE_GROOVE {
+                IRON_DARK.lerp(border, 0.1)
             } else {
-                let t = y as f32 / (h - 1).max(1) as f32;
-                top.lerp(bottom, t as f64)
+                let t = py / hf;
+                let c = top.lerp(bottom, t as f64);
+                let grain = 0.95 + 0.1 * hash(x - glow, (y - glow) / 2);
+                // sunk under the rim: shadowed under the lit side's rim
+                let inset = depth - PLATE_GROOVE;
+                let rim = 1.0 - smooth(0.0, PLATE_RECESS, inset);
+                let shade = 1.0 - if side > 0.0 { 0.6 } else { 0.1 } * rim;
+                let c = scaled(c, grain * shade);
+                if side < 0.0 && inset < 1.0 {
+                    c.lerp(light, 0.5)
+                } else {
+                    c
+                }
+            };
+            // a cap over each corner: a quarter disc of bronze, its edge
+            // bevelled (lit on the top left corner, shaded on the bottom
+            // right), a rivet in it
+            let cap = (dx - 0.5).hypot(dy - 0.5);
+            let c = if caps && depth >= PLATE_OUTLINE && cap < PLATE_CAP {
+                let up = match (dl < dr, dt < db) {
+                    (true, true) => 1.0,
+                    (false, false) => -1.0,
+                    _ => 0.0,
+                };
+                let up = if press { -up } else { up };
+                let e = PLATE_CAP - cap;
+                let k = if e < 1.0 {
+                    0.3
+                } else if e < 2.0 {
+                    0.95 + 0.5 * up
+                } else {
+                    0.8 + 0.3 * up + 0.1 * hash(x / 2, y / 2)
+                };
+                let mut c = scaled(border, k);
+                let (sx, sy) = (dx - PLATE_RIVET, dy - PLATE_RIVET);
+                let rd = sx.hypot(sy);
+                if rd < 2.0 {
+                    // its dome lit on the side toward the plate's corner
+                    let to = if dl < dr { -sx } else { sx } + if dt < db { -sy } else { sy };
+                    let k = if to > 0.4 {
+                        1.7
+                    } else if to < -0.4 {
+                        0.5
+                    } else {
+                        1.1
+                    };
+                    c = c.lerp(scaled(border, k), ((2.0 - rd) / 0.8).clamp(0.0, 1.0) as f64);
+                    if rd > 1.4 {
+                        c = c.lerp(scaled(border, 0.4), 0.5);
+                    }
+                }
+                c
+            } else {
+                c
             };
             data.extend_from_slice(&[
-                (c.r * 255.0).round() as u8,
-                (c.g * 255.0).round() as u8,
-                (c.b * 255.0).round() as u8,
-                (c.a * 255.0).round() as u8,
+                (c.r.clamp(0.0, 1.0) * 255.0).round() as u8,
+                (c.g.clamp(0.0, 1.0) * 255.0).round() as u8,
+                (c.b.clamp(0.0, 1.0) * 255.0).round() as u8,
+                (c.a.clamp(0.0, 1.0) * 255.0).round() as u8,
             ]);
         }
     }
@@ -478,56 +611,91 @@ fn bevel_image(
         .expect("a bevel image")
 }
 
-fn bevel_style(
-    top: Color,
-    bottom: Color,
-    border: Color,
-    light: Color,
-    press: bool,
-) -> Gd<StyleBox> {
-    let Some(tex) =
-        ImageTexture::create_from_image(&bevel_image(64, 32, top, bottom, border, light))
-    else {
+/// `c` with its colour (not its alpha) times `k`.
+fn scaled(c: Color, k: f32) -> Color {
+    Color::from_rgba(c.r * k, c.g * k, c.b * k, c.a)
+}
+
+fn bevel_style(plate: Plate) -> Gd<StyleBox> {
+    let Some(tex) = ImageTexture::create_from_image(&bevel_image(plate)) else {
         let mut sb = StyleBoxFlat::new_gd();
-        sb.set_bg_color(top.lerp(bottom, 0.5));
+        sb.set_bg_color(plate.top.lerp(plate.bottom, 0.5));
         sb.set_border_width_all(1);
-        sb.set_border_color(border);
+        sb.set_border_color(plate.border);
         return sb.upcast();
     };
     let mut sb = StyleBoxTexture::new_gd();
     sb.set_texture(&tex);
-    sb.set_texture_margin_all(6.0);
+    let margin = if plate.caps {
+        PLATE_MARGIN
+    } else {
+        PLATE_MARGIN_BARE
+    };
+    // the glow drawn outside the control
+    let g = plate.glow as f32;
+    sb.set_texture_margin_all(margin + g);
+    sb.set_expand_margin_all(g);
     sb.set_content_margin(Side::LEFT, 16.0);
     sb.set_content_margin(Side::RIGHT, 16.0);
-    sb.set_content_margin(Side::TOP, if press { 6.0 } else { 5.0 });
-    sb.set_content_margin(Side::BOTTOM, if press { 4.0 } else { 5.0 });
+    sb.set_content_margin(Side::TOP, if plate.press { 6.0 } else { 5.0 });
+    sb.set_content_margin(Side::BOTTOM, if plate.press { 4.0 } else { 5.0 });
     sb.upcast()
 }
 
-/// Button plates: (normal, hover, pressed, disabled).
-fn button_styles(default: bool) -> [Gd<StyleBox>; 4] {
+/// Button plates: (normal, hover, pressed, disabled); with `caps` on their
+/// corners (buttons; a drop-down list's are too short for them).
+fn button_styles(default: bool, caps: bool) -> [Gd<StyleBox>; 4] {
     let (top, bottom) = (rgb(0x33261a), rgb(0x1c140e));
     let idle = if default { GOLD } else { GOLD_DIM };
     let hover_edge = if default { GOLD_BRIGHT } else { GOLD };
     let light = alpha(BEVEL_LIGHT, 0.9);
+    let plate = Plate {
+        top,
+        bottom,
+        border: idle,
+        light,
+        press: false,
+        caps,
+        glow: 0,
+    };
     [
-        bevel_style(top, bottom, idle, light, false),
-        bevel_style(
-            top.lightened(0.08),
-            bottom.lightened(0.05),
-            hover_edge,
-            light,
-            false,
-        ),
-        bevel_style(
-            rgb(0x140f0b),
-            rgb(0x1e160f),
-            hover_edge,
-            alpha(IRON_DARK, 1.0),
-            true,
-        ),
-        bevel_style(rgb(0x1a1510), rgb(0x120e0b), IRON, alpha(IRON, 1.0), false),
+        bevel_style(plate),
+        bevel_style(Plate {
+            top: top.lightened(0.08),
+            bottom: bottom.lightened(0.05),
+            border: hover_edge,
+            ..plate
+        }),
+        bevel_style(Plate {
+            top: rgb(0x140f0b),
+            bottom: rgb(0x1e160f),
+            border: hover_edge,
+            light: alpha(IRON_DARK, 1.0),
+            press: true,
+            ..plate
+        }),
+        bevel_style(Plate {
+            top: rgb(0x1a1510),
+            bottom: rgb(0x120e0b),
+            border: IRON,
+            light: alpha(IRON, 1.0),
+            ..plate
+        }),
     ]
+}
+
+/// The button the keys and a gamepad are on: a carved plate with a bright
+/// gold rim, its face lit, a soft gold glow round it.
+pub fn focus_plate() -> Gd<StyleBox> {
+    bevel_style(Plate {
+        top: rgb(0x5a4423),
+        bottom: rgb(0x33251a),
+        border: GOLD_BRIGHT,
+        light: alpha(BEVEL_LIGHT, 0.9),
+        press: false,
+        caps: true,
+        glow: PLATE_GLOW,
+    })
 }
 
 /// The control the keys and a gamepad are on: gold-edged and lit.
@@ -545,7 +713,7 @@ pub fn focus_style() -> Gd<StyleBoxFlat> {
 
 /// A button that stands out: the answer Enter gives.
 pub fn default_button_style() -> Gd<StyleBox> {
-    let [normal, ..] = button_styles(true);
+    let [normal, ..] = button_styles(true, true);
     normal
 }
 
@@ -598,8 +766,8 @@ fn theme_with(default: Gd<Font>, size: i32) -> Gd<Theme> {
         theme.set_stylebox("panel", class, &panel);
     }
     let body_bold = font(Face::BodyBold);
-    for (class, default) in [("Button", false), ("OptionButton", false)] {
-        let [normal, hover, pressed, disabled] = button_styles(default);
+    for (class, caps) in [("Button", true), ("OptionButton", false)] {
+        let [normal, hover, pressed, disabled] = button_styles(false, caps);
         theme.set_stylebox("normal", class, &normal);
         theme.set_stylebox("hover", class, &hover);
         theme.set_stylebox("pressed", class, &pressed);

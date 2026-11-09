@@ -953,9 +953,11 @@ impl Screens {
     }
 
     /// The focus drawn on its control, gold-edged (a card chosen, as the
-    /// one the focus is on always is, in every state).
+    /// one the focus is on always is, in every state): a button's a carved
+    /// plate like its own, aglow.
     fn show_nav(&mut self) {
         let look: Gd<StyleBox> = theme::focus_style().upcast();
+        let plate = theme::focus_plate();
         let at = self.nav.at;
         let grid = self.nav.grid.as_ref();
         for (i, c) in self.nav.items.iter_mut().enumerate() {
@@ -965,9 +967,14 @@ impl Screens {
             } else {
                 &["normal"]
             };
+            let own = if c.get_class() == "Button" {
+                &plate
+            } else {
+                &look
+            };
             for state in states {
                 if i == at {
-                    c.add_theme_stylebox_override(*state, card.map_or(&look, |g| &g.focus));
+                    c.add_theme_stylebox_override(*state, card.map_or(own, |g| &g.focus));
                 } else {
                     c.remove_theme_stylebox_override(*state);
                 }

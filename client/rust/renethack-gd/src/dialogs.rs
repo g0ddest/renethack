@@ -615,7 +615,7 @@ struct Look {
     no_focus: Gd<StyleBoxEmpty>,
     default_button: Gd<StyleBox>,
     /// The button a gamepad is on.
-    focus_button: Gd<StyleBoxFlat>,
+    focus_button: Gd<StyleBox>,
     /// The proportional faces of rows that are not engine columns.
     body: Gd<Font>,
     body_bold: Gd<Font>,
@@ -685,7 +685,7 @@ impl Look {
             rows,
             no_focus: StyleBoxEmpty::new_gd(),
             default_button: theme::default_button_style(),
-            focus_button: theme::focus_style(),
+            focus_button: theme::focus_plate(),
             body: theme::font(Face::Body),
             body_bold: theme::font(Face::BodyBold),
             title: theme::font(Face::Title),
