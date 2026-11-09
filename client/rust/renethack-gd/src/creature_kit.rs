@@ -561,7 +561,7 @@ impl Kit<'_> {
 
     /// A raven on the wing: its sleek body, head and wedge of a tail (the
     /// Body pivot bobs as it flies), its wings beating on WingL and WingR
-    /// (they bob with it), its heavy beak and its tucked feet dark.
+    /// (they bob with it), matte, its heavy beak and its tucked feet dark.
     pub(super) fn raven(&mut self, root: &mut Gd<Node3D>) {
         use more::Part::*;
         let mut body = self.pivot(root, "Body", [0.0; 3]);
@@ -587,11 +587,15 @@ impl Kit<'_> {
         );
         let ([x, y, z], r) = more::RAVEN_EYE;
         self.eyes(&mut body, [0.0, y, z], x, r, true);
+        // the wings matte and darker than the sleek body: spread flat under
+        // the light, in the body's stuff they shone a pale gray
+        let feathers = self.dark();
         for (right, name) in [(false, "WingL"), (true, "WingR")] {
             let mut wing = self.pivot(root, name, raven_wing(right));
-            self.skin(
+            self.part(
                 &mut wing,
                 shape(Organic::More(RavenWing { right })),
+                &feathers,
                 FLAT,
                 FLAT,
                 ONE,

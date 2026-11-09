@@ -1142,9 +1142,9 @@
 
    "horse": {"tint_strength": 0},
    "warhorse": {"scale": 1.1, "tint": "#3a2a20", "tint_strength": 0.5},
-   "white unicorn": {"model": "unicorn", "tint": "#f0f0f0", "tint_strength": 0.7},
-   "gray unicorn": {"model": "unicorn", "tint": "#8a8a8a", "tint_strength": 0.7},
-   "black unicorn": {"model": "unicorn", "tint": "#181818", "tint_strength": 0.75},
+   "white unicorn": {"model": "unicorn", "tint": "#f4f2ec", "tint_strength": 1.0},
+   "gray unicorn": {"model": "unicorn", "tint": "#8c8c90", "tint_strength": 1.0},
+   "black unicorn": {"model": "unicorn", "tint": "#1e1c22", "tint_strength": 1.0},
    "ki-rin": {"model": "unicorn", "tint": "#d0b040", "tint_strength": 0.6},
 
    "rothe": {"model": "bull"},
@@ -1170,7 +1170,7 @@
    "gnome ruler": {"model": "gnome_ruler", "female": "gnome_ruler_f", "tint_strength": 0},
 
 
-   "raven": {"model": "raven"},
+   "raven": {"model": "raven", "tint_strength": 0.85},
    "floating eye": {"model": "eye"},
    "gas spore": {"model": "spore", "tint": "#8a8a8a", "tint_strength": 0.6},
    "freezing sphere": {"model": "light"},
@@ -1388,7 +1388,9 @@
    "electric eel": {"model": "eel_electric"},
    "iron piercer": {"model": "piercer_iron"},
    "glass piercer": {"model": "piercer_glass"},
-   "black light": {"model": "light_black"},
+   "black light": {"model": "light_black", "tint_strength": 1.0},
+   "vampire bat": {"model": "bat", "tint_strength": 0.95},
+   "gray ooze": {"model": "blob", "tint": "#d0bcf4", "tint_strength": 1.0, "scale": 1.2},
    "lurker above": {"model": "lurker"},
    "stalker": {"model": "human_male", "skin": "translucent", "tint": "#e0e0f0", "tint_strength": 0.6},
    "earth elemental": {"model": "boulder", "tint": "#6a5a48", "tint_strength": 0.3, "scale": 1.5},

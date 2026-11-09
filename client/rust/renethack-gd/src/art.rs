@@ -105,9 +105,12 @@ const RIM: f32 = 0.6;
 /// (`skin_lit`).
 const SKIN_SCATTER: f32 = 0.15;
 /// A creature whose colour is darker than this (its luminance) gets the
-/// brighter edge, so strong.
+/// brighter edge, so strong, from so far off facing the eye: an outline,
+/// not a wash (wider and stronger, a raven's wings and a black unicorn's
+/// legs, side-on, came out pale blue: a black creature must read black).
 const DARK_EDGE: f32 = 0.22;
-const DARK_EDGE_STRENGTH: f32 = 0.7;
+const DARK_EDGE_STRENGTH: f32 = 0.5;
+const DARK_EDGE_FROM: f32 = 0.5;
 const SKIN_RIM: f32 = 0.14;
 const RIM_TINT: f32 = 0.5;
 const RIM_ROUGHNESS: f32 = 0.95;
@@ -2030,7 +2033,7 @@ impl Art {
             m.set_shader(&shader);
             if dark {
                 m.set_shader_parameter("strength", &DARK_EDGE_STRENGTH.to_variant());
-                m.set_shader_parameter("from", &0.3f32.to_variant());
+                m.set_shader_parameter("from", &DARK_EDGE_FROM.to_variant());
             }
             Some(m.upcast())
         })

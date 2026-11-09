@@ -1256,8 +1256,13 @@ pub(crate) fn role_monster(role: &str) -> &str {
 }
 
 /// The darkest a creature's tint goes (its brightest channel): a black
-/// one is dark fur under the light, not a silhouette.
-const MIN_TINT: f32 = 0.55;
+/// one is dark fur under the light, not a hole. Low: a black one must
+/// read black (a black unicorn's colour is its alignment); the dark
+/// creatures' brighter edge (`art::DARK_EDGE`) keeps it off a dark floor.
+const MIN_TINT: f32 = 0.1;
+/// NetHack's black for a creature's tint: the palette's is a lifted
+/// slate, legible as a letter on the dark but pale on a body.
+const CREATURE_BLACK: Color = Color::from_rgb(0.12, 0.12, 0.15);
 
 /// `c` brightened to `MIN_TINT`, its hue kept.
 fn lifted(c: Color) -> Color {
@@ -1272,7 +1277,14 @@ fn lifted(c: Color) -> Color {
 fn tint_color(tint: Tint, glyph_color: i32) -> Color {
     match tint {
         Tint::None => Color::WHITE,
-        Tint::Glyph(s) => mix(Color::WHITE, nh_color(glyph_color), s),
+        Tint::Glyph(s) => {
+            let c = if glyph_color & 0xff == 0 {
+                CREATURE_BLACK
+            } else {
+                nh_color(glyph_color)
+            };
+            mix(Color::WHITE, c, s)
+        }
         Tint::Rgb(c, s) => mix(Color::WHITE, Color::from_rgb(c[0], c[1], c[2]), s),
     }
 }
@@ -12149,6 +12161,133 @@ mod tests {
             y(&wet),
             wet.ground
         );
+    }
+
+    /// The tint a monster's model is drawn in (white: in its own colours),
+    /// and the colour it comes out: the tint over its model's shade and
+    /// its material's colour (a texture's own colours aside).
+    fn tint_of(f: &Fixture, name: &str) -> (Color, Color) {
+        let cell = Cell {
+            glyph: Some(monster(&f.cat, name, 0)),
+            ..feature(&f.cat, "S_room")
+        };
+        let look = f.look(&cell);
+        let drawn = &look.models[look.entity.expect(name)].look;
+        let spec = f.art.model_at(drawn.art.model).1;
+        let hex = |h: Option<&str>| {
+            h.and_then(nh_art::hex)
+                .map_or(Color::WHITE, |[r, g, b]| Color::from_rgb(r, g, b))
+        };
+        let shade = hex(spec.shade.as_deref());
+        let stuff = hex(spec
+            .material
+            .as_deref()
+            .and_then(|m| f.art.material_index(m))
+            .and_then(|m| f.art.material_at(m).1.color.as_deref()));
+        let t = drawn.tint;
+        let base = Color::from_rgb(shade.r * stuff.r, shade.g * stuff.g, shade.b * stuff.b);
+        (t, Color::from_rgb(t.r * base.r, t.g * base.g, t.b * base.b))
+    }
+
+    fn luma(c: Color) -> f32 {
+        0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
+    }
+
+    /// A unicorn's colour is its alignment, what a player goes by to touch
+    /// its horn or throw it a gem: the white, the gray and the black are
+    /// drawn white, gray and black, far apart (the black was a pale gray:
+    /// its tint was lifted to keep it off a dark floor, the dark edge's
+    /// work now).
+    #[test]
+    fn the_unicorns_are_their_alignments_colours() {
+        let f = Fixture::new();
+        let [white, gray, black] =
+            ["white unicorn", "gray unicorn", "black unicorn"].map(|n| luma(tint_of(&f, n).1));
+        assert!(white > 0.75, "white {white}");
+        assert!((0.3..0.6).contains(&gray), "gray {gray}");
+        assert!(black < 0.15, "black {black}");
+        assert!(
+            white - gray > 0.25 && gray - black > 0.25,
+            "{white} {gray} {black}"
+        );
+    }
+
+    /// Every monster named for a colour, and the black raven and vampire
+    /// bat, that is tinted is tinted in that colour: a black one dark, a
+    /// white one light, a gray one between, the rest of that hue.
+    #[test]
+    fn a_monster_named_for_a_colour_is_drawn_in_it() {
+        let f = Fixture::new();
+        // (hue in degrees, saturation) of a colour
+        let hsv = |c: Color| {
+            let (max, min) = (c.r.max(c.g).max(c.b), c.r.min(c.g).min(c.b));
+            let d = max - min;
+            let h = if d <= 0.0 {
+                0.0
+            } else if max == c.r {
+                60.0 * ((c.g - c.b) / d).rem_euclid(6.0)
+            } else if max == c.g {
+                60.0 * ((c.b - c.r) / d + 2.0)
+            } else {
+                60.0 * ((c.r - c.g) / d + 4.0)
+            };
+            (h, if max > 0.0 { d / max } else { 0.0 })
+        };
+        let mut wrong = Vec::new();
+        for m in &f.cat.monsters {
+            let words: Vec<String> = m
+                .name
+                .to_lowercase()
+                .split([' ', '-'])
+                .map(str::to_string)
+                .collect();
+            let named = |w: &str| words.iter().any(|x| x == w);
+            let colour = [
+                "black", "white", "gray", "grey", "red", "blue", "green", "yellow", "brown",
+                "orange", "golden", "violet",
+            ]
+            .into_iter()
+            .find(|w| named(w))
+            .or_else(|| {
+                ["raven", "vampire bat"]
+                    .contains(&m.name.as_str())
+                    .then_some("black")
+            });
+            let Some(colour) = colour else {
+                continue;
+            };
+            let (tint, t) = tint_of(&f, &m.name);
+            if tint == Color::WHITE {
+                // in its own colours (a dragon's, a naga's): the sheets
+                continue;
+            }
+            let (l, (hue, sat)) = (luma(t), hsv(t));
+            let ok = match colour {
+                "black" => l < 0.2,
+                "white" => l > 0.75 && sat < 0.2,
+                "gray" | "grey" => (0.25..0.65).contains(&l) && sat < 0.25,
+                hued => {
+                    let want = match hued {
+                        "red" => 0.0,
+                        "orange" => 30.0,
+                        "brown" | "golden" => 35.0,
+                        "yellow" => 55.0,
+                        "green" => 120.0,
+                        "blue" => 225.0,
+                        _ => 300.0,
+                    };
+                    let d = (hue - want).rem_euclid(360.0);
+                    sat > 0.3 && d.min(360.0 - d) < 40.0
+                }
+            };
+            if !ok {
+                wrong.push(format!(
+                    "{} ({colour}): luma {l:.2} sat {sat:.2} hue {hue:.0}",
+                    m.name
+                ));
+            }
+        }
+        assert!(wrong.is_empty(), "{wrong:#?}");
     }
 
     #[test]

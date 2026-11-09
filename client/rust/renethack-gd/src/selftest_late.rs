@@ -4,11 +4,14 @@
 //! (the owlbear, trolls, dark dragons), the demons, the demon lords and
 //! princes, and the undead and the alien of the human kind (liches, mind
 //! flayers, vampires, Medusa), each at the default distance and close up,
-//! for sheets before and after a change of their look. Nothing is checked
-//! but that each is drawn; with `--screenshots`, the pictures
-//! `late-dragons`, `late-giants`, `late-hides`, `late-demons`,
-//! `late-lords`, `late-casters` and their `-close` (RENETHACK_LATE=demons,
-//! lords: only those).
+//! for sheets before and after a change of their look; and those whose
+//! colour tells the player something (a unicorn's alignment, a dragon's
+//! breath, a pudding's, a mold's, a light's), in the gallery's light and in
+//! the game's. Nothing is checked but that each is drawn; with
+//! `--screenshots`, the pictures `late-dragons`, `late-giants`,
+//! `late-hides`, `late-demons`, `late-lords`, `late-casters`,
+//! `late-colours`, `late-colours-game`, `late-hues`, `late-hues-game` and
+//! their `-close` (RENETHACK_LATE=demons,lords: only those).
 
 use super::{Step, camera_settled, quit, start, zoom_by};
 use crate::game::RenethackGame;
@@ -62,12 +65,90 @@ const CASTERS: Rows = &[
     (3, &["Medusa", "vampire"]),
 ];
 
+/// Those whose glyph's colour means something, and others NetHack draws
+/// black, the unicorns first (a long body's row at the top).
+const COLOURS: Rows = &[
+    (
+        3,
+        &["white unicorn", "gray unicorn", "black unicorn", "warg"],
+    ),
+    (
+        2,
+        &[
+            "black light",
+            "yellow light",
+            "black pudding",
+            "brown pudding",
+            "gray ooze",
+            "green slime",
+        ],
+    ),
+    (
+        2,
+        &[
+            "black naga",
+            "red naga",
+            "golden naga",
+            "raven",
+            "vampire bat",
+            "giant beetle",
+        ],
+    ),
+    (
+        2,
+        &[
+            "panther",
+            "Uruk-hai",
+            "wraith",
+            "ghoul",
+            "shade",
+            "carnivorous ape",
+        ],
+    ),
+];
+
+/// The dragons by colour, young (the grown ones share their colours), and
+/// the molds.
+const HUES: Rows = &[
+    (
+        3,
+        &[
+            "baby gray dragon",
+            "baby silver dragon",
+            "baby white dragon",
+            "baby black dragon",
+            "baby blue dragon",
+        ],
+    ),
+    (
+        3,
+        &[
+            "baby red dragon",
+            "baby orange dragon",
+            "baby yellow dragon",
+            "baby gold dragon",
+            "baby green dragon",
+        ],
+    ),
+    (
+        2,
+        &[
+            "brown mold",
+            "yellow mold",
+            "green mold",
+            "red mold",
+            "violet fungus",
+            "blue jelly",
+        ],
+    ),
+];
+
 pub(super) fn late_monsters() -> Vec<Step> {
     let mut steps = start();
     steps.push(Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
     }));
-    let pictures: [(Lay, &str, &str); 6] = [
+    let pictures: [(Lay, &str, &str); 10] = [
         (
             |g| lay_out(g, DRAGONS),
             "late-dragons",
@@ -81,6 +162,22 @@ pub(super) fn late_monsters() -> Vec<Step> {
             |g| lay_out(g, CASTERS),
             "late-casters",
             "late-casters-close",
+        ),
+        (
+            |g| lay_out(g, COLOURS),
+            "late-colours",
+            "late-colours-close",
+        ),
+        (
+            |g| lay_out_lit(g, COLOURS, false),
+            "late-colours-game",
+            "late-colours-game-close",
+        ),
+        (|g| lay_out(g, HUES), "late-hues", "late-hues-close"),
+        (
+            |g| lay_out_lit(g, HUES, false),
+            "late-hues-game",
+            "late-hues-game-close",
         ),
     ];
     // RENETHACK_LATE=demons,lords: only the pictures so named
@@ -109,8 +206,13 @@ pub(super) fn late_monsters() -> Vec<Step> {
 }
 
 fn lay_out(g: &mut RenethackGame, rows: Rows) -> Result<(), String> {
+    lay_out_lit(g, rows, true)
+}
+
+/// The rows under the gallery's light (`showcase`) or the game's.
+fn lay_out_lit(g: &mut RenethackGame, rows: Rows, showcase: bool) -> Result<(), String> {
     let cat = g.catalog.clone().ok_or("no catalog")?;
     crate::gallery::lay_out_rows(&mut g.world, &cat, rows)?;
-    g.ui.as_mut().ok_or("no UI")?.map.set_showcase(true);
+    g.ui.as_mut().ok_or("no UI")?.map.set_showcase(showcase);
     Ok(())
 }
