@@ -266,6 +266,85 @@ fn title_label(text: &str, size: i32) -> Gd<Label> {
     l
 }
 
+/// The game's name on the title: its letters struck in gold
+/// (`ui_title.gdshader`: the label's colour white, its gold the shader's),
+/// a dark outline and a shadow under them; plain gold without the shader.
+/// A stand-in for the logo an artist would letter (docs/logo.md).
+fn title_name(text: &str, size: i32) -> Gd<Label> {
+    let Some(mut m) = theme::ui_material("ui_title") else {
+        return title_label(text, size);
+    };
+    let mut l = theme::styled_label(text, theme::Face::Title, size, Color::WHITE);
+    l.set_horizontal_alignment(HorizontalAlignment::CENTER);
+    l.add_theme_color_override("font_outline_color", Color::from_rgb(0.12, 0.07, 0.03));
+    l.add_theme_constant_override("outline_size", 5);
+    l.add_theme_color_override("font_shadow_color", Color::from_rgba(0.0, 0.0, 0.0, 0.75));
+    l.add_theme_constant_override("shadow_offset_x", 0);
+    l.add_theme_constant_override("shadow_offset_y", 4);
+    l.add_theme_constant_override("shadow_outline_size", 10);
+    // the letters' cap height in the label, about (the font's ascent above
+    // the small capitals' feet)
+    let tall = size as f32 * 0.72;
+    m.set_shader_parameter("top", &(size as f32 * 0.42).to_variant());
+    m.set_shader_parameter("tall", &tall.to_variant());
+    l.set_material(&m);
+    l
+}
+
+/// A gold flourish `wide` design pixels across: two lines tapering out
+/// from a diamond, a dot at each end.
+fn flourish(wide: f32) -> Gd<TextureRect> {
+    let (w, h) = (wide as i32, 18);
+    let mut data = Vec::with_capacity((w * h * 4) as usize);
+    let (cx, cy) = (w as f32 / 2.0, h as f32 / 2.0);
+    let gold = theme::GOLD;
+    for y in 0..h {
+        for x in 0..w {
+            let (px, py) = (x as f32 + 0.5, y as f32 + 0.5);
+            let off = (px - cx).abs();
+            // the diamond in the middle, and a small one inside it
+            let diamond = (off / 9.0 + (py - cy).abs() / 7.0 - 1.0) * 6.0;
+            let ring = ((off / 9.0 + (py - cy).abs() / 7.0 - 0.55).abs() - 0.12) * 6.0;
+            // the lines, thinning out to the ends
+            let reach = cx - 10.0;
+            let along = ((off - 12.0) / reach).clamp(0.0, 1.0);
+            let thick = 1.4 * (1.0 - along) + 0.35;
+            let line = if off > 12.0 && off < cx - 6.0 {
+                (py - cy).abs() - thick
+            } else {
+                9.0
+            };
+            // a dot at each end
+            let dot = ((cx - off) - 4.0).hypot(py - cy) - 2.0;
+            let d = diamond.max(-ring).min(line).min(dot);
+            let a = (0.5 - d).clamp(0.0, 1.0);
+            // lit from above
+            let k = if py < cy { 1.25 } else { 0.8 };
+            data.extend_from_slice(&[
+                (gold.r * k * 255.0).min(255.0) as u8,
+                (gold.g * k * 255.0).min(255.0) as u8,
+                (gold.b * k * 255.0).min(255.0) as u8,
+                (a * 255.0) as u8,
+            ]);
+        }
+    }
+    let mut r = TextureRect::new_alloc();
+    r.set_mouse_filter(MouseFilter::IGNORE);
+    r.set_stretch_mode(godot::classes::texture_rect::StretchMode::KEEP_CENTERED);
+    let image = godot::classes::Image::create_from_data(
+        w,
+        h,
+        false,
+        godot::classes::image::Format::RGBA8,
+        &PackedByteArray::from(data),
+    );
+    if let Some(t) = image.and_then(|i| godot::classes::ImageTexture::create_from_image(&i)) {
+        r.set_texture(&t);
+    }
+    r.set_custom_minimum_size(Vector2::new(wide, h as f32));
+    r
+}
+
 fn wide(mut b: Gd<Button>) -> Gd<Button> {
     b.set_custom_minimum_size(Vector2::new(460.0, 44.0));
     b
@@ -445,10 +524,12 @@ impl Screens {
     pub fn show_title(&mut self, saves: &[SavedGame], notice: Option<&str>) {
         self.title = (saves.to_vec(), notice.map(str::to_string));
         let mut col = column();
-        // the game's name: not translated
-        let name = title_label(GAME_NAME, 72);
+        // the game's name (not translated), struck in gold until a logo is
+        // drawn, a flourish under it
+        let name = title_name(GAME_NAME, 88);
         i18n::verbatim(&name);
         col.add_child(&name);
+        col.add_child(&flourish(440.0));
         let mut sub = theme::label(&tr!("title-subtitle"));
         sub.set_horizontal_alignment(HorizontalAlignment::CENTER);
         sub.add_theme_color_override("font_color", theme::TEXT_DIM);
