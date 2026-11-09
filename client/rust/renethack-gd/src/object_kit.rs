@@ -899,6 +899,38 @@ impl Kit<'_> {
                 let stone = self.gem_mat();
                 self.cut_stone(root, &stone, [0.0, -0.05, 0.47], 0.08);
             }
+            "crown" => {
+                // a lord's: a broad band of metal the colour of the look
+                // (gold, iron, bone) and a ring of tall points, leaning out,
+                // high and low by turns; a stone at the front
+                // (matte: a glossy band mirrors the dark above and reads black)
+                let metal = self.mat(self.tint, Finish::Matte);
+                self.part(
+                    root,
+                    torus(0.4, 0.47),
+                    &metal,
+                    [0.0, 0.02, 0.0],
+                    [-6.0, 0.0, 0.0],
+                    [1.0, 2.6, 1.12],
+                );
+                for i in 0..8 {
+                    let a = (i as f32 / 8.0) * std::f32::consts::TAU;
+                    let (sin, cos) = a.sin_cos();
+                    let tall = if i % 2 == 0 { 0.62 } else { 0.38 };
+                    let out = Vector3::new(sin * 0.15, 1.0, cos * 0.15);
+                    let base = Vector3::new(sin * 0.44, 0.08, cos * 0.49);
+                    self.part(
+                        root,
+                        cylinder(0.0, 0.085, tall),
+                        &metal,
+                        xyz(base + out.normalized() * (tall * 0.5)),
+                        along(out),
+                        ONE,
+                    );
+                }
+                let stone = self.mat(Color::from_rgb(0.75, 0.04, 0.06), Finish::Gem);
+                self.cut_stone(root, &stone, [0.0, 0.0, 0.52], 0.11);
+            }
             "cap" => {
                 // a gnome's: a tall cone with no brim, its tip flopped
                 // back, a rolled band at the brow
@@ -2353,6 +2385,23 @@ impl Kit<'_> {
                 (0.12, 0.0),
                 &[0.0, 12.0, 24.0, 36.0, 48.0, 60.0],
             ),
+            // a straight spike from its root at the origin to a point along
+            // +z: a barbed devil's barbs, an ice devil's icicles
+            "spike" => self.skin(
+                root,
+                cylinder(0.0, 0.1, 1.0),
+                [0.0, 0.0, 0.5],
+                [90.0, 0.0, 0.0],
+                ONE,
+            ),
+            // a ram's horn: from its root along +z it curls up, back and
+            // down round more than a turn, thick and ridged, drifting out
+            // along +x as it coils (along -x the left one, "ram_l")
+            "ram" | "ram_l" => {
+                let turns: Vec<f32> = (0..16).map(|i| i as f32 * 26.0).collect();
+                let drift = if shape == "ram" { 0.4 } else { -0.4 };
+                self.coil(root, &skin, &dark, (0.15, 0.03), &turns, drift);
+            }
             // a long tapering tube along +z that waves and curls at its tip
             "tentacle" => self.bend(
                 root,
@@ -2730,6 +2779,44 @@ impl Kit<'_> {
                 ONE,
             );
             at += along;
+        }
+    }
+
+    /// As `bend`, drifting `drift` along +x over its length as it turns (a
+    /// coil, not a curl in one plane), a ridge of `ridge` round it at every
+    /// other segment.
+    fn coil(
+        &mut self,
+        root: &mut Gd<Node3D>,
+        mat: &Gd<Material>,
+        ridge: &Gd<Material>,
+        r: (f32, f32),
+        turns: &[f32],
+        drift: f32,
+    ) {
+        let n = turns.len();
+        let step = 1.0 / n as f32;
+        let mut at = Vector3::ZERO;
+        let radius = |k: usize| r.0 + (r.1 - r.0) * k as f32 / n as f32;
+        for (i, &turn) in turns.iter().enumerate() {
+            let (sin, cos) = turn.to_radians().sin_cos();
+            let way = Vector3::new(drift, sin, cos) * step;
+            let mid = at + way * 0.5;
+            let rot = along(way);
+            let length = way.length() * 1.15;
+            self.part(
+                root,
+                cylinder(radius(i + 1), radius(i), length),
+                mat,
+                xyz(mid),
+                rot,
+                ONE,
+            );
+            if i % 2 == 1 {
+                let k = radius(i) * 1.12;
+                self.part(root, torus(k * 0.8, k), ridge, xyz(at), rot, ONE);
+            }
+            at += way;
         }
     }
 

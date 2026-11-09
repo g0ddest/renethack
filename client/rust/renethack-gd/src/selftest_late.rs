@@ -1,10 +1,14 @@
 //! `late-monsters`: the big monsters of the late game under the gallery's
 //! light, dragons in one picture and the titan, the giants, the mumak, the
 //! mastodon and the purple worm in another, hides and coats in a third
-//! (the owlbear, trolls, dark dragons), each at the default distance and
-//! close up, for sheets before and after a change of their look. Nothing
-//! is checked but that each is drawn; with `--screenshots`, the pictures
-//! `late-dragons`, `late-giants`, `late-hides` and their `-close`.
+//! (the owlbear, trolls, dark dragons), the demons, the demon lords and
+//! princes, and the undead and the alien of the human kind (liches, mind
+//! flayers, vampires, Medusa), each at the default distance and close up,
+//! for sheets before and after a change of their look. Nothing is checked
+//! but that each is drawn; with `--screenshots`, the pictures
+//! `late-dragons`, `late-giants`, `late-hides`, `late-demons`,
+//! `late-lords`, `late-casters` and their `-close` (RENETHACK_LATE=demons,
+//! lords: only those).
 
 use super::{Step, camera_settled, quit, start, zoom_by};
 use crate::game::RenethackGame;
@@ -30,12 +34,40 @@ const HIDES: Rows = &[
     (3, &["black dragon", "green dragon", "Olog-hai"]),
 ];
 
+const DEMONS: Rows = &[
+    (3, &["imp", "hezrou", "vrock", "nalfeshnee"]),
+    (3, &["pit fiend", "balrog", "horned devil", "barbed devil"]),
+    (
+        3,
+        &["ice devil", "bone devil", "amorous demon", "water demon"],
+    ),
+];
+
+const LORDS: Rows = &[
+    (3, &["Juiblex", "Yeenoghu", "Orcus", "Geryon"]),
+    (3, &["Dispater", "Baalzebub", "Asmodeus", "Demogorgon"]),
+];
+
+const CASTERS: Rows = &[
+    (3, &["master lich", "lich", "demilich", "arch-lich"]),
+    (
+        3,
+        &[
+            "mind flayer",
+            "master mind flayer",
+            "vampire leader",
+            "Vlad the Impaler",
+        ],
+    ),
+    (3, &["Medusa", "vampire"]),
+];
+
 pub(super) fn late_monsters() -> Vec<Step> {
     let mut steps = start();
     steps.push(Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
     }));
-    let pictures: [(Lay, &str, &str); 3] = [
+    let pictures: [(Lay, &str, &str); 6] = [
         (
             |g| lay_out(g, DRAGONS),
             "late-dragons",
@@ -43,8 +75,21 @@ pub(super) fn late_monsters() -> Vec<Step> {
         ),
         (|g| lay_out(g, GIANTS), "late-giants", "late-giants-close"),
         (|g| lay_out(g, HIDES), "late-hides", "late-hides-close"),
+        (|g| lay_out(g, DEMONS), "late-demons", "late-demons-close"),
+        (|g| lay_out(g, LORDS), "late-lords", "late-lords-close"),
+        (
+            |g| lay_out(g, CASTERS),
+            "late-casters",
+            "late-casters-close",
+        ),
     ];
-    for (rows, far, close) in pictures {
+    // RENETHACK_LATE=demons,lords: only the pictures so named
+    let only = std::env::var("RENETHACK_LATE").ok();
+    let wanted = |far: &str| {
+        only.as_deref()
+            .is_none_or(|o| o.split(',').any(|w| far == format!("late-{w}")))
+    };
+    for (rows, far, close) in pictures.into_iter().filter(|p| wanted(p.1)) {
         steps.extend([
             Step::Call("lay out the rows", rows),
             Step::Wait("the rows drawn", |g| {

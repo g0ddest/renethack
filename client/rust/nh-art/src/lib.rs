@@ -2143,7 +2143,10 @@ mod tests {
             let (name, spec) = art.model_at(art.monster(find(who), 0).model);
             assert_eq!(spec.head.as_deref(), Some("lich"), "{who}");
             assert!(spec.rim.is_some(), "{who} has no rim");
-            let robe = spec.recolor.get("_Body").and_then(|c| hex(c));
+            let robe = spec
+                .recolor
+                .get("_Body")
+                .and_then(|c| hex(c.trim_start_matches('=')));
             assert!(robe.is_some_and(robed), "{who}: {robe:?}");
             assert!(!seen.contains(&name), "{who} looks as another");
             seen.push(name);
@@ -2213,6 +2216,9 @@ mod tests {
     /// Shopkeepers, priests, soldiers, Kops, vampires, angels and the
     /// djinni were plain peasants, and every demon the same red imp (the
     /// marilith and Geryon newt-sized snakes): each has its own look now.
+    /// The demons and the lords were then still the imp's rig in tints,
+    /// and the liches, mind flayers, vampires and Medusa a human recoloured:
+    /// each has its own model and its own things.
     #[test]
     fn the_people_and_the_demons_are_told_apart() {
         let (art, cat) = (manifest(), catalog());
@@ -2241,9 +2247,68 @@ mod tests {
         for who in ["Angel", "Archon", "vrock"] {
             assert!(wears(who, "garment_wings"), "{who} has no feathers");
         }
-        for who in ["pit fiend", "balrog", "Asmodeus", "amorous demon", "Geryon"] {
+        for who in ["pit fiend", "balrog", "Orcus", "amorous demon", "Geryon"] {
             assert!(wears(who, "bat_wings"), "{who} has no bat's wings");
         }
+        // each demon and each demon lord a model of its own, not the imp's
+        // rig in another tint (art loop iteration 1, #2)
+        for kind in [
+            &[
+                "imp",
+                "hezrou",
+                "vrock",
+                "nalfeshnee",
+                "pit fiend",
+                "balrog",
+                "horned devil",
+                "barbed devil",
+                "ice devil",
+                "water demon",
+            ][..],
+            &[
+                "Juiblex",
+                "Yeenoghu",
+                "Orcus",
+                "Geryon",
+                "Dispater",
+                "Baalzebub",
+                "Asmodeus",
+                "Demogorgon",
+            ][..],
+        ] {
+            let mut models: Vec<&str> = kind.iter().map(|who| model(who).0).collect();
+            models.sort();
+            models.dedup();
+            assert_eq!(
+                models.len(),
+                kind.len(),
+                "{kind:?} share models: {models:?}"
+            );
+        }
+        // the lords crowned, Orcus ram-horned, Juiblex a heap of eyes
+        for who in [
+            "Asmodeus",
+            "Dispater",
+            "vampire leader",
+            "Vlad the Impaler",
+            "arch-lich",
+        ] {
+            assert!(wears(who, "helm_crown"), "{who} has no crown");
+        }
+        assert!(wears("Orcus", "horn_ram") && wears("Orcus", "horn_ram_l"));
+        assert_eq!(model("Juiblex").1.shape.as_deref(), Some("juiblex"));
+        // the liches robed and cloaked, the vampires caped, the mind
+        // flayers' heads swollen, Medusa on a serpent's tail
+        for who in ["lich", "demilich", "master lich", "arch-lich"] {
+            assert!(wears(who, "cloak_worn"), "{who} has no cloak");
+        }
+        for who in ["vampire", "vampire leader", "Vlad the Impaler"] {
+            assert!(wears(who, "cape_worn"), "{who} has no cape");
+        }
+        for who in ["mind flayer", "master mind flayer"] {
+            assert!(model(who).1.head_scale > 1.2, "{who}");
+        }
+        assert!(wears("Medusa", "serpent_tail"));
         // the marilith and Geryon raised on a serpent's coiled tail, she
         // with four arms more, a blade in each
         for who in ["marilith", "Geryon"] {

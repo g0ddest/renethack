@@ -931,6 +931,10 @@ impl Kit<'_> {
             self.cube(root);
             return;
         }
+        if self.shape.as_deref() == Some("juiblex") {
+            self.juiblex(root);
+            return;
+        }
         let mut body = self.pivot(root, "Body", [0.0; 3]);
         self.skin(&mut body, shape(Organic::Blob), FLAT, FLAT, ONE);
         let heart = self.dark();
@@ -953,6 +957,91 @@ impl Kit<'_> {
             FLAT,
             ONE,
         );
+    }
+
+    /// Juiblex, the Faceless Lord: not a blob but a heap of slime taller
+    /// than a man, three mounds run together and one heaped on them, eyes
+    /// all over it staring every way (yellow, red-rimmed), pseudopods
+    /// slumped from its foot, a dark heart in its depths.
+    fn juiblex(&mut self, root: &mut Gd<Node3D>) {
+        let mut body = self.pivot(root, "Body", [0.0; 3]);
+        let mounds: [([f32; 3], [f32; 3]); 4] = [
+            ([0.0, 0.0, 0.0], [1.0, 1.7, 1.0]),
+            ([0.42, 0.0, -0.25], [0.72, 1.2, 0.72]),
+            ([-0.4, 0.0, 0.2], [0.68, 1.05, 0.68]),
+            ([0.05, 0.75, -0.05], [0.62, 0.95, 0.62]),
+        ];
+        for (pos, s) in mounds {
+            self.skin(&mut body, shape(Organic::Blob), pos, FLAT, s);
+        }
+        let heart = self.dark();
+        self.part(
+            &mut body,
+            sphere(0.32),
+            &heart,
+            [0.0, 0.6, 0.0],
+            FLAT,
+            [1.0, 1.2, 1.0],
+        );
+        // pseudopods slumped out over the floor, tips curled up
+        for k in 0..5 {
+            let a = k as f32 / 5.0 * std::f32::consts::TAU + 0.4;
+            let (sin, cos) = a.sin_cos();
+            self.skin(
+                &mut body,
+                capsule(0.11, 0.7),
+                [sin * 0.78, 0.08, cos * 0.72],
+                [90.0, a.to_degrees(), 0.0],
+                [1.0, 1.0, 0.7],
+            );
+        }
+        let white = self
+            .art
+            .flat(Color::from_rgb(0.95, 0.72, 0.12), Finish::Ember);
+        let rim = self.dark();
+        let pupil = self.eye();
+        // (azimuth from the front, height, size): over the mounds' faces
+        let eyes: [(f32, f32, f32); 11] = [
+            (0.0, 0.95, 1.2),
+            (0.5, 0.7, 0.9),
+            (-0.6, 0.8, 1.0),
+            (1.3, 0.55, 0.8),
+            (-1.4, 0.5, 0.85),
+            (2.2, 0.75, 0.9),
+            (-2.4, 0.7, 0.8),
+            (3.1, 0.9, 1.0),
+            (0.25, 1.35, 0.8),
+            (-0.3, 0.35, 0.7),
+            (0.9, 1.15, 0.7),
+        ];
+        for (a, y, s) in eyes {
+            let (sin, cos) = a.sin_cos();
+            let spread = 0.62 * (1.0 - (y / 1.7).powi(2)).max(0.2).sqrt();
+            let at = [sin * spread, y, cos * spread];
+            // a lid of the dark slime round a yellow eye that glows a
+            // little, its pupil a slit
+            let r = 0.09 * s;
+            let yaw = a.to_degrees();
+            self.part(&mut body, sphere(r * 1.3), &rim, at, FLAT, [1.0, 0.75, 1.0]);
+            let out = [at[0] + sin * r * 0.45, at[1], at[2] + cos * r * 0.45];
+            self.part(
+                &mut body,
+                sphere(r),
+                &white,
+                out,
+                [0.0, yaw, 0.0],
+                [1.0, 0.7, 1.0],
+            );
+            let front = [out[0] + sin * r * 0.8, out[1], out[2] + cos * r * 0.8];
+            self.part(
+                &mut body,
+                sphere(r * 0.5),
+                &pupil,
+                front,
+                [0.0, yaw, 0.0],
+                [0.3, 1.1, 0.4],
+            );
+        }
     }
 
     /// A floating eye: a great eyeball turned up to look at whoever looks
