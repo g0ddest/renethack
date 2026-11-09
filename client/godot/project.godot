@@ -86,6 +86,12 @@ branch_floor_memory={
 "type": "float",
 "value": 1.0
 }
+; how strongly the branch's rock is laid in strata across its faces (the
+; Plane of Earth; 0: the rock's own faint ones)
+branch_strata={
+"type": "float",
+"value": 0.0
+}
 ; the whole level framed: what is remembered shows nearly as it is
 overview={
 "type": "float",

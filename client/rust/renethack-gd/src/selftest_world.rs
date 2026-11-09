@@ -408,18 +408,20 @@ fn light_visit(
 
 /// Where the hero was before a teleport beside a feature (`by`).
 static BY_FROM: std::sync::Mutex<Option<(i32, i32)>> = std::sync::Mutex::new(None);
-/// The feature the hero is teleported beside (set as a tour's steps are
-/// laid out: one kind of feature a tour).
-static BY: std::sync::Mutex<Option<nh_world::Terrain>> = std::sync::Mutex::new(None);
+/// The features the hero is teleported beside, in turn (queued as a
+/// tour's steps are laid out, taken as each teleport is made).
+static BY: std::sync::Mutex<std::collections::VecDeque<nh_world::Terrain>> =
+    std::sync::Mutex::new(std::collections::VecDeque::new());
 
-/// The bare floor beside the level's first feature of the kind `BY`
-/// holds (west of it first): the hero's place for a picture in a temple
+/// The bare floor beside the level's first feature of the kind next in
+/// `BY` (west of it first): the hero's place for a picture in a temple
 /// (an altar) or a town's street (a fountain).
 fn beside_feature(g: &RenethackGame) -> Result<(i32, i32), String> {
     use nh_world::Terrain;
     let feature = BY
         .lock()
         .map_err(|e| e.to_string())?
+        .pop_front()
         .ok_or("no feature asked")?;
     let cat = g.catalog.clone().ok_or("no catalog")?;
     let map = &g.world.map;
@@ -428,19 +430,36 @@ fn beside_feature(g: &RenethackGame) -> Result<(i32, i32), String> {
         .flat_map(|y| (0..nh_world::COLNO).map(move |x| (x, y)))
         .find(|&(x, y)| t(x, y) == Some(feature))
         .ok_or_else(|| format!("no {feature:?} known"))?;
-    [
-        (ax - 1, ay),
-        (ax + 1, ay),
-        (ax - 1, ay + 1),
-        (ax + 1, ay + 1),
-        (ax, ay + 1),
-    ]
-    .into_iter()
-    .find(|&(x, y)| {
-        matches!(t(x, y), Some(Terrain::Floor | Terrain::DarkFloor))
-            && map.cell(x, y).is_some_and(|c| c.entity().is_none())
-    })
-    .ok_or_else(|| format!("no bare floor beside the {feature:?}"))
+    // (a gate's drawbridge from the bank across its water)
+    let water = |x: i32, y: i32| matches!(t(x, y), Some(Terrain::Pool | Terrain::Water));
+    let cells = if feature == Terrain::DrawbridgeUp {
+        let (dx, dy) = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            .into_iter()
+            .find(|&(dx, dy)| water(ax + dx, ay + dy))
+            .unwrap_or((-1, 0));
+        [
+            (ax + 2 * dx, ay + 2 * dy),
+            (ax + 2 * dx + dy, ay + 2 * dy + dx),
+            (ax + 2 * dx - dy, ay + 2 * dy - dx),
+            (ax + 3 * dx, ay + 3 * dy),
+            (ax - 2 * dx, ay - 2 * dy),
+        ]
+    } else {
+        [
+            (ax - 1, ay),
+            (ax + 1, ay),
+            (ax - 1, ay + 1),
+            (ax + 1, ay + 1),
+            (ax, ay + 1),
+        ]
+    };
+    cells
+        .into_iter()
+        .find(|&(x, y)| {
+            matches!(t(x, y), Some(Terrain::Floor | Terrain::DarkFloor))
+                && map.cell(x, y).is_some_and(|c| c.entity().is_none())
+        })
+        .ok_or_else(|| format!("no bare floor beside the {feature:?}"))
 }
 
 /// As `light_visit`; with `by` a feature, once mapped the hero is
@@ -492,6 +511,12 @@ fn light_visit_at(
         Step::Key(ctrl_key('f')),
         Step::Request("a command after the map", |p| matches!(p, Prompt::Command)),
         Step::Wait("the level drawn", drawn_here),
+        Step::Call("what the level is told", |g| {
+            let lair = g.world.level.as_ref().and_then(|l| l.lair.clone());
+            let shafts = map_view(g)?.shafts_shown();
+            godot_print!("selftest: light: the level told as {lair:?}, {shafts} shafts");
+            Ok(())
+        }),
         Step::Call("where to measure", luma_marks),
         Step::Shot(shot),
         // the near field at 7 m on the hero, where the art director
@@ -503,8 +528,31 @@ fn light_visit_at(
         Step::Call("the camera back", |g| far(g, 11.0)),
         Step::Wait("the camera back", drawn_here),
     ]);
-    if let Some(feature) = by {
-        *BY.lock().unwrap_or_else(|e| e.into_inner()) = Some(feature);
+    // a gate's drawbridge from the bank across its water, the camera there
+    // (the Castle keeps a hero teleported from outside its walls out)
+    if by == Some(nh_world::Terrain::DrawbridgeUp) {
+        BY.lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .push_back(nh_world::Terrain::DrawbridgeUp);
+        steps.extend([
+            Step::Call("the view on the gate", |g| {
+                let at = beside_feature(g)?;
+                godot_print!("selftest: light: the view on {at:?} across the gate's water");
+                g.world.view_center = Some(at);
+                far(g, 7.0)
+            }),
+            Step::Wait("the camera on the gate", drawn_here),
+            Step::Shot(named("town")),
+            Step::Call("the camera back on the hero", |g| {
+                g.world.view_center = None;
+                far(g, 11.0)
+            }),
+            Step::Wait("the camera back", drawn_here),
+        ]);
+    } else if let Some(feature) = by {
+        BY.lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .push_back(feature);
         steps.extend([
             Step::Key(ctrl_key('t')),
             Step::Request("getpos's cursor", |p| matches!(p, Prompt::Command)),
@@ -637,6 +685,55 @@ pub(super) fn overview() -> Vec<Step> {
         light_visit(&mut steps, Some(pick), "", shot, false);
     }
     light_visit(&mut steps, None, "34", "overview-34", false);
+    steps.extend(quit());
+    steps
+}
+
+/// The special levels that should each look their own (the art loop's
+/// first critique, #7), for pictures before and after (not part of `make
+/// test-client`): the Oracle (close beside a fountain of its centre), the
+/// Big Room, the Castle (close beside its drawbridge) and the Plane of
+/// Earth, each as the hero arrives, mapped, close on a wall and in the
+/// overview. `RENETHACK_PLACES` (a comma list: "oracle,castle") picks some.
+pub(super) fn places() -> Vec<Step> {
+    use nh_world::Terrain;
+    let mut steps = vec![Step::Call(
+        "debug mode for this game",
+        |g: &mut RenethackGame| {
+            g.debug_mode = true;
+            Ok(())
+        },
+    )];
+    steps.extend(start());
+    steps.push(Step::Wait("the first level drawn", |g| {
+        drawn_in(g, Branch::Main)
+    }));
+    let wanted = |name: &str| {
+        std::env::var("RENETHACK_PLACES")
+            .map(|only| only.split(',').any(|w| w.trim() == name))
+            .unwrap_or(true)
+    };
+    let visits: [(KeyCheck, &'static str, Option<Terrain>, bool); 4] = [
+        (
+            |g| entry_key(g, "oracle"),
+            "places-oracle",
+            Some(Terrain::Fountain),
+            false,
+        ),
+        (|g| entry_key(g, "bigrm"), "places-bigroom", None, false),
+        (
+            |g| entry_key(g, "castle"),
+            "places-castle",
+            Some(Terrain::DrawbridgeUp),
+            false,
+        ),
+        (|g| entry_key(g, "earth"), "places-earth", None, true),
+    ];
+    for (pick, shot, by, wish) in visits {
+        if wanted(shot.trim_start_matches("places-")) {
+            light_visit_at(&mut steps, Some(pick), "", shot, wish, by);
+        }
+    }
     steps.extend(quit());
     steps
 }

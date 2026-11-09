@@ -116,6 +116,9 @@ global uniform float branch_cave;
 // dimmer, its hero's pool bright against them); the overview shows them
 // all alike
 global uniform float branch_floor_memory;
+// how strongly the branch's rock is laid in strata (the Plane of Earth):
+// bands of ochre, grey and rust across its faces, a dark seam between
+global uniform float branch_strata;
 // the whole level framed (map_view's overview): what is remembered shows
 // nearly as it is, lit by its own faint light
 global uniform float overview;
@@ -515,6 +518,25 @@ void fragment() {
 		// (fainter on rock's lit faces: dark veins there are marble's; on
 		// a cave's lumps all but none)
 		rock *= 1.0 - (boulder > 0.0 ? 0.1 : chunks > 0.0 ? 0.3 : 0.45) * crack;
+		// on a level of solid rock (the Plane of Earth) its faces laid in
+		// strata: bands a hand to a forearm thick, each its own stone,
+		// folding gently over the level, a dark joint between them
+		if (branch_strata > 0.0 && (chunks > 0.0 || boulder > 0.0)) {
+			float fold = tn2(wpos.xz * 0.06) * 2.2 + tn3(wpos * 0.45) * 0.5;
+			float layer = (wpos.y + fold) * 3.6;
+			float id = floor(layer);
+			float f = fract(layer);
+			float pick = fract(sin(id * 12.9898 + 4.1) * 43758.5453);
+			// ochre sandstone, grey shale, rust, pale limestone
+			vec3 tint = pick < 0.3 ? vec3(1.25, 1.02, 0.72)
+				: pick < 0.55 ? vec3(0.78, 0.8, 0.84)
+				: pick < 0.75 ? vec3(1.15, 0.78, 0.6)
+				: vec3(1.05, 1.0, 0.9);
+			tint *= mix(0.75, 1.2, fract(pick * 7.31));
+			float joint = smoothstep(0.0, 0.07, f) * smoothstep(1.0, 0.9, f);
+			// (on its tops, cut across, the layer they are cut through)
+			rock *= mix(vec3(1.0), tint * mix(0.4, 1.0, joint), branch_strata * mix(1.0, 0.7, up));
+		}
 		float seam = 0.0;
 		if (crevices > 0.0) {
 			float cv = tn3(wpos * 1.6 + 7.3);

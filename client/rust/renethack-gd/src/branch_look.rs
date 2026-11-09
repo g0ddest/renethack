@@ -191,6 +191,14 @@ pub struct BranchLook {
     pub remap: &'static [(&'static str, &'static str)],
     /// The walls are the rock itself, broken and irregular (caves).
     pub cave: bool,
+    /// The level is solid rock round its few caves (the Plane of Earth):
+    /// the rock known beside its floor stands as rock, as a cave's walls
+    /// would.
+    pub solid: bool,
+    /// How strongly its rock is laid in strata, bands of stone of
+    /// another colour across its faces (map_surface's `branch_strata`;
+    /// 0: the rock's own faint ones).
+    pub strata: f32,
     /// Wooden props along the walls: mine supports.
     pub supports: bool,
     /// Stones fallen from the rock lie at the foot of walls and along
@@ -249,6 +257,16 @@ pub struct BranchLook {
     /// dungeon's torch-lit vault): next to nothing where the light is the
     /// fire's, the sky's or the deep's (0: nothing at all).
     pub reflect: f32,
+    /// A sanctuary stands in the level (the Oracle's centre: the room
+    /// round the Delphi and its fountains), drawn in `sanctum`'s marble
+    /// as far as it is known, light falling on it from high above
+    /// (map_view's `sanctum`).
+    pub sanctum: bool,
+    /// Mist lies low over its water (the Castle's moat).
+    pub mist: bool,
+    /// Light falls from high above in shafts over its lit floor, seen in
+    /// its haze (the Big Room: a vast hall).
+    pub shafts: bool,
 }
 
 const NEUTRAL: Grade = Grade {
@@ -269,6 +287,8 @@ const MAIN: BranchLook = BranchLook {
     underglow: None,
     remap: &[],
     cave: false,
+    solid: false,
+    strata: 0.0,
     supports: false,
     rubble: true,
     cap: "bedrock",
@@ -318,6 +338,9 @@ const MAIN: BranchLook = BranchLook {
     },
     under: Under::Rock,
     reflect: 1.0,
+    sanctum: false,
+    mist: false,
+    shafts: false,
 };
 
 /// The look of a branch.
@@ -538,6 +561,10 @@ pub fn look_of(branch: Branch) -> BranchLook {
 fn plane_look(plane: Plane) -> BranchLook {
     let rgb = Color::from_rgb;
     match plane {
+        // deep in the rock: its few caves walled by the rock itself, laid
+        // in strata of ochre, grey and rust, dust hanging in the air (its
+        // rock was a flat brown plain lost in a brown haze: the art
+        // loop's first critique, a void)
         Plane::Earth => BranchLook {
             remap: &[
                 ("masonry", "cave"),
@@ -546,10 +573,14 @@ fn plane_look(plane: Plane) -> BranchLook {
                 ("dirt", "earth"),
             ],
             cave: true,
+            solid: true,
+            strata: 1.0,
             ambient: rgb(0.4, 0.32, 0.24),
             ambient_energy: 0.2,
-            fog: rgb(0.55, 0.45, 0.32),
-            fog_density: 0.01,
+            fog: rgb(0.5, 0.42, 0.32),
+            // (thinner: thick, it drowned the rock in a brown murk)
+            fog_density: 0.005,
+            haze: 0.6,
             dust: 3.0,
             grade: Grade {
                 shadows: rgb(1.04, 0.98, 0.9),
@@ -723,6 +754,9 @@ fn fire_of(dungeon: &str, depth: i32) -> usize {
 /// the level's cells stay as they are drawn.
 pub fn look_of_level(branch: Branch, level: Option<&LevelNotice>) -> BranchLook {
     let look = look_of(branch);
+    if branch == Branch::Main {
+        return main_lair(look, level.and_then(|l| l.lair.as_deref()));
+    }
     let Some(level) = level.filter(|_| branch == Branch::Gehennom) else {
         return look;
     };
@@ -765,6 +799,71 @@ pub fn look_of_level(branch: Branch, level: Option<&LevelNotice>) -> BranchLook 
             ..look
         },
         _ => look,
+    }
+}
+
+/// A special level of the main dungeon once the hero knows it (the host's
+/// lair, by the overview's own rules: the inside of the Delphi seen, the
+/// Big Room seen, the Castle's drawbridge seen), each its own signature
+/// (the art loop's first critique: the Oracle, the Castle and the Big Room
+/// read as one grey stone room). The light and the air, a sanctuary's
+/// stone, mist over water: nothing is drawn that is not there, and the
+/// level's cells stay as they are (a level drawn again when it is named
+/// would go dark for a moment).
+fn main_lair(look: BranchLook, lair: Option<&str>) -> BranchLook {
+    let rgb = Color::from_rgb;
+    match lair {
+        // the Oracle: her centre a sanctuary of pale marble under a clear
+        // light falling from high above, the air about it clearer and
+        // cooler
+        Some("oracle") => BranchLook {
+            sanctum: true,
+            ambient: rgb(0.32, 0.36, 0.48),
+            fog: rgb(0.66, 0.7, 0.8),
+            haze: 1.2,
+            grade: Grade {
+                shadows: rgb(0.98, 1.0, 1.04),
+                ..look.grade
+            },
+            ..look
+        },
+        // the Castle: a cold mist off its moat, its air colder
+        Some("castle") => BranchLook {
+            mist: true,
+            fog: rgb(0.56, 0.6, 0.68),
+            fog_density: 0.0045,
+            haze: 1.25,
+            ambient: rgb(0.26, 0.3, 0.42),
+            grade: Grade {
+                saturation: 0.88,
+                shadows: rgb(0.96, 0.99, 1.06),
+                ..look.grade
+            },
+            ..look
+        },
+        // the Big Room: a vast hall, light falling far off in its warm
+        // haze
+        Some("bigroom") => BranchLook {
+            shafts: true,
+            fill: rgb(1.0, 0.86, 0.68),
+            fill_scale: 1.2,
+            fog: rgb(0.72, 0.62, 0.5),
+            fog_density: 0.0045,
+            haze: 1.5,
+            ..look
+        },
+        _ => look,
+    }
+}
+
+/// The look of a sanctuary's cells (`BranchLook::sanctum`, the Oracle's
+/// centre): walls of pale marble capped in gilt, a floor of polished
+/// marble.
+pub fn sanctum(look: BranchLook) -> BranchLook {
+    BranchLook {
+        remap: &[("masonry", "marble"), ("floor", "marble_floor")],
+        cap: "gilded",
+        ..look
     }
 }
 
@@ -819,7 +918,7 @@ impl BranchLook {
     pub fn cells(&self) -> impl PartialEq + use<> {
         (
             self.remap,
-            self.cave,
+            (self.cave, self.solid, self.strata),
             self.dress,
             self.under,
             self.rubble,

@@ -262,13 +262,28 @@ inventory_flush(void)
 /* The lair the hero knows their level to be: "valley" from the arrival
    there, which NetHack's own words name; "sanctum" once the overview
    names it (#overview's temple of Moloch, its flag set when the hero
-   enters the temple, or by the overview once its altar is mapped); else
-   "".  The flags as they stand, never worked out anew.  Observation
-   only. */
+   enters the temple, or by the overview once its altar is mapped);
+   "oracle", "bigroom" and "castle" by the overview's own rules for its
+   annotations (recalc_mapseen), read from what the hero has seen as it
+   stands, since the overview's flags are worked out only as the hero
+   leaves or asks: the Oracle once a cell inside the Delphi has been seen
+   (its fountains, the Oracle on her seat; the overview names it once
+   the hero has stood in it, on her welcome, or once magic mapping or
+   clairvoyance has shown it: never later than this); the Big Room while
+   the hero can see on it; the Castle once its drawbridge has been seen
+   (count_feat_lastseentyp's rule: raised in its wall, lowered, or its
+   gate open).  What the overview has worked out, and what this level was
+   told to be while the hero stays (a Big Room seen, then blind; a
+   drawbridge seen, then destroyed), is kept; a restore or a return before
+   the overview has worked it out drops what was only told, as the
+   overview's flags are dropped then too.  Else "".  Observation only:
+   no RNG, no state change. */
 static const char *
 level_lair(void)
 {
     mapseen *mptr;
+    const char *kept;
+    int x, y, r;
 
     /* the Valley: NetHack names it as the hero arrives from outside
        Gehennom ("You arrive at the Valley of the Dead..."), and every way
@@ -278,10 +293,49 @@ level_lair(void)
     for (mptr = svm.mapseenchn; mptr; mptr = mptr->next)
         if (on_level(&mptr->lev, &u.uz))
             break;
-    if (!mptr)
-        return "";
-    return mptr->flags.valley ? "valley" : mptr->flags.msanctum ? "sanctum"
-                                                               : "";
+    if (mptr && mptr->flags.valley)
+        return "valley";
+    if (mptr && mptr->flags.msanctum)
+        return "sanctum";
+    kept = on_level(&told_level, &u.uz) ? told_lair : "";
+    if (Is_oracle_level(&u.uz)) {
+        if ((mptr && mptr->flags.oracle) || !strcmp(kept, "oracle"))
+            return "oracle";
+        /* a cell inside the Delphi (not its walls), by the room it is
+           in, as recalc_mapseen indexes rooms: no pointers followed */
+        for (x = 1; x < COLNO; x++)
+            for (y = 0; y < ROWNO; y++) {
+                r = levl[x][y].roomno - ROOMOFFSET;
+                if (levl[x][y].seenv && !levl[x][y].edge && r >= 0
+                    && r < SIZE(svr.rooms)
+                    && svr.rooms[r].orig_rtype == DELPHI)
+                    return "oracle";
+            }
+    }
+    if (Is_bigroom(&u.uz)
+        && (!Blind || (mptr && mptr->flags.bigroom)
+            || !strcmp(kept, "bigroom")))
+        return "bigroom";
+    if (Is_stronghold(&u.uz)) {
+        if ((mptr && mptr->flags.castle) || !strcmp(kept, "castle"))
+            return "castle";
+        /* the type each cell was last seen as, as the overview counts it */
+        for (x = 1; x < COLNO; x++)
+            for (y = 0; y < ROWNO; y++)
+                switch (svl.lastseentyp[x][y]) {
+                case DOOR:
+                    if (is_drawbridge_wall(x, y) < 0)
+                        break;
+                    FALLTHROUGH;
+                    /*FALLTHRU*/
+                case DBWALL:
+                case DRAWBRIDGE_DOWN:
+                    return "castle";
+                default:
+                    break;
+                }
+    }
+    return "";
 }
 
 /* Before the engine waits for input: the hero arrived on another level
@@ -301,10 +355,14 @@ level_flush(void)
         told_lair = "";
         return;
     }
-    lair = level_lair();
+    /* (never while a level is being read in: its rooms are not all
+       in place yet) */
     if (rh_proto_is_lost() || suppress_map_output()
-        || (told_level.dnum == u.uz.dnum && told_level.dlevel == u.uz.dlevel
-            && !strcmp(told_lair, lair)))
+        || program_state.in_getlev)
+        return;
+    lair = level_lair();
+    if (told_level.dnum == u.uz.dnum && told_level.dlevel == u.uz.dlevel
+        && !strcmp(told_lair, lair))
         return;
     told_level = u.uz;
     told_lair = lair;

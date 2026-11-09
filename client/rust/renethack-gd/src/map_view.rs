@@ -33,8 +33,8 @@ use godot::classes::sky::RadianceSize;
 use godot::classes::{
     Camera3D, CanvasLayer, ColorRect, Decal, DirectionalLight3D, Environment, FogMaterial,
     FogVolume, GeometryInstance3D, Label3D, Material, MeshInstance3D, Node3D, OmniLight3D,
-    PackedScene, RenderingServer, Shader, ShaderMaterial, Sky, StandardMaterial3D, SurfaceTool,
-    SystemFont, VisualInstance3D, WorldEnvironment,
+    PackedScene, RenderingServer, Shader, ShaderMaterial, Sky, SpotLight3D, StandardMaterial3D,
+    SurfaceTool, SystemFont, VisualInstance3D, WorldEnvironment,
 };
 use godot::prelude::*;
 use nh_art::{ArtManifest, Tint};
@@ -660,6 +660,150 @@ fn built_walls(t: impl Fn(i32, i32) -> Option<Terrain>, most: usize) -> HashSet<
 /// The most walls and doors joined up that are still a building in a cave
 /// branch (Minetown's temple is the biggest); more are the cave's own.
 const BUILT_MOST: usize = 90;
+
+/// A sanctuary's cells as far as they are known (`MapView::refresh_sanctum`:
+/// the Oracle's centre), by what each cell shows (`t`: its terrain as
+/// known, and whether something stands or lies on it): its heart (the
+/// Delphi, a walled room of no more than `HEART_MOST` cells holding two
+/// of its fountains or more) and the heart's walls, the floor of the room
+/// round them as far as it is known (`SANCTUM_MOST` cells at most: more
+/// would be no room) and that room's walls; and the heart's middle. No
+/// heart known: none.
+fn sanctum_cells(t: impl Fn(i32, i32) -> (Option<Terrain>, bool)) -> Sanctum {
+    use Terrain::*;
+    let inside = |(x, y): (i32, i32)| {
+        let (k, held) = t(x, y);
+        matches!(k, Some(Floor | DarkFloor | Fountain))
+            || (held && matches!(k, None | Some(Stone | Unknown)))
+    };
+    let bound = |(x, y): (i32, i32)| {
+        matches!(
+            t(x, y).0,
+            Some(Wall | Doorway | OpenDoor | ClosedDoor | BrokenDoor)
+        )
+    };
+    let fountain = |(x, y): &(i32, i32)| t(*x, *y).0 == Some(Fountain);
+    let flood = |seeds: Vec<(i32, i32)>, skip: &HashSet<(i32, i32)>, most: usize| {
+        let mut out: HashSet<(i32, i32)> = seeds
+            .into_iter()
+            .filter(|&c| inside(c) && !skip.contains(&c))
+            .collect();
+        let mut todo: Vec<(i32, i32)> = out.iter().copied().collect();
+        while let Some((x, y)) = todo.pop() {
+            for n in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)] {
+                if in_field(n.0, n.1) && !skip.contains(&n) && inside(n) && out.insert(n) {
+                    if out.len() > most {
+                        return None;
+                    }
+                    todo.push(n);
+                }
+            }
+        }
+        Some(out)
+    };
+    let around = |cells: &HashSet<(i32, i32)>| -> Vec<(i32, i32)> {
+        let mut ring: Vec<(i32, i32)> = cells
+            .iter()
+            .flat_map(|&(x, y)| {
+                (-1..=1).flat_map(move |dy| (-1..=1).map(move |dx| (x + dx, y + dy)))
+            })
+            .filter(|c| !cells.contains(c) && bound(*c))
+            .collect();
+        ring.sort_unstable();
+        ring.dedup();
+        ring
+    };
+    let none = HashSet::new();
+    let Some(heart) = (0..ROWNO)
+        .flat_map(|y| (0..COLNO).map(move |x| (x, y)))
+        .filter(fountain)
+        .filter_map(|f| flood(vec![f], &none, HEART_MOST))
+        .find(|h| h.iter().filter(|c| fountain(c)).count() >= 2)
+    else {
+        return (HashSet::new(), None);
+    };
+    let n = heart.len() as f32;
+    let (sx, sy) = heart
+        .iter()
+        .fold((0.0, 0.0), |(a, b), &(x, y)| (a + x as f32, b + y as f32));
+    let mut cells = heart.clone();
+    cells.extend(around(&heart));
+    // the room round the heart: its floor from beside the heart's walls
+    let seeds: Vec<(i32, i32)> = cells
+        .iter()
+        .flat_map(|&(x, y)| [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)])
+        .collect();
+    if let Some(room) = flood(seeds, &cells, SANCTUM_MOST) {
+        let walls = around(&room);
+        cells.extend(room);
+        cells.extend(walls);
+    }
+    (cells, Some((sx / n, sy / n)))
+}
+
+/// A sanctuary's cells, and its heart's middle (x, z).
+type Sanctum = (HashSet<(i32, i32)>, Option<(f32, f32)>);
+
+/// The most cells a sanctuary's heart has (the Delphi: three by three),
+/// and the room round it (the Oracle's: eleven by nine).
+const HEART_MOST: usize = 9;
+const SANCTUM_MOST: usize = 120;
+
+/// A light falling from high above (`place_shafts`): how high it hangs,
+/// its cone's half angle, its energy and colour, whether it casts
+/// shadows, and its glow in the air it falls through (shaders/holy_light,
+/// as over an Astral altar): how wide and how strong.
+struct Shaft {
+    high: f32,
+    angle: f32,
+    energy: f32,
+    color: Color,
+    shadow: bool,
+    radius: f32,
+    glow: f32,
+}
+
+/// On a sanctuary's heart (the Delphi): cold and clear, its walls'
+/// shadows cast.
+const SANCTUM_SHAFT: Shaft = Shaft {
+    high: 8.0,
+    angle: 19.0,
+    energy: 7.0,
+    color: Color::from_rgb(0.86, 0.92, 1.0),
+    shadow: true,
+    radius: 1.4,
+    glow: 0.2,
+};
+/// Over a vast hall (the Big Room): warm, as the light far off in its
+/// haze, one over every `HALL_SHAFT_APART` cells of its biggest lit floor,
+/// its middle first, `HALL_SHAFTS` at most, on a floor of `HALL_LEAST`
+/// cells or more.
+const HALL_SHAFT: Shaft = Shaft {
+    high: 9.0,
+    angle: 14.0,
+    energy: 7.0,
+    color: Color::from_rgb(1.0, 0.84, 0.62),
+    shadow: false,
+    radius: 1.2,
+    glow: 0.08,
+};
+const HALL_SHAFT_APART: i32 = 14;
+const HALL_SHAFTS: usize = 4;
+const HALL_LEAST: usize = 150;
+/// How much of a shaft's light the haze shows.
+const SHAFT_FOG: f32 = 6.0;
+/// A sanctuary's statues (the Oracle's centaurs), each lit from a lamp at
+/// its foot on the side the camera sees: its reach, energy and colour.
+const STATUE_LAMP_RANGE: f32 = 1.8;
+const STATUE_LAMP_ENERGY: f32 = 2.2;
+const STATUE_LAMP: Color = Color::from_rgb(0.92, 0.95, 1.0);
+/// The mist over water (`BranchLook::mist`): puffs of it a water cell
+/// holds, low, drifting (shaders/cloud, as a cloud's on the Plane of
+/// Air), their colours lit and in shade, and how much they veil.
+const MIST_PUFFS: u32 = 2;
+const MIST_LIT: Color = Color::from_rgb(0.5, 0.54, 0.62);
+const MIST_SHADE: Color = Color::from_rgb(0.22, 0.25, 0.32);
+const MIST_OPACITY: f32 = 0.16;
 /// Lava's light (`place_lava_lights`): its colour, energy and reach (3 to
 /// 4 cells), one every so many cells over a big pool, and how many at
 /// most on a level.
@@ -767,10 +911,12 @@ enum Liquid {
     Deep,
     /// The bubble's skin where its air meets the water.
     Membrane,
+    /// Mist lying low over water (the Castle's moat).
+    Mist,
 }
 
 impl Liquid {
-    pub const ALL: [Liquid; 9] = [
+    pub const ALL: [Liquid; 10] = [
         Liquid::Water,
         Liquid::Basin,
         Liquid::Lava,
@@ -780,6 +926,7 @@ impl Liquid {
         Liquid::Cloud,
         Liquid::Deep,
         Liquid::Membrane,
+        Liquid::Mist,
     ];
 }
 
@@ -1821,6 +1968,34 @@ fn door_leaf(look: &mut Look, along_x: bool, open: bool, h: f32, wood: Paint, ir
     }
 }
 
+/// A chain of iron links from `from` to `to` (the cell's own metres),
+/// each link turned a quarter from the last; too small to cast a shadow.
+fn chain(look: &mut Look, from: Vector3, to: Vector3, iron: Paint) {
+    const LINK: f32 = 0.055;
+    let d = to - from;
+    let len = d.length();
+    if len < LINK {
+        return;
+    }
+    // (a ring lies flat: turned so it runs along the chain)
+    let yaw = d.x.atan2(d.z).to_degrees();
+    let pitch = -(d.y / len).clamp(-1.0, 1.0).asin().to_degrees();
+    let n = (len / LINK).round() as u32;
+    for i in 0..n {
+        let t = (i as f32 + 0.5) / n as f32;
+        let roll = if i % 2 == 0 { 0.0 } else { 90.0 };
+        look.turned(
+            torus(0.012, 0.035),
+            iron,
+            from + d * t,
+            at(pitch, yaw, roll),
+        );
+        if let Some(s) = look.solids.last_mut() {
+            s.shadow = false;
+        }
+    }
+}
+
 fn terrain_base(
     look: &mut Look,
     t: Terrain,
@@ -2467,6 +2642,25 @@ fn terrain_base(
                 if t == Terrain::Water { 0.9 } else { 0.5 },
                 false,
             );
+            // mist lying low over it, drifting, in puffs that overlap
+            // their neighbours' (past the cell's edges: its banks ragged)
+            if ctx.branch.mist {
+                for k in 0..MIST_PUFFS {
+                    let salt = 170 + k * 4;
+                    let size = 1.2 + ctx.noise(salt) * 0.6;
+                    let pos = at(
+                        (ctx.noise(salt + 1) - 0.5) * 0.9,
+                        -0.1 + k as f32 * 0.15 + ctx.noise(salt + 2) * 0.1,
+                        (ctx.noise(salt + 3) - 0.5) * 0.9,
+                    );
+                    look.sheet(
+                        plane(size, size),
+                        Paint::Liquid(Liquid::Mist),
+                        pos,
+                        Vector3::ZERO,
+                    );
+                }
+            }
             look.ground = -deep;
             look.sunk = true;
         }
@@ -2502,33 +2696,115 @@ fn terrain_base(
             look.ground = wall_h;
         }
         Terrain::DrawbridgeDown => {
-            look.solid(cuboid(1.0, 0.08, 1.0), main(SHADE_LIT), at(0.0, 0.04, 0.0));
-            // two iron beams along the span
-            let mesh = if vertical {
-                cuboid(1.0, 0.1, 0.06)
-            } else {
-                cuboid(0.06, 0.1, 1.0)
-            };
-            for d in [-0.3, 0.3] {
-                let pos = if vertical {
-                    at(0.0, 0.09, d)
+            // the bridge let down over the water: a deck of heavy planks
+            // laid across the way, two iron straps along it, and from its
+            // far end its chains running up to the top of the gate (it
+            // was a flat slab)
+            let wood = main(SHADE_LIT);
+            let iron = trim(SHADE_LIT);
+            // (the way over it runs along x before a side wall)
+            let along = vertical;
+            const PLANKS: u32 = 6;
+            for i in 0..PLANKS {
+                let off = -0.5 + (i as f32 + 0.5) / PLANKS as f32;
+                let h = 0.07 + 0.02 * ctx.noise(40 + i);
+                let (mesh, pos) = if along {
+                    (bevel(0.16, h, 1.0), at(off, h / 2.0, 0.0))
                 } else {
-                    at(d, 0.09, 0.0)
+                    (bevel(1.0, h, 0.16), at(0.0, h / 2.0, off))
                 };
-                look.solid(mesh, trim(SHADE_LIT), pos);
+                look.solid(mesh, wood, pos);
+            }
+            for d in [-0.34, 0.34] {
+                let (mesh, pos) = if along {
+                    (cuboid(1.0, 0.02, 0.07), at(0.0, 0.095, d))
+                } else {
+                    (cuboid(0.07, 0.02, 1.0), at(d, 0.095, 0.0))
+                };
+                look.solid(mesh, iron, pos);
+            }
+            // the gate: the side the wall stands on
+            let (a, b) = if along { (2, 3) } else { (0, 1) };
+            let gate = match (around.sides[a], around.sides[b]) {
+                (Side::Wall, s) if s != Side::Wall => Some(-1.0),
+                (s, Side::Wall) if s != Side::Wall => Some(1.0),
+                _ => None,
+            };
+            if let Some(g) = gate {
+                for s in [-0.4f32, 0.4] {
+                    let (from, to) = if along {
+                        (at(-g * 0.44, 0.1, s), at(g * 0.56, DOOR_HEIGHT + 0.1, s))
+                    } else {
+                        (at(s, 0.1, -g * 0.44), at(s, DOOR_HEIGHT + 0.1, g * 0.56))
+                    };
+                    chain(look, from, to, iron);
+                }
             }
             look.ground = 0.08;
         }
         Terrain::DrawbridgeUp => {
-            look.ground_tile(plane(1.0, 1.0), trim(SHADE_LIT), at(0.0, -0.06, 0.0));
-            look.sunk = true;
-            let mesh = if vertical {
-                cuboid(0.2, 1.1, 0.96)
+            // the gate with its bridge raised (NetHack shows the raised
+            // bridge where the gate stands in the wall, the water before
+            // it as water): the gateway's stone jambs and lintel, the
+            // bridge of planks banded in iron standing up in it on the
+            // water's side, two chains from its top into the wall over
+            // it (it was a low slab over water)
+            floor(look);
+            // (its wall runs along x)
+            let along_x = !vertical;
+            let stone = ctx
+                .remap(ctx.art.terrain(Terrain::Wall).material)
+                .map_or(main(SHADE_LIT), |m| Paint::Pbr(m, SHADE_LIT, Role::Wall));
+            let iron = pbr(ctx.mat("iron"), SHADE_LIT, Role::Prop, DEEP);
+            let wood = pbr(art.material, SHADE_LIT, Role::Door, FLOOR_UNSEEN);
+            door_frame(look, along_x, cut, ctx, stone, true);
+            let (a, b) = if along_x { (0, 1) } else { (2, 3) };
+            let out = if around.liquid[b] && !around.liquid[a] {
+                1.0
             } else {
-                cuboid(0.96, 1.1, 0.2)
+                -1.0
             };
-            look.solid(mesh, main(SHADE_LIT), at(0.0, 0.55, 0.0));
-            look.ground = 1.1;
+            let h = if cut { CUT_HEIGHT } else { DOOR_HEIGHT };
+            let face = out * 0.36;
+            const PLANKS: u32 = 6;
+            const WIDE: f32 = 0.96;
+            let w = WIDE / PLANKS as f32;
+            for i in 0..PLANKS {
+                let off = -WIDE / 2.0 + w * (i as f32 + 0.5);
+                let d = 0.14 + 0.02 * (i % 2) as f32;
+                let (mesh, p) = if along_x {
+                    (bevel(w - 0.01, h, d), at(off, h / 2.0, face))
+                } else {
+                    (bevel(d, h, w - 0.01), at(face, h / 2.0, off))
+                };
+                look.solid(mesh, wood, p);
+            }
+            for f in [0.15, 0.5, 0.85] {
+                let (mesh, p) = if along_x {
+                    (
+                        cuboid(WIDE + 0.02, 0.07, 0.04),
+                        at(0.0, h * f, face + out * 0.09),
+                    )
+                } else {
+                    (
+                        cuboid(0.04, 0.07, WIDE + 0.02),
+                        at(face + out * 0.09, h * f, 0.0),
+                    )
+                };
+                look.solid(mesh, iron, p);
+            }
+            if !cut {
+                for s in [-0.4f32, 0.4] {
+                    let top = WALL_HEIGHT - CAP_HEIGHT;
+                    let (from, to) = if along_x {
+                        (at(s, h, face + out * 0.08), at(s * 0.9, top, out * 0.12))
+                    } else {
+                        (at(face + out * 0.08, h, s), at(out * 0.12, top, s * 0.9))
+                    };
+                    chain(look, from, to, iron);
+                }
+            }
+            look.ground = door_h;
         }
         Terrain::Air => match ctx.branch.under {
             // nothing: open air over the sea of clouds (or the stars) far
@@ -2845,7 +3121,8 @@ fn rock_look(look: &mut Look, near: &Near, ctx: &Ctx) {
             Some(_) => floor = true,
         }
     }
-    if !(corridor || (wall && !floor)) {
+    // (on a level of solid rock its caves are walled by the rock itself)
+    if !(corridor || (wall && !floor) || (floor && ctx.branch.solid)) {
         return;
     }
     let Some(m) = ctx.mat("bedrock") else {
@@ -2883,8 +3160,9 @@ fn rock_look(look: &mut Look, near: &Near, ctx: &Ctx) {
     } else {
         ROCK_HEIGHT
     };
-    // (a cave's in lumps like its walls)
-    let role = if ctx.branch.cave {
+    // (a cave's in lumps like its walls; rock laid in strata breaks in
+    // blocks along them)
+    let role = if ctx.branch.cave && ctx.branch.strata <= 0.0 {
         Role::Cave
     } else {
         Role::Rock
@@ -3730,6 +4008,22 @@ pub struct MapView {
     /// one: Minetown's shops and temple), drawn in `built_look`.
     built: HashSet<(i32, i32)>,
     built_look: BranchLook,
+    /// A sanctuary's cells as far as they are known (the Oracle's centre:
+    /// `BranchLook::sanctum`), drawn in `sanctum_look`, and where its
+    /// light falls from (the middle of its heart, the Delphi).
+    sanctum: HashSet<(i32, i32)>,
+    sanctum_look: BranchLook,
+    sanctum_heart: Option<Vector3>,
+    /// The statues known in it, and the lamps lighting them.
+    sanctum_statues: Vec<(i32, i32)>,
+    statue_lamps: Vec<Gd<OmniLight3D>>,
+    /// The lights falling from high above (`place_shafts`): over a
+    /// sanctuary, over a vast hall's lit floor; the glow of each in the
+    /// air.
+    shafts: Vec<Gd<SpotLight3D>>,
+    shaft_glow: Vec<Gd<MeshInstance3D>>,
+    /// How many of them fall now.
+    shafts_used: usize,
     /// The level's plan: its arches and inlays (`dressing::plan`).
     volume: HashMap<(i32, i32), dressing::Volume>,
     /// The post layer's material, and how far a new level is still
@@ -4560,6 +4854,14 @@ impl MapView {
             built: HashSet::new(),
             volume: HashMap::new(),
             built_look: crate::branch_look::look_of(Branch::Main),
+            sanctum: HashSet::new(),
+            sanctum_look: crate::branch_look::look_of(Branch::Main),
+            sanctum_heart: None,
+            sanctum_statues: Vec::new(),
+            statue_lamps: Vec::new(),
+            shafts: Vec::new(),
+            shaft_glow: Vec::new(),
+            shafts_used: 0,
             stats_window: std::env::var_os("RENETHACK_FRAME_STATS").map(|_| FrameStats::default()),
             sightings: std::env::var_os("RENETHACK_DUMP_SIGHTINGS").and_then(|p| {
                 std::fs::OpenOptions::new()
@@ -4746,6 +5048,7 @@ impl MapView {
             self.vfx.clear();
             self.facing.clear();
             self.refresh_built(world, catalog);
+            self.refresh_sanctum(world, catalog);
             self.refresh_volume(world, catalog);
             self.generation = Some(generation);
             world.map.take_dirty();
@@ -4786,6 +5089,8 @@ impl MapView {
             self.flank_steed(was_at, hero, world);
             // walls found to be built (a door seen in them) drawn again
             dirty.extend(self.refresh_built(world, catalog));
+            // a sanctuary's cells found
+            dirty.extend(self.refresh_sanctum(world, catalog));
             // and cells the level's plan gives something else now
             dirty.extend(self.refresh_volume(world, catalog));
             let near: Vec<_> = dirty
@@ -5242,6 +5547,7 @@ impl MapView {
         };
         self.branch_look = l;
         self.built_look = crate::branch_look::built(l);
+        self.sanctum_look = crate::branch_look::sanctum(l);
         self.still_water();
         let env = &mut self.env;
         env.set_bg_color(l.darkness);
@@ -5327,6 +5633,8 @@ impl MapView {
         );
         RenderingServer::singleton()
             .global_shader_parameter_set("branch_floor_memory", &l.floor_memory.to_variant());
+        RenderingServer::singleton()
+            .global_shader_parameter_set("branch_strata", &l.strata.to_variant());
         self.vfx.set_dust(l.dust, l.embers);
         // the dust force strikes from the level's stone, in its colour
         // (the walls' material's, by the texture's middle tone)
@@ -5382,6 +5690,11 @@ impl MapView {
             sea.set_material_override(&m);
         }
         sea.set_visible(true);
+    }
+
+    /// How many shafts of light fall (self-tests).
+    pub fn shafts_shown(&self) -> usize {
+        self.shafts.iter().filter(|l| l.is_visible()).count()
     }
 
     /// The branch the level drawn is in (self-tests).
@@ -5645,6 +5958,7 @@ impl MapView {
         }
         self.place_torches(&sconces);
         self.place_lava_lights();
+        self.place_shafts(&lit);
     }
 
     /// In a cave branch, the walls built: those a door is set in or joined
@@ -5664,6 +5978,164 @@ impl MapView {
         let changed = built.symmetric_difference(&self.built).copied().collect();
         self.built = built;
         changed
+    }
+
+    /// On a level with a sanctuary (`BranchLook::sanctum`), its cells as
+    /// far as the map shows them (`sanctum_cells`), and its heart's
+    /// middle, where its light falls (moved: the lights placed again). The
+    /// cells whose look that changed.
+    fn refresh_sanctum(&mut self, world: &World, catalog: &Catalog) -> Vec<(i32, i32)> {
+        let (cells, heart) = if self.level_look.sanctum {
+            sanctum_cells(|x, y| {
+                world.map.cell(x, y).map_or((None, false), |c| {
+                    (cell_terrain(c, catalog), c.entity().is_some())
+                })
+            })
+        } else {
+            (HashSet::new(), None)
+        };
+        let heart = heart.map(|(x, z)| Vector3::new(x, 0.0, z));
+        let mut statues: Vec<(i32, i32)> = cells
+            .iter()
+            .copied()
+            .filter(|&(x, y)| {
+                world
+                    .map
+                    .cell(x, y)
+                    .and_then(|c| c.entity())
+                    .is_some_and(|g| g.kind == GlyphKind::Statue)
+            })
+            .collect();
+        statues.sort_unstable();
+        if heart != self.sanctum_heart || statues != self.sanctum_statues {
+            self.sanctum_heart = heart;
+            self.sanctum_statues = statues;
+            self.lights_dirty = true;
+        }
+        let changed = cells.symmetric_difference(&self.sanctum).copied().collect();
+        self.sanctum = cells;
+        changed
+    }
+
+    /// The lights falling from high above, each a narrow cone the haze
+    /// shows: on a sanctuary's heart (the Delphi), cold and clear, its
+    /// shadows cast; over a vast hall (`BranchLook::shafts`, the Big Room)
+    /// one over every `HALL_SHAFT_APART` cells of its biggest lit floor,
+    /// its middle first, warm. Never over a dark floor: a light where
+    /// NetHack has none would lie.
+    fn place_shafts(&mut self, lit: &HashSet<(i32, i32)>) {
+        let look = self.branch_look;
+        let mut spots: Vec<(Vector3, &Shaft)> = Vec::new();
+        if let Some(h) = self.sanctum_heart.filter(|_| look.sanctum) {
+            spots.push((h, &SANCTUM_SHAFT));
+        }
+        if look.shafts
+            && let Some(hall) = lit_areas(lit)
+                .into_iter()
+                .filter(|a| a.len() >= HALL_LEAST)
+                .max_by_key(Vec::len)
+        {
+            let n = hall.len() as f32;
+            let (sx, sy) = hall
+                .iter()
+                .fold((0.0, 0.0), |(a, b), &(x, y)| (a + x as f32, b + y as f32));
+            let mid = (sx / n, sy / n);
+            let mut cells = hall;
+            let off =
+                |&(x, y): &(i32, i32)| (x as f32 - mid.0).powi(2) + (y as f32 - mid.1).powi(2);
+            cells.sort_by(|a, b| off(a).total_cmp(&off(b)));
+            let mut chosen: Vec<(i32, i32)> = Vec::new();
+            for c in cells {
+                if chosen.len() == HALL_SHAFTS {
+                    break;
+                }
+                let apart = |o: &(i32, i32)| (o.0 - c.0).abs().max((o.1 - c.1).abs());
+                if chosen.iter().all(|o| apart(o) >= HALL_SHAFT_APART) {
+                    chosen.push(c);
+                }
+            }
+            for (x, y) in chosen {
+                spots.push((Vector3::new(x as f32, 0.0, y as f32), &HALL_SHAFT));
+            }
+        }
+        for (i, &(at, shaft)) in spots.iter().enumerate() {
+            if i == self.shafts.len() {
+                let mut l = SpotLight3D::new_alloc();
+                // straight down
+                l.set_rotation_degrees(Vector3::new(-90.0, 0.0, 0.0));
+                l.set_param(Param::SPOT_ATTENUATION, 0.6);
+                l.set_param(Param::VOLUMETRIC_FOG_ENERGY, SHAFT_FOG);
+                self.root.add_child(&l);
+                self.shafts.push(l);
+                let mut glow = MeshInstance3D::new_alloc();
+                glow.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+                if let Ok(shader) =
+                    godot::tools::try_load::<Shader>("res://shaders/holy_light.gdshader")
+                {
+                    let mut mat = ShaderMaterial::new_gd();
+                    mat.set_shader(&shader);
+                    mat.set_shader_parameter("height", &SHAFT_TALL.to_variant());
+                    glow.set_material_override(&mat);
+                }
+                self.root.add_child(&glow);
+                self.shaft_glow.push(glow);
+            }
+            let l = &mut self.shafts[i];
+            l.set_position(at + Vector3::new(0.0, shaft.high, 0.0));
+            l.set_param(Param::RANGE, shaft.high + 2.0);
+            l.set_param(Param::SPOT_ANGLE, shaft.angle);
+            l.set_param(Param::ENERGY, shaft.energy);
+            l.set_color(shaft.color);
+            l.set_shadow(shaft.shadow);
+            l.set_visible(true);
+            let mesh = self
+                .art
+                .mesh(cylinder(shaft.radius, shaft.radius, SHAFT_TALL));
+            let glow = &mut self.shaft_glow[i];
+            glow.set_mesh(&mesh);
+            if let Some(mut m) = glow
+                .get_material_override()
+                .and_then(|m| m.try_cast::<ShaderMaterial>().ok())
+            {
+                m.set_shader_parameter("color", &shaft.color.to_variant());
+                m.set_shader_parameter("strength", &shaft.glow.to_variant());
+            }
+            glow.set_position(at + Vector3::new(0.0, SHAFT_TALL / 2.0, 0.0));
+            // (none in the overview: its air clears)
+            glow.set_visible(self.overview.is_none());
+        }
+        self.shafts_used = spots.len();
+        for l in self.shafts.iter_mut().skip(spots.len()) {
+            l.set_visible(false);
+        }
+        for g in self.shaft_glow.iter_mut().skip(spots.len()) {
+            g.set_visible(false);
+        }
+        // a sanctuary's statues, each lit from its foot on the side the
+        // camera sees
+        let statues: Vec<(i32, i32)> = if look.sanctum {
+            self.sanctum_statues.clone()
+        } else {
+            Vec::new()
+        };
+        for (i, &(x, y)) in statues.iter().enumerate() {
+            if i == self.statue_lamps.len() {
+                let mut l = OmniLight3D::new_alloc();
+                l.set_shadow(false);
+                l.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
+                l.set_param(Param::RANGE, STATUE_LAMP_RANGE);
+                l.set_param(Param::ENERGY, STATUE_LAMP_ENERGY);
+                l.set_color(STATUE_LAMP);
+                self.root.add_child(&l);
+                self.statue_lamps.push(l);
+            }
+            let l = &mut self.statue_lamps[i];
+            l.set_position(Vector3::new(x as f32, 0.3, y as f32 + 0.45));
+            l.set_visible(true);
+        }
+        for l in self.statue_lamps.iter_mut().skip(statues.len()) {
+            l.set_visible(false);
+        }
     }
 
     /// The level's plan of arches and inlays as the map shows it now
@@ -6527,7 +6999,7 @@ impl MapView {
             Liquid::Haze => "res://shaders/heat_haze.gdshader",
             Liquid::Unseen => "res://shaders/unseen.gdshader",
             Liquid::Bubble => "res://shaders/bubble.gdshader",
-            Liquid::Cloud => "res://shaders/cloud.gdshader",
+            Liquid::Cloud | Liquid::Mist => "res://shaders/cloud.gdshader",
             Liquid::Deep => "res://shaders/deep.gdshader",
             Liquid::Membrane => "res://shaders/membrane.gdshader",
         };
@@ -6555,6 +7027,11 @@ impl MapView {
                 }
                 if l == Liquid::Membrane {
                     m.set_shader_parameter("tall", &MEMBRANE_TALL.to_variant());
+                }
+                if l == Liquid::Mist {
+                    m.set_shader_parameter("lit", &MIST_LIT.to_variant());
+                    m.set_shader_parameter("shade", &MIST_SHADE.to_variant());
+                    m.set_shader_parameter("opacity", &MIST_OPACITY.to_variant());
                 }
                 if l == Liquid::Water {
                     m.set_shader_parameter("foam_amount", &self.foam_amount().to_variant());
@@ -6587,6 +7064,7 @@ impl MapView {
                     Liquid::Unseen => Color::from_rgba(0.7, 0.72, 0.8, 0.3),
                     Liquid::Bubble => Color::from_rgba(0.4, 0.65, 0.8, 0.35),
                     Liquid::Cloud => Color::from_rgba(0.9, 0.93, 1.0, 0.7),
+                    Liquid::Mist => Color::from_rgba(0.5, 0.54, 0.62, 0.2),
                     Liquid::Deep => Color::from_rgb(0.01, 0.05, 0.1),
                     Liquid::Membrane => Color::from_rgba(0.7, 0.85, 1.0, 0.25),
                 };
@@ -6779,6 +7257,12 @@ impl MapView {
     /// camera follows the hero again.
     fn ease_overview(&mut self, delta: f32) {
         let want = if self.overview.is_some() { 1.0 } else { 0.0 };
+        // (the shafts' glow in the air goes with the haze)
+        for g in self.shaft_glow.iter_mut().take(self.shafts_used) {
+            if g.is_visible() != (want == 0.0) {
+                g.set_visible(want == 0.0);
+            }
+        }
         if self.overview_k == want && want == 0.0 {
             return;
         }
@@ -8897,6 +9381,8 @@ impl MapView {
                 .map(|t| t == nh_world::TrapKind::SpikedPit),
             branch: if self.built.contains(&(x, y)) {
                 &self.built_look
+            } else if self.sanctum.contains(&(x, y)) {
+                &self.sanctum_look
             } else {
                 &self.branch_look
             },
@@ -10832,6 +11318,7 @@ mod tests {
                     'W' => "S_water",
                     'a' => "S_air",
                     'c' => "S_cloud",
+                    '{' => "S_fountain",
                     _ => continue,
                 };
                 let (x, y) = (PICTURE_AT.0 + col as i32, PICTURE_AT.1 + row as i32);
@@ -11436,6 +11923,50 @@ mod tests {
             ],
         );
         assert!(built_walls(t(&against), 30).is_empty());
+    }
+
+    #[test]
+    fn the_oracle_s_centre_is_a_sanctuary_as_far_as_it_is_known() {
+        let f = Fixture::new();
+        let t = |map: &MapState| {
+            let cat = &f.cat;
+            let map = map.clone();
+            move |x: i32, y: i32| {
+                map.cell(x, y).map_or((None, false), |c| {
+                    (cell_terrain(c, cat), c.entity().is_some())
+                })
+            }
+        };
+        let at = |c: i32, r: i32| (PICTURE_AT.0 + c, PICTURE_AT.1 + r);
+        // the Delphi, three by three round its four fountains, walled in
+        // the middle of a room, a corridor beyond the room's door
+        let rows = [
+            "r-----------7    ",
+            "|...........|    ",
+            "|...r-+-7...+####",
+            "|...|.{.|...|    ",
+            "|...+{.{+...|    ",
+            "|...|.{.|...|    ",
+            "|...L-+-J...|    ",
+            "|...........|    ",
+            "L-----------J    ",
+        ];
+        let oracle = level(&f.cat, &rows);
+        let (cells, heart) = sanctum_cells(t(&oracle));
+        // the room and its walls whole, nothing of the corridor
+        assert_eq!(cells.len(), 13 * 9, "{cells:?}");
+        assert!(cells.contains(&at(0, 0)) && cells.contains(&at(12, 2)));
+        assert!(!cells.contains(&at(13, 2)));
+        let (hx, hy) = at(6, 4);
+        assert_eq!(heart, Some((hx as f32, hy as f32)));
+        // the Delphi alone seen: it and its walls
+        let delphi: Vec<&str> = rows[2..7].iter().map(|row| &row[4..9]).collect();
+        let (cells, heart) = sanctum_cells(t(&level(&f.cat, &delphi)));
+        assert_eq!(cells.len(), 25);
+        assert!(heart.is_some());
+        // a room with a fountain in it, no Delphi: none
+        let plain = level(&f.cat, &["r---7", "|.{.|", "|...|", "L---J"]);
+        assert_eq!(sanctum_cells(t(&plain)), (HashSet::new(), None));
     }
 
     #[test]
