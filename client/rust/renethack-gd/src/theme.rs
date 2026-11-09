@@ -698,6 +698,86 @@ pub fn focus_plate() -> Gd<StyleBox> {
     })
 }
 
+/// A round plate `px` pixels across, as the orbs' rings are drawn, lit
+/// from the top left: a dark outline, a rounded bronze rim (`GOLD` when
+/// `lit`, else `GOLD_DIM`), a groove, the face sunk inside it, shadowed
+/// under its top left rim. Its texture is stretched over the whole box,
+/// less `inset` on every side (no room for content): draw it at about its
+/// size.
+pub fn round_plate(px: i32, lit: bool, inset: f32) -> Gd<StyleBox> {
+    let border = if lit { GOLD } else { GOLD_DIM };
+    let (face, edge) = if lit {
+        (rgb(0x231a12), rgb(0x0e0a07))
+    } else {
+        (rgb(0x16110c), rgb(0x0a0806))
+    };
+    let px = px.max(8);
+    let half = px as f32 / 2.0;
+    // its parts as shares of the radius
+    let (rim, groove) = (0.84, 0.79);
+    let aa = 1.0 / half;
+    let key = Vector2::new(-0.6, -0.8);
+    let mut data = Vec::with_capacity((px * px * 4) as usize);
+    for y in 0..px {
+        for x in 0..px {
+            let p = Vector2::new(x as f32 + 0.5 - half, y as f32 + 0.5 - half) / half;
+            let r = p.length();
+            let facing = if r > 1e-4 { p.dot(key) / r } else { 0.0 };
+            let c = if r > 1.0 {
+                Color::from_rgba(0.0, 0.0, 0.0, 0.0)
+            } else if r > 1.0 - 1.5 * aa {
+                // the outline, its outer edge smoothed
+                let mut c = IRON_DARK;
+                c.a = ((1.0 - r) / aa).clamp(0.0, 1.0);
+                c
+            } else if r > rim {
+                // the rim's profile: its outer half faces out, its inner in
+                let t = (1.0 - r) / (1.0 - rim);
+                let lit = 0.5 + 0.5 * facing * (1.0 - 2.0 * t);
+                let crest = 1.0 - ((t - 0.35).abs() / 0.5).clamp(0.0, 1.0);
+                scaled(border, 0.42 + 0.95 * lit + 0.25 * crest * facing.max(0.0))
+            } else if r > groove {
+                IRON_DARK.lerp(border, 0.1)
+            } else {
+                // the face: lighter in the middle, sunk under the rim on
+                // the lit side, caught a little on the other
+                let c = face.lerp(edge, (r / groove).powf(1.5) as f64);
+                let near = ((r - (groove - 0.22)) / 0.22).clamp(0.0, 1.0);
+                let shade = 1.0 - 0.55 * near * facing.max(0.0);
+                let mut c = scaled(c, shade);
+                if facing < -0.3 && r > groove - 2.0 * aa {
+                    c = c.lerp(BEVEL_LIGHT, 0.35);
+                }
+                c.a = 0.9;
+                c
+            };
+            data.extend_from_slice(&[
+                (c.r.clamp(0.0, 1.0) * 255.0).round() as u8,
+                (c.g.clamp(0.0, 1.0) * 255.0).round() as u8,
+                (c.b.clamp(0.0, 1.0) * 255.0).round() as u8,
+                (c.a.clamp(0.0, 1.0) * 255.0).round() as u8,
+            ]);
+        }
+    }
+    let image = Image::create_from_data(px, px, false, Format::RGBA8, &PackedByteArray::from(data));
+    let Some(tex) = image.and_then(|i| ImageTexture::create_from_image(&i)) else {
+        let mut sb = StyleBoxFlat::new_gd();
+        sb.set_bg_color(edge);
+        sb.set_border_width_all(1);
+        sb.set_border_color(border);
+        sb.set_corner_radius_all(px / 2);
+        sb.set_corner_detail(12);
+        sb.set_expand_margin_all(-inset);
+        sb.set_content_margin_all(0.0);
+        return sb.upcast();
+    };
+    let mut sb = StyleBoxTexture::new_gd();
+    sb.set_texture(&tex);
+    sb.set_expand_margin_all(-inset);
+    sb.set_content_margin_all(0.0);
+    sb.upcast()
+}
+
 /// The control the keys and a gamepad are on: gold-edged and lit.
 pub fn focus_style() -> Gd<StyleBoxFlat> {
     let mut sb = StyleBoxFlat::new_gd();

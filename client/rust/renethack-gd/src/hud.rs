@@ -16,7 +16,7 @@ use godot::classes::text_server::{AutowrapMode, OverrunBehavior};
 use godot::classes::{
     BoxContainer, Button, CanvasLayer, ColorRect, Control, GridContainer, HBoxContainer,
     InputEvent, InputEventMouseButton, Label, PanelContainer, Polygon2D, RichTextLabel,
-    ShaderMaterial, StyleBoxFlat, Time, VBoxContainer,
+    ShaderMaterial, StyleBox, StyleBoxFlat, Time, VBoxContainer,
 };
 use godot::global::{HorizontalAlignment, MouseButton, VerticalAlignment};
 use godot::prelude::*;
@@ -1010,25 +1010,12 @@ fn micro_button(
 
 /// A micro-button's look: a round plate inside its hit target, as the
 /// orbs' rims are drawn, lit when the mouse is on it.
-fn micro_plate(side: f32, hover: bool) -> Gd<StyleBoxFlat> {
-    let mut sb = StyleBoxFlat::new_gd();
-    sb.set_bg_color(Color::from_rgba(
-        0.06,
-        0.05,
-        0.04,
-        if hover { 0.95 } else { 0.82 },
-    ));
-    sb.set_border_width_all(if hover { 2 } else { 1 });
-    sb.set_border_color(if hover { theme::GOLD } else { theme::GOLD_DIM });
-    sb.set_corner_radius_all((side / 2.0).round() as i32);
-    sb.set_corner_detail(12);
-    // the plate inside the target: the target is the larger
+fn micro_plate(side: f32, hover: bool) -> Gd<StyleBox> {
+    // the plate inside the target: the target is the larger; drawn at
+    // twice its size in design pixels, sharp up to a 4K window
     let inset = side * (1.0 - MICRO_PLATE) / 2.0;
-    for s in [Side::LEFT, Side::TOP, Side::RIGHT, Side::BOTTOM] {
-        sb.set_expand_margin(s, -inset);
-        sb.set_content_margin(s, 0.0);
-    }
-    sb
+    let plate = side * MICRO_PLATE;
+    theme::round_plate((plate * 2.0).round() as i32, hover, inset)
 }
 
 /// The micro-buttons at `side`: their target, their plate, their glyph.
