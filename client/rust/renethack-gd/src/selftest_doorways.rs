@@ -8,9 +8,11 @@
 //! the map still remembers the door shut), open, and doorless (or
 //! broken); the hero stands in a door too. Each one's feet are where the
 //! same body's are on the room's floor, within a centimetre, and in the
-//! middle of the opening: standing, mid-blow at a foe inside the room,
-//! and reeling from the foe's blow back. With `--screenshots`, a picture
-//! of each body's room at each.
+//! middle of the opening: standing, and back on the very spot after
+//! lunging at a foe inside the room and after reeling from the foe's blow.
+//! Mid-reel it is knocked back through the opening, never across it into
+//! the frame. With `--screenshots`, a picture of each body's room at
+//! each.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
@@ -19,6 +21,7 @@ use std::time::Instant;
 use godot::prelude::*;
 
 use super::{Step, camera_settled, map_view, quit, start};
+use crate::animator::REEL;
 use crate::gallery::{
     DOORWAY_DOORS, DOORWAY_FLOOR, DOORWAY_FOES, DOORWAY_HERO, DOORWAY_HERO_FOE, DoorSeen,
     door_seen, doorway_cell, lay_out_doorways,
@@ -118,10 +121,23 @@ fn fights_over(g: &RenethackGame) -> Result<bool, String> {
     Ok(played && map_view(g)?.motions_held())
 }
 
+/// What those in the doors are doing as their feet are looked at.
+#[derive(Clone, Copy, PartialEq)]
+enum Stance {
+    /// In the middle of the opening: before a blow, and after one, back
+    /// on the very spot.
+    Standing,
+    /// Lunging at a foe inside the room: off the middle.
+    Lunging,
+    /// Knocked back by the foe's blow: through the opening, away from the
+    /// foe and no farther than a reel goes, never across it into the
+    /// frame.
+    Reeling,
+}
+
 /// Everyone in a door has their feet where the same body has them on the
-/// room's floor (the hero where it has), and stands in the middle of the
-/// opening unless `lunging` at a foe.
-fn on_the_floor(g: &RenethackGame, when: &str, lunging: bool) -> Result<(), String> {
+/// room's floor (the hero where it has), and stands as `stance` has it.
+fn on_the_floor(g: &RenethackGame, when: &str, stance: Stance) -> Result<(), String> {
     let map = map_view(g)?;
     let body = body();
     let (fx, fy) = doorway_cell(DOORWAY_FLOOR);
@@ -130,36 +146,60 @@ fn on_the_floor(g: &RenethackGame, when: &str, lunging: bool) -> Result<(), Stri
         .ok_or_else(|| format!("no {body} on the room's floor"))?
         .0
         .y;
+    // who, where, the way to their foe (the opening's passage), feet
     let mut everyone = Vec::new();
-    for (door, &at) in DOORWAY_DOORS.iter().enumerate() {
+    for (door, (&at, (_, foe))) in DOORWAY_DOORS.iter().zip(DOORWAY_FOES).enumerate() {
         let (x, y) = doorway_cell(at);
         let (p, _) = map
             .entity_stands(x, y)
             .ok_or_else(|| format!("no {body} in the door at {at:?}"))?;
         let who = format!("the {body} in the {:?} door at {at:?}", door_seen(door));
-        everyone.push((who, (x, y), p));
+        everyone.push((who, (x, y), toward(at, foe), p));
     }
     let (p, _) = map.hero_stands().ok_or("the hero is not drawn")?;
     let who = format!("the hero in the {:?} door", hero_door());
-    everyone.push((who, doorway_cell(DOORWAY_HERO), p));
-    for (who, (x, y), p) in everyone {
+    let foe = toward(DOORWAY_HERO, DOORWAY_HERO_FOE.1);
+    everyone.push((who, doorway_cell(DOORWAY_HERO), foe, p));
+    for (who, (x, y), foe, p) in everyone {
         let up = p.y - floor;
-        let off = Vector2::new(p.x - x as f32, p.z - y as f32).length();
+        let off = Vector2::new(p.x - x as f32, p.z - y as f32);
+        let back = -off.dot(foe);
+        let across = (off + foe * back).length();
         godot_print!(
-            "selftest: doorways: {when}: {who}: feet {up:+.3} m over the floor, {off:.3} m off the middle"
+            "selftest: doorways: {when}: {who}: feet {up:+.3} m over the floor, {:.3} m off the middle ({back:+.3} back, {across:.3} across)",
+            off.length()
         );
         if up.abs() > TOLERANCE {
             return Err(format!(
                 "{when}: {who} stands {up:+.3} m over the room's floor"
             ));
         }
-        if !lunging && off > TOLERANCE {
-            return Err(format!(
-                "{when}: {who} stands {off:.3} m off the middle of the opening"
-            ));
+        match stance {
+            Stance::Standing if off.length() > TOLERANCE => {
+                return Err(format!(
+                    "{when}: {who} stands {:.3} m off the middle of the opening",
+                    off.length()
+                ));
+            }
+            Stance::Reeling if across > TOLERANCE => {
+                return Err(format!(
+                    "{when}: {who} is knocked {across:.3} m across the opening, into its frame"
+                ));
+            }
+            Stance::Reeling if back <= TOLERANCE || back > REEL + TOLERANCE => {
+                return Err(format!(
+                    "{when}: {who} is knocked back {back:+.3} m through the opening (a reel goes {REEL} m)"
+                ));
+            }
+            _ => {}
         }
     }
     Ok(())
+}
+
+/// The flat unit vector from a cell of the room to its neighbour `to`.
+fn toward(from: (i32, i32), to: (i32, i32)) -> Vector2 {
+    Vector2::new((to.0 - from.0) as f32, (to.1 - from.1) as f32).normalized()
 }
 
 pub(super) fn doorways() -> Vec<Step> {
@@ -180,24 +220,31 @@ pub(super) fn doorways() -> Vec<Step> {
             Step::Wait("the camera over it", camera_settled),
             Step::Shot(shot("")),
             Step::Call("everyone in a door on its floor", |g| {
-                on_the_floor(g, "standing", false)
+                on_the_floor(g, "standing", Stance::Standing)
             }),
             Step::Call("blows at the foes", |g| fight(g, Round::Blows)),
             Step::Wait("the blows half-way", fights_held),
             Step::Shot(shot("-blows")),
             Step::Call("on the floor mid-blow", |g| {
-                on_the_floor(g, "mid-blow", true)
+                on_the_floor(g, "mid-blow", Stance::Lunging)
             }),
             Step::Call("the blows go on", let_go),
             Step::Wait("the blows over", fights_over),
+            Step::Call("back on the spot after the blows", |g| {
+                on_the_floor(g, "after the blows", Stance::Standing)
+            }),
             Step::Call("the foes strike back", |g| fight(g, Round::Hits)),
             Step::Wait("their blows half-way", fights_held),
             Step::Shot(shot("-hits")),
             Step::Call("on the floor reeling", |g| {
-                on_the_floor(g, "reeling", false)
+                on_the_floor(g, "reeling", Stance::Reeling)
             }),
             Step::Call("their blows go on", let_go),
             Step::Wait("their blows over", fights_over),
+            Step::Call("back on the spot after the reel", |g| {
+                on_the_floor(g, "after the reel", Stance::Standing)
+            }),
+            Step::Shot(shot("-back")),
             Step::Call("the next body", |_| {
                 BODY.fetch_add(1, Ordering::Relaxed);
                 Ok(())

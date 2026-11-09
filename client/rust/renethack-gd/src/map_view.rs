@@ -891,6 +891,10 @@ struct Look {
     masonry: bool,
     /// Models of the branch's own on the cell (doors, candles).
     props: Vec<PlacedProp>,
+    /// A door or a doorway: the way its passage runs (a flat unit
+    /// vector). Whoever stands in it is knocked back along it only, never
+    /// into its frame.
+    passage: Option<Vector3>,
 }
 
 /// A branch's model on a cell: where, which way, how stretched.
@@ -1370,6 +1374,28 @@ impl Around {
 
 /// The unit vectors towards north, south, west, east (x, z).
 const SIDES: [(f32, f32); 4] = [(0.0, -1.0), (0.0, 1.0), (-1.0, 0.0), (1.0, 0.0)];
+
+/// The way a door's passage runs through its wall, the wall running along
+/// x (`wall_along_x`) or along z.
+fn passage(wall_along_x: bool) -> Vector3 {
+    if wall_along_x {
+        Vector3::new(0.0, 0.0, 1.0)
+    } else {
+        Vector3::new(1.0, 0.0, 0.0)
+    }
+}
+
+/// Which way a blow knocks back the one it struck: along `away`, or in a
+/// door or doorway (`passage`) along its passage only, so that nobody is
+/// pushed into the frame. None when nothing of it runs along the passage
+/// (a blow along the wall).
+fn knocked_back(away: Vector3, passage: Option<Vector3>) -> Option<Vector3> {
+    let Some(p) = passage else {
+        return Some(away);
+    };
+    let along = p * away.dot(p);
+    (along.length() > 0.1).then_some(along)
+}
 
 /// A terrain that matters in play, which a room's dressing keeps off and
 /// away from: a door or a doorway, stairs, a ladder, an altar, a trap and
@@ -2045,6 +2071,7 @@ fn terrain_base(
         Terrain::Doorway | Terrain::BrokenDoor => {
             floor(look);
             let along_x = around.wall_along_x();
+            look.passage = Some(passage(along_x));
             let wood = pbr(ctx.mat("wood"), 70, Role::Door, DEEP);
             door_frame(look, along_x, cut, ctx, wood, true);
             // a worn wooden threshold across the passage
@@ -2075,6 +2102,7 @@ fn terrain_base(
             let open = t == Terrain::OpenDoor;
             // the passage runs along x through a vertical wall
             let along_x = !vertical;
+            look.passage = Some(passage(along_x));
             let wood = pbr(art.material, SHADE_LIT, Role::Door, FLOOR_UNSEEN);
             let frame = pbr(art.material, 62, Role::Door, FLOOR_UNSEEN);
             match ctx.branch.door.filter(|_| !open && !cut) {
@@ -10160,8 +10188,10 @@ impl MapView {
     }
 
     /// The one struck at `cell` knocked back along `away` and back again
-    /// (`Motion::reel`), unless it is already moving (a blow of its own),
-    /// or rides (the steed under it stands).
+    /// to the very spot it stood on (`Motion::reel`), unless it is already
+    /// moving (a blow of its own), or rides (the steed under it stands).
+    /// In a door it is knocked back through the opening, not into the
+    /// frame (`knocked_back`).
     fn reel(&mut self, cell: (i32, i32), away: Vector3, hero: bool) {
         if self.motions.iter().any(|m| m.cell == cell) || (hero && self.rider.is_some()) {
             return;
@@ -10170,6 +10200,9 @@ impl MapView {
             return;
         };
         let Some(i) = nodes.look.entity.filter(|&i| i < nodes.models.len()) else {
+            return;
+        };
+        let Some(away) = knocked_back(away, nodes.look.passage) else {
             return;
         };
         let placed = &nodes.look.models[i];
@@ -11585,6 +11618,36 @@ mod tests {
             y(&wet),
             wet.ground
         );
+    }
+
+    #[test]
+    fn a_blow_knocks_one_in_a_door_back_through_it_not_into_its_frame() {
+        let x = Vector3::new(1.0, 0.0, 0.0);
+        let z = Vector3::new(0.0, 0.0, 1.0);
+        let slant = (x + z).normalized();
+        // in the open: the way the blow goes
+        assert_eq!(knocked_back(slant, None), Some(slant));
+        // in a door: through it only, never across it
+        assert_eq!(knocked_back(-z, Some(z)), Some(-z));
+        let through = knocked_back(slant, Some(z)).expect("a slanting blow");
+        assert!(through.x.abs() < 1e-6 && through.z > 0.5, "{through:?}");
+        assert_eq!(knocked_back(x, Some(z)), None, "a blow along the wall");
+        // the way each door's passage runs: through a wall along a row, z
+        let f = Fixture::new();
+        let orc = monster(&f.cat, "hill orc", 0);
+        for (sym, way) in [
+            ("S_hodoor", z),
+            ("S_vodoor", x),
+            ("S_hcdoor", z),
+            ("S_vcdoor", x),
+        ] {
+            let cell = Cell {
+                glyph: Some(orc.clone()),
+                ..feature(&f.cat, sym)
+            };
+            assert_eq!(f.look(&cell).passage, Some(way), "{sym}");
+        }
+        assert_eq!(f.look(&feature(&f.cat, "S_room")).passage, None);
     }
 
     #[test]

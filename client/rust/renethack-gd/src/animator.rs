@@ -39,7 +39,7 @@ const AFTER_BLOW: f64 = 0.15;
 const SWAY_ROLL: f32 = 6.0;
 /// A blow's reel: how far the one struck is knocked back (metres), and
 /// for how long, out and back.
-const REEL: f32 = 0.16;
+pub const REEL: f32 = 0.16;
 const REEL_SECS: f32 = 0.32;
 
 /// The walk clip's speed for a step of `secs`: the stride keeps up with
