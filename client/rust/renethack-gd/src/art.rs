@@ -300,6 +300,8 @@ struct CoatMaps {
     normal: Option<Gd<Texture2D>>,
     orm: Option<Gd<Texture2D>>,
     normal_scale: f32,
+    /// Light through it from behind (`Coat::backlight`).
+    backlight: Option<Color>,
 }
 
 impl CoatMaps {
@@ -323,6 +325,10 @@ impl CoatMaps {
             m.set_feature(Feature::AMBIENT_OCCLUSION, true);
             m.set_texture(TextureParam::AMBIENT_OCCLUSION, orm);
             m.set_ao_texture_channel(TextureChannel::RED);
+        }
+        if let Some(c) = self.backlight {
+            m.set_feature(Feature::BACKLIGHT, true);
+            m.set_backlight(c);
         }
     }
 }
@@ -3066,10 +3072,7 @@ impl Art {
     /// The coat a model lays over its surface of the material `name`
     /// (`ModelSpec::coat`): the maps of the coat's material, loaded.
     fn coat(&mut self, model: usize, name: &str) -> Option<CoatMaps> {
-        let coat = self.manifest.model_at(model).1.coat.clone()?;
-        if !coat.on.iter().any(|n| n == name) {
-            return None;
-        }
+        let coat = self.manifest.model_at(model).1.coat_on(name)?.clone();
         let i = self.manifest.material_index(&coat.material)?;
         let spec = self.manifest.material_at(i).1.clone();
         let mut load = |p: Option<String>| p.and_then(|p| self.texture(&p));
@@ -3080,6 +3083,7 @@ impl Art {
             normal: load(spec.normal_path()),
             orm: load(spec.arm_path()),
             normal_scale: spec.normal_scale,
+            backlight: coat.backlight.as_deref().and_then(nh_art::hex).map(rgb),
         })
     }
 

@@ -279,6 +279,10 @@ pub struct ModelSpec {
     /// scene's surfaces, their dye kept: a dragon's scales on its hide.
     #[serde(default)]
     pub coat: Option<Coat>,
+    /// More coats, each over surfaces of its own (a dragon's wings in a
+    /// veined membrane, its body in scales).
+    #[serde(default)]
+    pub coats: Vec<Coat>,
     /// Multiplies the meshes whose names end so ("_Arms": "#c89070"):
     /// sleeves the colour of bare skin; "=#rrggbb" dyes them that colour
     /// outright (a white robe: a product only darkens). A key "@Name" takes
@@ -397,6 +401,21 @@ pub struct Coat {
     /// model's own (a troll's hide over its painting).
     #[serde(default)]
     pub uv: bool,
+    /// Light through it from behind, of this colour ("#rrggbb"): a thin
+    /// membrane lit through, a wing's.
+    #[serde(default)]
+    pub backlight: Option<String>,
+}
+
+impl ModelSpec {
+    /// The coat laid over its surfaces of the material `name`, if one is
+    /// (`coat`, then `coats`).
+    pub fn coat_on(&self, name: &str) -> Option<&Coat> {
+        self.coat
+            .iter()
+            .chain(&self.coats)
+            .find(|c| c.on.iter().any(|n| n == name))
+    }
 }
 
 /// What a role wears on its feet without boots (`ModelSpec::feet`): the
@@ -542,6 +561,7 @@ impl ModelSpec {
             || self.rim.is_some()
             || self.glow.is_some()
             || self.coat.is_some()
+            || !self.coats.is_empty()
     }
 
     pub fn glow_rgb(&self) -> Option<[f32; 3]> {
@@ -1491,6 +1511,7 @@ impl ArtManifest {
             glow_energy: 0.0,
             smooth: false,
             coat: None,
+            coats: Vec::new(),
             recolor: BTreeMap::new(),
             dress: BTreeMap::new(),
             armour: BTreeMap::new(),

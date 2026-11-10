@@ -230,17 +230,9 @@ def fur(size=512, seed="fur"):
     return {"albedo": albedo, "normal": normals(height, 2.5), "arm": arm}
 
 
-def scales(size=512, rows=8, seed="scales"):
-    """Overlapping scales that take a tint, in rows offset by half a scale,
-    each a rounded shield keeled down its middle, its free edge down the
-    image over the root of the one below; dark in the gaps between. Their
-    middles glossier than their edges (roughness about 0.6 to 0.8). It
-    tiles. The albedo, normal and ORM maps."""
-    rng = random.Random(seed)
-    cols = rows
-    cw, rh = size / cols, size / rows
-    # one scale: a dome shaped like a shield, its keel, and where it is
-    sw, sh = round(cw * 1.16), round(rh * 1.7)
+def scale_dome(sw, sh, rise_k=1.0):
+    """One scale: a dome shaped like a shield, keeled down its middle, its
+    root at the top narrower, its free edge round; and its mask."""
     dome = Image.new("L", (sw, sh), 0)
     mask = Image.new("L", (sw, sh), 0)
     px, pm = dome.load(), mask.load()
@@ -248,37 +240,122 @@ def scales(size=512, rows=8, seed="scales"):
         for x in range(sw):
             u = (x + 0.5) / sw * 2 - 1
             t = (y + 0.5) / sh
-            # narrower toward its root (the top), round at its free edge
             half = 0.62 + 0.38 * math.sin(min(1.0, t * 1.25) * math.pi / 2)
             edge = 1 - (max(0.0, t - 0.55) / 0.45) ** 2
             if abs(u) > half * math.sqrt(max(0.0, edge)):
                 continue
             r = abs(u) / max(1e-3, half * math.sqrt(max(1e-3, edge)))
-            rise = 0.35 + 0.65 * t
-            keel = max(0.0, 1 - abs(u) * 6) * 0.25 * t
-            px[x, y] = max(1, round(255 * (rise * (1 - r ** 3) * 0.8 + keel)))
+            rise = (0.35 + 0.65 * t) * rise_k
+            keel = max(0.0, 1 - abs(u) * 6) * 0.3 * t
+            px[x, y] = max(1, min(255, round(255 * (rise * (1 - r ** 3) * 0.8 + keel))))
             pm[x, y] = 255
-    # the lowest row first, each over the one below it, on a taller sheet
-    # (two rows more above and below) so the overlaps run on across the
-    # seam; the rows repeat (an even number of them)
+    return dome, mask
+
+
+def scales(size=512, rows=8, seed="scales"):
+    """Overlapping scales that take a tint, in rows offset by half a scale,
+    each a rounded shield keeled down its middle, its free edge down the
+    image over the root of the one below; dark in the gaps between. No two
+    alike: each its own size, lean, height and shade, set a little off its
+    place, a few chipped at the edge, the rows swelling and narrowing
+    (not a printed hex). Their middles glossier than their edges. It
+    tiles. The albedo, normal and ORM maps."""
+    rng = random.Random(seed)
+    cols = rows
+    cw, rh = size / cols, size / rows
     pad = 2 * rh
-    jitter = [[rng.uniform(-1, 1) for _ in range(cols)] for _ in range(rows)]
+    # each scale's own (by its row and column, the rows repeating): size,
+    # lean, how high it stands, its shade, where it sits, a chip
+    own = [[{
+        "k": rng.uniform(0.8, 1.22) * (1.0 + 0.12 * math.sin(r / rows * math.tau)),
+        "lean": rng.uniform(-11, 11),
+        "rise": rng.uniform(0.7, 1.15),
+        "tone": rng.uniform(-22, 18),
+        "dx": rng.uniform(-0.17, 0.17) * cw,
+        "dy": rng.uniform(-0.1, 0.1) * rh,
+        "chip": rng.random() < 0.1,
+    } for _ in range(cols)] for r in range(rows)]
     tall = Image.new("L", (size, round(size + 2 * pad)), 0)
+    tone = Image.new("L", tall.size, 128)
     for r in range(rows + 2, -3, -1):
         for c in range(cols):
-            x = round((c + 0.5 * (r % 2)) * cw - sw / 2 + jitter[r % rows][c])
-            y = round(pad + (r - 0.7) * rh)
+            o = own[r % rows][c]
+            sw, sh = round(cw * 1.16 * o["k"]), round(rh * 1.7 * o["k"])
+            dome, mask = scale_dome(sw, sh, o["rise"])
+            if o["chip"]:
+                d = ImageDraw.Draw(mask)
+                cx = rng.uniform(0.2, 0.8) * sw
+                d.ellipse([cx - sw * 0.08, sh * 0.88, cx + sw * 0.08, sh * 1.06], fill=0)
+            dome = dome.rotate(o["lean"], resample=Image.BICUBIC)
+            mask = mask.rotate(o["lean"], resample=Image.BICUBIC)
+            shade = Image.new("L", (sw, sh), max(0, min(255, round(128 + o["tone"]))))
+            x = round((c + 0.5 * (r % 2)) * cw - sw / 2 + o["dx"])
+            y = round(pad + (r - 0.7) * rh + o["dy"] - (sh - rh * 1.7) * 0.5)
             for dx in (-size, 0, size):
                 tall.paste(dome, (x + dx, y), mask)
+                tone.paste(shade, (x + dx, y), mask)
     height = tall.crop((0, round(pad), size, round(pad) + size))
+    tone = tone.crop((0, round(pad), size, round(pad) + size))
     height = height.filter(ImageFilter.GaussianBlur(0.8))
-    mottle = noise(rng, (size, size), 5)
-    light = ImageChops.add(height.point(lambda v: round(110 + v * 0.5)), mottle.point(lambda v: v * 30 // 255))
+    # the hide under them swelling and sinking a little
+    swell = noise(rng, (size, size), 4)
+    height = ImageChops.add(height.point(lambda v: round(v * 0.88)), swell.point(lambda v: v * 30 // 255))
+    mottle = noise(rng, (size, size), 7)
+    light = ImageChops.add(height.point(lambda v: round(100 + v * 0.5)), mottle.point(lambda v: v * 26 // 255))
+    light = ImageChops.add(light, tone, scale=1.0, offset=-128)
     albedo = Image.merge("RGB", [light] * 3)
-    ao = hollows(height, 8, 0.9)
-    rough = height.point(lambda v: round(205 - v * 0.2))
+    ao = hollows(height, 8, 1.0)
+    rough = height.point(lambda v: round(215 - v * 0.25))
     arm = Image.merge("RGB", [ao, rough, Image.new("L", (size, size), 0)])
-    return {"albedo": albedo, "normal": normals(height, 3.0), "arm": arm}
+    return {"albedo": albedo, "normal": normals(height, 4.0), "arm": arm}
+
+
+def membrane(size=512, seed="membrane"):
+    """A wing's membrane that takes a tint: thin skin stretched between
+    the fingers, veins branching across it (raised, a shade darker), finer
+    veinlets between, the skin creased and blotched; less rough than a
+    hide, a little glossy where it is stretched. It tiles. The albedo,
+    normal and ORM maps."""
+    rng = random.Random(seed)
+    height = Image.new("L", (size, size), 70)
+    d = ImageDraw.Draw(height)
+
+    def vein(x, y, angle, length, width, depth):
+        pts = [(x, y)]
+        for _ in range(12):
+            angle += rng.uniform(-0.28, 0.28)
+            step = length / 12
+            x, y = x + math.cos(angle) * step, y + math.sin(angle) * step
+            pts.append((x, y))
+        for i in range(len(pts) - 1):
+            a, b = pts[i], pts[i + 1]
+            w = max(2, round(width * (1 - i / len(pts) * 0.55)))
+            at_every_wrap(size, lambda dx, dy: d.line(
+                [(a[0] + dx, a[1] + dy), (b[0] + dx, b[1] + dy)], fill=175, width=w))
+        if depth > 0:
+            for _ in range(rng.randint(1, 2)):
+                k = rng.randint(3, 8)
+                bx, by = pts[k]
+                vein(bx, by, angle + rng.choice((-1, 1)) * rng.uniform(0.4, 0.9),
+                     length * rng.uniform(0.4, 0.55), max(2, round(width * 0.55)), depth - 1)
+
+    # broad veins fanned the same way (the fingers'), and what branches off
+    fan = rng.uniform(0, math.tau)
+    for i in range(4):
+        vein(size * (i + rng.uniform(0.2, 0.8)) / 4, rng.uniform(0, size),
+             fan + rng.uniform(-0.35, 0.35), size * rng.uniform(0.7, 0.95), 13, 2)
+    height = height.filter(ImageFilter.GaussianBlur(1.6))
+    creases = noise(rng, (size, size), 12)
+    height = ImageChops.add(height, creases.point(lambda v: v * 22 // 255))
+    blotch = noise(rng, (size, size), 6)
+    veins = above(height, 120, 60)
+    skin = blotch.point(lambda v: 150 + v * 45 // 255)
+    light = ImageChops.subtract(skin, veins.point(lambda v: v * 40 // 255))
+    albedo = Image.merge("RGB", [light, light.point(lambda v: round(v * 0.94)), light.point(lambda v: round(v * 0.9))])
+    ao = hollows(height, 5, 0.6)
+    rough = height.point(lambda v: round(165 - v * 0.15))
+    arm = Image.merge("RGB", [ao, rough, Image.new("L", (size, size), 0)])
+    return {"albedo": albedo, "normal": normals(height, 2.5), "arm": arm}
 
 
 def weave(size=512, threads=32, seed="weave"):

@@ -486,7 +486,8 @@ def do_painted(w, item):
         return
     elif item["paint"] == "relief":
         image = art_paint.relief(source(), item["radius"], item["light"])
-    elif item["paint"] in ("fur", "scales", "weave", "floral", "forged", "winingas", "lames", "ringmail"):
+    elif item["paint"] in ("fur", "scales", "membrane", "weave", "floral", "forged", "winingas", "lames",
+                           "ringmail"):
         # a material's maps from nothing (or baked on meshes of a .gltf
         # under ART by their UVs: `from`, `mesh` or `meshes`): `out` and
         # the map's name
