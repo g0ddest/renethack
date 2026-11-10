@@ -5767,6 +5767,9 @@ impl MapView {
             .global_shader_parameter_set("branch_floor_memory", &l.floor_memory.to_variant());
         RenderingServer::singleton()
             .global_shader_parameter_set("branch_strata", &l.strata.to_variant());
+        if let Some(m) = self.post_mat.as_mut() {
+            m.set_shader_parameter("cool_amount", &l.cool_shadows.to_variant());
+        }
         self.vfx.set_dust(l.dust, l.embers);
         // the dust force strikes from the level's stone, in its colour
         // (the walls' material's, by the texture's middle tone)

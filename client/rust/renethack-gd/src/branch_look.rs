@@ -267,6 +267,10 @@ pub struct BranchLook {
     /// Light falls from high above in shafts over its lit floor, seen in
     /// its haze (the Big Room: a vast hall).
     pub shafts: bool,
+    /// How much of the frame's split tone's cool its shadows take (1: all;
+    /// none where the dark is the fire's: Gehennom's red haze, cooled,
+    /// turned grey).
+    pub cool_shadows: f32,
 }
 
 const NEUTRAL: Grade = Grade {
@@ -341,6 +345,7 @@ const MAIN: BranchLook = BranchLook {
     sanctum: false,
     mist: false,
     shafts: false,
+    cool_shadows: 1.0,
 };
 
 /// The look of a branch.
@@ -454,6 +459,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
             dust: 1.5,
             // (its darkness tuned without it: the fire alone shines on iron)
             reflect: 0.05,
+            cool_shadows: 0.0,
             dress: Dress {
                 // in colours and iron the fire lights: black on its black
                 // stone showed nothing
@@ -623,6 +629,7 @@ fn plane_look(plane: Plane) -> BranchLook {
             fog_density: 0.006,
             creature_key: Some((Vector3::new(-40.0, 15.0, 0.0), rgb(1.0, 0.97, 0.92), 1.8)),
             darkness: rgb(0.08, 0.015, 0.005),
+            cool_shadows: 0.0,
             cracks: 1.4,
             embers: true,
             reflect: 0.3,
