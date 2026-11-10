@@ -998,25 +998,44 @@ pub(super) fn end_tabs() -> Vec<Step> {
                 .map(|c| KeyInput::plain(Key::Char(c)))
                 .ok_or_else(|| "no sack".into())
         }),
-        Step::Request("what to do with the sack", |p| !command(p)),
-        key('i'),
-        // the potions' class, and every one of it
-        Step::Request("what type to put in", is_menu),
-        Step::KeyFrom("the potions' class", |g| {
-            let Some((_, Prompt::Menu { items, .. })) = g.pending.as_ref() else {
-                return Err("no menu".into());
-            };
-            (items.iter())
-                .find(|i| i.str.as_deref().is_some_and(|t| t.contains("Potion")))
-                .and_then(|i| u32::try_from(i.ch).ok().and_then(char::from_u32))
-                .map(|c| KeyInput::plain(Key::Char(c)))
-                .ok_or_else(|| "no potions' class".into())
+        // the empty sack's panel: the pack to put in (the client answers
+        // NetHack's "do what" and "what types" itself)
+        Step::Wait("the sack's panel, on the put-in list", |g| {
+            fail_on_error_screen(g)?;
+            let putting = matches!(&g.pending,
+                Some((_, Prompt::Menu { title: Some(t), .. })) if t == "Put in what?");
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(putting && ui.dialogs.loot_pack_letters().is_some())
         }),
-        key('A'),
-        Step::Key(KeyInput::plain(Key::Enter)),
+        Step::Call("the potion marked", |g| {
+            let potion = letter_of(g, "potion").ok_or("no potion")?;
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            let rows = ui.dialogs.loot_pack_letters().ok_or("no panel")?;
+            let row = (rows.iter())
+                .position(|c| *c == potion)
+                .ok_or("the potion not in the pack's column")?;
+            let req = g.pending.as_ref().map(|(id, _)| *id).ok_or("no request")?;
+            let ev = DialogEvent::LootToggle {
+                column: crate::loot_view::PACK,
+                row,
+            };
+            g.push_ui(UiEvent::Dialog { req, ev });
+            Ok(())
+        }),
+        Step::Wait("marked", |g| {
+            let ui = g.ui.as_ref().ok_or("no UI")?;
+            Ok(ui
+                .dialogs
+                .loot_state()
+                .is_some_and(|(_, m, _)| m[crate::loot_view::PACK].len() == 1))
+        }),
+        Step::Press(godot::global::Key::ENTER, '\0', false),
         Step::AnswerUntil(' ', "a command, the potion in the sack", |g| {
             fail_on_error_screen(g)?;
             Ok(matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+        Step::Wait("the potion no longer in the pack", |g| {
+            Ok(letter_of(g, "potion").is_none())
         }),
     ]);
     // newts genocided
