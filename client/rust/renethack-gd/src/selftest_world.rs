@@ -819,8 +819,14 @@ pub(super) fn lighting() -> Vec<Step> {
     if wanted("minetown") || wanted("mines9") {
         arrive(&mut steps, "", Some(|g| entry_key(g, "minetn")));
         pair(&mut steps, "lighting-minetown");
-        // (a filler level below it, unlit)
-        arrive(&mut steps, "9", None);
+        // (a filler level below it, unlit; `RENETHACK_LIGHTING_MINES`
+        // another depth)
+        let deep: &'static str = Box::leak(
+            std::env::var("RENETHACK_LIGHTING_MINES")
+                .unwrap_or_else(|_| "9".into())
+                .into_boxed_str(),
+        );
+        arrive(&mut steps, deep, None);
         pair(&mut steps, "lighting-mines9");
     }
     if wanted("valley") {

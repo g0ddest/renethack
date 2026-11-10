@@ -309,8 +309,14 @@ const UNDERGLOW_ENERGY: f32 = 0.9;
 /// The low light round the hero outside a lit room: its colour, how far
 /// it reaches (about three cells about them) and how high it hangs.
 const NEAR_FILL: Color = Color::from_rgb(0.86, 0.84, 0.82);
-const NEAR_FILL_RANGE: f32 = 4.0;
+const NEAR_FILL_RANGE: f32 = 7.5;
+/// How much more than the branch's own `near_fill` it gives (at 4 m and
+/// as bright, under the hero's own pool, it showed nowhere).
+const NEAR_FILL_GAIN: f32 = 1.5;
 const NEAR_FILL_HEIGHT: f32 = 1.6;
+/// The hero stands in a lit room, out of the near fill, where this many of
+/// the 25 cells two about them are a lit floor.
+const NEAR_FILL_LIT: usize = 14;
 const GALLERY_FILL: f32 = 2.5;
 /// The faces of the rock mass, a little over the material's own colour:
 /// in the hero's light they are what shows of the rock (its tops and the
@@ -4722,7 +4728,7 @@ impl MapView {
         let mut near_fill = OmniLight3D::new_alloc();
         near_fill.set_color(NEAR_FILL);
         near_fill.set_param(Param::RANGE, NEAR_FILL_RANGE);
-        near_fill.set_param(Param::ATTENUATION, 0.7);
+        near_fill.set_param(Param::ATTENUATION, 1.0);
         near_fill.set_param(Param::SPECULAR, 0.0);
         near_fill.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
         near_fill.set_shadow(false);
@@ -5319,10 +5325,17 @@ impl MapView {
                 }
                 // outside a lit room a low light all round them, so what
                 // is drawn about them reads in the dark
-                let in_lit = self.cells.get(&(x, y)).is_some_and(|n| n.look.lit);
+                // (the floor the hero sees beside them always shows lit, in
+                // a dark room too: a lit room is lit two cells about)
+                let lit_about = (-2..=2)
+                    .flat_map(|dy| (-2..=2).map(move |dx| (x + dx, y + dy)))
+                    .filter(|c| self.cells.get(c).is_some_and(|n| n.look.lit))
+                    .count();
+                let in_lit = lit_about >= NEAR_FILL_LIT;
                 let fill = self.branch_look.near_fill;
                 if fill > 0.0 && !in_lit {
-                    self.near_fill.set_param(Param::ENERGY, fill);
+                    self.near_fill
+                        .set_param(Param::ENERGY, fill * NEAR_FILL_GAIN);
                     self.near_fill
                         .set_position(p + at(0.0, NEAR_FILL_HEIGHT, 0.0));
                     self.near_fill.set_visible(true);
