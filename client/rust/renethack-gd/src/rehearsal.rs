@@ -544,11 +544,11 @@ impl Rehearsal {
             }
             Some(7) => {
                 let ground = Vector3::new((X0 + 6) as f32, 0.0, (Y0 + 4) as f32);
-                map.vfx().blast(Blast::Fiery, true, red, ground);
+                map.vfx().blast(Blast::Fiery, (0, 0), red, ground);
             }
             Some(8) => {
                 let ground = Vector3::new((X0 + 7) as f32, 0.0, (Y0 + 4) as f32);
-                map.vfx().blast(Blast::Fiery, false, red, ground);
+                map.vfx().blast(Blast::Fiery, (1, 0), red, ground);
             }
             // what the prologue's scenes stand beside their levels
             Some(9) => map.warm_prologue(),

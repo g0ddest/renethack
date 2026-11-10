@@ -1118,6 +1118,17 @@ const EMBER: Color = Color::from_rgb(1.0, 0.36, 0.07);
 /// stone it struck (metres) at its foot.
 const STRIKE_MARK: f32 = 1.7;
 const STRIKE_MARK_BACK: f32 = 0.35;
+/// A ray bursts on a creature once in this long (seconds): its bounce
+/// crosses it again.
+const RAY_HIT_ONCE: f32 = 1.2;
+/// A cold ray seen no longer than this (metres) was zapped point-blank;
+/// rays run this high over the floor (map_view's `bright_flash`).
+const POINT_BLANK: f32 = 2.4;
+const RAY_OVER: f32 = 0.6;
+/// A cold ray's strike: its frost burst's ball (radius, metres) and the
+/// rime it leaves (metres across).
+const FROST_BURST: f32 = 0.9;
+const FROST_RIME: f32 = 2.6;
 /// A strike's flash this far off the stone it strikes (metres): half of
 /// it was buried in the wall.
 const IMPACT_OFF: f32 = 0.25;
@@ -1135,8 +1146,20 @@ const SHED_AFTER: f32 = 0.15;
 /// A ray this long (metres) or longer sheds a trail's whole amount.
 const TRAIL_FULL: f32 = 8.0;
 /// An explosion's cell sheds this share of what its kind's ray would along
-/// a whole trail: a cloud of it.
+/// a whole trail: a cloud of it, a ball this wide (radius, metres).
 const BLAST_SHARE: f32 = 0.5;
+const BLAST_BALL: f32 = 0.55;
+/// An explosion's cells beside its heart burst this far nearer it (in
+/// cells), its corners further and with this share of the rest: the whole
+/// round, its edge about a cell and a half from the heart.
+const BLAST_PULL: f32 = 0.25;
+const BLAST_PULL_CORNER: f32 = 0.45;
+const BLAST_CORNER: f32 = 0.75;
+/// A fire's cells: their flames this large, leaning out from the heart
+/// (this much up for one out), and the ball of flame at the heart's foot.
+const BLAST_BLAZE: f32 = 1.3;
+const BLAST_LEAN: f32 = 1.1;
+const BLAST_HEART_BLAZE: f32 = 2.2;
 /// Pieces of a ray drawn by the map this lately (seconds) were the ray of
 /// the hero's own zap, shown before the hero's use is (`ray_lately`).
 const RAY_LATELY: f32 = 1.5;
@@ -1207,6 +1230,9 @@ pub struct Vfx {
     /// A piece of a ray with no way of its own that came alone (a wand of
     /// digging's first cell): (kind, colour, where, when).
     loose: Option<(Ray, Color, Vector3, f32)>,
+    /// The creatures a ray burst on lately: their cells and when (a ray
+    /// that bounces back crosses them again).
+    hits: Vec<((i32, i32), f32)>,
     /// A number for the next ray's pattern.
     rays_drawn: u32,
     columns: Vec<Column>,
@@ -1524,6 +1550,7 @@ impl Vfx {
             beams: Vec::new(),
             last_piece: f32::NEG_INFINITY,
             loose: None,
+            hits: Vec::new(),
             rays_drawn: 0,
             columns: Vec::new(),
             flame_shader: godot::tools::try_load::<Shader>("res://shaders/flame.gdshader").ok(),
@@ -1618,13 +1645,7 @@ impl Vfx {
                 self.emit_by(Recipe::Embers, rgb(1.0, 0.55, 0.2), near, Some(out), 1.2);
                 self.flash(near, fire, 5.0, 0.9, 4.0);
             }
-            Ray::Cold => {
-                let ice = rgb(0.56, 0.88, 1.0);
-                self.emit_by(Recipe::Shards, ice, near, Some(out), 1.6);
-                self.emit_by(Recipe::Glints, ice, near, None, 2.2);
-                self.emit_by(Recipe::Cloud, rgb(0.78, 0.9, 1.0), near, Some(out), 1.2);
-                self.flash(near, ice, 5.0, 0.8, 4.0);
-            }
+            Ray::Cold => self.frost_burst(near + back * 0.2, Some(out), foot + back * 0.3),
             Ray::Lightning => {
                 let bolt = rgb(0.85, 0.9, 1.0);
                 self.emit_by(Recipe::Bolts, bolt, near, None, 1.4);
@@ -1648,9 +1669,46 @@ impl Vfx {
             Ray::Death => self.shade(near, 3.0, 0.8, 3.5),
             Ray::Dig | Ray::Force => {}
         }
-        if let Some((mark, size)) = kind.mark(color) {
+        // (cold's rime is its burst's own, wider)
+        if let Some((mark, size)) = kind.mark(color)
+            && kind != Ray::Cold
+        {
             self.mark(mark, foot, size * STRIKE_MARK);
         }
+    }
+
+    /// A cold ray's burst at `at`: shards flung out (along `out`, else all
+    /// round), rime and a cold haze in a ball a cell or two wide, glints,
+    /// its light, and the rime it leaves on the floor at `foot`.
+    fn frost_burst(&mut self, at: Vector3, out: Option<Vector3>, foot: Vector3) {
+        let rgb = Color::from_rgb;
+        let ice = rgb(0.56, 0.88, 1.0);
+        let haze = rgb(0.78, 0.9, 1.0);
+        self.emit_by(Recipe::Shards, ice, at, out, 2.2);
+        self.emit_ball(Recipe::Rime, ice, at, 1.0, FROST_BURST);
+        self.emit_ball(Recipe::Haze, haze, at, 0.7, FROST_BURST);
+        self.emit_by(Recipe::Glints, ice, at, None, 2.6);
+        self.emit_by(Recipe::Cloud, haze, at, out, 1.6);
+        self.flash(at, ice, 6.0, 1.0, 5.0);
+        self.mark(Mark::Frost, foot, FROST_RIME);
+    }
+
+    /// A ray of `kind` crossing a creature at `at` (the ray's height over
+    /// its cell; `foot` the floor there): cold bursts into frost on it, a
+    /// cell or two wide (at point-blank the ray is all but hidden behind
+    /// the creature it strikes). Once a creature a ray, its bounce too.
+    pub fn ray_hit(&mut self, kind: Ray, at: Vector3, foot: Vector3) {
+        if kind != Ray::Cold {
+            return;
+        }
+        let cell = (foot.x.round() as i32, foot.z.round() as i32);
+        let now = self.clock;
+        self.hits.retain(|&(_, when)| now - when < RAY_HIT_ONCE);
+        if self.hits.iter().any(|&(c, _)| c == cell) {
+            return;
+        }
+        self.hits.push((cell, now));
+        self.frost_burst(at, None, foot);
     }
 
     /// A body come down on the floor at `at` (its feet), `size` metres
@@ -1823,10 +1881,32 @@ impl Vfx {
         }
     }
 
-    /// A cell of an explosion of `kind` (`heart`: its middle one) at
-    /// `at` on the ground, `color` its glyph's: each kind as what it is.
-    pub fn blast(&mut self, kind: Blast, heart: bool, color: Color, at: Vector3) {
+    /// A cell of an explosion of `kind` at `at` on the ground, `off` its
+    /// place from the explosion's middle (x and y each -1..1; (0, 0) the
+    /// heart), `color` its glyph's: each kind as what it is. The cells
+    /// round the heart burst from nearer it (the corners nearer still, and
+    /// less), so that the whole is round and not a box of nine; a fire's
+    /// flames lean out from the heart and lick past the cells' edges.
+    pub fn blast(&mut self, kind: Blast, off: (i32, i32), color: Color, at: Vector3) {
         self.last_blast = self.clock;
+        let heart = off == (0, 0);
+        let corner = off.0 != 0 && off.1 != 0;
+        // the way out from the heart (none at the heart)
+        let out = Vector3::new(off.0 as f32, 0.0, off.1 as f32)
+            .try_normalized()
+            .unwrap_or(Vector3::ZERO);
+        let pull = if corner {
+            BLAST_PULL_CORNER
+        } else {
+            BLAST_PULL
+        };
+        let at = at - Vector3::new(off.0 as f32, 0.0, off.1 as f32) * pull;
+        let share = if corner {
+            BLAST_SHARE * BLAST_CORNER
+        } else {
+            BLAST_SHARE
+        };
+        let size = if corner { BLAST_CORNER } else { 1.0 };
         let mid = at + Vector3::new(0.0, 0.6, 0.0);
         let rgb = Color::from_rgb;
         match kind {
@@ -1834,32 +1914,43 @@ impl Vfx {
                 self.last_fire = self.clock;
                 let fire = rgb(1.0, 0.5, 0.16);
                 if heart {
-                    // a tower of flame, a column of fire rolling up it,
-                    // embers flung out, the scorch it leaves
+                    // a tower of flame, a column of fire rolling up it, a
+                    // ball of flame round its foot, embers flung out, the
+                    // scorch it leaves
                     self.column(at);
                     self.emit(Recipe::Pillar, fire, at + Vector3::new(0.0, 0.3, 0.0), None);
+                    let low = at + Vector3::new(0.0, 0.3, 0.0);
+                    self.emit_by(Recipe::Blaze, fire, low, None, BLAST_HEART_BLAZE);
                     self.emit(Recipe::Embers, rgb(1.0, 0.55, 0.2), mid, None);
                     self.flash(at + Vector3::new(0.0, 1.4, 0.0), fire, 7.0, 1.3, 5.0);
-                    self.mark(Mark::Scorch(EMBER), at, 2.4);
+                    self.mark(Mark::Scorch(EMBER), at, 2.6);
                 } else {
-                    self.emit(Recipe::Blaze, fire, at + Vector3::new(0.0, 0.25, 0.0), None);
-                    self.mark(Mark::Scorch(EMBER), at, 1.2);
+                    // flames leaning out from the heart
+                    let lean = (out + Vector3::UP * BLAST_LEAN).normalized();
+                    let low = at + Vector3::new(0.0, 0.25, 0.0);
+                    self.emit_by(Recipe::Blaze, fire, low, Some(lean), BLAST_BLAZE * size);
+                    self.mark(Mark::Scorch(EMBER), at, 1.2 * size);
                 }
             }
             Blast::Frosty => {
                 let ice = rgb(0.62, 0.86, 1.0);
-                self.emit(Recipe::Shards, ice, mid, None);
-                self.emit_in_cell(Recipe::Rime, ice, mid, BLAST_SHARE);
-                self.emit_in_cell(Recipe::Haze, rgb(0.75, 0.86, 0.95), mid, BLAST_SHARE);
+                let lean = if heart {
+                    None
+                } else {
+                    Some((out + Vector3::UP).normalized())
+                };
+                self.emit(Recipe::Shards, ice, mid, lean);
+                self.emit_in_cell(Recipe::Rime, ice, mid, share);
+                self.emit_in_cell(Recipe::Haze, rgb(0.75, 0.86, 0.95), mid, share);
                 if heart {
                     self.flash(mid, ice, 3.0, 0.5, 4.0);
                 }
-                self.mark(Mark::Frost, at, if heart { 1.8 } else { 1.2 });
+                self.mark(Mark::Frost, at, if heart { 1.9 } else { 1.2 * size });
             }
             // a cloud of its gas over the cell, lit green from within
             Blast::Noxious => {
                 let gas = rgb(0.55, 0.78, 0.2);
-                self.emit_in_cell(Recipe::Gas, gas, mid, BLAST_SHARE);
+                self.emit_in_cell(Recipe::Gas, gas, mid, share);
                 if heart {
                     self.flash(mid, gas, 2.5, 0.9, 4.0);
                     self.mark(Mark::Etch(gas), at, 1.4);
@@ -1867,7 +1958,7 @@ impl Vfx {
             }
             // black smoke, the light round it put out a moment
             Blast::Dark => {
-                self.emit_in_cell(Recipe::Smoke, color, mid, BLAST_SHARE);
+                self.emit_in_cell(Recipe::Smoke, color, mid, share);
                 if heart {
                     self.shade(mid, 3.0, 1.2, 4.5);
                 }
@@ -1883,14 +1974,14 @@ impl Vfx {
                 let up = Some(Vector3::UP);
                 if kind == Blast::Wet {
                     self.emit(Recipe::Spray, drops, mid, up);
-                    self.emit_in_cell(Recipe::Gas, mist, mid, BLAST_SHARE);
+                    self.emit_in_cell(Recipe::Gas, mist, mid, share);
                     if heart {
                         self.flash(mid, drops, 1.6, 0.6, 3.5);
                     }
                 } else {
                     self.emit(Recipe::Grit, drops, mid, up);
-                    self.emit_in_cell(Recipe::Gas, mist, mid, BLAST_SHARE);
-                    self.splat(at, drops, 1.0);
+                    self.emit_in_cell(Recipe::Gas, mist, mid, share);
+                    self.splat(at, drops, size);
                 }
                 self.emit(Recipe::Droplets, drops, mid, None);
             }
@@ -1900,14 +1991,21 @@ impl Vfx {
                 if heart {
                     self.flash(mid, color, 4.0, 0.4, 4.0);
                 }
-                self.mark(Mark::Glitter(color), at, 1.2);
+                self.mark(Mark::Glitter(color), at, 1.2 * size);
             }
         }
     }
 
-    /// What a ray of its kind sheds, shed over a cell about `at` instead
-    /// (an explosion's cell): the box of a cell, `share` of the amount.
+    /// What a ray of its kind sheds, shed round `at` instead (an
+    /// explosion's cell): a ball about a cell wide (`BLAST_BALL`), `share`
+    /// of the amount.
     fn emit_in_cell(&mut self, recipe: Recipe, color: Color, at: Vector3, share: f32) {
+        self.emit_ball(recipe, color, at, share, BLAST_BALL);
+    }
+
+    /// What a ray of its kind sheds, shed in a ball of `radius` metres
+    /// round `at`, `share` of the amount.
+    fn emit_ball(&mut self, recipe: Recipe, color: Color, at: Vector3, share: f32, radius: f32) {
         let i = self.take_emitter(recipe);
         let Some(e) = self
             .emitters
@@ -1918,8 +2016,8 @@ impl Vfx {
         };
         let color = recipe.own_color().unwrap_or(color);
         e.process.set_color_ramp(&ramp_of(recipe, color));
-        e.process
-            .set_emission_box_extents(Vector3::new(0.45, 0.35, 0.45));
+        e.process.set_emission_shape(EmissionShape::SPHERE);
+        e.process.set_emission_sphere_radius(radius);
         e.node.set_transform(Transform3D::new(Basis::IDENTITY, at));
         e.node.set_amount_ratio(share);
         e.node.set_visibility_aabb(Aabb::new(
@@ -2279,6 +2377,8 @@ impl Vfx {
             };
             let color = recipe.own_color().unwrap_or(color);
             e.process.set_color_ramp(&ramp_of(recipe, color));
+            // (a blast's cell left it a ball)
+            e.process.set_emission_shape(EmissionShape::BOX);
             e.process
                 .set_emission_box_extents(Vector3::new(0.07, 0.07, len / 2.0));
             e.node.set_transform(at);
@@ -2578,15 +2678,21 @@ impl Vfx {
             // for a moment): it sheds what it sheds
             if !b.shed && b.age >= if b.whole { RUN_SECS } else { SHED_AFTER } {
                 b.shed = true;
-                due_shed.push((b.kind, b.color, b.from, b.to));
+                due_shed.push((b.kind, b.color, b.from, b.to, b.capped.is_empty()));
             }
             if !b.live() {
                 b.node.set_visible(false);
                 b.light.set_visible(false);
             }
         }
-        for (kind, color, from, to) in due_shed {
+        for (kind, color, from, to, unstruck) in due_shed {
             self.shed(kind, color, from, to);
+            // a cold ray seen only a cell or two (point-blank: it struck
+            // what stands there, or went on unseen) bursts at its end
+            if kind == Ray::Cold && unstruck && from.distance_to(to) < POINT_BLANK {
+                let foot = to - Vector3::new(0.0, RAY_OVER, 0.0);
+                self.ray_hit(kind, to, foot);
+            }
         }
         for c in &mut self.columns {
             if c.age >= COLUMN_SECS {
@@ -2681,6 +2787,7 @@ impl Vfx {
             b.light.set_visible(false);
         }
         self.loose = None;
+        self.hits.clear();
         for c in &mut self.columns {
             c.age = COLUMN_SECS;
             c.root.set_visible(false);

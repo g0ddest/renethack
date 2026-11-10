@@ -1044,7 +1044,8 @@ struct Look {
     lamp: Option<Lamp>,
     /// An explosion shows here: (what of, the glyph's colour, whether this
     /// is its middle).
-    blast: Option<(Blast, Color, bool)>,
+    /// An explosion's cell: its kind, colour and place from its heart.
+    blast: Option<(Blast, Color, (i32, i32))>,
     /// A ray crosses here: (what of, the glyph's colour, its yaw if it
     /// shows its way, height).
     ray: Option<(Ray, Color, Option<f32>, f32)>,
@@ -3428,11 +3429,13 @@ fn entity_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
         GlyphKind::Explosion => {
             // what it is of is in its number, and which of its cells
             let n = g.glyph.map_or(-1, |n| n - ctx.catalog.glyphs.explode);
-            let (kind, heart) = match n {
-                0..63 => (Blast::of_type(n / 9), n % 9 == 4),
-                _ => (Blast::Fiery, false),
+            // (its nine cells row by row from the top left, the fifth
+            // the heart)
+            let (kind, off) = match n {
+                0..63 => (Blast::of_type(n / 9), (n % 3 - 1, n % 9 / 3 - 1)),
+                _ => (Blast::Fiery, (1, 0)),
             };
-            blast_flash(look, kind, heart, g);
+            blast_flash(look, kind, off, g);
         }
         // the engulfer is drawn once, around the hero
         _ => {}
@@ -3781,16 +3784,33 @@ fn glyph_look(look: &mut Look, g: &Glyph, ctx: &Ctx) {
     } else if let Some(sym) = cmap_sym(g, ctx.catalog).filter(|&s| terrain_of(s) == Terrain::Effect)
     {
         match sym.strip_prefix("S_expl_") {
-            Some(part) => blast_flash(look, Blast::Fiery, part == "mc", g),
+            Some(part) => blast_flash(look, Blast::Fiery, expl_place(part), g),
             None => bright_flash(look, g, ctx),
         }
     }
 }
 
+/// An explosion's cell's place from its heart by its symbol's part
+/// (`S_expl_tl` .. `S_expl_br`: t, m, b and l, c, r).
+fn expl_place(part: &str) -> (i32, i32) {
+    let mut c = part.chars();
+    let y = match c.next() {
+        Some('t') => -1,
+        Some('b') => 1,
+        _ => 0,
+    };
+    let x = match c.next() {
+        Some('l') => -1,
+        Some('r') => 1,
+        _ => 0,
+    };
+    (x, y)
+}
+
 /// A cell of an explosion for the moment it shows: the effects draw it
 /// as what it is of (`Vfx::blast`), no glitter, no solid in the cell.
-fn blast_flash(look: &mut Look, kind: Blast, heart: bool, g: &Glyph) {
-    look.blast = Some((kind, lighter(nh_color(g.color), 0.2), heart));
+fn blast_flash(look: &mut Look, kind: Blast, off: (i32, i32), g: &Glyph) {
+    look.blast = Some((kind, lighter(nh_color(g.color), 0.2), off));
     look.reach(look.ground.max(0.0) + 0.9);
 }
 
@@ -9687,11 +9707,11 @@ impl MapView {
         if old.props != look.props {
             self.place_props(&mut nodes, &look, origin);
         }
-        if let Some((kind, c, heart)) = look.blast
+        if let Some((kind, c, off)) = look.blast
             && old.blast != look.blast
         {
             self.vfx
-                .blast(kind, heart, c, origin + at(0.0, look.ground.max(0.0), 0.0));
+                .blast(kind, off, c, origin + at(0.0, look.ground.max(0.0), 0.0));
             self.hear_blast(kind, (x, y));
         }
         if let Some((c, y)) = look.glint
@@ -9717,6 +9737,11 @@ impl MapView {
                 (mid - dir, mid + dir)
             });
             self.draw_ray(kind, c, along, mid);
+            // across a creature seen there (not the hero): its burst on it
+            if look.entity.is_some() && !look.hero && !look.sensed {
+                let foot = origin + at(0.0, look.ground.max(0.0), 0.0);
+                self.vfx.ray_hit(kind, mid, foot);
+            }
         }
         if (old.seen, old.masonry) != (look.seen, look.masonry) {
             self.fow_dirty = true;
@@ -13778,14 +13803,14 @@ mod tests {
             glyph: Some(cat.glyphs.explode + 5 * 9 + 4),
             ..glyph(GlyphKind::Explosion, ' ')
         };
-        let (kind, _, middle) = f.look(&under(&dagger, heart)).blast.expect("a blast");
-        assert_eq!((kind, middle), (Blast::Fiery, true));
+        let (kind, _, off) = f.look(&under(&dagger, heart)).blast.expect("a blast");
+        assert_eq!((kind, off), (Blast::Fiery, (0, 0)));
         let edge = Glyph {
             glyph: Some(cat.glyphs.explode + 6 * 9),
             ..glyph(GlyphKind::Explosion, '/')
         };
-        let (kind, _, middle) = f.look(&under(&dagger, edge)).blast.expect("a blast");
-        assert_eq!((kind, middle), (Blast::Frosty, false));
+        let (kind, _, off) = f.look(&under(&dagger, edge)).blast.expect("a blast");
+        assert_eq!((kind, off), (Blast::Frosty, (-1, -1)));
         // the floor drawn over a hero who steps off it (the next cell comes
         // a frame later), or the pet they swap places with: nothing to add
         for over in [cmap(cat, "S_room"), pet] {
