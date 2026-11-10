@@ -7,8 +7,8 @@
 //! built in code topples onto its side as its corpse lies; a blob, a
 //! jelly, a pudding or a fungus slumps; a ghost, a light, a vortex or an
 //! elemental dissolves; a gas spore is gone in its own blast. It darkens
-//! as it falls to its corpse's shade; with no corpse to take over, it
-//! sinks away. Only a monster the map showed (seen, not sensed) falls;
+//! as it falls to its corpse's shade; with no corpse to take over (NetHack
+//! left none), it lies a moment and fades away. Only a monster the map showed (seen, not sensed) falls;
 //! nothing waits for a fall: the next turn plays alongside, and a fall
 //! whose cell changes again ends at once.
 
@@ -28,10 +28,13 @@ const TOPPLE_SECS: f32 = 0.45;
 const SLUMP_SECS: f32 = 0.5;
 const DISSOLVE_SECS: f32 = 0.7;
 const CLIP_MOST: f32 = 1.1;
-const SINK_SECS: f32 = 0.5;
+const SINK_SECS: f32 = 0.9;
+/// Seconds a body with no corpse lies still before it fades: it fell,
+/// then it goes (it lay a second and was gone in a blink before).
+const LIE_SECS: f32 = 0.35;
 /// Seconds a body takes to blink out.
 const BLINK_SECS: f32 = 0.25;
-const SINK_DEPTH: f32 = 0.3;
+const SINK_DEPTH: f32 = 0.12;
 /// A slumped body's height and breadth, of its own, and the share of its
 /// fall it sags in when it rolls on into its corpse's way of lying.
 const SLUMPED: (f32, f32) = (0.3, 1.3);
@@ -379,9 +382,10 @@ impl MapView {
                 ended.push(i);
                 continue;
             }
-            // no corpse: it sinks away
+            // no corpse: NetHack left none, so none is shown; it lies a
+            // moment, then fades as it sinks a little
             f.sunk += delta;
-            let s = (f.sunk / SINK_SECS).min(1.0);
+            let s = ((f.sunk - LIE_SECS) / SINK_SECS).clamp(0.0, 1.0);
             let mut node = f.model.node.clone();
             node.set_position(f.at - Vector3::new(0.0, SINK_DEPTH * f.height * s, 0.0));
             see_through(&mut f.meshes, s);

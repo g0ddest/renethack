@@ -11,41 +11,66 @@ use godot::prelude::*;
 use crate::art::Clips;
 
 /// Seconds a step takes; a step taken in a hurry (the previous one had not
-/// ended yet, or two cells in one turn) is quicker and runs.
+/// ended yet, or two cells in one turn) is quicker and runs (not so quick
+/// that three cells go by in 0.4 s, a dash).
 pub const STEP_SECS: f32 = 0.24;
-pub const HURRY_SECS: f32 = 0.18;
+pub const HURRY_SECS: f32 = 0.2;
 
 /// Seconds to cross `cells` cells (1 or 2), and whether that is a run.
 pub fn pace(cells: i32, hurry: bool) -> (f32, bool) {
     match (cells, hurry) {
-        (c, _) if c > 1 => (HURRY_SECS * 0.85 * c as f32, true),
+        (c, _) if c > 1 => (HURRY_SECS * 0.9 * c as f32, true),
         (_, true) => (HURRY_SECS, true),
         _ => (STEP_SECS, false),
     }
 }
 /// Seconds of a strike's turn and lunge (the attack clip plays on).
 const STRIKE_SECS: f32 = 0.3;
-/// The share of a motion spent turning to the new direction.
-const TURN_SHARE: f32 = 0.35;
-/// Playback speed of the gait clips: the stride keeps up with the step.
-const WALK_SPEED: f32 = 1.6;
-const RUN_SPEED: f32 = 1.25;
-/// How far a body without an attack clip lunges at its target (metres).
+/// Seconds a body takes to turn to a new heading, wherever it turns (a
+/// step, a blow, facing a foe): never a snap in one frame.
+pub const TURN_SECS: f32 = 0.15;
+/// How fast the ground goes by under the walk and the run clips played at
+/// their own speed (metres a second, for a body 1.75 m tall; the UAL
+/// clips, measured): a gait clip is played so its stride keeps up with the
+/// step, its feet not sliding, within these bounds.
+const WALK_GROUND: f32 = 1.1;
+const RUN_GROUND: f32 = 3.2;
+const BODY_HEIGHT: f32 = 1.75;
+const GAIT_SCALE: (f32, f32) = (0.6, 2.0);
+/// The hero runs (the run clip) when a step goes faster than this (metres
+/// a second); a slow step (a burdened hero, a slow order) walks.
+pub const HERO_RUNS_FROM: f32 = 2.0;
+/// How far a body without an attack clip lunges at its target, how far a
+/// monster's attack clip carries it (a bite, a claw), and the hero's
+/// (her clips carry her) (metres).
 const LUNGE: f32 = 0.3;
+const BITE: f32 = 0.22;
 const NUDGE: f32 = 0.08;
 /// Seconds the idle takes to blend in after an attack clip.
 const AFTER_BLOW: f64 = 0.15;
 /// Roll of a swaying body (degrees).
 const SWAY_ROLL: f32 = 6.0;
 /// A blow's reel: how far the one struck is knocked back (metres), and
-/// for how long, out and back.
+/// for how long, out and back; how far it staggers back from the blow, a
+/// lean from its feet (degrees).
 pub const REEL: f32 = 0.16;
 const REEL_SECS: f32 = 0.32;
+const STAGGER: f32 = 11.0;
 
-/// The walk clip's speed for a step of `secs`: the stride keeps up with
-/// a slower or quicker step (an order's step lasts its tick).
-pub fn walk_speed(secs: f32) -> f32 {
-    WALK_SPEED * (STEP_SECS / secs.max(0.01)).clamp(0.5, 2.0)
+/// The speed a gait clip plays at for a step of `metres` in `secs` by a
+/// body `height` tall: its stride keeps up with the step (a bigger body's
+/// stride is longer), the run's or the walk's.
+pub fn gait_speed(metres: f32, secs: f32, height: f32, run: bool) -> f32 {
+    let ground = if run { RUN_GROUND } else { WALK_GROUND } * (height / BODY_HEIGHT).max(0.2);
+    (metres / secs.max(0.01) / ground).clamp(GAIT_SCALE.0, GAIT_SCALE.1)
+}
+
+/// The share of a lunge or a reel out from where it stands at progress t:
+/// quick out, slower back.
+fn out_and_back(t: f32) -> f32 {
+    (std::f32::consts::PI * t.clamp(0.0, 1.0).powf(0.55))
+        .sin()
+        .max(0.0)
 }
 
 /// Smooth in and out, 0..1.
@@ -90,9 +115,18 @@ pub fn progress(elapsed: f32, duration: f32, hold: Option<f32>) -> f32 {
 }
 
 enum Kind {
-    Step { hop: f32 },
-    Strike { toward: Vector3, reach: f32 },
-    Reel { away: Vector3 },
+    Step {
+        hop: f32,
+    },
+    Strike {
+        toward: Vector3,
+        reach: f32,
+    },
+    Reel {
+        away: Vector3,
+    },
+    /// Turning where it stands (a new heading, no step).
+    Turn,
 }
 
 pub struct Motion {
@@ -107,6 +141,8 @@ pub struct Motion {
     pub yaw_to: f32,
     elapsed: f32,
     duration: f32,
+    /// When its turn from `yaw_from` to `yaw_to` began (seconds in).
+    turn_start: f32,
     clips: Clips,
     /// Where it is now without hops or lunges: the camera, the hero's ring
     /// and torch follow it.
@@ -114,14 +150,22 @@ pub struct Motion {
 }
 
 fn place(node: &mut Gd<Node3D>, pos: Vector3, yaw: f32, roll: f32) {
+    place_leaning(node, pos, yaw, roll, (Vector3::ZERO, 0.0));
+}
+
+/// As `place`, leaning by `lean.1` degrees from its feet toward `lean.0`
+/// (a flat unit vector; a stagger back from a blow).
+fn place_leaning(node: &mut Gd<Node3D>, pos: Vector3, yaw: f32, roll: f32, lean: (Vector3, f32)) {
     if !node.is_instance_valid() {
         return;
     }
     let rot = Vector3::new(0.0, yaw.to_radians(), roll.to_radians());
-    node.set_transform(Transform3D::new(
-        Basis::from_euler(EulerOrder::YXZ, rot),
-        pos,
-    ));
+    let mut basis = Basis::from_euler(EulerOrder::YXZ, rot);
+    let axis = Vector3::UP.cross(lean.0);
+    if lean.1 != 0.0 && axis.length_squared() > 1e-6 {
+        basis = Basis::from_axis_angle(axis.normalized(), lean.1.to_radians()) * basis;
+    }
+    node.set_transform(Transform3D::new(basis, pos));
 }
 
 impl Motion {
@@ -139,11 +183,8 @@ impl Motion {
     ) -> Motion {
         let hop = match (&mut clips.player, &clips.gait) {
             (Some(p), Some(gait)) => {
-                let speed = if hurry {
-                    RUN_SPEED
-                } else {
-                    walk_speed(duration)
-                };
+                let flat = Vector2::new(to.x - from.x, to.z - from.z).length();
+                let speed = gait_speed(flat, duration, height, hurry);
                 p.play_ex()
                     .name(gait.as_str())
                     .custom_blend(0.1)
@@ -164,6 +205,7 @@ impl Motion {
             yaw_to,
             elapsed: 0.0,
             duration,
+            turn_start: 0.0,
             clips,
             base: from,
         };
@@ -182,6 +224,8 @@ impl Motion {
         toward: Vector3,
         mut clips: Clips,
     ) -> Motion {
+        // the hero's clips carry her; a monster's bite or claw carries it
+        // at her too, a body with no clip lunges
         let reach = match (&mut clips.player, &clips.attack) {
             (Some(p), Some(attack)) => {
                 p.play_ex().name(attack.as_str()).custom_blend(0.08).done();
@@ -191,7 +235,7 @@ impl Motion {
                     p.set_blend_time(attack.as_str(), idle.as_str(), AFTER_BLOW);
                     p.queue(idle.as_str());
                 }
-                NUDGE
+                if hero { NUDGE } else { BITE }
             }
             _ => LUNGE,
         };
@@ -206,6 +250,7 @@ impl Motion {
             yaw_to,
             elapsed: 0.0,
             duration: STRIKE_SECS,
+            turn_start: 0.0,
             clips,
             base: at,
         };
@@ -236,11 +281,64 @@ impl Motion {
             yaw_to: yaw,
             elapsed: 0.0,
             duration: REEL_SECS,
+            turn_start: 0.0,
             clips,
             base: at,
         };
         m.apply(0.0);
         m
+    }
+
+    /// The node at `cell` (standing at `at`) turns from `yaw_from` to
+    /// `yaw_to` where it stands, over `TURN_SECS` (a new heading with no
+    /// step: facing a foe, a monster facing the hero who moved).
+    pub fn turn(
+        node: Gd<Node3D>,
+        cell: (i32, i32),
+        hero: bool,
+        at: Vector3,
+        (yaw_from, yaw_to): (f32, f32),
+        clips: Clips,
+    ) -> Motion {
+        let mut m = Motion {
+            node,
+            cell,
+            hero,
+            kind: Kind::Turn,
+            from: at,
+            to: at,
+            yaw_from,
+            yaw_to,
+            elapsed: 0.0,
+            duration: TURN_SECS,
+            turn_start: 0.0,
+            clips,
+            base: at,
+        };
+        m.apply(0.0);
+        m
+    }
+
+    /// The heading it turns to now, and from where it faces this moment,
+    /// over `TURN_SECS` (a blow on its way in, a foe beside it).
+    pub fn turn_to(&mut self, yaw: f32) {
+        let now = self.yaw_now();
+        self.yaw_from = now;
+        self.yaw_to = yaw;
+        self.turn_start = self.elapsed;
+        // a turn alone lasts the turn
+        if matches!(self.kind, Kind::Turn) {
+            self.duration = self.elapsed + TURN_SECS;
+        }
+    }
+
+    /// The heading it faces this moment.
+    pub fn yaw_now(&self) -> f32 {
+        turn(
+            self.yaw_from,
+            self.yaw_to,
+            (self.elapsed - self.turn_start) / TURN_SECS,
+        )
     }
 
     /// (the gait clip a step plays, the clip playing now) (self-tests).
@@ -259,7 +357,7 @@ impl Motion {
     }
 
     fn apply(&mut self, t: f32) {
-        let yaw = turn(self.yaw_from, self.yaw_to, t / TURN_SHARE);
+        let yaw = self.yaw_now();
         match self.kind {
             Kind::Step { hop } => {
                 self.base = self.from.lerp(self.to, ease(t));
@@ -269,14 +367,21 @@ impl Motion {
             }
             Kind::Strike { toward, reach } => {
                 self.base = self.to;
-                let out = reach * (std::f32::consts::PI * t).sin();
+                let out = reach * out_and_back(t);
                 place(&mut self.node, self.to + toward * out, yaw, 0.0);
             }
             Kind::Reel { away } => {
-                // (the camera, the ring and the torch stay where it stands)
+                // knocked back and staggering back from the blow, a lean
+                // from its feet (the camera, the ring and the torch stay
+                // where it stands)
                 self.base = self.to;
-                let out = REEL * (std::f32::consts::PI * t.powf(0.55)).sin();
-                place(&mut self.node, self.to + away * out, yaw, 0.0);
+                let k = out_and_back(t);
+                let lean = (away, STAGGER * k);
+                place_leaning(&mut self.node, self.to + away * REEL * k, yaw, 0.0, lean);
+            }
+            Kind::Turn => {
+                self.base = self.to;
+                place(&mut self.node, self.to, yaw, 0.0);
             }
         }
     }
@@ -384,12 +489,31 @@ mod tests {
     }
 
     #[test]
-    fn the_stride_follows_the_length_of_a_step() {
-        assert_eq!(walk_speed(STEP_SECS), WALK_SPEED);
-        assert!(walk_speed(0.3) < WALK_SPEED);
-        assert!(walk_speed(0.15) > WALK_SPEED);
-        assert_eq!(walk_speed(10.0), WALK_SPEED * 0.5);
-        assert_eq!(walk_speed(0.0), WALK_SPEED * 2.0);
+    fn the_stride_keeps_up_with_the_step() {
+        // the run's stride over a cell at the step's pace: its own speed
+        let run = gait_speed(1.0, 1.0 / RUN_GROUND, BODY_HEIGHT, true);
+        assert!((run - 1.0).abs() < 1e-4);
+        // quicker steps play it quicker, a smaller body's legs quicker still
+        let step = gait_speed(1.0, STEP_SECS, BODY_HEIGHT, true);
+        assert!(step > 1.0 && gait_speed(1.0, HURRY_SECS, BODY_HEIGHT, true) > step);
+        assert!(gait_speed(1.0, STEP_SECS, 1.2, true) > step);
+        // within bounds however slow or quick
+        assert_eq!(gait_speed(1.0, 10.0, BODY_HEIGHT, false), GAIT_SCALE.0);
+        assert_eq!(gait_speed(1.0, 0.0, BODY_HEIGHT, false), GAIT_SCALE.1);
+        // never three cells in 0.4 s
+        assert!(pace(2, true).0 / 2.0 * 3.0 > 0.5);
+    }
+
+    #[test]
+    fn a_lunge_and_a_reel_go_out_quick_and_come_back() {
+        assert_eq!(out_and_back(0.0), 0.0);
+        assert!(out_and_back(1.0) < 1e-4);
+        // the farthest early, the way back slower
+        let peak = (1..100)
+            .map(|i| i as f32 / 100.0)
+            .max_by(|a, b| out_and_back(*a).total_cmp(&out_and_back(*b)))
+            .unwrap();
+        assert!(peak < 0.4, "{peak}");
     }
 
     #[test]

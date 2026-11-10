@@ -1,11 +1,13 @@
-//! `motion`: a fight caught frame by frame, for sheets of how blows,
-//! hits and deaths move (the art-director's motion bursts). A debug-mode
-//! Valkyrie (her kitten slain first, so it fights nothing for her), a
-//! hill orc made beside her, the camera 7 m off; she waits
+//! `motion`: a fight caught frame by frame, for sheets of how steps,
+//! turns, blows, hits and deaths move (the art-director's motion bursts). A
+//! debug-mode Valkyrie (her kitten slain first, so it fights nothing for
+//! her) takes a step out and a step back (`motion-walk-<leg>-<frame>`); a
+//! hill orc is made beside her, the camera 7 m off; she waits
 //! while it strikes her, then strikes it again and again; after each turn
 //! a burst of pictures `motion-<round>-<frame>` a few frames apart catches
 //! its blows and her reeling, then her swings, its reeling and its fall.
-//! Then soldier ants made beside her bite until she falls; at debug
+//! Then soldier ants made beside her bite (`motion-bite-<frame>`, a turn
+//! of their bites) until she falls; at debug
 //! mode's "Die?" she says no, and must stand again ("OK, so you don't
 //! die"), on the map and on the inventory's doll (`motion-risen-doll`);
 //! they bite on till she dies, and a burst `motion-death-<frame>` catches
@@ -41,6 +43,38 @@ static WAITED: AtomicUsize = AtomicUsize::new(0);
 static DIED: AtomicBool = AtomicBool::new(false);
 /// She said no at her first "Die?" (debug mode).
 static REFUSED: AtomicBool = AtomicBool::new(false);
+/// The way she walked out (a key), to walk back.
+static WAY: AtomicUsize = AtomicUsize::new(0);
+
+/// She faces the orc while it stands beside her (once her turn is over),
+/// not the camera.
+fn faces_the_orc(g: &RenethackGame) -> Result<(), String> {
+    let Some(k) = foe(g) else {
+        return Ok(());
+    };
+    let (dx, dy) = match k {
+        'h' => (-1, 0),
+        'l' => (1, 0),
+        'k' => (0, -1),
+        'j' => (0, 1),
+        'y' => (-1, -1),
+        'u' => (1, -1),
+        'b' => (-1, 1),
+        _ => (1, 1),
+    };
+    let want = crate::animator::yaw_toward((0, 0), (dx, dy));
+    let map = map_view(g)?;
+    let off = (map.hero_yaw() - want + 540.0).rem_euclid(360.0) - 180.0;
+    let shown = map.hero_facing().ok_or("no hero model")?;
+    let shown_off = (shown - want + 540.0).rem_euclid(360.0) - 180.0;
+    eprintln!("selftest: motion: the orc at {k}: heading {off:+.1}, drawn {shown_off:+.1} off it");
+    if off.abs() > 1.0 || shown_off.abs() > 2.0 {
+        return Err(format!(
+            "she faces {off:+.1} (drawn {shown_off:+.1}) degrees off the orc beside her"
+        ));
+    }
+    Ok(())
+}
 
 fn frames() -> i64 {
     Engine::singleton().get_process_frames() as i64
@@ -137,6 +171,56 @@ pub(super) fn motion() -> Vec<Step> {
         Ok(g.world.map.hero().is_some())
     })]);
     steps.extend(slay_pet());
+    // a step out and a step back, caught frame by frame: the stride and
+    // the turn (`motion-walk-<0|1>-<frame>`)
+    steps.extend([
+        Step::Call("7 m off, as in play", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(7.0, 0.2);
+            Ok(())
+        }),
+        Step::Wait("the camera on the hero", camera_settled),
+    ]);
+    for leg in 0..2 {
+        steps.push(if leg == 0 {
+            Step::KeyFrom("a step out", |g| {
+                let k = super::audio_tests::open_way(g)?;
+                WAY.store(k as usize, Ordering::Relaxed);
+                Ok(KeyInput::plain(Key::Char(k)))
+            })
+        } else {
+            Step::KeyFrom("a step back", |_| {
+                let back = match WAY.load(Ordering::Relaxed) as u8 as char {
+                    'h' => 'l',
+                    'l' => 'h',
+                    'j' => 'k',
+                    'k' => 'j',
+                    'y' => 'n',
+                    'n' => 'y',
+                    'u' => 'b',
+                    _ => 'u',
+                };
+                Ok(KeyInput::plain(Key::Char(back)))
+            })
+        });
+        steps.push(Step::Call("the burst begins", |_| {
+            FRAME.store(frames(), Ordering::Relaxed);
+            Ok(())
+        }));
+        for k in 0..BURST {
+            let name: &'static str = format!("motion-walk-{leg}-{k}").leak();
+            steps.extend([
+                Step::Wait("a few frames on", |_| {
+                    Ok(frames() >= FRAME.load(Ordering::Relaxed) + APART)
+                }),
+                Step::Shot(name),
+                Step::Call("the next frame of the burst", |_| {
+                    FRAME.store(frames(), Ordering::Relaxed);
+                    Ok(())
+                }),
+            ]);
+        }
+        steps.push(Step::Request("the next command", command));
+    }
     steps.extend([
         Step::Key(ctrl_key('g')),
         Step::Request(
@@ -189,6 +273,13 @@ pub(super) fn motion() -> Vec<Step> {
             ]);
         }
         steps.push(Step::Request("the next command", command));
+        steps.extend([
+            Step::Wait("her turn over", |g| {
+                Ok(map_view(g)?.motions_held()
+                    && frames() >= FRAME.load(Ordering::Relaxed) + APART * 4)
+            }),
+            Step::Call("she faces the orc beside her", |g| faces_the_orc(g)),
+        ]);
     }
     for _ in 0..2 {
         steps.extend([
@@ -199,6 +290,30 @@ pub(super) fn motion() -> Vec<Step> {
             ),
             Step::Dialog(DialogEvent::TextSubmitted("soldier ant".into())),
             Step::Request("a command after the monster", command),
+        ]);
+    }
+    // a turn waited out beside them: their bites lunge (`motion-bite-<frame>`)
+    steps.extend([
+        Step::KeyFrom("m, to wait beside them", |_| {
+            Ok(KeyInput::plain(Key::Char('m')))
+        }),
+        Step::KeyFrom("s", |_| Ok(KeyInput::plain(Key::Char('s')))),
+        Step::Call("the burst begins", |_| {
+            FRAME.store(frames(), Ordering::Relaxed);
+            Ok(())
+        }),
+    ]);
+    for k in 0..BURST {
+        let name: &'static str = format!("motion-bite-{k}").leak();
+        steps.extend([
+            Step::Wait("a frame on", |_| {
+                Ok(frames() >= FRAME.load(Ordering::Relaxed) + 2)
+            }),
+            Step::Shot(name),
+            Step::Call("the next frame of the burst", |_| {
+                FRAME.store(frames(), Ordering::Relaxed);
+                Ok(())
+            }),
         ]);
     }
     steps.extend([

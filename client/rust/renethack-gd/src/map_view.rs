@@ -44,7 +44,7 @@ use nh_world::{
     cell_terrain, in_field, locate_attack, parse_attack, terrain_of,
 };
 
-use crate::animator::{Motion, STEP_SECS, ease, pace, turn, yaw_toward};
+use crate::animator::{HERO_RUNS_FROM, Motion, STEP_SECS, ease, pace, turn, yaw_toward};
 use crate::art::{
     Art, CREATURE_LAYER, Finish, Model, ModelLook, Pose, build_flat, no_shadow, set_layer_mask,
 };
@@ -239,12 +239,13 @@ const HOODED_FIGURE: &str = "figure_hooded";
 
 /// Seconds from the start of a strike to the blow landing.
 const CONTACT_SECS: f32 = 0.16;
-/// A blow landing flashes the one it struck for this long, the hero red,
-/// any other warm white (`FLASH_SHADER`, an overlay on its meshes).
-const FLASH_SECS: f32 = 0.3;
+/// A blow landing flashes the one it struck white for a moment, the hero
+/// a shade warmer (`FLASH_SHADER`, an overlay on its meshes); it staggers
+/// back (`Motion::reel`). A longer red tint read as a body dyed, not a hit.
+const FLASH_SECS: f32 = 0.12;
 const FLASH_SHADER: &str = "res://shaders/hit_flash.gdshader";
-const FLASH_HERO: Color = Color::from_rgb(1.0, 0.3, 0.2);
-const FLASH_FOE: Color = Color::from_rgb(1.0, 0.86, 0.7);
+const FLASH_HERO: Color = Color::from_rgb(1.0, 0.88, 0.82);
+const FLASH_FOE: Color = Color::from_rgb(1.0, 0.95, 0.9);
 /// Descent per step when a pointer ray is walked through the raised geometry.
 const PICK_STEP: f32 = 0.05;
 /// Nothing drawn reaches higher (a giant on an altar).
@@ -4210,6 +4211,9 @@ pub struct MapView {
     hero_at: Option<(i32, i32)>,
     /// The hero's model lies in its death clip (`hero_falls`).
     hero_down: bool,
+    /// The cell of the foe the hero last struck or was struck by: she
+    /// faces it while it stands beside her (`face_foe`).
+    last_foe: Option<(i32, i32)>,
     hero_yaw: f32,
     /// Which way a monster faces since it stepped or fought, while the
     /// same one stands on the cell.
@@ -5003,6 +5007,7 @@ impl MapView {
             mirrors: false,
             snap: true,
             clock: 0.0,
+            last_foe: None,
             hero_down: false,
             hero_at: None,
             hero_yaw: 0.0,
@@ -5180,6 +5185,8 @@ impl MapView {
             dirty.extend(self.refresh_sanctum(world, catalog));
             // and cells the level's plan gives something else now
             dirty.extend(self.refresh_volume(world, catalog));
+            // the hero standing beside a foe she sees faces it
+            dirty.extend(self.face_foe(hero, hero != was_at, world));
             let near: Vec<_> = dirty
                 .iter()
                 .flat_map(|&(x, y)| {
@@ -7723,6 +7730,7 @@ impl MapView {
         self.snap = true;
         self.hero_at = None;
         self.hero_down = false;
+        self.last_foe = None;
         // a new hero faces the camera, not the way the last one turned
         self.hero_yaw = 0.0;
         self.set_path(&[], false);
@@ -7939,6 +7947,15 @@ impl MapView {
     }
 
     /// The way the hero faces, in degrees (self-tests).
+    /// The heading the hero's model is drawn at this frame (self-tests).
+    pub fn hero_facing(&self) -> Option<f32> {
+        let node = &self.hero_model()?.node;
+        node.is_instance_valid().then(|| {
+            let f = node.get_global_transform().basis.col_c();
+            f.x.atan2(f.z).to_degrees()
+        })
+    }
+
     pub fn hero_yaw(&self) -> f32 {
         self.hero_yaw
     }
@@ -9728,6 +9745,13 @@ impl MapView {
                     }
                     _ => pace(c.cells, c.hurry),
                 };
+                // the hero on foot runs a quick step (a walk's stride would
+                // slide), and walks a slow one
+                let run = if hero && self.rider.is_none() {
+                    c.cells as f32 / secs > HERO_RUNS_FROM
+                } else {
+                    run
+                };
                 let mut clips = self.art.clips(&c.model, run);
                 // a floating hero glides, their legs still
                 if hero && self.rider.is_none() && self.hero_look.floating() {
@@ -9821,6 +9845,27 @@ impl MapView {
                         p.look.art.height,
                         (MOUNT_SECS, false),
                     ));
+                } else if before
+                    .is_some_and(|b| look.entity == Some(i) && (b.look, b.pos) == (p.look, p.pos))
+                {
+                    // only its heading changed (a foe beside the hero, a
+                    // monster facing the hero who moved): it turns, never
+                    // a snap; a motion under way turns the same way
+                    if let Some(mo) = self.motions.iter_mut().find(|mo| mo.cell == (x, y)) {
+                        mo.turn_to(p.yaw);
+                    } else {
+                        let facing = m.node.get_transform().basis.col_c();
+                        let yaw_from = facing.x.atan2(facing.z).to_degrees();
+                        let clips = self.art.clips(&m, false);
+                        self.motions.push(Motion::turn(
+                            m.node.clone(),
+                            (x, y),
+                            hero_here,
+                            origin + p.pos,
+                            (yaw_from, p.yaw),
+                            clips,
+                        ));
+                    }
                 } else {
                     let turn = Vector3::new(0.0, p.yaw.to_radians(), 0.0);
                     let basis = Basis::from_euler(EulerOrder::YXZ, turn);
@@ -10510,6 +10555,9 @@ impl MapView {
                     if !dying && self.art.flinch(m) {
                         self.stats.flinches += 1;
                     }
+                    if at_hero && from != to {
+                        self.last_foe = Some(from);
+                    }
                     // (from where it stands: a blow from inside it, an
                     // engulfer's, has no way and knocks nothing back)
                     let toward = Vector3::new((from.0 - to.0) as f32, 0.0, (from.1 - to.1) as f32)
@@ -10782,6 +10830,7 @@ impl MapView {
         let hero = ident.is_some_and(|i| i.is_hero());
         if hero {
             self.hero_yaw = yaw;
+            self.last_foe = Some(to);
         } else if let Some(id) = ident {
             self.facing.insert(from, (id, yaw));
         }
@@ -10791,7 +10840,7 @@ impl MapView {
             .iter_mut()
             .find(|m| m.cell == from && m.is_step())
         {
-            m.yaw_to = yaw;
+            m.turn_to(yaw);
             if let Some(p) = self
                 .cells
                 .get_mut(&from)
@@ -11013,6 +11062,57 @@ impl MapView {
         if secs.is_none() && !self.steps_under_way().0 {
             self.settle_hero();
         }
+    }
+
+    /// The hero standing (not stepping, no order walking her, not riding)
+    /// beside a foe she sees turns to face it, and keeps facing it while it
+    /// stands there: the one she last struck or was struck by, else the
+    /// first beside her. Her cell, to draw again, when her heading changed.
+    fn face_foe(
+        &mut self,
+        hero: Option<(i32, i32)>,
+        moved: bool,
+        world: &World,
+    ) -> Option<(i32, i32)> {
+        let (hx, hy) = hero?;
+        if moved || self.order_pace.is_some() || self.rider.is_some() || self.hero_down {
+            return None;
+        }
+        let foe_at = |(x, y): (i32, i32)| {
+            (x, y) != (hx, hy)
+                && (x - hx).abs() <= 1
+                && (y - hy).abs() <= 1
+                && world.map.cell(x, y).is_some_and(|c| {
+                    !c.peaceful
+                        && c.glyph.as_ref().is_some_and(|g| {
+                            g.kind == GlyphKind::Mon
+                                && g.flags & (mg::HERO | mg::PET | mg::DETECT) == 0
+                        })
+                })
+        };
+        let around = [
+            (0, 1),
+            (1, 0),
+            (0, -1),
+            (-1, 0),
+            (1, 1),
+            (-1, 1),
+            (1, -1),
+            (-1, -1),
+        ];
+        let foe = self.last_foe.filter(|&c| foe_at(c)).or_else(|| {
+            around
+                .iter()
+                .map(|(dx, dy)| (hx + dx, hy + dy))
+                .find(|&c| foe_at(c))
+        })?;
+        self.last_foe = Some(foe);
+        let yaw = yaw_toward((hx, hy), foe);
+        if ((yaw - self.hero_yaw + 540.0).rem_euclid(360.0) - 180.0).abs() < 1.0 {
+            return None;
+        }
+        self.hero_yaw = yaw;
+        Some((hx, hy))
     }
 
     /// A hero who fell dead and lives on (an amulet's, or "OK, so you don't
