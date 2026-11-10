@@ -692,9 +692,9 @@ pub(super) fn overview() -> Vec<Step> {
 /// The special levels that should each look their own (the art loop's
 /// first critique, #7), for pictures before and after (not part of `make
 /// test-client`): the Oracle (close beside a fountain of its centre), the
-/// Big Room, the Castle (close beside its drawbridge) and the Plane of
-/// Earth, each as the hero arrives, mapped, close on a wall and in the
-/// overview. `RENETHACK_PLACES` (a comma list: "oracle,castle") picks some.
+/// Big Room, the Castle (close beside its drawbridge), the Plane of Earth
+/// and the Astral Plane, each as the hero arrives, mapped, close on a wall
+/// and in the overview. `RENETHACK_PLACES` (a comma list: "oracle,castle") picks some.
 pub(super) fn places() -> Vec<Step> {
     use nh_world::Terrain;
     let mut steps = vec![Step::Call(
@@ -713,7 +713,7 @@ pub(super) fn places() -> Vec<Step> {
             .map(|only| only.split(',').any(|w| w.trim() == name))
             .unwrap_or(true)
     };
-    let visits: [(KeyCheck, &'static str, Option<Terrain>, bool); 4] = [
+    let visits: [(KeyCheck, &'static str, Option<Terrain>, bool); 5] = [
         (
             |g| entry_key(g, "oracle"),
             "places-oracle",
@@ -728,6 +728,7 @@ pub(super) fn places() -> Vec<Step> {
             false,
         ),
         (|g| entry_key(g, "earth"), "places-earth", None, true),
+        (|g| entry_key(g, "astral"), "places-astral", None, true),
     ];
     for (pick, shot, by, wish) in visits {
         if wanted(shot.trim_start_matches("places-")) {
@@ -825,6 +826,56 @@ pub(super) fn lighting() -> Vec<Step> {
     if wanted("valley") {
         arrive(&mut steps, "", Some(|g| entry_key(g, "valley")));
         pair(&mut steps, "lighting-valley");
+    }
+    steps.extend(quit());
+    steps
+}
+
+/// A castle's gate in a lit gallery's scene (the art loop's second
+/// critique: the Castle's drawbridge read in no picture), for pictures
+/// before and after (not part of `make test-client`): raised in its wall
+/// at the game's distance and close (`drawbridge-raised`, `-close`), then
+/// let down over the moat (`drawbridge-down`, `-close`).
+pub(super) fn drawbridge() -> Vec<Step> {
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    type Lay = fn(&mut RenethackGame) -> Result<(), String>;
+    let lays: [(Lay, &'static str, &'static str); 2] = [
+        (
+            |g| {
+                let cat = g.catalog.clone().ok_or("no catalog")?;
+                crate::gallery::lay_out_gate(&mut g.world, &cat, true)?;
+                Ok(())
+            },
+            "drawbridge-raised",
+            "drawbridge-raised-close",
+        ),
+        (
+            |g| {
+                let cat = g.catalog.clone().ok_or("no catalog")?;
+                crate::gallery::lay_out_gate(&mut g.world, &cat, false)?;
+                Ok(())
+            },
+            "drawbridge-down",
+            "drawbridge-down-close",
+        ),
+    ];
+    for (lay, far_shot, close) in lays {
+        steps.extend([
+            Step::Call("lay out the gate", lay),
+            Step::Wait("the gate drawn", |g| {
+                let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                Ok(drawn == Some(g.world.map.generation()))
+            }),
+            Step::Call("the game's distance", |g| far(g, 11.0)),
+            Step::Wait("the camera on it", drawn_here),
+            Step::Shot(far_shot),
+            Step::Call("closer", |g| far(g, 7.0)),
+            Step::Wait("the camera closer", drawn_here),
+            Step::Shot(close),
+        ]);
     }
     steps.extend(quit());
     steps

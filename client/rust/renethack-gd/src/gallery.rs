@@ -621,6 +621,42 @@ pub fn lay_out_rows(
     lay_out_rows_on(world, cat, rows, "S_room")
 }
 
+/// A castle's gate for pictures (the `drawbridge` scene): a wall running
+/// north and south with its drawbridge raised in it (`raised`) or let down
+/// over the moat before it, the hero inside on a lit floor beside it.
+pub fn lay_out_gate(world: &mut World, cat: &Catalog, raised: bool) -> Result<(i32, i32), String> {
+    let map = &mut world.map;
+    map.clear();
+    let floor = cmap(cat, "S_room")?;
+    let moat = cmap(cat, "S_pool")?;
+    let wall = cmap(cat, "S_vwall")?;
+    let (gx, gy) = (40, 10);
+    for y in gy - 4..=gy + 4 {
+        for x in gx - 6..=gx + 6 {
+            let g = if x == gx {
+                match (y == gy, raised) {
+                    (true, true) => cmap(cat, "S_vcdbridge")?,
+                    (true, false) => cmap(cat, "S_ndoor")?,
+                    _ => wall.clone(),
+                }
+            } else if x == gx - 1 || x == gx - 2 {
+                if x == gx - 1 && y == gy && !raised {
+                    cmap(cat, "S_vodbridge")?
+                } else {
+                    moat.clone()
+                }
+            } else {
+                floor.clone()
+            };
+            map.print(x, y, &g, None);
+        }
+    }
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(gx + 2, gy + 1, &hero, Some(&floor));
+    world.view_center = Some((gx, gy));
+    Ok((gx, gy))
+}
+
 /// As `lay_out_rows`, on a floor of `floor` (a dark one: "S_darkroom").
 pub fn lay_out_rows_on(
     world: &mut World,

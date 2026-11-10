@@ -857,11 +857,12 @@ fn main_lair(look: BranchLook, lair: Option<&str>) -> BranchLook {
 }
 
 /// The look of a sanctuary's cells (`BranchLook::sanctum`, the Oracle's
-/// centre): walls of pale marble capped in gilt, a floor of polished
-/// marble.
+/// centre): walls of pale dressed stone under a gilt cornice and cap, a
+/// floor of polished marble (walls of marble too read as flat beige
+/// panels beside it).
 pub fn sanctum(look: BranchLook) -> BranchLook {
     BranchLook {
-        remap: &[("masonry", "marble"), ("floor", "marble_floor")],
+        remap: &[("masonry", "ludios_wall"), ("floor", "marble_floor")],
         cap: "gilded",
         ..look
     }

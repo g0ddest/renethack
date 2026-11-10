@@ -1996,6 +1996,21 @@ fn door_leaf(look: &mut Look, along_x: bool, open: bool, h: f32, wood: Paint, ir
     }
 }
 
+/// The Astral Plane's far isles (`show_far_isles`): how many, and their
+/// lamps' light.
+const FAR_ISLES: u32 = 14;
+const FAR_ISLE_LAMP: Color = Color::from_rgb(1.0, 0.86, 0.6);
+/// Their stone and their slabs' (pale marble under the stars), and how
+/// much light of their own they give.
+const FAR_ISLE_STONE: Color = Color::from_rgb(0.62, 0.6, 0.66);
+const FAR_ISLE_TOP: Color = Color::from_rgb(0.8, 0.76, 0.7);
+const FAR_ISLE_GLOW: f32 = 0.06;
+/// A gilt cornice's height under a wall's cap (`BranchLook::cap` "gilded").
+const CORNICE: f32 = 0.07;
+/// How far a raised drawbridge leans out from upright over its water, on
+/// its chains (degrees).
+const DRAWBRIDGE_LEAN: f32 = 18.0;
+
 /// A chain of iron links from `from` to `to` (the cell's own metres),
 /// each link turned a quarter from the last; too small to cast a shadow.
 fn chain(look: &mut Look, from: Vector3, to: Vector3, iron: Paint) {
@@ -2122,6 +2137,21 @@ fn terrain_base(
                     cap,
                     at(0.0, top - CAP_HEIGHT / 2.0, 0.0),
                 );
+                // a gilt cap stands on a cornice of it, a moulding stepped
+                // out under it (a treasury's, a sanctuary's, a temple's: a
+                // flat gold slab on flat walls read as beige panels)
+                if ctx.branch.cap == "gilded" {
+                    look.solid(
+                        bevel(w + 0.1, CORNICE, w + 0.1),
+                        cap,
+                        at(0.0, top - CAP_HEIGHT - CORNICE / 2.0, 0.0),
+                    );
+                    look.solid(
+                        bevel(w + 0.06, CORNICE * 0.6, w + 0.06),
+                        cap,
+                        at(0.0, top - CAP_HEIGHT - CORNICE * 1.3, 0.0),
+                    );
+                }
             }
             // a plinth of darker stone where there is ground to stand on
             let plinth = pbr(art.material, 62, Role::Trim, DEEP);
@@ -2793,43 +2823,59 @@ fn terrain_base(
                 -1.0
             };
             let h = if cut { CUT_HEIGHT } else { DOOR_HEIGHT };
-            let face = out * 0.36;
+            // its foot hinged at the wall's outer face, its top leaning out
+            // over the water on its chains: its planked face shows to the
+            // camera above (upright, it showed only its edge in a side
+            // wall)
+            let face = out * 0.4;
+            let lean = if cut { 0.0f32 } else { DRAWBRIDGE_LEAN };
+            let (ls, lc) = lean.to_radians().sin_cos();
+            // a point of the bridge `y` up it and `n` out from its face, `u`
+            // along the wall
+            let on = |u: f32, y: f32, n: f32| {
+                let across = face + out * (y * ls + n * lc);
+                let up = y * lc - n * ls;
+                if along_x {
+                    at(u, up, across)
+                } else {
+                    at(across, up, u)
+                }
+            };
+            let turn = if along_x {
+                at(out * lean, 0.0, 0.0)
+            } else {
+                at(0.0, 0.0, -out * lean)
+            };
             const PLANKS: u32 = 6;
             const WIDE: f32 = 0.96;
             let w = WIDE / PLANKS as f32;
             for i in 0..PLANKS {
                 let off = -WIDE / 2.0 + w * (i as f32 + 0.5);
                 let d = 0.14 + 0.02 * (i % 2) as f32;
-                let (mesh, p) = if along_x {
-                    (bevel(w - 0.01, h, d), at(off, h / 2.0, face))
+                let mesh = if along_x {
+                    bevel(w - 0.01, h, d)
                 } else {
-                    (bevel(d, h, w - 0.01), at(face, h / 2.0, off))
+                    bevel(d, h, w - 0.01)
                 };
-                look.solid(mesh, wood, p);
+                look.turned(mesh, wood, on(off, h / 2.0, 0.0), turn);
             }
             for f in [0.15, 0.5, 0.85] {
-                let (mesh, p) = if along_x {
-                    (
-                        cuboid(WIDE + 0.02, 0.07, 0.04),
-                        at(0.0, h * f, face + out * 0.09),
-                    )
+                let mesh = if along_x {
+                    cuboid(WIDE + 0.02, 0.07, 0.04)
                 } else {
-                    (
-                        cuboid(0.04, 0.07, WIDE + 0.02),
-                        at(face + out * 0.09, h * f, 0.0),
-                    )
+                    cuboid(0.04, 0.07, WIDE + 0.02)
                 };
-                look.solid(mesh, iron, p);
+                look.turned(mesh, iron, on(0.0, h * f, 0.09), turn);
             }
             if !cut {
                 for s in [-0.4f32, 0.4] {
                     let top = WALL_HEIGHT - CAP_HEIGHT;
-                    let (from, to) = if along_x {
-                        (at(s, h, face + out * 0.08), at(s * 0.9, top, out * 0.12))
+                    let to = if along_x {
+                        at(s * 0.9, top, out * 0.12)
                     } else {
-                        (at(face + out * 0.08, h, s), at(out * 0.12, top, s * 0.9))
+                        at(out * 0.12, top, s * 0.9)
                     };
-                    chain(look, from, to, iron);
+                    chain(look, on(s, h, 0.08), to, iron);
                 }
             }
             look.ground = door_h;
@@ -4117,6 +4163,9 @@ pub struct MapView {
     /// and the light from above (the moon's, the Planes' own sun).
     sky_sea: Option<Gd<MeshInstance3D>>,
     sea_mats: Vec<(&'static str, Gd<Material>)>,
+    /// Far isles floating among the Astral Plane's stars (`show_far_isles`),
+    /// made the first time they are shown.
+    far_isles: Option<Gd<Node3D>>,
     moon: Gd<DirectionalLight3D>,
     back: Gd<DirectionalLight3D>,
     /// The vignette and grain over the map, under the HUD.
@@ -4928,6 +4977,7 @@ impl MapView {
             bedrock_dirty: true,
             sky_sea: None,
             sea_mats: Vec::new(),
+            far_isles: None,
             moon,
             back,
             post,
@@ -5651,6 +5701,7 @@ impl MapView {
             Under::Stars => Some("res://shaders/stars.gdshader"),
             _ => None,
         });
+        self.show_far_isles(l.under == Under::Stars);
         let chasm = if l.under == Under::Chasm {
             CHASM
         } else {
@@ -5733,6 +5784,101 @@ impl MapView {
     /// How many shafts of light fall (self-tests).
     pub fn shafts_shown(&self) -> usize {
         self.shafts.iter().filter(|l| l.is_visible()).count()
+    }
+
+    /// Isles of marble floating far below and about the Astral Plane among
+    /// its stars, columns standing on them and a lamp burning on each, so
+    /// that the level's slabs float in a heaven and not alone in the dark
+    /// (at 11 m it read as a small slab among stars). Never anywhere the
+    /// level is: well below it, scattered by a fixed pattern that knows
+    /// nothing of where its temples stand. Made the first time.
+    fn show_far_isles(&mut self, on: bool) {
+        if !on {
+            if let Some(n) = self.far_isles.as_mut() {
+                n.set_visible(false);
+            }
+            return;
+        }
+        if self.far_isles.is_none() {
+            // (a plain stone of their own, faintly lit by itself: in the
+            // map's, far outside anything known, they came out black
+            // blots)
+            let stone = |c: Color| -> Gd<Material> {
+                let mut m = StandardMaterial3D::new_gd();
+                m.set_albedo(c);
+                m.set_roughness(0.85);
+                m.set_feature(Feature::EMISSION, true);
+                m.set_emission(c);
+                m.set_emission_energy_multiplier(FAR_ISLE_GLOW);
+                m.upcast()
+            };
+            let rock = Some(stone(FAR_ISLE_STONE));
+            let top = Some(stone(FAR_ISLE_TOP));
+            let lamp = self.art.flat(FAR_ISLE_LAMP, Finish::Glow);
+            let mut root = Node3D::new_alloc();
+            root.set_name("FarIsles");
+            let mut part =
+                |root: &mut Gd<Node3D>, mesh: MeshKey, mat: Option<&Gd<Material>>, at: Vector3| {
+                    let mut mi = MeshInstance3D::new_alloc();
+                    mi.set_mesh(&self.art.mesh(mesh));
+                    if let Some(m) = mat {
+                        mi.set_material_override(m);
+                    }
+                    mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+                    mi.set_position(at);
+                    root.add_child(&mi);
+                };
+            for i in 0..FAR_ISLES {
+                let r = |k: u32| cell_noise(i as i32, 7, 300 + k);
+                let size = 1.0 + r(0) * 1.2;
+                let at = Vector3::new(
+                    -14.0 + r(1) * (COLNO as f32 + 28.0),
+                    -20.0 - r(2) * 16.0,
+                    -22.0 + r(3) * (ROWNO as f32 + 44.0),
+                );
+                let mut isle = Node3D::new_alloc();
+                isle.set_position(at);
+                isle.set_rotation_degrees(Vector3::new(0.0, r(4) * 360.0, 0.0));
+                // rock tapering below it, a slab of the temples' floor on
+                // it, columns round its rim and a lamp in its middle
+                let s = size;
+                part(
+                    &mut isle,
+                    cylinder(s, s * 0.25, s * 1.4),
+                    rock.as_ref(),
+                    Vector3::new(0.0, -s * 0.7, 0.0),
+                );
+                part(
+                    &mut isle,
+                    cylinder(s * 1.04, s * 1.04, 0.25),
+                    top.as_ref(),
+                    Vector3::new(0.0, 0.12, 0.0),
+                );
+                let columns = 3 + (r(5) * 3.0) as u32;
+                for c in 0..columns {
+                    let a = (c as f32 / columns as f32 * 360.0 + r(6) * 40.0).to_radians();
+                    let h = s * (0.6 + 0.5 * r(10 + c));
+                    part(
+                        &mut isle,
+                        cylinder(s * 0.09, s * 0.11, h),
+                        rock.as_ref(),
+                        Vector3::new(a.sin() * s * 0.75, 0.25 + h / 2.0, a.cos() * s * 0.75),
+                    );
+                }
+                part(
+                    &mut isle,
+                    sphere(s * 0.22),
+                    Some(&lamp),
+                    Vector3::new(0.0, 0.25 + s * 0.25, 0.0),
+                );
+                root.add_child(&isle);
+            }
+            self.root.add_child(&root);
+            self.far_isles = Some(root);
+        }
+        if let Some(n) = self.far_isles.as_mut() {
+            n.set_visible(true);
+        }
     }
 
     /// The branch the level drawn is in (self-tests).
