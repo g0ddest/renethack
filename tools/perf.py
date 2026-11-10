@@ -91,11 +91,14 @@ SCENES = {
     # and the spells' cards: for the census, not timed
     "command-wheel": ("command-wheel", [], 600),
     "spells": ("spells", [], 600),
+    # the Oracle, the Big Room, the Castle and the Plane of Earth, each
+    # its own look (holy light, clouds, lamps): for the census, not timed
+    "places": ("places", [], 600),
     # every creature and thing a batch at a time: with --census, what the
     # game can draw (not a timing)
     "variants": ("variants", [], 1800),
 }
-CENSUS_ONLY = ("through", "outfits", "late-monsters", "command-wheel", "spells")
+CENSUS_ONLY = ("through", "outfits", "late-monsters", "command-wheel", "spells", "places")
 DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants", *CENSUS_ONLY)]
 
 
