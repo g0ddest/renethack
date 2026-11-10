@@ -657,6 +657,37 @@ pub fn lay_out_gate(world: &mut World, cat: &Catalog, raised: bool) -> Result<(i
     Ok((gx, gy))
 }
 
+/// A field of lava half in view for pictures (the `lava-edge` scene): a lit
+/// floor along its west side, stepped (the lava beside it in view), the
+/// field beyond it remembered, a dark floor past it; the hero on the lit
+/// floor.
+pub fn lay_out_lava_edge(world: &mut World, cat: &Catalog) -> Result<(i32, i32), String> {
+    let map = &mut world.map;
+    map.clear();
+    let lit = cmap(cat, "S_room")?;
+    let dark = cmap(cat, "S_darkroom")?;
+    let lava = cmap(cat, "S_lava")?;
+    let (cx, cy) = (40, 10);
+    for y in cy - 4..=cy + 4 {
+        // the lit floor's edge stepped: a cell further east every two rows
+        let edge = cx - 4 + (y - cy + 4) / 2;
+        for x in cx - 8..=cx + 8 {
+            let g = if x < edge {
+                &lit
+            } else if x <= cx + 5 {
+                &lava
+            } else {
+                &dark
+            };
+            map.print(x, y, g, None);
+        }
+    }
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(cx - 7, cy, &hero, Some(&lit));
+    world.view_center = Some((cx, cy));
+    Ok((cx, cy))
+}
+
 /// As `lay_out_rows`, on a floor of `floor` (a dark one: "S_darkroom").
 pub fn lay_out_rows_on(
     world: &mut World,

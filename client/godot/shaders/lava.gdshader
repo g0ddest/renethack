@@ -194,20 +194,15 @@ void fragment() {
 		rock *= mix(1.0 - 0.5 * smoothstep(0.1, 0.33, fray), 0.06, cooled);
 	}
 	float seen = texture(fow_tex, uv).r;
-	// what the hero sees of it meets what they remember wandering over a
-	// couple of cells (a big field half seen stepped along the cells, its
-	// lava dimmed cell by cell)
-	vec2 fd = vec2(1.0) / FIELD;
-	float seen_w = (seen * 4.0
-		+ (texture(fow_tex, uv + vec2(fd.x, 0.0)).r + texture(fow_tex, uv - vec2(fd.x, 0.0)).r
-		+ texture(fow_tex, uv + vec2(0.0, fd.y)).r + texture(fow_tex, uv - vec2(0.0, fd.y)).r) * 2.0
-		+ texture(fow_tex, uv + fd).r + texture(fow_tex, uv - fd).r
-		+ texture(fow_tex, uv + vec2(fd.x, -fd.y)).r
-		+ texture(fow_tex, uv + vec2(-fd.x, fd.y)).r) / 16.0;
-	if (seen_w > 0.001 && seen_w < 0.999) {
-		float s = mix(seen, seen_w, 0.75) + (tl2(wpos.xz * 1.3 + vec2(41.3, 17.9)) - 0.5) * 0.45
-			+ (tl2(wpos.xz * 0.42 + vec2(9.7, 33.1)) - 0.5) * 0.3;
-		seen = smoothstep(0.25, 0.75, s);
+	// what the hero sees of it meets what they remember along a curved,
+	// wandering line, not along the cells (a big field half seen stepped,
+	// its lava dimmed cell by cell); never more than about half a cell
+	// either way of the cells' own edge, so each cell still reads plainly
+	// as in view or remembered
+	if (seen > 0.001 && seen < 0.999) {
+		float s = seen + (tl2(wpos.xz * 1.7 + vec2(41.3, 17.9)) - 0.5) * 0.4
+			+ (tl2(wpos.xz * 0.42 + vec2(9.7, 33.1)) - 0.5) * 0.2;
+		seen = smoothstep(0.35, 0.65, s);
 	}
 	ALBEDO = mix(rock, molten.rgb * 0.3, crack);
 	ROUGHNESS = mix(0.9, 0.4, crack);

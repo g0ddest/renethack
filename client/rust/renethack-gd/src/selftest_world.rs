@@ -508,6 +508,13 @@ fn light_visit_at(
         Step::Wait("the level drawn as the hero arrives", drawn_here),
         Step::Call("where to measure", luma_marks),
         Step::Shot(named("arrival")),
+        // and close (7 m), still unmapped: what the hero sees meeting what
+        // nothing is known of
+        Step::Call("the camera close", |g| far(g, 7.0)),
+        Step::Wait("the camera close", drawn_here),
+        Step::Shot(named("arrival-near")),
+        Step::Call("the camera back", |g| far(g, 11.0)),
+        Step::Wait("the camera back", drawn_here),
         Step::Key(ctrl_key('f')),
         Step::Request("a command after the map", |p| matches!(p, Prompt::Command)),
         Step::Wait("the level drawn", drawn_here),
@@ -883,6 +890,35 @@ pub(super) fn drawbridge() -> Vec<Step> {
             Step::Shot(close),
         ]);
     }
+    steps.extend(quit());
+    steps
+}
+
+/// A field of lava half in view (the lead's truth guard on its seen
+/// edge), for pictures before and after (not part of `make test-client`):
+/// at the game's distance (`lava-edge`) and close (`-close`).
+pub(super) fn lava_edge() -> Vec<Step> {
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    steps.extend([
+        Step::Call("lay out the field", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            crate::gallery::lay_out_lava_edge(&mut g.world, &cat)?;
+            Ok(())
+        }),
+        Step::Wait("the field drawn", |g| {
+            let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+            Ok(drawn == Some(g.world.map.generation()))
+        }),
+        Step::Call("the game's distance", |g| far(g, 11.0)),
+        Step::Wait("the camera on it", drawn_here),
+        Step::Shot("lava-edge"),
+        Step::Call("closer", |g| far(g, 7.0)),
+        Step::Wait("the camera closer", drawn_here),
+        Step::Shot("lava-edge-close"),
+    ]);
     steps.extend(quit());
     steps
 }
