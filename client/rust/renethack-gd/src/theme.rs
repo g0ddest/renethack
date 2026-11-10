@@ -62,8 +62,11 @@ const fn alpha(c: Color, a: f32) -> Color {
 
 /// Screen-space backgrounds, letter pills.
 pub const INK: Color = rgb(0x0b0908);
-pub const PANEL_TOP: Color = rgb(0x1b140f);
-pub const PANEL_BOTTOM: Color = rgb(0x0e0b09);
+/// The panels' ground, a dark leather: its gradient.
+pub const PANEL_TOP: Color = rgb(0x2a1d13);
+pub const PANEL_BOTTOM: Color = rgb(0x160f0a);
+/// The panels' cast rims and corner caps.
+pub const BRONZE: Color = rgb(0x7a5a2c);
 /// Cells and slots.
 pub const SOCKET: Color = rgb(0x0d0a08);
 /// The outer frame line.
@@ -281,6 +284,16 @@ struct FrameLook {
     cut: f32,
     shadow: f32,
     margin: f32,
+    /// The rim rounded and lit (else flat), as a socket's lip when `sunk`.
+    carved: bool,
+    sunk: bool,
+    /// Cast caps over the corners (radius), and the rim widened into
+    /// brackets there (by how much, over how far): 0 for none.
+    cap: f32,
+    bracket: f32,
+    bracket_len: f32,
+    /// The ground's leather grain, 0..1.
+    leather: f32,
 }
 
 impl Frame {
@@ -289,46 +302,70 @@ impl Frame {
             Frame::Panel => FrameLook {
                 top: alpha(PANEL_TOP, 0.985),
                 bottom: alpha(PANEL_BOTTOM, 0.985),
-                border: IRON,
-                border_px: 2.0,
+                border: BRONZE,
+                border_px: 5.0,
                 trim: Some(alpha(GOLD_DIM, 0.85)),
-                inner_shadow: 14.0,
+                inner_shadow: 16.0,
                 cut: 6.0,
                 shadow: 14.0,
                 margin: 20.0,
+                carved: true,
+                sunk: false,
+                cap: 15.0,
+                bracket: 5.0,
+                bracket_len: 60.0,
+                leather: 1.0,
             },
             Frame::Hud => FrameLook {
                 top: alpha(PANEL_TOP, 0.9),
                 bottom: alpha(PANEL_BOTTOM, 0.9),
-                border: IRON,
-                border_px: 2.0,
+                border: BRONZE,
+                border_px: 4.0,
                 trim: Some(alpha(GOLD_DIM, 0.8)),
                 inner_shadow: 12.0,
                 cut: 5.0,
                 shadow: 10.0,
                 margin: 12.0,
+                carved: true,
+                sunk: false,
+                cap: 10.0,
+                bracket: 3.0,
+                bracket_len: 36.0,
+                leather: 0.8,
             },
             Frame::Banner => FrameLook {
                 top: alpha(rgb(0x1f1711), 0.95),
                 bottom: alpha(rgb(0x100c09), 0.95),
-                border: IRON,
-                border_px: 1.0,
+                border: BRONZE,
+                border_px: 3.0,
                 trim: Some(alpha(GOLD, 0.7)),
                 inner_shadow: 8.0,
                 cut: 4.0,
                 shadow: 8.0,
                 margin: 10.0,
+                carved: true,
+                sunk: false,
+                cap: 0.0,
+                bracket: 0.0,
+                bracket_len: 0.0,
+                leather: 0.6,
             },
             Frame::Socket => FrameLook {
                 top: alpha(SOCKET, 0.92),
                 bottom: alpha(rgb(0x14100c), 0.92),
-                border: IRON,
-                border_px: 1.0,
+                border: scaled(BRONZE, 0.8),
+                border_px: 2.0,
                 trim: None,
                 inner_shadow: 10.0,
                 cut: 3.0,
                 shadow: 0.0,
                 margin: 4.0,
+                carved: true,
+                sunk: true,
+                cap: 0.0,
+                bracket: 0.0,
+                bracket_len: 0.0,
+                leather: 0.0,
             },
             Frame::Tooltip => FrameLook {
                 top: alpha(rgb(0x15100c), 0.96),
@@ -340,6 +377,12 @@ impl Frame {
                 cut: 3.0,
                 shadow: 8.0,
                 margin: 8.0,
+                carved: false,
+                sunk: false,
+                cap: 0.0,
+                bracket: 0.0,
+                bracket_len: 0.0,
+                leather: 0.0,
             },
         }
     }
@@ -351,8 +394,9 @@ pub fn frame_style(kind: Frame) -> Gd<StyleBoxFlat> {
     let l = kind.look();
     let mut sb = StyleBoxFlat::new_gd();
     sb.set_bg_color(l.bottom.lerp(l.top, 0.5));
-    sb.set_border_width_all(l.border_px as i32);
-    sb.set_border_color(l.border);
+    // flat, a carved rim is a thin iron line
+    sb.set_border_width_all(if l.carved { 2 } else { l.border_px as i32 });
+    sb.set_border_color(if l.carved { IRON } else { l.border });
     sb.set_corner_radius_all(l.cut as i32);
     // one segment per corner: a straight cut, like forged metal
     sb.set_corner_detail(1);
@@ -409,6 +453,13 @@ pub fn apply_frame<T: Inherits<Control>>(panel: &Gd<T>, kind: Frame) {
         ),
         ("trim_inset", (l.border_px + 4.0).to_variant()),
         ("shadow_px", l.shadow.to_variant()),
+        ("carved", l.carved.to_variant()),
+        ("sunk", l.sunk.to_variant()),
+        ("cap_px", l.cap.to_variant()),
+        ("cap_color", scaled(BRONZE, 1.15).to_variant()),
+        ("bracket_px", l.bracket.to_variant()),
+        ("bracket_len", l.bracket_len.to_variant()),
+        ("leather", l.leather.to_variant()),
         ("size", c.get_size().to_variant()),
     ] {
         m.set_shader_parameter(name, &v);
@@ -1019,6 +1070,38 @@ pub fn label(text: &str) -> Gd<Label> {
     l.set_text(text);
     l.set_mouse_filter(MouseFilter::IGNORE);
     l
+}
+
+/// The end page's reading type (its body, emphasis and small capitals)
+/// over the sizes its layout gives: larger, to read at a glance. Its
+/// titles and the stone's words keep their own.
+pub const END_TEXT: f32 = 1.2;
+
+/// Every label under `root` set in a reading face (Body, BodyBold, Caps)
+/// at `k` times its size, all but those under `skip` (text rebuilt later,
+/// which would come back at its own size).
+pub fn scale_reading_text(root: &Gd<Control>, k: f32, skip: Option<&Gd<Control>>) {
+    let faces: Vec<InstanceId> = [Face::Body, Face::BodyBold, Face::Caps]
+        .into_iter()
+        .map(|f| font(f).instance_id())
+        .collect();
+    let skip = skip.map(|s| s.instance_id());
+    let mut stack = vec![root.clone().upcast::<Node>()];
+    while let Some(node) = stack.pop() {
+        if Some(node.instance_id()) == skip {
+            continue;
+        }
+        if let Ok(mut l) = node.clone().try_cast::<Label>() {
+            let reading = l
+                .get_theme_font("font")
+                .is_some_and(|f| faces.contains(&f.instance_id()));
+            if reading {
+                let size = l.get_theme_font_size("font_size");
+                l.add_theme_font_size_override("font_size", (size as f32 * k).round() as i32);
+            }
+        }
+        stack.extend(node.get_children().iter_shared());
+    }
 }
 
 /// A label in `face` at `size`, in `color`.

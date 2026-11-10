@@ -768,6 +768,10 @@ impl Screens {
     /// and takes no input until the beat is over.
     pub fn show_end(&mut self, summary: &EndSummary, beat: bool) {
         let mut page = end_view::build(summary, &self.queue, self.canvas(), self.pad, beat);
+        // its reading type larger (the hints, redrawn with the pad, as
+        // they are)
+        let foot = page.foot.clone().upcast::<Control>();
+        theme::scale_reading_text(&page.root, theme::END_TEXT, Some(&foot));
         // drawn again (another language): its gate as it was
         let kept = self.end_gate.take().filter(|_| !beat);
         self.end = Some(summary.clone());

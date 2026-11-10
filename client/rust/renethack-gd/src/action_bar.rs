@@ -105,7 +105,7 @@ impl ActionBar {
             }
             crate::tips::set(&button, &crate::tr!("bar-slot-empty", key = key_label(i)));
 
-            // the inner shadow of the socket
+            // the socket: a bronze lip round a hollow, its inner shadow
             let mut well = godot::classes::ColorRect::new_alloc();
             well.set_mouse_filter(MouseFilter::IGNORE);
             place(&well, [0.0, 0.0, 1.0, 1.0], [1.0, 1.0, -1.0, -1.0]);
@@ -125,11 +125,10 @@ impl ActionBar {
                             "outer_color",
                             Color::from_rgba(0.0, 0.0, 0.0, 0.0).to_variant(),
                         ),
-                        (
-                            "border_color",
-                            Color::from_rgba(0.0, 0.0, 0.0, 0.0).to_variant(),
-                        ),
-                        ("border_px", 0.0f32.to_variant()),
+                        ("border_color", theme::BRONZE.to_variant()),
+                        ("border_px", 3.0f32.to_variant()),
+                        ("carved", true.to_variant()),
+                        ("sunk", true.to_variant()),
                         ("inner_shadow_px", 12.0f32.to_variant()),
                         ("corner_cut_px", 2.0f32.to_variant()),
                         ("trim_px", 0.0f32.to_variant()),

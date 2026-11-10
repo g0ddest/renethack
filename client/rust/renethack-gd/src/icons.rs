@@ -159,13 +159,14 @@ pub fn tile_class(tile: i32) -> char {
     LOOKS.with(|l| l.borrow().get(&tile).map_or('?', |(_, c)| *c))
 }
 
-/// A glyph painted as an embossed gold emblem (bar commands, spells).
+/// A glyph struck as a gold emblem, as the HUD's (bar commands, spells,
+/// the wheel's sections).
 pub fn emblem(glyph: Glyph) -> Gd<Texture2D> {
     let key = (-1000 - glyph as i32, 'E');
     if let Some(t) = ITEMS.with(|i| i.borrow().get(&key).cloned()) {
         return t;
     }
-    let tex = painted(glyph, Style::Filled(STEEL));
+    let tex = painted(glyph, Style::Struck);
     ITEMS.with(|i| i.borrow_mut().insert(key, tex.clone()));
     tex
 }
@@ -1523,7 +1524,14 @@ enum Style {
     Filled(Mat),
     /// White strokes along the outlines (tinted by the caller).
     Stroke,
+    /// One solid shape struck in gold, as the HUD's emblems
+    /// (`ui_icon.gdshader`): its edges rounded and lit from the top left,
+    /// where its surfaces meet a groove, a dark rim and a shadow.
+    Struck,
 }
+
+/// The struck emblems' gold (theme::GOLD).
+const STRUCK_GOLD: [f32; 3] = [0.72, 0.54, 0.23];
 
 fn mix(a: [f32; 3], b: [f32; 3], t: f32) -> [f32; 3] {
     [
@@ -1547,7 +1555,7 @@ fn over(dst: [f32; 4], c: [f32; 3], a: f32) -> [f32; 4] {
 fn paint(g: Glyph, style: Style, n: usize) -> Vec<u8> {
     let main = match style {
         Style::Filled(m) => m,
-        Style::Stroke => STEEL,
+        Style::Stroke | Style::Struck => STEEL,
     };
     let ls = layers(g, main);
     let px = 2.0 / n as f32;
@@ -1573,6 +1581,56 @@ fn paint(g: Glyph, style: Style, n: usize) -> Vec<u8> {
                         .fold(f32::MAX, f32::min);
                     let a = cover(d / 0.9);
                     c = [1.0, 1.0, 1.0, a];
+                }
+                Style::Struck => {
+                    // a little bolder than the outline
+                    let solid = |q: V| all(q) - 0.03;
+                    // the relief's height: rising over the rounded edge,
+                    // sunk in the grooves where the surfaces meet
+                    let groove = |q: V| {
+                        let seam = ls.iter().map(|(f, _)| f(q).abs()).fold(f32::MAX, f32::min);
+                        if -solid(q) > 0.06 {
+                            1.0 - (seam / 0.035).clamp(0.0, 1.0)
+                        } else {
+                            0.0
+                        }
+                    };
+                    let height = |q: V| {
+                        let rise = (-solid(q) / 0.13).clamp(0.0, 1.0);
+                        rise * rise * (3.0 - 2.0 * rise) * (1.0 - 0.7 * groove(q))
+                    };
+                    let s = solid((p.0 - 0.05, p.1 - 0.07));
+                    let sa = (1.0 - (s / 0.12).clamp(0.0, 1.0)) * 0.6;
+                    c = over(c, [0.0, 0.0, 0.0], sa);
+                    let d = solid(p);
+                    let oa = cover((d - 0.04) / 0.9);
+                    c = over(c, [0.03, 0.02, 0.012], oa);
+                    let a = cover(d / 0.9);
+                    if a > 0.0 {
+                        let e = px.max(0.012);
+                        let h0 = height(p);
+                        let hx = height((p.0 + e, p.1));
+                        let hy = height((p.0, p.1 + e));
+                        let k = 0.13 * 0.9;
+                        let (nx, ny, nz) = (-(hx - h0) / e * k, -(hy - h0) / e * k, 1.0f32);
+                        let nl = (nx * nx + ny * ny + nz * nz).sqrt();
+                        let n3 = (nx / nl, ny / nl, nz / nl);
+                        // the light from the top left and in front
+                        let l3 = (-0.48f32, -0.61f32, 0.65f32);
+                        let diff = (n3.0 * l3.0 + n3.1 * l3.1 + n3.2 * l3.2).max(0.0);
+                        // the half vector's highlight, towards the eye
+                        let hv = (l3.0, l3.1, l3.2 + 1.0);
+                        let hl = (hv.0 * hv.0 + hv.1 * hv.1 + hv.2 * hv.2).sqrt();
+                        let sp = ((n3.0 * hv.0 + n3.1 * hv.1 + n3.2 * hv.2) / hl).max(0.0);
+                        let spec = sp.powi(24);
+                        let t = ((p.1 + 0.9) / 1.8).clamp(0.0, 1.0);
+                        let gold = STRUCK_GOLD.map(|v| v * (1.2 - 0.4 * t));
+                        let mut col = gold.map(|v| v * (0.3 + 0.95 * diff));
+                        col = mix(col, [1.0, 0.93, 0.78], spec * 0.45);
+                        // the grooves dark
+                        col = mix(col, gold.map(|v| v * 0.32), groove(p) * 0.85);
+                        c = over(c, col, a);
+                    }
                 }
                 Style::Filled(_) => {
                     // shadow, then the outline, then each surface
