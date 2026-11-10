@@ -114,6 +114,19 @@ const SKIN_BACKLIGHT: Color = Color::from_rgb(0.3, 0.1, 0.06);
 const DARK_EDGE: f32 = 0.22;
 const DARK_EDGE_STRENGTH: f32 = 0.5;
 const DARK_EDGE_FROM: f32 = 0.5;
+/// NetHack's black, as a creature may be dyed in it (a slate, `nh_color(0)`):
+/// a colour of no more luminance than this and no more spread between its
+/// channels (a red of as little luminance reads by its own hue).
+const BLACK_LUMINANCE: f32 = 0.36;
+const BLACK_SPREAD: f32 = 0.15;
+
+/// A colour that reads as black on a dark floor: dark, or NetHack's own
+/// black slate.
+fn reads_black(c: Color) -> bool {
+    let luminance = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+    let spread = c.r.max(c.g).max(c.b) - c.r.min(c.g).min(c.b);
+    luminance < DARK_EDGE || (luminance < BLACK_LUMINANCE && spread < BLACK_SPREAD)
+}
 const SKIN_RIM: f32 = 0.14;
 const RIM_TINT: f32 = 0.5;
 const RIM_ROUGHNESS: f32 = 0.95;
@@ -494,7 +507,7 @@ pub struct Art {
     derived: HashMap<(i64, u32, bool, Option<usize>), Gd<Material>>,
     /// A creature's materials with their rim (`rimmed`), by the material
     /// each was made from, and the ids of those made (they take none more).
-    rims: HashMap<i64, Gd<Material>>,
+    rims: HashMap<(i64, bool), Gd<Material>>,
     rimmed: HashSet<i64>,
     /// The metal materials made (`keep_metal`, by id: they may be freed)
     /// with their metallic where the level mirrors all of the sky, and how
@@ -1848,7 +1861,9 @@ impl Art {
             return;
         }
         if RIM > 0.0 {
-            self.rim(m);
+            // (a creature dyed black takes the dark one's edge, whatever
+            // its maps: a raven's feathers, a pudding)
+            self.rim(m, reads_black(look.tint));
         }
         // what is seen through or only sensed throws no shadow, nor takes
         // the light of the creatures seen; a thing on the floor lights the
@@ -1992,8 +2007,9 @@ impl Art {
     /// the lights' rim is a hairline on a smooth body and dim on a dark
     /// one (a homunculus in a dark corridor, a manes on Gehennom's floor
     /// were lost). Each material is copied once; a stand-in is rimmed once
-    /// it is built.
-    fn rim(&mut self, m: &Model) {
+    /// it is built. `black`: the creature is dyed black (its edge the dark
+    /// one's, `edge_pass`).
+    fn rim(&mut self, m: &Model, black: bool) {
         let Some(inner) = m.inner.as_ref() else {
             return;
         };
@@ -2007,6 +2023,16 @@ impl Art {
             let Ok(mut mi) = node.try_cast::<MeshInstance3D>() else {
                 continue;
             };
+            // a body built of parts (a cat, a pudding, a raven) wears its
+            // material over all of it, over any surface's: rimmed there
+            // (a surface's would not show)
+            if let Some(src) = mi.get_material_override() {
+                if !self.rimmed.contains(&src.instance_id().to_i64()) {
+                    let rimmed = self.rimmed_material(&src, black);
+                    mi.set_material_override(&rimmed);
+                }
+                continue;
+            }
             let n = mi.get_mesh().map_or(0, |m| m.get_surface_count());
             for i in 0..n {
                 let Some(src) = mi.get_active_material(i) else {
@@ -2015,7 +2041,7 @@ impl Art {
                 if self.rimmed.contains(&src.instance_id().to_i64()) {
                     continue;
                 }
-                let rimmed = self.rimmed_material(&src);
+                let rimmed = self.rimmed_material(&src, black);
                 mi.set_surface_override_material(i, &rimmed);
             }
         }
@@ -2043,8 +2069,8 @@ impl Art {
         .clone()
     }
 
-    fn rimmed_material(&mut self, src: &Gd<Material>) -> Gd<Material> {
-        let key = src.instance_id().to_i64();
+    fn rimmed_material(&mut self, src: &Gd<Material>, black: bool) -> Gd<Material> {
+        let key = (src.instance_id().to_i64(), black);
         if let Some(m) = self.rims.get(&key) {
             return m.clone();
         }
@@ -2060,10 +2086,12 @@ impl Art {
                 let specular = m.get_specular().min(RIM_SPECULAR);
                 m.set_specular(specular);
                 // (never on a see-through one: the pass knows nothing of
-                // the cut-outs of a card of feathers or hair)
-                let c = m.get_albedo();
-                let dark = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b < DARK_EDGE;
-                if m.get_transparency() == Transparency::DISABLED
+                // the cut-outs of a card of feathers or hair; but a dark
+                // one seen through all over, a pudding's slime, has none)
+                let dark = black || reads_black(m.get_albedo());
+                let see_through = m.get_transparency();
+                if (see_through == Transparency::DISABLED
+                    || (dark && see_through == Transparency::ALPHA))
                     && m.get_next_pass().is_none()
                     && let Some(edge) = self.edge_pass(dark)
                 {
@@ -5209,6 +5237,18 @@ mod tests {
             }
         }
         assert!(found.is_empty(), "{found:#?}");
+    }
+
+    #[test]
+    fn nethack_s_black_reads_black_and_a_dark_red_its_own_hue() {
+        use crate::theme::nh_color;
+        // black (a slate), and anything as dark as a black dragon's hide
+        assert!(reads_black(nh_color(0)));
+        assert!(reads_black(Color::from_rgb(0.15, 0.15, 0.17)));
+        // red, blue and magenta read by their hue; grey and white by light
+        for c in [1, 4, 5, 7, 15] {
+            assert!(!reads_black(nh_color(c)), "colour {c}");
+        }
     }
 
     #[test]

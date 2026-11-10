@@ -618,9 +618,19 @@ pub fn lay_out_rows(
     cat: &Catalog,
     rows: &[(i32, &[&str])],
 ) -> Result<(i32, i32), String> {
+    lay_out_rows_on(world, cat, rows, "S_room")
+}
+
+/// As `lay_out_rows`, on a floor of `floor` (a dark one: "S_darkroom").
+pub fn lay_out_rows_on(
+    world: &mut World,
+    cat: &Catalog,
+    rows: &[(i32, &[&str])],
+    floor: &str,
+) -> Result<(i32, i32), String> {
     let map = &mut world.map;
     map.clear();
-    let floor = cmap(cat, "S_room")?;
+    let floor = cmap(cat, floor)?;
     let (cx, cy) = (40, 10);
     let span = |&(gap, names): &(i32, &[&str])| gap * (names.len() as i32 - 1);
     let wide = rows.iter().map(span).max().unwrap_or(0);

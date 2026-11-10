@@ -5283,6 +5283,7 @@ impl SelfTest {
             "lava" => world_looks::lava(),
             "overview" => world_looks::overview(),
             "places" => world_looks::places(),
+            "dark-creatures" => world_looks::dark_creatures(),
             "far" => world_looks::far_view(),
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),

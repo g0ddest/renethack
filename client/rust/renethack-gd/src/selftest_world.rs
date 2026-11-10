@@ -738,6 +738,44 @@ pub(super) fn places() -> Vec<Step> {
     steps
 }
 
+/// Dark creatures on a dark floor in the game's own light (the art loop's
+/// first critique, #6: a black dragon, a black pudding and a shade lost
+/// on dark stone), as a hero with infravision sees them there, and
+/// people beside them (skin's own rim with the creatures'), for pictures
+/// before and after (not part of `make test-client`): at the game's
+/// distance (`dark-creatures`) and close (`-close`).
+pub(super) fn dark_creatures() -> Vec<Step> {
+    const ROWS: &[(i32, &[&str])] = &[
+        (3, &["black dragon", "black pudding", "shade"]),
+        (3, &["black naga", "black light", "raven"]),
+        (3, &["watchman", "valkyrie", "black unicorn"]),
+    ];
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    steps.extend([
+        Step::Call("lay out the rows on a dark floor", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            crate::gallery::lay_out_rows_on(&mut g.world, &cat, ROWS, "S_darkroom")?;
+            Ok(())
+        }),
+        Step::Wait("the rows drawn", |g| {
+            let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+            Ok(drawn == Some(g.world.map.generation()))
+        }),
+        Step::Call("the game's distance", |g| far(g, 11.0)),
+        Step::Wait("the camera on them", drawn_here),
+        Step::Shot("dark-creatures"),
+        Step::Call("closer", |g| far(g, 7.0)),
+        Step::Wait("the camera closer", drawn_here),
+        Step::Shot("dark-creatures-close"),
+        Step::Call("back", |g| far(g, 11.0)),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
 /// Lava's shores and the Plane of Fire (the critics' second pass, #9), for
 /// pictures before and after (not part of `make test-client`): Orcus'
 /// town and the Wizard's tower (their lava), and the Plane of Fire, each
