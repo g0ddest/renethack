@@ -738,6 +738,98 @@ pub(super) fn places() -> Vec<Step> {
     steps
 }
 
+/// The light where the art director measures it (the art loop's lighting,
+/// #1), for pictures before and after (not part of `make test-client`):
+/// each level as the hero arrives, unmapped, at the game's distance
+/// (`lighting-<level>`) and close on the hero (`-near`): the first level
+/// (and close on its north wall's torch, `-wall`), Dlvl 3, Minetown,
+/// Mines 9 and the Valley. `RENETHACK_LIGHTING` (a comma list: "dlvl1,
+/// valley") picks some.
+pub(super) fn lighting() -> Vec<Step> {
+    let mut steps = vec![Step::Call(
+        "debug mode for this game",
+        |g: &mut RenethackGame| {
+            g.debug_mode = true;
+            Ok(())
+        },
+    )];
+    steps.extend(start());
+    steps.push(Step::Wait("the first level drawn", |g| {
+        drawn_in(g, Branch::Main)
+    }));
+    let wanted = |name: &str| {
+        std::env::var("RENETHACK_LIGHTING")
+            .map(|only| only.split(',').any(|w| w.trim() == name))
+            .unwrap_or(true)
+    };
+    let pair = |steps: &mut Vec<Step>, shot: &'static str| {
+        let near: &'static str = Box::leak(format!("{shot}-near").into_boxed_str());
+        steps.extend([
+            Step::Wait("the level drawn", drawn_here),
+            Step::Call("where to measure", luma_marks),
+            Step::Shot(shot),
+            Step::Call("the camera close", |g| far(g, 7.0)),
+            Step::Wait("the camera close", drawn_here),
+            Step::Shot(near),
+            Step::Call("the camera back", |g| far(g, 11.0)),
+            Step::Wait("the camera back", drawn_here),
+        ]);
+    };
+    let arrive = |steps: &mut Vec<Step>, to: &'static str, pick: Option<KeyCheck>| {
+        steps.extend([
+            Step::Key(ctrl_key('v')),
+            Step::Request(
+                "to what level",
+                |p| matches!(p, Prompt::Text { query, .. } if query.contains("level")),
+            ),
+            Step::Dialog(DialogEvent::TextSubmitted(
+                if pick.is_some() { "?" } else { to }.into(),
+            )),
+        ]);
+        if let Some(pick) = pick {
+            steps.extend([
+                Step::Request("the levels to teleport to", is_menu),
+                Step::KeyFrom("the level", pick),
+            ]);
+        }
+        steps.push(Step::AnswerUntil(
+            'n',
+            "a command on the new level",
+            at_command,
+        ));
+    };
+    if wanted("dlvl1") {
+        pair(&mut steps, "lighting-dlvl1");
+        steps.extend([
+            Step::Call("the view on a room's north wall", view_north_wall),
+            Step::Wait("the camera on the wall", drawn_here),
+            Step::Shot("lighting-dlvl1-wall"),
+            Step::Call("the camera back on the hero", |g| {
+                g.world.view_center = None;
+                far(g, 11.0)
+            }),
+            Step::Wait("the camera back", drawn_here),
+        ]);
+    }
+    if wanted("dlvl3") {
+        arrive(&mut steps, "3", None);
+        pair(&mut steps, "lighting-dlvl3");
+    }
+    if wanted("minetown") || wanted("mines9") {
+        arrive(&mut steps, "", Some(|g| entry_key(g, "minetn")));
+        pair(&mut steps, "lighting-minetown");
+        // (a filler level below it, unlit)
+        arrive(&mut steps, "9", None);
+        pair(&mut steps, "lighting-mines9");
+    }
+    if wanted("valley") {
+        arrive(&mut steps, "", Some(|g| entry_key(g, "valley")));
+        pair(&mut steps, "lighting-valley");
+    }
+    steps.extend(quit());
+    steps
+}
+
 /// Dark creatures on a dark floor in the game's own light (the art loop's
 /// first critique, #6: a black dragon, a black pudding and a shade lost
 /// on dark stone), as a hero with infravision sees them there, and

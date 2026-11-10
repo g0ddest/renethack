@@ -117,6 +117,11 @@ const FAR_EXPOSURE: f32 = 0.3;
 const OVERVIEW_AMBIENT: f32 = 0.3;
 /// The vignette's strength over the map (vignette.gdshader's own).
 const VIGNETTE: f32 = 0.4;
+/// How far the frame's highlights are lifted towards white, by their luma
+/// (vignette.gdshader's own `lift`): at 11 m a lit room's brightest 1 %
+/// reached 105-145 of 255, the frame lived in its lower half; what no
+/// light reaches is left as it is.
+const HIGHLIGHT_LIFT: f32 = 0.37;
 /// The overview never goes further (a whole 80x21 level fits well within).
 const MAX_OVERVIEW_DISTANCE: f32 = 80.0;
 const FOLLOW_RATE: f32 = 6.0;
@@ -7307,6 +7312,7 @@ impl MapView {
         }
         if let Some(m) = self.post_mat.as_mut() {
             m.set_shader_parameter("strength", &(VIGNETTE * (1.0 - k)).to_variant());
+            m.set_shader_parameter("lift", &(HIGHLIGHT_LIFT * (1.0 - k)).to_variant());
         }
         RenderingServer::singleton().global_shader_parameter_set("overview", &k.to_variant());
         self.show_reflect();

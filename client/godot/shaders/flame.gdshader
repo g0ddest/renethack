@@ -2,7 +2,9 @@
 // camera, playing a flipbook of a real flame (Unity Labs, CC0), or shaped
 // and licked by scrolling noise without one.
 shader_type spatial;
-render_mode unshaded, blend_add, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
+// (its light added, and what is behind its body dimmed: added alone over
+// a wall its torch lights five times as bright, its orange burned white)
+render_mode unshaded, blend_premul_alpha, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
 
 uniform float energy = 1.3;
 uniform sampler2D flipbook : source_color, filter_linear_mipmap, repeat_disable;
@@ -53,11 +55,15 @@ void fragment() {
 		float t = (TIME + phase) * fps;
 		float f = floor(t);
 		vec3 c = mix(page(f, UV), page(f + 1.0, UV), fract(t));
-		ALBEDO = c * energy * 1.6;
-		ALPHA = clamp(max(c.r, max(c.g, c.b)) * 1.5, 0.0, 1.0);
-		if (foot > 0.0) {
-			ALPHA *= smoothstep(0.0, foot, 1.0 - UV.y);
-		}
+		// the picture's heat in a fire's own colours: deep orange at its
+		// edges, a yellow-orange core, never white (its near-white core,
+		// over a wall a torch lights five times as bright, burned white)
+		float heat = max(c.r, max(c.g, c.b));
+		vec3 fire = mix(vec3(1.0, 0.26, 0.04), vec3(1.0, 0.45, 0.08), smoothstep(0.15, 0.55, heat));
+		fire = mix(fire, vec3(1.0, 0.62, 0.2), smoothstep(0.6, 0.95, heat));
+		float stand = foot > 0.0 ? smoothstep(0.0, foot, 1.0 - UV.y) : 1.0;
+		ALBEDO = fire * heat * energy * 1.1 * stand;
+		ALPHA = clamp(heat * 1.5, 0.0, 1.0) * stand * 0.8;
 	} else {
 		float y = 1.0 - UV.y;
 		float t = TIME + phase;
@@ -69,7 +75,8 @@ void fragment() {
 		float heat = shape * (1.25 - y);
 		vec3 col = mix(vec3(1.0, 0.22, 0.03), vec3(1.0, 0.68, 0.3), smoothstep(0.25, 0.8, heat));
 		col = mix(col, vec3(1.0, 0.93, 0.75), smoothstep(0.8, 1.1, heat));
-		ALBEDO = col * energy;
 		ALPHA = clamp(shape * 1.2, 0.0, 1.0);
+		ALBEDO = col * energy * ALPHA;
+		ALPHA *= 0.8;
 	}
 }

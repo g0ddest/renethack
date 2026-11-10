@@ -1,5 +1,6 @@
-// The map's frame (map_view.rs): the corners darken towards a cold black,
-// and a faint film grain moves over the darks. Drawn under the HUD.
+// The map's frame (map_view.rs): its highlights lifted, the corners
+// darken towards a cold black, and a faint film grain moves over the
+// darks. Drawn under the HUD.
 shader_type canvas_item;
 
 uniform sampler2D screen : hint_screen_texture, filter_linear_mipmap;
@@ -11,6 +12,10 @@ uniform float strength = 0.40;
 uniform float grain = 0.025;
 // a new level comes up out of black (map_view.rs)
 uniform float fade = 0.0;
+// how far the highlights are lifted towards white, the darks left as they
+// are and the hue kept (the frame lived in its lower half: a lit room's
+// brightest read as a grey); none in the overview (map_view.rs)
+uniform float lift = 0.37;
 
 float hash(vec2 p) {
 	vec3 q = fract(vec3(p.xyx) * 0.1031);
@@ -20,6 +25,11 @@ float hash(vec2 p) {
 
 void fragment() {
 	vec3 col = texture(screen, SCREEN_UV).rgb;
+	// (by the luma: lifting each channel would turn a torch's orange
+	// redder, not brighter)
+	float l0 = dot(col, vec3(0.2126, 0.7152, 0.0722));
+	float l1 = l0 + lift * smoothstep(0.18, 0.6, l0) * (1.0 - l0);
+	col *= l1 / max(l0, 1e-4);
 	// a little wider than tall: the frame follows the 16:9 screen
 	vec2 d = (UV - 0.5) * vec2(1.0, 0.92) * 1.4142;
 	float v = smoothstep(radius - softness, radius, length(d)) * strength;
