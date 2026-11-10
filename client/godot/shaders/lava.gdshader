@@ -12,6 +12,11 @@ uniform vec4 crust : source_color = vec4(0.07, 0.05, 0.045, 1.0);
 uniform float energy = 3.5;
 uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 uniform sampler2D fow_tex : filter_linear, repeat_disable;
+// what the ground under the level shows where nothing is known
+// (map_surface.gdshader's), for the crust cooled toward it
+global uniform vec4 branch_chasm;
+global uniform vec4 branch_void;
+global uniform float overview;
 // per cell, full in the channel of its ground: water, lava, ice, land
 uniform sampler2D ground_tex : filter_linear, repeat_disable;
 // per cell: G full where nothing is drawn at all (surface.rs `StandField`)
@@ -180,17 +185,54 @@ void fragment() {
 	// toward what nothing is known of its crust closes over it, a thin
 	// line of glow where it does, and past that it lies cooled black (a
 	// hole there showed the ground under the level lit, a square of it)
+	float cooled = 0.0;
 	if (fray > 0.0) {
 		float line = smoothstep(0.27, 0.33, fray) * (1.0 - smoothstep(0.33, 0.39, fray));
-		float cooled = smoothstep(0.33, 0.39, fray);
+		cooled = smoothstep(0.33, 0.39, fray);
 		crack *= 1.0 - smoothstep(0.05, 0.3, fray);
 		glow = molten.rgb * max(max(crack, rim * 0.8), line * 0.45) * seethe * (1.0 - cooled);
 		rock *= mix(1.0 - 0.5 * smoothstep(0.1, 0.33, fray), 0.06, cooled);
 	}
-	float seen = texture(fow_tex, (wpos.xz + 0.5) / FIELD).r;
+	float seen = texture(fow_tex, uv).r;
+	// what the hero sees of it meets what they remember wandering over a
+	// couple of cells (a big field half seen stepped along the cells, its
+	// lava dimmed cell by cell)
+	vec2 fd = vec2(1.0) / FIELD;
+	float seen_w = (seen * 4.0
+		+ (texture(fow_tex, uv + vec2(fd.x, 0.0)).r + texture(fow_tex, uv - vec2(fd.x, 0.0)).r
+		+ texture(fow_tex, uv + vec2(0.0, fd.y)).r + texture(fow_tex, uv - vec2(0.0, fd.y)).r) * 2.0
+		+ texture(fow_tex, uv + fd).r + texture(fow_tex, uv - fd).r
+		+ texture(fow_tex, uv + vec2(fd.x, -fd.y)).r
+		+ texture(fow_tex, uv + vec2(-fd.x, fd.y)).r) / 16.0;
+	if (seen_w > 0.001 && seen_w < 0.999) {
+		float s = mix(seen, seen_w, 0.75) + (tl2(wpos.xz * 1.3 + vec2(41.3, 17.9)) - 0.5) * 0.45
+			+ (tl2(wpos.xz * 0.42 + vec2(9.7, 33.1)) - 0.5) * 0.3;
+		seen = smoothstep(0.25, 0.75, s);
+	}
 	ALBEDO = mix(rock, molten.rgb * 0.3, crack);
 	ROUGHNESS = mix(0.9, 0.4, crack);
 	// nor does it mirror the metal sky (map_view's): it shines by its fire
 	RADIANCE = vec4(0.0, 0.0, 0.0, 1.0);
 	EMISSION = (glow * energy + rock * 0.15 * heat) * mix(0.35, 1.0, seen);
+	// and its crust cooled toward the unknown fades, past its line, into
+	// what the ground under the level shows where nothing is known
+	// (Gehennom's smouldering chasm, elsewhere the smoky dark: as
+	// map_surface draws them), so the field's edge there runs through
+	// the cells: a dark crust stopped at each cell's edge against what lay
+	// beyond stepped along them
+	if (cooled > 0.0) {
+		vec3 beyond = vec3(0.0);
+		if (branch_chasm.a > 0.0) {
+			float smoke = tl2(wpos.xz * 0.05 + TIME * vec2(0.01, 0.004));
+			float deep = smoothstep(0.35, 0.75, tl2(wpos.xz * 0.11 + 7.0 - TIME * 0.006));
+			beyond = branch_chasm.rgb * mix(0.45, 1.0, deep) * mix(0.6, 1.0, smoke);
+		} else if (branch_void.a > 0.0) {
+			float drift = tl2(wpos.xz * 0.045 + TIME * vec2(0.008, 0.003));
+			float grain = tl2(wpos.xz * 0.23 + vec2(3.1, 7.7));
+			beyond = branch_void.rgb * mix(0.55, 1.0, drift) * mix(0.8, 1.0, grain) * (1.0 - overview);
+		}
+		float gone = smoothstep(0.37, 0.5, fray);
+		ALBEDO *= 1.0 - gone;
+		EMISSION = mix(EMISSION, beyond, gone);
+	}
 }

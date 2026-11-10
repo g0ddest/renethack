@@ -197,18 +197,29 @@ void fragment() {
 		+ sheen.rgb * sky_reflect * mist * mix(0.6, 1.0, seen)
 		+ max(own, overview_min.rgb) * overview * OVERVIEW_GLOW;
 
-	// foam lapping at the shore: a band at its very edge, its reach
-	// breathing, broken up by the noise; none on a swamp (`foam_amount`:
-	// white, it ringed each of its pools)
+	// foam lapping at the shore: a narrow band at its very edge, its reach
+	// breathing, broken up by the noise into flecks and gaps, as much as
+	// there is water about to drive it (a pool of a few cells little, a
+	// moat or a sea its whole); none on a swamp (`foam_amount`). Wide and
+	// white, it ringed every pool: a swamp read as a cow's hide, a dark
+	// floor's water as a white crackle
+	vec2 wu = (wpos.xz + 0.5) / FIELD;
+	vec2 w2 = vec2(2.0) / FIELD;
+	float about = (texture(ground_tex, wu + vec2(w2.x, 0.0)).r + texture(ground_tex, wu - vec2(w2.x, 0.0)).r
+		+ texture(ground_tex, wu + vec2(0.0, w2.y)).r + texture(ground_tex, wu - vec2(0.0, w2.y)).r
+		+ texture(ground_tex, wu + w2).r + texture(ground_tex, wu - w2).r
+		+ texture(ground_tex, wu + vec2(w2.x, -w2.y)).r
+		+ texture(ground_tex, wu + vec2(-w2.x, w2.y)).r) / 8.0;
 	float lap = 0.5 + 0.5 * sin(t * 1.3 + wpos.x * 1.9 + wpos.z * 1.4);
-	float band = smoothstep(mix(0.45, 0.8, lap), 0.97, shore);
-	float breakup = smoothstep(0.3, 0.62, n2(wpos.xz * 2.4 + vec2(t * 0.06, -t * 0.04)) + 0.35 * shore);
-	float foam = band * breakup * foam_amount;
-	vec3 froth = mix(luma * vec3(0.54, 0.59, 0.72) * 0.4, foam_color.rgb, seen);
-	col = mix(col, froth, foam * 0.85);
+	float band = smoothstep(mix(0.66, 0.86, lap), 0.98, shore);
+	float breakup = smoothstep(0.42, 0.72, n2(wpos.xz * 3.1 + vec2(t * 0.06, -t * 0.04)) + 0.25 * shore)
+		* smoothstep(0.3, 0.6, n2(wpos.xz * 0.9 + vec2(5.3, 1.7)));
+	float foam = band * breakup * foam_amount * mix(0.15, 1.0, smoothstep(0.3, 0.6, about));
+	vec3 froth = mix(luma * vec3(0.54, 0.59, 0.72) * 0.4, foam_color.rgb * 0.85, seen);
+	col = mix(col, froth, foam * 0.7);
 
 	ALBEDO = col;
-	ALPHA = max(mix(0.8, 0.97, depth_t), foam * 0.9);
+	ALPHA = max(mix(0.8, 0.97, depth_t), foam * 0.75);
 	// rough enough, and rougher where the ripples turn faster than
 	// a pixel: the lights glint as soft streaks along them, not as
 	// points (stars)
