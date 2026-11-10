@@ -1553,6 +1553,13 @@ fn passage(wall_along_x: bool) -> Vector3 {
     }
 }
 
+/// A line that tells the hero, fallen dead, lives on: an amulet's ("But
+/// wait..."), or a "no" to "Die?" in debug or explore mode ("OK, so you
+/// don't die.", "... don't choke.").
+fn hero_lives_on(text: &str) -> bool {
+    text.starts_with("But wait...") || text.starts_with("OK, so you don't")
+}
+
 /// Which way a blow knocks back the one it struck: along `away`, or in a
 /// door or doorway (`passage`) along its passage only, so that nobody is
 /// pushed into the frame. None when nothing of it runs along the passage
@@ -4146,6 +4153,8 @@ pub struct MapView {
     clock: f64,
     /// Where the hero was and which way they face.
     hero_at: Option<(i32, i32)>,
+    /// The hero's model lies in its death clip (`hero_falls`).
+    hero_down: bool,
     hero_yaw: f32,
     /// Which way a monster faces since it stepped or fought, while the
     /// same one stands on the cell.
@@ -4938,6 +4947,7 @@ impl MapView {
             mirrors: false,
             snap: true,
             clock: 0.0,
+            hero_down: false,
             hero_at: None,
             hero_yaw: 0.0,
             facing: HashMap::new(),
@@ -7553,6 +7563,7 @@ impl MapView {
         self.engulfed.show(None, Vector3::ZERO, 0.0);
         self.snap = true;
         self.hero_at = None;
+        self.hero_down = false;
         // a new hero faces the camera, not the way the last one turned
         self.hero_yaw = 0.0;
         self.set_path(&[], false);
@@ -10241,7 +10252,7 @@ impl MapView {
             // saved by an amulet, they stand
             if m.text.starts_with("You die") {
                 hero_dies = Some(true);
-            } else if m.text.starts_with("But wait...") {
+            } else if hero_lives_on(&m.text) {
                 hero_dies = Some(false);
             }
             // what a monster does that the hero sees: a spell cast
@@ -10340,8 +10351,11 @@ impl MapView {
                     if !dying && self.art.flinch(m) {
                         self.stats.flinches += 1;
                     }
+                    // (from where it stands: a blow from inside it, an
+                    // engulfer's, has no way and knocks nothing back)
                     let toward = Vector3::new((from.0 - to.0) as f32, 0.0, (from.1 - to.1) as f32)
-                        .normalized();
+                        .try_normalized()
+                        .unwrap_or(Vector3::ZERO);
                     // and is knocked back, flashing
                     let node = m.node.clone();
                     if !dying {
@@ -10357,7 +10371,7 @@ impl MapView {
         }
         match hero_dies {
             Some(true) => self.hero_falls(),
-            Some(false) => self.settle_hero(),
+            Some(false) => self.hero_rises(),
             None => {}
         }
         for (at, hit, a) in unplaced {
@@ -10566,7 +10580,9 @@ impl MapView {
             .and_then(|n| n.look.entity.and_then(|i| n.look.models.get(i)))
             .map_or(1.0, |p| p.look.art.height);
         let ground = self.ground(to.0, to.1);
-        let toward = Vector3::new((from.0 - to.0) as f32, 0.0, (from.1 - to.1) as f32).normalized();
+        let toward = Vector3::new((from.0 - to.0) as f32, 0.0, (from.1 - to.1) as f32)
+            .try_normalized()
+            .unwrap_or(Vector3::ZERO);
         let at = Vector3::new(
             to.0 as f32,
             ground + (height * 0.6).clamp(0.2, 1.2),
@@ -10640,7 +10656,9 @@ impl MapView {
         let yaw_from = placed.yaw;
         placed.yaw = yaw;
         let at = Vector3::new(from.0 as f32, 0.0, from.1 as f32) + placed.pos;
-        let toward = Vector3::new((to.0 - from.0) as f32, 0.0, (to.1 - from.1) as f32).normalized();
+        let toward = Vector3::new((to.0 - from.0) as f32, 0.0, (to.1 - from.1) as f32)
+            .try_normalized()
+            .unwrap_or(Vector3::ZERO);
         let node = nodes.models[i].node.clone();
         // from the saddle the blow is the rider's: the steed under them
         // turns to it
@@ -10687,6 +10705,7 @@ impl MapView {
         let Some(cell) = self.hero_at else {
             return;
         };
+        self.hero_down = true;
         if let Some(i) = self.motions.iter().position(|m| m.cell == cell) {
             self.motions.swap_remove(i).finish(false);
         }
@@ -10717,7 +10736,8 @@ impl MapView {
         let Some(i) = nodes.look.entity.filter(|&i| i < nodes.models.len()) else {
             return;
         };
-        let Some(away) = knocked_back(away, nodes.look.passage) else {
+        let Some(away) = knocked_back(away, nodes.look.passage).filter(|a| *a != Vector3::ZERO)
+        else {
             return;
         };
         let placed = &nodes.look.models[i];
@@ -10836,6 +10856,16 @@ impl MapView {
         }
     }
 
+    /// A hero who fell dead and lives on (an amulet's, or "OK, so you don't
+    /// die" in debug or explore mode) stands again, on the map and so on
+    /// the inventory's doll, which shows the map's model. Only one who fell:
+    /// a monster saved by its amulet ("But wait...") leaves her be.
+    fn hero_rises(&mut self) {
+        if std::mem::take(&mut self.hero_down) {
+            self.settle_hero();
+        }
+    }
+
     /// The hero's model plays its idle clip (after an order's last step):
     /// the body that walked, the steed's under a rider.
     fn settle_hero(&mut self) {
@@ -10852,6 +10882,17 @@ impl MapView {
         {
             p.play_ex().name(idle.as_str()).custom_blend(0.2).done();
         }
+    }
+
+    /// The hero lies dead: fallen in the death clip and not risen again
+    /// (self-tests), and the clip the hero's model plays now.
+    pub fn hero_lies(&self) -> (bool, Option<String>) {
+        let now = self
+            .hero_model()
+            .and_then(|m| m.player())
+            .filter(|p| p.is_instance_valid())
+            .map(|p| p.get_current_animation().to_string());
+        (self.hero_down, now)
     }
 
     /// The clip the hero's model plays now, and its idle clip (self-tests).
@@ -12305,6 +12346,15 @@ mod tests {
             }
         }
         assert!(wrong.is_empty(), "{wrong:#?}");
+    }
+
+    #[test]
+    fn the_hero_fallen_dead_lives_on_by_an_amulet_or_a_no() {
+        assert!(hero_lives_on("But wait...  Your medallion begins to glow!"));
+        assert!(hero_lives_on("OK, so you don't die."));
+        assert!(hero_lives_on("OK, so you don't choke."));
+        assert!(!hero_lives_on("You die..."));
+        assert!(!hero_lives_on("OK."));
     }
 
     #[test]

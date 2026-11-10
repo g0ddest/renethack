@@ -531,7 +531,9 @@ fn strap(m: &mut Merge, z: f32, lift: f32, half: f32, thick: f32) {
     let path: Vec<Vector3> = (0..=n)
         .map(|k| {
             let a = frac(k, n) * PI;
-            v(w * a.cos(), SOLE_TOP + h * a.sin().powf(0.8), z)
+            // (sin(PI) is a hair under 0: its root was NaN, and so was
+            // the strap's end, 189 "cannot be normalized" warnings a start)
+            v(w * a.cos(), SOLE_TOP + h * a.sin().max(0.0).powf(0.8), z)
         })
         .collect();
     m.sweep(&path, |_| (thick, half), 2.0, false, Vector3::BACK);
@@ -549,19 +551,14 @@ fn sandal(m: &mut Merge, straw: bool) {
     let mid = (SOLE_LOW + SOLE_TOP) / 2.0;
     let edge: Vec<Vector3> = (0..n).map(|k| rim(k) + v(0.0, mid, 0.0)).collect();
     m.sweep(&edge, |_| (0.012, thick), 4.0, true, UP);
-    // its face, a flat fan from the middle
+    // its face, a flat fan from the middle, its UVs laid by the plan
+    let plan = |p: Vector3| Vector2::new(0.5 + p.x * 4.0, 0.5 + p.z * 4.0);
     for (y, up) in [(SOLE_TOP + thick - 0.006, 1.0f32), (SOLE_LOW, -1.0)] {
-        let c = m.vertex(
-            v(0.0, y, (SOLE_HEEL + SOLE_TOE) / 2.0),
-            v(0.0, up, 0.0),
-            Vector2::new(0.5, 0.5),
-        );
+        let middle = v(0.0, y, (SOLE_HEEL + SOLE_TOE) / 2.0);
+        let c = m.vertex(middle, v(0.0, up, 0.0), plan(middle));
         for k in 0..n {
-            m.vertex(
-                rim(k) + v(0.0, y, 0.0),
-                v(0.0, up, 0.0),
-                Vector2::new(0.5, 0.5),
-            );
+            let p = rim(k) + v(0.0, y, 0.0);
+            m.vertex(p, v(0.0, up, 0.0), plan(p));
         }
         for k in 0..n as i32 {
             m.tri(c, c + 1 + k, c + 1 + (k + 1) % n as i32);
@@ -1169,6 +1166,43 @@ fn spanned(
             let a = base + i * c + j;
             m.tri(a, a + 1, a + c);
             m.tri(a + 1, a + c + 1, a + c);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every point of a sandal and a waraji is a number: the straps' ends
+    /// were NaN (the root of a sine a hair under 0), and Godot warned 189
+    /// times a start that it couldn't normalize their tangents. Their soles'
+    /// faces are laid out in UV, too.
+    #[test]
+    fn a_sandal_is_made_of_numbers() {
+        for straw in [false, true] {
+            let mut m = Merge::default();
+            sandal(&mut m, straw);
+            let bad = (0..m.pos.len())
+                .filter(|&i| !(m.pos[i].is_finite() && m.nrm[i].is_finite() && m.uv[i].is_finite()))
+                .count();
+            assert_eq!(bad, 0, "straw {straw}: points not finite");
+            let middle = |p: Vector3| p.x == 0.0 && p.z == (SOLE_HEEL + SOLE_TOE) / 2.0;
+            let mut fans = 0;
+            for t in m.idx.chunks(3) {
+                let [a, b, c] = [t[0], t[1], t[2]].map(|i| i as usize);
+                if !middle(m.pos[a]) || m.nrm[a].y.abs() < 0.99 {
+                    continue;
+                }
+                fans += 1;
+                let (e1, e2) = (m.uv[b] - m.uv[a], m.uv[c] - m.uv[a]);
+                let area = (e1.x * e2.y - e1.y * e2.x).abs();
+                assert!(
+                    area > 1e-6,
+                    "straw {straw}: a fan's triangle with no UV area"
+                );
+            }
+            assert!(fans >= 40, "straw {straw}: {fans} fan triangles");
         }
     }
 }

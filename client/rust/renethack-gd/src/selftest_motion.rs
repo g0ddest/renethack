@@ -5,20 +5,24 @@
 //! while it strikes her, then strikes it again and again; after each turn
 //! a burst of pictures `motion-<round>-<frame>` a few frames apart catches
 //! its blows and her reeling, then her swings, its reeling and its fall.
-//! Then soldier ants made beside her bite until she dies (debug mode asks
-//! "Die?" first), and a burst `motion-death-<frame>` catches her fall.
-//! Nothing is checked but that the fight was drawn.
+//! Then soldier ants made beside her bite until she falls; at debug
+//! mode's "Die?" she says no, and must stand again ("OK, so you don't
+//! die"), on the map and on the inventory's doll (`motion-risen-doll`);
+//! they bite on till she dies, and a burst `motion-death-<frame>` catches
+//! her fall. Nothing else is checked but that the fight was drawn.
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicUsize, Ordering};
 
-use godot::classes::Engine;
+use godot::classes::{DisplayServer, Engine};
 use godot::obj::Singleton;
 use nh_protocol::{GlyphKind, mg};
 use nh_world::{Key, KeyInput, Prompt};
 
-use super::{DialogEvent, Step, camera_settled, command, ctrl_key, key, start};
+use super::{DialogEvent, Step, camera_settled, command, ctrl_key, key, map_view, start};
 use crate::game::RenethackGame;
+use crate::inventory_panel::InvInput;
+use crate::ui_events::UiEvent;
 
 /// Turns she waits (it strikes), turns in all, pictures after each,
 /// frames between pictures.
@@ -35,6 +39,8 @@ static PICKED: AtomicBool = AtomicBool::new(false);
 /// Turns waited for the ants, and whether she was let die.
 static WAITED: AtomicUsize = AtomicUsize::new(0);
 static DIED: AtomicBool = AtomicBool::new(false);
+/// She said no at her first "Die?" (debug mode).
+static REFUSED: AtomicBool = AtomicBool::new(false);
 
 fn frames() -> i64 {
     Engine::singleton().get_process_frames() as i64
@@ -200,11 +206,67 @@ pub(super) fn motion() -> Vec<Step> {
             WAITED.store(0, Ordering::Relaxed);
             Ok(())
         }),
+        // she falls; at "Die?" (debug mode) she says no, and stands again,
+        // on the map and on the inventory's doll (the map's model)
+        Step::KeysUntil("waiting till she falls", |g| {
+            match g.pending.as_ref().map(|(_, p)| p) {
+                Some(Prompt::Command) if REFUSED.load(Ordering::Relaxed) => Ok(None),
+                Some(Prompt::Command) => {
+                    let n = WAITED.fetch_add(1, Ordering::Relaxed);
+                    if n > 400 {
+                        return Err("she never fell".into());
+                    }
+                    Ok(Some(KeyInput::plain(Key::Char(if n.is_multiple_of(2) {
+                        'm'
+                    } else {
+                        's'
+                    }))))
+                }
+                Some(Prompt::Choice { query, .. }) if query.contains("Die?") => {
+                    REFUSED.store(true, Ordering::Relaxed);
+                    Ok(Some(KeyInput::plain(Key::Char('n'))))
+                }
+                _ => Ok(Some(KeyInput::plain(Key::Escape))),
+            }
+        }),
+        Step::Wait("\"OK, so you don't die\" drawn", |g| {
+            Ok(map_view(g)?.drawn_generation() == Some(g.world.map.generation()))
+        }),
+        Step::Call("she stands again", |g| {
+            let (down, clip) = map_view(g)?.hero_lies();
+            if down || clip.as_deref().is_some_and(|c| c.contains("Death")) {
+                return Err(format!(
+                    "she lies dead after \"OK, so you don't die\": {clip:?}"
+                ));
+            }
+            Ok(())
+        }),
+        Step::Call("the inventory opened", |g| {
+            g.push_ui(UiEvent::Inventory(InvInput::Toggle));
+            FRAME.store(frames(), Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::Wait("the doll drawn", |g| {
+            let Some(p) = g.ui.as_ref().map(|ui| &ui.inventory) else {
+                return Err("no UI".into());
+            };
+            Ok(p.is_open()
+                && (p.doll_rendered() || DisplayServer::singleton().get_name() == "headless"))
+        }),
+        Step::Wait("a few frames on", |_| {
+            Ok(frames() >= FRAME.load(Ordering::Relaxed) + APART * 4)
+        }),
+        Step::Shot("motion-risen-doll"),
+        Step::Call("the inventory closed", |g| {
+            g.ui.as_mut().ok_or("no UI")?.inventory.close();
+            Ok(())
+        }),
+        Step::Request("the next command", command),
         Step::KeysUntil("waiting till she dies", |g| {
             match g.pending.as_ref().map(|(_, p)| p) {
                 Some(Prompt::Command) => {
                     let n = WAITED.fetch_add(1, Ordering::Relaxed);
-                    if n > 400 {
+                    if n > 800 {
                         return Err("she never died".into());
                     }
                     Ok(Some(KeyInput::plain(Key::Char(if n.is_multiple_of(2) {
