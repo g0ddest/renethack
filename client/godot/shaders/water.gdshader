@@ -34,6 +34,12 @@ uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 uniform sampler2D ground_tex : filter_linear, repeat_disable;
 uniform sampler2D depth_tex : hint_depth_texture, filter_linear_mipmap;
 uniform sampler2D fow_tex : filter_linear, repeat_disable;
+// what is drawn on each cell (G: nothing), so that toward what nothing is
+// known of the water's edge frays and fades into the dark as a floor's
+uniform sampler2D stand_tex : filter_linear, repeat_disable;
+uniform bool has_stand = false;
+global uniform vec4 branch_chasm;
+global uniform vec4 branch_void;
 // the whole level framed (map_view's overview, as map_surface.gdshader)
 global uniform float overview;
 
@@ -153,6 +159,31 @@ void fragment() {
 		}
 		shore = 1.0 - smoothstep(0.0, 0.3, v.r - max(max(v.g, v.b), v.a));
 	}
+	// toward what nothing is known of: frayed as a floor's edge is there,
+	// and fading into the dark over the edge cell (it ended square, the
+	// side of a slab standing out of the void)
+	float edge_fade = 0.0;
+	if (has_stand && !basin) {
+		vec2 suv = (wpos.xz + 0.5) / FIELD;
+		float empty = texture(stand_tex, suv).g;
+		if (empty > 0.001) {
+			if (empty + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.6 > 0.5) {
+				discard;
+			}
+			vec2 d = vec2(1.0) / FIELD;
+			float wide = (empty * 4.0
+				+ (texture(stand_tex, suv + vec2(d.x, 0.0)).g + texture(stand_tex, suv - vec2(d.x, 0.0)).g
+				+ texture(stand_tex, suv + vec2(0.0, d.y)).g + texture(stand_tex, suv - vec2(0.0, d.y)).g) * 2.0
+				+ texture(stand_tex, suv + d).g + texture(stand_tex, suv - d).g
+				+ texture(stand_tex, suv + vec2(d.x, -d.y)).g
+				+ texture(stand_tex, suv + vec2(-d.x, d.y)).g) / 16.0;
+			vec2 middle = floor(wpos.xz + 0.5);
+			float core = 1.0 - smoothstep(0.2, 0.42, length(wpos.xz - middle));
+			float fray = mix(empty, wide, 0.5) + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.3
+				- core * 0.5;
+			edge_fade = smoothstep(0.08, 0.45, fray) * (1.0 - 0.6 * overview);
+		}
+	}
 	float seen = texture(fow_tex, (wpos.xz + 0.5) / FIELD).r;
 	// what the hero sees of it meets what they remember wandering through
 	// the cells (a square of brighter water round them)
@@ -220,6 +251,21 @@ void fragment() {
 
 	ALBEDO = col;
 	ALPHA = max(mix(0.8, 0.97, depth_t), foam * 0.75);
+	if (edge_fade > 0.0) {
+		vec3 beyond = vec3(0.0);
+		if (branch_chasm.a > 0.0) {
+			float smoke = tl2(wpos.xz * 0.05 + TIME * vec2(0.01, 0.004));
+			float glow = smoothstep(0.35, 0.75, tl2(wpos.xz * 0.11 + 7.0 - TIME * 0.006));
+			beyond = branch_chasm.rgb * mix(0.45, 1.0, glow) * mix(0.6, 1.0, smoke);
+		} else if (branch_void.a > 0.0) {
+			float drift = tl2(wpos.xz * 0.045 + TIME * vec2(0.008, 0.003));
+			float grain = tl2(wpos.xz * 0.23 + vec2(3.1, 7.7));
+			beyond = branch_void.rgb * mix(0.55, 1.0, drift) * mix(0.8, 1.0, grain) * (1.0 - overview);
+		}
+		ALBEDO *= 1.0 - edge_fade;
+		EMISSION = mix(EMISSION, beyond, edge_fade);
+		ALPHA = mix(ALPHA, 1.0, edge_fade);
+	}
 	// rough enough, and rougher where the ripples turn faster than
 	// a pixel: the lights glint as soft streaks along them, not as
 	// points (stars)

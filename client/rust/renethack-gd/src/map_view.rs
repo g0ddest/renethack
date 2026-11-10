@@ -1885,10 +1885,12 @@ fn liquid_bed(look: &mut Look, around: &Around, ctx: &Ctx, depth: f32, lava: boo
     // dark and wet under the water: a bed, not a pale tank
     let stone = Paint::Pbr(m, 45, Role::Prop);
     look.ground_tile(plane(1.0, 1.0), stone, at(0.0, -depth, 0.0));
-    // (no bank where nothing is known beside lava: its crust cools black
-    // there, lava.gdshader, and a lip of stone stepped along the cells)
+    // (no bank where nothing is known beside it: lava's crust cools black
+    // there and water fades into the dark, and a lip of stone stepped
+    // along the cells, the side of a slab)
+    let _ = lava;
     for (i, (dx, dz)) in SIDES.iter().enumerate() {
-        if around.liquid[i] || around.ground[i] != Ground::None || (lava && around.unknown[i]) {
+        if around.liquid[i] || around.ground[i] != Ground::None || around.unknown[i] {
             continue;
         }
         let (mesh, pos) = if *dx == 0.0 {
@@ -7279,9 +7281,10 @@ impl MapView {
                     m.set_shader_parameter("ground_tex", &ground.to_variant());
                 }
                 // (its edge frays where nothing is drawn beside it)
-                if l == Liquid::Lava {
+                if matches!(l, Liquid::Lava | Liquid::Water) {
                     let stand = self.surfaces.stand_texture();
                     m.set_shader_parameter("stand_tex", &stand.to_variant());
+                    m.set_shader_parameter("has_stand", &true.to_variant());
                 }
                 if l == Liquid::Membrane {
                     m.set_shader_parameter("tall", &MEMBRANE_TALL.to_variant());

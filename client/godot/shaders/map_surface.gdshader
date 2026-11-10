@@ -426,10 +426,29 @@ void fragment() {
 	// a floor's edge where nothing is drawn beside it (the dark past what
 	// is seen, a floor NetHack leaves unmapped out of sight): frayed by the
 	// noise as a shore is, never a square step
+	float edge_fade = 0.0;
 	if (edge_kind == 1.0) {
-		float empty = texture(stand_tex, (wpos.xz + 0.5) / FIELD).g;
+		vec2 suv = (wpos.xz + 0.5) / FIELD;
+		float empty = texture(stand_tex, suv).g;
 		if (empty > 0.001 && empty + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.6 > 0.5) {
 			discard;
+		}
+		// and toward it fading into the dark over the edge cell, the cell's
+		// middle kept as it is (ending crisp at the fray it sat as a slab
+		// lifted off the void, hard sides in its haze)
+		if (empty > 0.001) {
+			vec2 d = vec2(1.0) / FIELD;
+			float wide = (empty * 4.0
+				+ (texture(stand_tex, suv + vec2(d.x, 0.0)).g + texture(stand_tex, suv - vec2(d.x, 0.0)).g
+				+ texture(stand_tex, suv + vec2(0.0, d.y)).g + texture(stand_tex, suv - vec2(0.0, d.y)).g) * 2.0
+				+ texture(stand_tex, suv + d).g + texture(stand_tex, suv - d).g
+				+ texture(stand_tex, suv + vec2(d.x, -d.y)).g
+				+ texture(stand_tex, suv + vec2(-d.x, d.y)).g) / 16.0;
+			vec2 middle = floor(wpos.xz + 0.5);
+			float core = 1.0 - smoothstep(0.2, 0.42, length(wpos.xz - middle));
+			float fray = mix(empty, wide, 0.5) + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.3
+				- core * 0.5;
+			edge_fade = smoothstep(0.08, 0.45, fray) * (1.0 - 0.6 * overview);
 		}
 	}
 	vec3 n = normalize(wnrm);
@@ -709,6 +728,22 @@ void fragment() {
 		}
 	}
 
+	// a floor's edge toward the unknown fading into what the ground under
+	// the level shows there (Gehennom's chasm, elsewhere the smoky dark)
+	if (edge_fade > 0.0) {
+		vec3 beyond = vec3(0.0);
+		if (branch_chasm.a > 0.0) {
+			float smoke = tn2(wpos.xz * 0.05 + TIME * vec2(0.01, 0.004));
+			float deep = smoothstep(0.35, 0.75, tn2(wpos.xz * 0.11 + 7.0 - TIME * 0.006));
+			beyond = branch_chasm.rgb * mix(0.45, 1.0, deep) * mix(0.6, 1.0, smoke);
+		} else if (branch_void.a > 0.0) {
+			float drift = tn2(wpos.xz * 0.045 + TIME * vec2(0.008, 0.003));
+			float grain = tn2(wpos.xz * 0.23 + vec2(3.1, 7.7));
+			beyond = branch_void.rgb * mix(0.55, 1.0, drift) * mix(0.8, 1.0, grain) * (1.0 - overview);
+		}
+		color *= 1.0 - edge_fade;
+		emission = mix(emission, beyond, edge_fade);
+	}
 	// the stone dark towards the see-through's rim
 	color *= 1.0 - 0.6 * rim_near;
 	emission *= 1.0 - 0.6 * rim_near;
