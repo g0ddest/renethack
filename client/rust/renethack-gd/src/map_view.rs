@@ -20,7 +20,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use godot::classes::base_material_3d::{BillboardMode, Feature, ShadingMode};
+use godot::classes::base_material_3d::{BillboardMode, Feature, Flags, ShadingMode};
 use godot::classes::control::{LayoutPreset, MouseFilter};
 use godot::classes::environment::{
     AmbientSource, BgMode, FogMode, GlowBlendMode, ReflectionSource, ToneMapper,
@@ -2006,12 +2006,13 @@ fn door_leaf(look: &mut Look, along_x: bool, open: bool, h: f32, wood: Paint, ir
 /// The Astral Plane's far isles (`show_far_isles`): how many, and their
 /// lamps' light.
 const FAR_ISLES: u32 = 14;
-const FAR_ISLE_LAMP: Color = Color::from_rgb(1.0, 0.86, 0.6);
+const FAR_ISLE_LAMP: Color = Color::from_rgb(1.0, 0.78, 0.45);
+const FAR_ISLE_LAMP_GLOW: f32 = 5.0;
 /// Their stone and their slabs' (pale marble under the stars), and how
 /// much light of their own they give.
 const FAR_ISLE_STONE: Color = Color::from_rgb(0.62, 0.6, 0.66);
 const FAR_ISLE_TOP: Color = Color::from_rgb(0.8, 0.76, 0.7);
-const FAR_ISLE_GLOW: f32 = 0.06;
+const FAR_ISLE_GLOW: f32 = 0.12;
 /// A gilt cornice's height under a wall's cap (`BranchLook::cap` "gilded").
 const CORNICE: f32 = 0.07;
 /// How far a raised drawbridge leans out from upright over its water, on
@@ -5820,21 +5821,33 @@ impl MapView {
             return;
         }
         if self.far_isles.is_none() {
-            // (a plain stone of their own, faintly lit by itself: in the
-            // map's, far outside anything known, they came out black
-            // blots)
-            let stone = |c: Color| -> Gd<Material> {
+            // (a plain stone of their own, lit by the stars' light and a
+            // little by itself, out of the depth's haze: in the map's, or
+            // under the haze, they came out as blots and smudges)
+            let stone = |c: Color, glow: f32| -> Gd<Material> {
                 let mut m = StandardMaterial3D::new_gd();
                 m.set_albedo(c);
-                m.set_roughness(0.85);
+                m.set_roughness(0.8);
                 m.set_feature(Feature::EMISSION, true);
                 m.set_emission(c);
-                m.set_emission_energy_multiplier(FAR_ISLE_GLOW);
+                m.set_emission_energy_multiplier(glow);
+                m.set_flag(Flags::DISABLE_FOG, true);
                 m.upcast()
             };
-            let rock = Some(stone(FAR_ISLE_STONE));
-            let top = Some(stone(FAR_ISLE_TOP));
-            let lamp = self.art.flat(FAR_ISLE_LAMP, Finish::Glow);
+            let rock = Some(stone(FAR_ISLE_STONE, FAR_ISLE_GLOW * 0.6));
+            let marble = Some(stone(FAR_ISLE_TOP, FAR_ISLE_GLOW));
+            // (a flame bright enough to bloom: a point of warm light among
+            // the columns)
+            let lamp = {
+                let mut m = StandardMaterial3D::new_gd();
+                m.set_shading_mode(ShadingMode::UNSHADED);
+                m.set_albedo(FAR_ISLE_LAMP);
+                m.set_feature(Feature::EMISSION, true);
+                m.set_emission(FAR_ISLE_LAMP);
+                m.set_emission_energy_multiplier(FAR_ISLE_LAMP_GLOW);
+                m.set_flag(Flags::DISABLE_FOG, true);
+                m.upcast::<Material>()
+            };
             let mut root = Node3D::new_alloc();
             root.set_name("FarIsles");
             let mut part =
@@ -5850,46 +5863,67 @@ impl MapView {
                 };
             for i in 0..FAR_ISLES {
                 let r = |k: u32| cell_noise(i as i32, 7, 300 + k);
-                let size = 1.0 + r(0) * 1.2;
+                let s = 1.2 + r(0) * 1.0;
                 let at = Vector3::new(
                     -14.0 + r(1) * (COLNO as f32 + 28.0),
-                    -20.0 - r(2) * 16.0,
+                    -18.0 - r(2) * 14.0,
                     -22.0 + r(3) * (ROWNO as f32 + 44.0),
                 );
                 let mut isle = Node3D::new_alloc();
                 isle.set_position(at);
                 isle.set_rotation_degrees(Vector3::new(0.0, r(4) * 360.0, 0.0));
-                // rock tapering below it, a slab of the temples' floor on
-                // it, columns round its rim and a lamp in its middle
-                let s = size;
+                // a jagged root of rock under a flat slab of marble, a ring
+                // of columns on it under a round roof and a dome, a warm
+                // lamp burning among the columns
                 part(
                     &mut isle,
-                    cylinder(s, s * 0.25, s * 1.4),
+                    cylinder(s * 0.95, s * 0.12, s * 1.1),
                     rock.as_ref(),
-                    Vector3::new(0.0, -s * 0.7, 0.0),
+                    Vector3::new(0.0, -s * 0.55 - 0.1, 0.0),
                 );
                 part(
                     &mut isle,
-                    cylinder(s * 1.04, s * 1.04, 0.25),
-                    top.as_ref(),
-                    Vector3::new(0.0, 0.12, 0.0),
+                    cylinder(s, s, 0.22),
+                    marble.as_ref(),
+                    Vector3::new(0.0, 0.0, 0.0),
                 );
-                let columns = 3 + (r(5) * 3.0) as u32;
+                let columns = 6;
+                let h = s * 0.9;
                 for c in 0..columns {
-                    let a = (c as f32 / columns as f32 * 360.0 + r(6) * 40.0).to_radians();
-                    let h = s * (0.6 + 0.5 * r(10 + c));
+                    let a = (c as f32 / columns as f32 * 360.0).to_radians();
                     part(
                         &mut isle,
-                        cylinder(s * 0.09, s * 0.11, h),
-                        rock.as_ref(),
-                        Vector3::new(a.sin() * s * 0.75, 0.25 + h / 2.0, a.cos() * s * 0.75),
+                        cylinder(s * 0.07, s * 0.08, h),
+                        marble.as_ref(),
+                        Vector3::new(a.sin() * s * 0.7, 0.11 + h / 2.0, a.cos() * s * 0.7),
                     );
                 }
+                // a lintel round the columns' heads (a ring, open over the
+                // lamp), a small dome on a drum in the middle, and the lamp
+                // on the slab between the columns
                 part(
                     &mut isle,
-                    sphere(s * 0.22),
+                    torus(s * 0.66, s * 0.76),
+                    marble.as_ref(),
+                    Vector3::new(0.0, 0.11 + h + 0.03, 0.0),
+                );
+                part(
+                    &mut isle,
+                    cylinder(s * 0.28, s * 0.28, s * 0.5),
+                    rock.as_ref(),
+                    Vector3::new(0.0, 0.11 + s * 0.25, 0.0),
+                );
+                part(
+                    &mut isle,
+                    dome(s * 0.3),
+                    marble.as_ref(),
+                    Vector3::new(0.0, 0.11 + s * 0.5, 0.0),
+                );
+                part(
+                    &mut isle,
+                    sphere(s * 0.16),
                     Some(&lamp),
-                    Vector3::new(0.0, 0.25 + s * 0.25, 0.0),
+                    Vector3::new(s * 0.45, 0.11 + s * 0.13, s * 0.2),
                 );
                 root.add_child(&isle);
             }
