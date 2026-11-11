@@ -29,6 +29,7 @@ const DRAGONS: Rows = &[
 
 const GIANTS: Rows = &[
     (3, &["titan", "storm giant", "giant"]),
+    (3, &["ettin", "hill giant", "fire giant"]),
     (3, &["mumak", "mastodon", "purple worm"]),
 ];
 

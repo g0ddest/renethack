@@ -350,6 +350,11 @@ pub struct ModelSpec {
     /// 1.3): the rig's `Head` bone scaled.
     #[serde(default = "one")]
     pub head_scale: f32,
+    /// Bones of its rig scaled in their own frames (x, y along the bone, z):
+    /// a dragon's neck and tail drawn out, its head made smaller, its wings
+    /// spread wider.
+    #[serde(default)]
+    pub bone_scale: BTreeMap<String, [f32; 3]>,
     /// How wide (x) and how long (z) the model lies on the floor as it
     /// stands idle, in its own units: a body that would outgrow its cell
     /// is fitted by it (`fitted`). None: no longer than a cell at any
@@ -1512,6 +1517,7 @@ impl ArtManifest {
             smooth: false,
             coat: None,
             coats: Vec::new(),
+            bone_scale: BTreeMap::new(),
             recolor: BTreeMap::new(),
             dress: BTreeMap::new(),
             armour: BTreeMap::new(),
@@ -2585,8 +2591,10 @@ mod tests {
         assert!(height("winter wolf") > height("wolf"));
         assert!(height("wolf") > height("jackal"));
         assert!(height("warhorse") > height("pony"));
-        // an upright body is as tall as its size says
-        assert_eq!(height("giant"), sizes["huge"]);
+        // an upright body is as tall as its size says, a giant a head
+        // taller (art loop iteration 3: giants stood no taller than a
+        // peasant would at their size)
+        assert_eq!(height("giant"), sizes["huge"] * 1.25);
         // and a boulder on the floor is no smaller for the earth elemental
         // that is drawn as one
         let boulder = cat

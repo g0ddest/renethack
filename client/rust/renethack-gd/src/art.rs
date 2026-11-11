@@ -2166,6 +2166,9 @@ impl Art {
                 if spec.head_scale != 1.0 {
                     scale_head(&inner, spec.head_scale);
                 }
+                if !spec.bone_scale.is_empty() {
+                    scale_bones(&inner, &spec.bone_scale);
+                }
                 // a role's own footwear, its outfit's boots only with boots
                 if let (Some(feet), Some(kind)) = (spec.feet.as_ref(), spec.head.as_deref()) {
                     footwear = self.attach_feet(&inner, kind, feet, look);
@@ -3488,6 +3491,20 @@ fn scale_head(inner: &Gd<Node3D>, k: f32) {
     }
 }
 
+/// Bones of the scene's skeleton scaled in their own frames
+/// (`ModelSpec::bone_scale`): the animation turns them, never scales them,
+/// so it holds.
+fn scale_bones(inner: &Gd<Node3D>, scales: &std::collections::BTreeMap<String, [f32; 3]>) {
+    if let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) {
+        for (name, [x, y, z]) in scales {
+            let bone = skeleton.find_bone(name.as_str());
+            if bone >= 0 {
+                skeleton.set_bone_pose_scale(bone, Vector3::new(*x, *y, *z));
+            }
+        }
+    }
+}
+
 /// A copy of a library without position tracks (the pelvis height of a
 /// taller rig would lift a shorter one off the ground).
 fn stripped(lib: &Gd<AnimationLibrary>) -> Gd<AnimationLibrary> {
@@ -4680,8 +4697,8 @@ enum Lean {
 impl Lean {
     /// How far a head of a pair leans from upright, and how far it stands
     /// from the middle (metres).
-    const ANGLE: f32 = 0.42;
-    const APART: f32 = 0.03;
+    const ANGLE: f32 = 0.62;
+    const APART: f32 = 0.07;
 
     /// The turn that leans a head about the neck's foot (`neck`, in the
     /// head's own rest pose); None for a head upright.
