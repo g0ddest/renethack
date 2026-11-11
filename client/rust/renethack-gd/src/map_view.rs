@@ -20,7 +20,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use godot::classes::base_material_3d::{BillboardMode, Feature, Flags, ShadingMode};
+use godot::classes::base_material_3d::{BillboardMode, Feature, ShadingMode};
 use godot::classes::control::{LayoutPreset, MouseFilter};
 use godot::classes::environment::{
     AmbientSource, BgMode, FogMode, GlowBlendMode, ReflectionSource, ToneMapper,
@@ -2006,16 +2006,6 @@ fn door_leaf(look: &mut Look, along_x: bool, open: bool, h: f32, wood: Paint, ir
     }
 }
 
-/// The Astral Plane's far isles (`show_far_isles`): how many, and their
-/// lamps' light.
-const FAR_ISLES: u32 = 14;
-const FAR_ISLE_LAMP: Color = Color::from_rgb(1.0, 0.78, 0.45);
-const FAR_ISLE_LAMP_GLOW: f32 = 5.0;
-/// Their stone and their slabs' (pale marble under the stars), and how
-/// much light of their own they give.
-const FAR_ISLE_STONE: Color = Color::from_rgb(0.62, 0.6, 0.66);
-const FAR_ISLE_TOP: Color = Color::from_rgb(0.8, 0.76, 0.7);
-const FAR_ISLE_GLOW: f32 = 0.12;
 /// A gilt cornice's height under a wall's cap (`BranchLook::cap` "gilded").
 const CORNICE: f32 = 0.07;
 /// How far a raised drawbridge leans out from upright over its water, on
@@ -4193,9 +4183,6 @@ pub struct MapView {
     /// and the light from above (the moon's, the Planes' own sun).
     sky_sea: Option<Gd<MeshInstance3D>>,
     sea_mats: Vec<(&'static str, Gd<Material>)>,
-    /// Far isles floating among the Astral Plane's stars (`show_far_isles`),
-    /// made the first time they are shown.
-    far_isles: Option<Gd<Node3D>>,
     moon: Gd<DirectionalLight3D>,
     back: Gd<DirectionalLight3D>,
     /// The vignette and grain over the map, under the HUD.
@@ -5010,7 +4997,6 @@ impl MapView {
             bedrock_dirty: true,
             sky_sea: None,
             sea_mats: Vec::new(),
-            far_isles: None,
             moon,
             back,
             post,
@@ -5744,7 +5730,6 @@ impl MapView {
             Under::Stars => Some("res://shaders/stars.gdshader"),
             _ => None,
         });
-        self.show_far_isles(l.under == Under::Stars);
         let chasm = if l.under == Under::Chasm {
             CHASM
         } else {
@@ -5830,134 +5815,6 @@ impl MapView {
     /// How many shafts of light fall (self-tests).
     pub fn shafts_shown(&self) -> usize {
         self.shafts.iter().filter(|l| l.is_visible()).count()
-    }
-
-    /// Isles of marble floating far below and about the Astral Plane among
-    /// its stars, columns standing on them and a lamp burning on each, so
-    /// that the level's slabs float in a heaven and not alone in the dark
-    /// (at 11 m it read as a small slab among stars). Never anywhere the
-    /// level is: well below it, scattered by a fixed pattern that knows
-    /// nothing of where its temples stand. Made the first time.
-    fn show_far_isles(&mut self, on: bool) {
-        if !on {
-            if let Some(n) = self.far_isles.as_mut() {
-                n.set_visible(false);
-            }
-            return;
-        }
-        if self.far_isles.is_none() {
-            // (a plain stone of their own, lit by the stars' light and a
-            // little by itself, out of the depth's haze: in the map's, or
-            // under the haze, they came out as blots and smudges)
-            let stone = |c: Color, glow: f32| -> Gd<Material> {
-                let mut m = StandardMaterial3D::new_gd();
-                m.set_albedo(c);
-                m.set_roughness(0.8);
-                m.set_feature(Feature::EMISSION, true);
-                m.set_emission(c);
-                m.set_emission_energy_multiplier(glow);
-                m.set_flag(Flags::DISABLE_FOG, true);
-                m.upcast()
-            };
-            let rock = Some(stone(FAR_ISLE_STONE, FAR_ISLE_GLOW * 0.6));
-            let marble = Some(stone(FAR_ISLE_TOP, FAR_ISLE_GLOW));
-            // (a flame bright enough to bloom: a point of warm light among
-            // the columns)
-            let lamp = {
-                let mut m = StandardMaterial3D::new_gd();
-                m.set_shading_mode(ShadingMode::UNSHADED);
-                m.set_albedo(FAR_ISLE_LAMP);
-                m.set_feature(Feature::EMISSION, true);
-                m.set_emission(FAR_ISLE_LAMP);
-                m.set_emission_energy_multiplier(FAR_ISLE_LAMP_GLOW);
-                m.set_flag(Flags::DISABLE_FOG, true);
-                m.upcast::<Material>()
-            };
-            let mut root = Node3D::new_alloc();
-            root.set_name("FarIsles");
-            let mut part =
-                |root: &mut Gd<Node3D>, mesh: MeshKey, mat: Option<&Gd<Material>>, at: Vector3| {
-                    let mut mi = MeshInstance3D::new_alloc();
-                    mi.set_mesh(&self.art.mesh(mesh));
-                    if let Some(m) = mat {
-                        mi.set_material_override(m);
-                    }
-                    mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
-                    mi.set_position(at);
-                    root.add_child(&mi);
-                };
-            for i in 0..FAR_ISLES {
-                let r = |k: u32| cell_noise(i as i32, 7, 300 + k);
-                let s = 1.2 + r(0) * 1.0;
-                let at = Vector3::new(
-                    -14.0 + r(1) * (COLNO as f32 + 28.0),
-                    -18.0 - r(2) * 14.0,
-                    -22.0 + r(3) * (ROWNO as f32 + 44.0),
-                );
-                let mut isle = Node3D::new_alloc();
-                isle.set_position(at);
-                isle.set_rotation_degrees(Vector3::new(0.0, r(4) * 360.0, 0.0));
-                // a jagged root of rock under a flat slab of marble, a ring
-                // of columns on it under a round roof and a dome, a warm
-                // lamp burning among the columns
-                part(
-                    &mut isle,
-                    cylinder(s * 0.95, s * 0.12, s * 1.1),
-                    rock.as_ref(),
-                    Vector3::new(0.0, -s * 0.55 - 0.1, 0.0),
-                );
-                part(
-                    &mut isle,
-                    cylinder(s, s, 0.22),
-                    marble.as_ref(),
-                    Vector3::new(0.0, 0.0, 0.0),
-                );
-                let columns = 6;
-                let h = s * 0.9;
-                for c in 0..columns {
-                    let a = (c as f32 / columns as f32 * 360.0).to_radians();
-                    part(
-                        &mut isle,
-                        cylinder(s * 0.07, s * 0.08, h),
-                        marble.as_ref(),
-                        Vector3::new(a.sin() * s * 0.7, 0.11 + h / 2.0, a.cos() * s * 0.7),
-                    );
-                }
-                // a lintel round the columns' heads (a ring, open over the
-                // lamp), a small dome on a drum in the middle, and the lamp
-                // on the slab between the columns
-                part(
-                    &mut isle,
-                    torus(s * 0.66, s * 0.76),
-                    marble.as_ref(),
-                    Vector3::new(0.0, 0.11 + h + 0.03, 0.0),
-                );
-                part(
-                    &mut isle,
-                    cylinder(s * 0.28, s * 0.28, s * 0.5),
-                    rock.as_ref(),
-                    Vector3::new(0.0, 0.11 + s * 0.25, 0.0),
-                );
-                part(
-                    &mut isle,
-                    dome(s * 0.3),
-                    marble.as_ref(),
-                    Vector3::new(0.0, 0.11 + s * 0.5, 0.0),
-                );
-                part(
-                    &mut isle,
-                    sphere(s * 0.16),
-                    Some(&lamp),
-                    Vector3::new(s * 0.45, 0.11 + s * 0.13, s * 0.2),
-                );
-                root.add_child(&isle);
-            }
-            self.root.add_child(&root);
-            self.far_isles = Some(root);
-        }
-        if let Some(n) = self.far_isles.as_mut() {
-            n.set_visible(true);
-        }
     }
 
     /// The branch the level drawn is in (self-tests).
