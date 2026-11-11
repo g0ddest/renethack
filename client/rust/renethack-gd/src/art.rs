@@ -114,6 +114,13 @@ const SKIN_BACKLIGHT: Color = Color::from_rgb(0.3, 0.1, 0.06);
 const DARK_EDGE: f32 = 0.22;
 const DARK_EDGE_STRENGTH: f32 = 0.5;
 const DARK_EDGE_FROM: f32 = 0.5;
+/// The hero's own cool edge, round her outline as the camera sees it (the
+/// same pass): subtler than a dark creature's, so that she reads on a dark
+/// floor at 11 m without being washed pale. Like the dark creatures' edge,
+/// in the game's light only (`Art::set_edges_lit`): never in the gallery's,
+/// nor behind the title and the creation form.
+const HERO_EDGE_STRENGTH: f32 = 0.34;
+const HERO_EDGE_FROM: f32 = 0.46;
 /// NetHack's black, as a creature may be dyed in it (a slate, `nh_color(0)`):
 /// a colour of no more luminance than this and no more spread between its
 /// channels (a red of as little luminance reads by its own hue).
@@ -528,7 +535,14 @@ pub struct Art {
     matte: HashSet<InstanceId>,
     /// The pass that edges them (`EDGE_SHADER`), once loaded (None: not
     /// yet asked for; Some(None): missing).
-    edge: Option<Option<Gd<Material>>>,
+    hero_edge: Option<Option<Gd<Material>>>,
+    /// The hero's materials with her edge, by the material each was made
+    /// from, and the ids of those made.
+    hero_edged: HashMap<i64, Gd<Material>>,
+    hero_edged_ids: HashSet<i64>,
+    /// The edges drawn now: in the game's light, not the gallery's nor the
+    /// title's (`set_edges_lit`).
+    edges_lit: bool,
     /// The same, brighter, for a dark creature (`DARK_EDGE`).
     dark_edge: Option<Option<Gd<Material>>>,
     /// A thing on the floor's glint (`GLINT_SHADER`), the same way, and
@@ -648,7 +662,10 @@ impl Art {
             twins: HashMap::new(),
             untwin: HashMap::new(),
             matte: HashSet::new(),
-            edge: None,
+            hero_edge: None,
+            hero_edged: HashMap::new(),
+            hero_edged_ids: HashSet::new(),
+            edges_lit: true,
             dark_edge: None,
             glint: None,
             coin_glint: None,
@@ -2053,26 +2070,119 @@ impl Art {
         }
     }
 
-    /// The pass a creature's rimmed materials draw its edge in; a dark
-    /// one's (its colour under `DARK_EDGE`) brighter, so that a black
-    /// dragon or a shade reads on a dark floor.
-    fn edge_pass(&mut self, dark: bool) -> Option<Gd<Material>> {
-        let slot = if dark {
-            &mut self.dark_edge
+    /// The pass a dark creature's rimmed materials (its colour under
+    /// `DARK_EDGE`, or NetHack's black) draw its edge in, so that a black
+    /// dragon or a shade reads on a dark floor; the hero's (`hero`), a
+    /// subtler one. Another creature has none: a cold sheen round every
+    /// outline read as plastic.
+    fn edge_pass(&mut self, hero: bool) -> Option<Gd<Material>> {
+        let lit = self.edges_lit;
+        let (slot, strength, from) = if hero {
+            (&mut self.hero_edge, HERO_EDGE_STRENGTH, HERO_EDGE_FROM)
         } else {
-            &mut self.edge
+            (&mut self.dark_edge, DARK_EDGE_STRENGTH, DARK_EDGE_FROM)
         };
         slot.get_or_insert_with(|| {
             let shader = godot::tools::try_load::<Shader>(EDGE_SHADER).ok()?;
             let mut m = ShaderMaterial::new_gd();
             m.set_shader(&shader);
-            if dark {
-                m.set_shader_parameter("strength", &DARK_EDGE_STRENGTH.to_variant());
-                m.set_shader_parameter("from", &DARK_EDGE_FROM.to_variant());
-            }
+            let k = if lit { strength } else { 0.0 };
+            m.set_shader_parameter("strength", &k.to_variant());
+            m.set_shader_parameter("from", &from.to_variant());
             Some(m.upcast())
         })
         .clone()
+    }
+
+    /// The edges in the game's light (`on`), or none (the gallery's light,
+    /// the title, the creation form): the dark creatures' and the hero's
+    /// passes, shared by all, at their strength or at none.
+    pub fn set_edges_lit(&mut self, on: bool) {
+        if self.edges_lit == on {
+            return;
+        }
+        self.edges_lit = on;
+        for (slot, strength) in [
+            (&self.dark_edge, DARK_EDGE_STRENGTH),
+            (&self.hero_edge, HERO_EDGE_STRENGTH),
+        ] {
+            if let Some(Some(m)) = slot
+                && let Ok(mut m) = m.clone().try_cast::<ShaderMaterial>()
+            {
+                let k = if on { strength } else { 0.0 };
+                m.set_shader_parameter("strength", &k.to_variant());
+            }
+        }
+    }
+
+    /// The hero's edge (`HERO_EDGE_STRENGTH`) on every opaque surface of
+    /// her model that has none yet: her body, her kit and what she holds,
+    /// put on as it changes.
+    pub fn edge_hero(&mut self, m: &Model) {
+        let Some(inner) = m.inner.as_ref() else {
+            return;
+        };
+        for node in inner
+            .find_children_ex("*")
+            .type_("MeshInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+        {
+            let Ok(mut mi) = node.try_cast::<MeshInstance3D>() else {
+                continue;
+            };
+            if let Some(src) = mi.get_material_override() {
+                if !self.hero_edged_ids.contains(&src.instance_id().to_i64()) {
+                    let edged = self.hero_edged_material(&src);
+                    mi.set_material_override(&edged);
+                }
+                continue;
+            }
+            let n = mi.get_mesh().map_or(0, |m| m.get_surface_count());
+            for i in 0..n {
+                let Some(src) = mi.get_active_material(i) else {
+                    continue;
+                };
+                if self.hero_edged_ids.contains(&src.instance_id().to_i64()) {
+                    continue;
+                }
+                let edged = self.hero_edged_material(&src);
+                mi.set_surface_override_material(i, &edged);
+            }
+        }
+    }
+
+    /// A copy of a material of the hero's with her edge for its next pass
+    /// (never a see-through one: the pass knows nothing of a card's cut-
+    /// outs, a hair's; nor one with a pass of its own, nor an unshaded one).
+    fn hero_edged_material(&mut self, src: &Gd<Material>) -> Gd<Material> {
+        let key = src.instance_id().to_i64();
+        if let Some(m) = self.hero_edged.get(&key) {
+            return m.clone();
+        }
+        let out = match src.duplicate_resource().try_cast::<BaseMaterial3D>() {
+            Ok(mut m)
+                if m.get_shading_mode() != ShadingMode::UNSHADED
+                    && m.get_transparency() == Transparency::DISABLED
+                    && m.get_next_pass().is_none() =>
+            {
+                match self.edge_pass(true) {
+                    Some(edge) => {
+                        m.set_next_pass(&edge);
+                        m.upcast::<Material>()
+                    }
+                    None => src.clone(),
+                }
+            }
+            _ => src.clone(),
+        };
+        if out != *src {
+            self.keep_metal(&out, Some(src));
+        }
+        self.hero_edged.insert(key, out.clone());
+        self.hero_edged_ids.insert(out.instance_id().to_i64());
+        out
     }
 
     fn rimmed_material(&mut self, src: &Gd<Material>, black: bool) -> Gd<Material> {
@@ -2096,10 +2206,10 @@ impl Art {
                 // one seen through all over, a pudding's slime, has none)
                 let dark = black || reads_black(m.get_albedo());
                 let see_through = m.get_transparency();
-                if (see_through == Transparency::DISABLED
-                    || (dark && see_through == Transparency::ALPHA))
+                if dark
+                    && matches!(see_through, Transparency::DISABLED | Transparency::ALPHA)
                     && m.get_next_pass().is_none()
-                    && let Some(edge) = self.edge_pass(dark)
+                    && let Some(edge) = self.edge_pass(false)
                 {
                     m.set_next_pass(&edge);
                 }

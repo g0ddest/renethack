@@ -4214,6 +4214,8 @@ pub struct MapView {
     hero_at: Option<(i32, i32)>,
     /// The hero's model lies in its death clip (`hero_falls`).
     hero_down: bool,
+    /// Frames counted for `edge_the_hero`.
+    edge_tick: u32,
     /// The cell of the foe the hero last struck or was struck by: she
     /// faces it while it stands beside her (`face_foe`).
     last_foe: Option<(i32, i32)>,
@@ -5009,6 +5011,7 @@ impl MapView {
             mirrors: false,
             snap: true,
             clock: 0.0,
+            edge_tick: 0,
             last_foe: None,
             hero_down: false,
             hero_at: None,
@@ -5257,6 +5260,7 @@ impl MapView {
         self.greet_summoned();
         self.advance_motions(delta as f32);
         self.advance_flashes(delta as f32);
+        self.edge_the_hero();
         self.advance_falls(delta as f32);
         self.advance_drops(delta as f32, catalog);
         self.advance_acts(delta as f32);
@@ -11028,6 +11032,35 @@ impl MapView {
         }
         self.hero_yaw = yaw;
         Some((hx, hy))
+    }
+
+    /// The edges are drawn in the game's light only (not the gallery's, nor
+    /// behind the title and the creation form); the hero's model, as her
+    /// kit changes, wears hers on every surface (`Art::edge_hero`), every
+    /// few frames.
+    fn edge_the_hero(&mut self) {
+        let game = !self.showcase && !(self.titled && !self.shown);
+        self.art.set_edges_lit(game);
+        self.edge_tick = self.edge_tick.wrapping_add(1);
+        if !game || !self.edge_tick.is_multiple_of(12) {
+            return;
+        }
+        if let Some(r) = self.rider.as_ref() {
+            self.art.edge_hero(&r.model);
+            return;
+        }
+        let Some(cell) = self.hero_at else {
+            return;
+        };
+        if let Some(n) = self.cells.get(&cell)
+            && let Some(m) = n
+                .look
+                .entity
+                .filter(|_| n.look.hero)
+                .and_then(|i| n.models.get(i))
+        {
+            self.art.edge_hero(m);
+        }
     }
 
     /// A hero who fell dead and lives on (an amulet's, or "OK, so you don't
