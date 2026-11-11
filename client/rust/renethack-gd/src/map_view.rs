@@ -115,13 +115,6 @@ const AIR_LEAST: f32 = 0.3;
 const FAR_EXPOSURE: f32 = 0.3;
 /// The ambient light the overview adds.
 const OVERVIEW_AMBIENT: f32 = 0.3;
-/// The vignette's strength over the map (vignette.gdshader's own).
-const VIGNETTE: f32 = 0.4;
-/// How far the frame's highlights are lifted towards white, by their luma
-/// (vignette.gdshader's own `lift`): at 11 m a lit room's brightest 1 %
-/// reached 105-145 of 255, the frame lived in its lower half; what no
-/// light reaches is left as it is.
-const HIGHLIGHT_LIFT: f32 = 0.37;
 /// The overview never goes further (a whole 80x21 level fits well within).
 const MAX_OVERVIEW_DISTANCE: f32 = 80.0;
 const FOLLOW_RATE: f32 = 6.0;
@@ -796,12 +789,12 @@ const SANCTUM_SHAFT: Shaft = Shaft {
 /// cells or more.
 const HALL_SHAFT: Shaft = Shaft {
     high: 9.0,
-    angle: 14.0,
-    energy: 7.0,
-    color: Color::from_rgb(1.0, 0.84, 0.62),
+    angle: 13.0,
+    energy: 10.0,
+    color: Color::from_rgb(0.95, 0.8, 0.62),
     shadow: false,
     radius: 1.2,
-    glow: 0.08,
+    glow: 0.05,
 };
 const HALL_SHAFT_APART: i32 = 14;
 const HALL_SHAFTS: usize = 4;
@@ -7403,9 +7396,9 @@ impl MapView {
             let ambient = l.ambient_energy + OVERVIEW_AMBIENT * k;
             self.env.set_ambient_light_energy(ambient);
         }
+        // (the frame's grade and vignette go with the haze)
         if let Some(m) = self.post_mat.as_mut() {
-            m.set_shader_parameter("strength", &(VIGNETTE * (1.0 - k)).to_variant());
-            m.set_shader_parameter("lift", &(HIGHLIGHT_LIFT * (1.0 - k)).to_variant());
+            m.set_shader_parameter("shown", &(1.0 - k).to_variant());
         }
         RenderingServer::singleton().global_shader_parameter_set("overview", &k.to_variant());
         self.show_reflect();

@@ -848,15 +848,21 @@ fn main_lair(look: BranchLook, lair: Option<&str>) -> BranchLook {
             },
             ..look
         },
-        // the Big Room: a vast hall, light falling far off in its warm
-        // haze
+        // the Big Room: a vast dim hall, its light in pools where it
+        // falls from high above and round the torches, its far reaches
+        // lost in a dark haze (a warm hall glowing in its haze, it was the
+        // brightest, most colourful place in the dungeon)
         Some("bigroom") => BranchLook {
             shafts: true,
-            fill: rgb(1.0, 0.86, 0.68),
-            fill_scale: 1.2,
-            fog: rgb(0.72, 0.62, 0.5),
-            fog_density: 0.0045,
-            haze: 1.5,
+            fill: rgb(0.86, 0.82, 0.76),
+            fill_scale: 0.3,
+            fog: rgb(0.3, 0.29, 0.28),
+            fog_density: 0.007,
+            haze: 0.5,
+            grade: Grade {
+                saturation: 0.8,
+                ..look.grade
+            },
             ..look
         },
         _ => look,
