@@ -193,7 +193,9 @@ void fragment() {
 	// gold, brighter at the top than the foot, darker in the grooves
 	vec3 gold = color.rgb * mix(1.2, 0.8, UV.y);
 	float sunk = 1.0 - smoothstep(-px, px, e.y);
-	vec3 metal = gold * (0.3 + 0.95 * diff) + vec3(1.0, 0.93, 0.78) * spec * 0.45;
+	// old gold, dulled: a little grey, its highlight faint
+	gold = mix(gold, vec3(dot(gold, vec3(0.3, 0.59, 0.11))), 0.25);
+	vec3 metal = gold * (0.3 + 0.9 * diff) + vec3(0.9, 0.8, 0.62) * spec * 0.18;
 	metal = mix(metal, gold * 0.32 * (0.6 + 0.6 * diff), sunk * 0.85);
 	// a dark rim round the shape, and its shadow down and to the right
 	float rim = 1.0 - smoothstep(0.0, px * 1.5 + 0.05, e.x);

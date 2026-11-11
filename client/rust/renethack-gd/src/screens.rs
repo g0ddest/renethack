@@ -190,15 +190,19 @@ const SCENE_CLEAR_SECS: f32 = 0.6;
 const CREATION_EDGE: i32 = 28;
 
 /// The title's shade over its scene (`across`): the ink of the pages
-/// under the menu on the left, clearing towards the right; else (down)
-/// the top edge, over the dark past the chamber, and a little of the
-/// bottom.
+/// under the menu on the left, near black, clearing towards the fires and
+/// closing in a little at the right edge; else (down) the top edge, over
+/// the dark past the chamber, and the bottom. Only the fires' pool of
+/// light shows the chamber.
 fn title_shade(across: bool) -> Gd<GradientTexture2D> {
     let ink = |a: f32| theme::BG.with_alpha(a);
     let (offsets, alphas): (&[f32], &[f32]) = if across {
-        (&[0.0, 0.3, 0.5, 0.68, 1.0], &[0.9, 0.78, 0.4, 0.0, 0.0])
+        (
+            &[0.0, 0.3, 0.5, 0.62, 0.86, 1.0],
+            &[0.97, 0.9, 0.5, 0.0, 0.12, 0.55],
+        )
     } else {
-        (&[0.0, 0.17, 0.75, 1.0], &[0.95, 0.0, 0.0, 0.5])
+        (&[0.0, 0.2, 0.72, 1.0], &[0.97, 0.1, 0.1, 0.75])
     };
     let colors: Vec<Color> = alphas.iter().map(|&a| ink(a)).collect();
     let mut g = Gradient::new_gd();
@@ -266,9 +270,10 @@ fn title_label(text: &str, size: i32) -> Gd<Label> {
     l
 }
 
-/// The game's name on the title: its letters struck in gold
-/// (`ui_title.gdshader`: the label's colour white, its gold the shader's),
-/// a dark outline and a shadow under them; plain gold without the shader.
+/// The game's name on the title: its letters cast in old, tarnished gold
+/// lit from below (`ui_title.gdshader`: the label's colour white, its gold
+/// the shader's), a dark outline and a shadow under them; plain gold
+/// without the shader.
 /// A stand-in for the logo an artist would letter (docs/logo.md).
 fn title_name(text: &str, size: i32) -> Gd<Label> {
     let Some(mut m) = theme::ui_material("ui_title") else {
@@ -276,7 +281,7 @@ fn title_name(text: &str, size: i32) -> Gd<Label> {
     };
     let mut l = theme::styled_label(text, theme::Face::Title, size, Color::WHITE);
     l.set_horizontal_alignment(HorizontalAlignment::CENTER);
-    l.add_theme_color_override("font_outline_color", Color::from_rgb(0.12, 0.07, 0.03));
+    l.add_theme_color_override("font_outline_color", Color::from_rgb(0.05, 0.03, 0.015));
     l.add_theme_constant_override("outline_size", 5);
     l.add_theme_color_override("font_shadow_color", Color::from_rgba(0.0, 0.0, 0.0, 0.75));
     l.add_theme_constant_override("shadow_offset_x", 0);
@@ -291,13 +296,14 @@ fn title_name(text: &str, size: i32) -> Gd<Label> {
     l
 }
 
-/// A gold flourish `wide` design pixels across: two lines tapering out
-/// from a diamond, a dot at each end.
+/// A flourish of old gold `wide` design pixels across, tarnished and lit
+/// from below as the name is: two lines tapering out from a diamond, a dot
+/// at each end.
 fn flourish(wide: f32) -> Gd<TextureRect> {
     let (w, h) = (wide as i32, 18);
     let mut data = Vec::with_capacity((w * h * 4) as usize);
     let (cx, cy) = (w as f32 / 2.0, h as f32 / 2.0);
-    let gold = theme::GOLD;
+    let gold = theme::GOLD_DIM;
     for y in 0..h {
         for x in 0..w {
             let (px, py) = (x as f32 + 0.5, y as f32 + 0.5);
@@ -318,8 +324,8 @@ fn flourish(wide: f32) -> Gd<TextureRect> {
             let dot = ((cx - off) - 4.0).hypot(py - cy) - 2.0;
             let d = diamond.max(-ring).min(line).min(dot);
             let a = (0.5 - d).clamp(0.0, 1.0);
-            // lit from above
-            let k = if py < cy { 1.25 } else { 0.8 };
+            // lit from below
+            let k = if py < cy { 0.7 } else { 1.15 };
             data.extend_from_slice(&[
                 (gold.r * k * 255.0).min(255.0) as u8,
                 (gold.g * k * 255.0).min(255.0) as u8,

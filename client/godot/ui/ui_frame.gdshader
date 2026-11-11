@@ -156,7 +156,8 @@ void fragment() {
 				float u = (depth - 1.0) / max(rim, 0.001);
 				float l = 0.5 + 0.5 * side * (1.0 - 2.0 * u);
 				float crest = 1.0 - clamp(abs(u - 0.35) / 0.5, 0.0, 1.0);
-				col = border_color.rgb * (0.42 + 0.95 * l + (side > 0.0 ? 0.25 * crest : 0.0));
+				// old bronze: dull, its crest only a little brighter
+				col = border_color.rgb * (0.42 + 0.8 * l + (side > 0.0 ? 0.1 * crest : 0.0));
 			} else {
 				col = border_color.rgb;
 			}

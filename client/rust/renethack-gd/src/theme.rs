@@ -456,7 +456,7 @@ pub fn apply_frame<T: Inherits<Control>>(panel: &Gd<T>, kind: Frame) {
         ("carved", l.carved.to_variant()),
         ("sunk", l.sunk.to_variant()),
         ("cap_px", l.cap.to_variant()),
-        ("cap_color", scaled(BRONZE, 1.15).to_variant()),
+        ("cap_color", BRONZE.to_variant()),
         ("bracket_px", l.bracket.to_variant()),
         ("bracket_len", l.bracket_len.to_variant()),
         ("leather", l.leather.to_variant()),
@@ -579,7 +579,7 @@ fn bevel_image(plate: Plate) -> Gd<Image> {
                     0.0
                 };
                 let mut c = border;
-                c.a = t * t * 0.55;
+                c.a = t * t * 0.35;
                 c
             } else if depth < PLATE_OUTLINE {
                 let mut c = IRON_DARK;
@@ -590,8 +590,9 @@ fn bevel_image(plate: Plate) -> Gd<Image> {
                 let t = (depth - PLATE_OUTLINE) / (PLATE_RIM - PLATE_OUTLINE);
                 let lit = 0.5 + 0.5 * side * (1.0 - 2.0 * t);
                 let crest = 1.0 - smooth(0.0, 0.5, (t - 0.35).abs());
-                let shine = if side > 0.0 { 0.25 * crest } else { 0.0 };
-                scaled(border, 0.42 + 0.95 * lit + shine)
+                // old bronze: dull, its crest only a little brighter
+                let shine = if side > 0.0 { 0.1 * crest } else { 0.0 };
+                scaled(dull(border), 0.4 + 0.72 * lit + shine)
             } else if depth < PLATE_GROOVE {
                 IRON_DARK.lerp(border, 0.1)
             } else {
@@ -628,7 +629,7 @@ fn bevel_image(plate: Plate) -> Gd<Image> {
                 } else {
                     0.8 + 0.3 * up + 0.1 * hash(x / 2, y / 2)
                 };
-                let mut c = scaled(border, k);
+                let mut c = scaled(dull(border), k);
                 let (sx, sy) = (dx - PLATE_RIVET, dy - PLATE_RIVET);
                 let rd = sx.hypot(sy);
                 if rd < 2.0 {
@@ -660,6 +661,13 @@ fn bevel_image(plate: Plate) -> Gd<Image> {
     }
     Image::create_from_data(w, h, false, Format::RGBA8, &PackedByteArray::from(data))
         .expect("a bevel image")
+}
+
+/// `c` dulled as old metal is: a third of the way to its own grey.
+fn dull(c: Color) -> Color {
+    let grey = c.r * 0.3 + c.g * 0.59 + c.b * 0.11;
+    let g = Color::from_rgba(grey, grey, grey, c.a);
+    c.lerp(g, 0.33)
 }
 
 /// `c` with its colour (not its alpha) times `k`.
@@ -735,13 +743,13 @@ fn button_styles(default: bool, caps: bool) -> [Gd<StyleBox>; 4] {
     ]
 }
 
-/// The button the keys and a gamepad are on: a carved plate with a bright
-/// gold rim, its face lit, a soft gold glow round it.
+/// The button the keys and a gamepad are on: a carved plate with a gold
+/// rim, its face a little lit, a faint glow round it.
 pub fn focus_plate() -> Gd<StyleBox> {
     bevel_style(Plate {
-        top: rgb(0x5a4423),
-        bottom: rgb(0x33251a),
-        border: GOLD_BRIGHT,
+        top: rgb(0x46351e),
+        bottom: rgb(0x281d13),
+        border: GOLD,
         light: alpha(BEVEL_LIGHT, 0.9),
         press: false,
         caps: true,

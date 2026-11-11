@@ -1530,8 +1530,8 @@ enum Style {
     Struck,
 }
 
-/// The struck emblems' gold (theme::GOLD).
-const STRUCK_GOLD: [f32; 3] = [0.72, 0.54, 0.23];
+/// The struck emblems' gold: old gold, dulled (theme::GOLD a little grey).
+const STRUCK_GOLD: [f32; 3] = [0.6, 0.47, 0.25];
 
 fn mix(a: [f32; 3], b: [f32; 3], t: f32) -> [f32; 3] {
     [
@@ -1626,7 +1626,7 @@ fn paint(g: Glyph, style: Style, n: usize) -> Vec<u8> {
                         let t = ((p.1 + 0.9) / 1.8).clamp(0.0, 1.0);
                         let gold = STRUCK_GOLD.map(|v| v * (1.2 - 0.4 * t));
                         let mut col = gold.map(|v| v * (0.3 + 0.95 * diff));
-                        col = mix(col, [1.0, 0.93, 0.78], spec * 0.45);
+                        col = mix(col, [0.9, 0.8, 0.62], spec * 0.18);
                         // the grooves dark
                         col = mix(col, gold.map(|v| v * 0.32), groove(p) * 0.85);
                         c = over(c, col, a);
