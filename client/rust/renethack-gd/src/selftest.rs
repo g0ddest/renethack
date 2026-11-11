@@ -241,6 +241,13 @@ enum Step {
     ),
     /// A dialog event for the request now pending.
     Dialog(DialogEvent),
+    /// A dialog event for the request now pending if the chooser gives one
+    /// (the Amulet's wish, asked only the first time it is held), else
+    /// none, never waiting for another request.
+    DialogIf(
+        &'static str,
+        fn(&RenethackGame) -> Result<Option<DialogEvent>, String>,
+    ),
     Call(&'static str, fn(&mut RenethackGame) -> Result<(), String>),
     /// An inventory panel input made from what the game shows (letters).
     Inv(
@@ -5596,6 +5603,22 @@ impl SelfTest {
                     self.next();
                     return;
                 }
+                Step::DialogIf(what, f) => match f(game) {
+                    Ok(None) => self.next(),
+                    Ok(Some(ev)) => {
+                        let Some((id, _)) = pending else {
+                            return;
+                        };
+                        game.push_ui(UiEvent::Dialog { req: id, ev });
+                        self.last_req = (serial, id);
+                        self.next();
+                        return;
+                    }
+                    Err(why) => {
+                        let why = format!("{what}: {why}");
+                        return self.fail(game, &why);
+                    }
+                },
                 Step::KeyIf(what, f) => match f(game) {
                     Ok(None) => self.next(),
                     Ok(Some(k)) => {
@@ -5827,7 +5850,9 @@ fn describe(step: &Step) -> String {
         Step::Push(ev) => format!("{ev:?}"),
         Step::Key(k) => format!("a request for key {k:?}"),
         Step::KeyFrom(what, _) => format!("a request for {what}"),
-        Step::KeysUntil(what, _) | Step::KeyIf(what, _) => what.to_string(),
+        Step::KeysUntil(what, _) | Step::KeyIf(what, _) | Step::DialogIf(what, _) => {
+            what.to_string()
+        }
         Step::Soak(_) => "the soak".to_string(),
         Step::Dialog(ev) => format!("a request for {ev:?}"),
         Step::Call(what, _) | Step::Inv(what, _) | Step::PadFrom(what, _) => what.to_string(),

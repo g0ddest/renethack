@@ -406,6 +406,12 @@ fn light_visit(
     light_visit_at(steps, pick, depth, shot, wish, None);
 }
 
+/// The Amulet's wish is asked now.
+fn amulet_wish(g: &RenethackGame) -> bool {
+    matches!(&g.pending,
+        Some((_, Prompt::Text { query, .. })) if query.contains("wish"))
+}
+
 /// Where the hero was before a teleport beside a feature (`by`).
 static BY_FROM: std::sync::Mutex<Option<(i32, i32)>> = std::sync::Mutex::new(None);
 /// The features the hero is teleported beside, in turn (queued as a
@@ -494,13 +500,16 @@ fn light_visit_at(
             Step::KeyFrom("the level", pick),
         ]);
     }
+    // (the Amulet gives its wish only the first time it is held: a tour
+    // through the Planes is asked once)
     if wish {
         steps.extend([
-            Step::AnswerUntil('n', "the Amulet's wish", |g| {
-                Ok(matches!(&g.pending,
-                    Some((_, Prompt::Text { query, .. })) if query.contains("wish")))
+            Step::AnswerUntil('n', "the Amulet's wish, or a command", |g| {
+                Ok(amulet_wish(g) || at_command(g)?)
             }),
-            Step::Dialog(DialogEvent::TextSubmitted("nothing".into())),
+            Step::DialogIf("the wish wished away", |g| {
+                Ok(amulet_wish(g).then(|| DialogEvent::TextSubmitted("nothing".into())))
+            }),
         ]);
     }
     steps.extend([
