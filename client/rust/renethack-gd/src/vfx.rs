@@ -1167,7 +1167,7 @@ const BLAST_HEART_BLAZE: f32 = 1.5;
 /// what is behind it, so it keeps its colour over a lit floor) and a soft
 /// glow in it, this much of its colour (an added light whitens what it
 /// lies on), this large at the heart and in the other cells.
-const BLAST_GLOW: f32 = 0.05;
+const BLAST_GLOW: f32 = 0.03;
 const BLAST_GLOW_SIZE: (f32, f32) = (3.4, 1.6);
 /// The haze at a frosty or magical blast's heart: its puffs this many
 /// times their size, in a ball as many times wider as its root.
@@ -1958,10 +1958,12 @@ impl Vfx {
                 } else {
                     Some((out + Vector3::UP).normalized())
                 };
-                let haze = Some(rgb(0.58, 0.76, 1.0));
+                // dusky: a cold grey-blue, not a bright one
+                let haze = Some(rgb(0.4, 0.5, 0.62));
                 self.blast_body(rgb(0.35, 0.62, 1.0), haze, mid, heart, size);
                 self.emit_by(Recipe::Shards, ice, mid, lean, 1.3);
-                self.emit_in_cell(Recipe::Rime, ice, mid, share);
+                // (a few glints of rime in it: the body is the haze)
+                self.emit_in_cell(Recipe::Rime, ice, mid, share * 0.4);
                 if heart {
                     self.flash(mid, ice, 3.0, 0.5, 4.0);
                 }
@@ -2009,10 +2011,13 @@ impl Vfx {
                 // a ball of its light in a haze of its colour, sparks flung
                 // from it
                 let c = vivid(color);
-                let haze = Color::from_rgb(c.r * 0.75, c.g * 0.6, c.b * 0.9);
+                // dusky: its colour darkened, as smoke lit from within
+                let haze = Color::from_rgb(c.r * 0.42, c.g * 0.34, c.b * 0.5);
                 self.blast_body(c, Some(haze), mid, heart, size);
-                self.emit(Recipe::Blast, color, mid, None);
-                self.emit(Recipe::Glints, color, mid, None);
+                // sparks flung from its heart alone (the body is the haze)
+                if heart {
+                    self.emit(Recipe::Blast, color, mid, None);
+                }
                 if heart {
                     self.flash(mid, color, 4.0, 0.4, 4.0);
                 }
@@ -2040,7 +2045,7 @@ impl Vfx {
         match haze {
             // at the heart a dense ball of it, its puffs larger
             Some(h) if heart => self.emit_by(Recipe::Haze, h, at, None, BLAST_BODY),
-            Some(h) => self.emit_in_cell(Recipe::Haze, h, at, BLAST_SHARE * 1.4 * size),
+            Some(h) => self.emit_by(Recipe::Haze, h, at, None, BLAST_BODY * 0.75 * size),
             None => {}
         }
         let dim = Color::from_rgb(
