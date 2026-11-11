@@ -1054,19 +1054,23 @@ def _veins(rng, size, freq, warp, width, turns):
 
 
 def marble(size=512, seed="marble", slabs=0):
-    """Polished white marble: a warm white, clouded faintly, under grey
-    veins with a touch of gold that wander and branch, and fine hairlines
-    between them. With `slabs`, laid in that many slabs a side, each cut
-    from another part of the stone, fine joints between. Polished: glossy
-    (roughness about 0.2), a little less so in the veins, rough in the
-    joints. It tiles. The albedo, normal and ORM maps."""
+    """Old temple marble: grey-bone, clouded and dimmed by age, its veins
+    dark and wandering, fine hairline cracks across it and darker stains
+    spreading in it; worn dull, a gloss left only in patches where feet
+    polished it. With `slabs`, laid in that many slabs a side, each cut
+    from another part of the stone, dirt packed in the joints and their
+    edges chipped. Rough (about 0.6), the worn patches glossier (0.3), the
+    joints rough. It tiles. The albedo, normal and ORM maps."""
     rng = random.Random(seed)
     main, streak = _veins(rng, size, 2, 4.2, 0.07, (1, 1))
     fine, _ = _veins(rng, size, 3, 6.5, 0.035, (2, -1))
+    cracks, _ = _veins(rng, size, 5, 11.0, 0.018, (3, 1))
     cloud = tile_noise(rng, size, 6)
     soft = tile_noise(rng, size, 20)
+    stain = above(tile_noise(rng, size, 5), 140, 80)
+    worn = above(tile_noise(rng, size, 4), 165, 50)
     if slabs:
-        # each slab its own part of the veins: the fields rolled by a step
+        # each slab its own part of the stone: the fields rolled by a step
         # of their own under it
         n = size // slabs
         def cut(field):
@@ -1077,43 +1081,54 @@ def marble(size=512, seed="marble", slabs=0):
                     rolled = ImageChops.offset(field, dx, dy)
                     out.paste(rolled.crop((i * n, j * n, (i + 1) * n, (j + 1) * n)), (i * n, j * n))
             return out
-        main, fine, cloud, streak = cut(main), cut(fine), cut(cloud), cut(streak)
+        main, fine, cloud, streak, cracks, stain = (cut(main), cut(fine), cut(cloud), cut(streak),
+                                                    cut(cracks), cut(stain))
     main = tiled(main, lambda i: i.filter(ImageFilter.GaussianBlur(0.9)))
     fine = tiled(fine, lambda i: i.filter(ImageFilter.GaussianBlur(0.5)))
-    # the ground: warm white, clouded grey faintly
-    base = Image.new("RGB", (size, size), "#e9e3d8")
-    shade = cloud.point(lambda v: 232 + v * 23 // 255)
-    shade = ImageChops.multiply(shade, soft.point(lambda v: 245 + v * 10 // 255))
+    cracks = tiled(cracks, lambda i: i.filter(ImageFilter.GaussianBlur(0.4)))
+    stain = tiled(stain, lambda i: i.filter(ImageFilter.GaussianBlur(5)))
+    # the ground: grey-bone, clouded darker in broad patches
+    base = Image.new("RGB", (size, size), "#a39d91")
+    shade = cloud.point(lambda v: 196 + v * 59 // 255)
+    shade = ImageChops.multiply(shade, soft.point(lambda v: 232 + v * 23 // 255))
     out = ImageChops.multiply(base, Image.merge("RGB", [shade] * 3))
-    # the veins: a broad grey streak about them, a soft halo, a darker
-    # core with a little gold in it
+    # the veins: a broad grey streak about them, a soft halo, a dark core
     streak = tiled(streak, lambda i: i.filter(ImageFilter.GaussianBlur(6)))
-    out = Image.composite(Image.new("RGB", (size, size), "#c2bcb1"), out, streak.point(lambda v: v * 45 // 100))
+    out = Image.composite(Image.new("RGB", (size, size), "#7f7a70"), out, streak.point(lambda v: v * 45 // 100))
     halo = tiled(main, lambda i: i.filter(ImageFilter.GaussianBlur(4)))
-    out = Image.composite(Image.new("RGB", (size, size), "#bdb7ac"), out, halo.point(lambda v: v * 7 // 10))
-    out = Image.composite(Image.new("RGB", (size, size), "#98917f"), out, main.point(lambda v: v * 75 // 100))
-    gold = above(tile_noise(rng, size, 10), 150, 60)
-    out = Image.composite(Image.new("RGB", (size, size), "#9a8458"), out,
-                          ImageChops.multiply(main, gold).point(lambda v: v * 6 // 10))
-    out = Image.composite(Image.new("RGB", (size, size), "#a8a397"), out, fine.point(lambda v: v * 6 // 10))
+    out = Image.composite(Image.new("RGB", (size, size), "#6e6960"), out, halo.point(lambda v: v * 6 // 10))
+    out = Image.composite(Image.new("RGB", (size, size), "#3a3630"), out, main.point(lambda v: v * 85 // 100))
+    out = Image.composite(Image.new("RGB", (size, size), "#5e5a52"), out, fine.point(lambda v: v * 6 // 10))
+    # hairline cracks, and stains spread through it (old water, soot)
+    out = Image.composite(Image.new("RGB", (size, size), "#2a2722"), out, cracks.point(lambda v: v * 8 // 10))
+    out = Image.composite(Image.new("RGB", (size, size), "#4e4636"), out, stain.point(lambda v: v * 55 // 100))
     height = Image.new("L", (size, size), 200)
     height = ImageChops.subtract(height, main.point(lambda v: v // 12))
-    rough = Image.new("L", (size, size), 72)
-    rough = ImageChops.add(rough, main.point(lambda v: v * 30 // 255))
-    rough = ImageChops.add(rough, soft.point(lambda v: v * 14 // 255))
+    height = ImageChops.subtract(height, cracks.point(lambda v: v // 6))
+    rough = Image.new("L", (size, size), 160)
+    rough = ImageChops.subtract(rough, worn.point(lambda v: v * 80 // 255))
+    rough = ImageChops.add(rough, soft.point(lambda v: v * 20 // 255))
+    rough = ImageChops.add(rough, cracks.point(lambda v: v * 50 // 255))
     if slabs:
         n = size // slabs
         joints = Image.new("L", (size, size), 0)
         d = ImageDraw.Draw(joints)
         for i in range(slabs + 1):
-            for c in (i * n - 1, i * n):
+            for c in range(i * n - 2, i * n + 2):
                 d.line([(c, 0), (c, size)], fill=255)
                 d.line([(0, c), (size, c)], fill=255)
-        joints = tiled(joints, lambda i: i.filter(ImageFilter.GaussianBlur(0.6)))
-        out = Image.composite(Image.new("RGB", (size, size), "#6e685e"), out, joints.point(lambda v: v * 7 // 10))
+        # chips out of the slabs' edges along the joints
+        for _ in range(slabs * slabs * 10):
+            i = rng.randrange(slabs + 1) * n
+            t = rng.randrange(size)
+            r = rng.uniform(2, 6) * size / 1024
+            x, y = (i, t) if rng.random() < 0.5 else (t, i)
+            at_every_wrap(size, lambda dx, dy: d.ellipse([x - r + dx, y - r + dy, x + r + dx, y + r + dy], fill=255))
+        joints = tiled(joints, lambda i: i.filter(ImageFilter.GaussianBlur(0.8)))
+        out = Image.composite(Image.new("RGB", (size, size), "#221f1a"), out, joints.point(lambda v: v * 9 // 10))
         height = ImageChops.subtract(height, joints.point(lambda v: v * 3 // 5))
         rough = ImageChops.add(rough, joints.point(lambda v: v * 3 // 5))
-    arm = Image.merge("RGB", [hollows(height, 3, 0.5), rough, Image.new("L", (size, size), 0)])
+    arm = Image.merge("RGB", [hollows(height, 3, 0.6), rough, Image.new("L", (size, size), 0)])
     return {"albedo": out, "normal": normals(height, 1.2), "arm": arm}
 
 
@@ -1123,10 +1138,12 @@ def marble_slabs(size=1024, seed="marble_slabs"):
 
 
 def pile(size=512, seed="pile"):
-    """A rug's pile that takes a tint: tufts of wool standing close, the
-    rows of its knots showing through, worn flat and paler in patches and
-    darker where it is deep. Matt (roughness about 0.95). It tiles. The
-    albedo, normal and ORM maps."""
+    """An old rug's pile that takes a tint: tufts of wool standing close,
+    the rows of its knots showing through; worn flat and paler in patches,
+    threadbare in some down to its weave (the warp and weft crossing, the
+    knots' stubs between); stained brown and dark in others; darker where
+    it is deep. Matt (roughness about 0.95). It tiles. The albedo, normal
+    and ORM maps."""
     rng = random.Random(seed)
     # tufts: soft dots on a fine grid, jittered, of many heights
     tufts = Image.new("L", (size, size), 0)
@@ -1147,15 +1164,36 @@ def pile(size=512, seed="pile"):
         y = (j + 0.5) * size / 64
         dr.line([(0, y), (size, y)], fill=110, width=max(1, size // 512))
     rows = tiled(rows, lambda i: i.filter(ImageFilter.GaussianBlur(1.0)))
-    # worn patches: the pile flattened and paler; deep patches darker
-    wear = above(tile_noise(rng, size, 5), 150, 70)
+    # the weave under it: warp and weft
+    weave = Image.new("L", (size, size), 0)
+    dw = ImageDraw.Draw(weave)
+    for k in range(96):
+        c = (k + 0.5) * size / 96
+        dw.line([(c, 0), (c, size)], fill=200, width=max(1, size // 400))
+        dw.line([(0, c), (size, c)], fill=150, width=max(1, size // 400))
+    weave = tiled(weave, lambda i: i.filter(ImageFilter.GaussianBlur(0.6)))
+    # worn patches: the pile flattened and paler; threadbare ones down to
+    # the weave; deep patches darker; stains
+    wear = above(tile_noise(rng, size, 5), 140, 70)
+    bare = above(tile_noise(rng, size, 9), 212, 22)
     deep = tile_noise(rng, size, 12)
+    stain = above(tile_noise(rng, size, 6), 160, 70)
+    blot = tiled(above(tile_noise(rng, size, 26), 215, 30), lambda i: i.filter(ImageFilter.GaussianBlur(2)))
     height = ImageChops.subtract(tufts, rows)
     height = ImageChops.subtract(height, wear.point(lambda v: v * 3 // 5))
-    grey = height.point(lambda v: 150 + v * 80 // 255)
-    grey = ImageChops.multiply(grey, deep.point(lambda v: 215 + v * 40 // 255))
-    grey = ImageChops.add(grey, wear.point(lambda v: v // 6))
+    height = Image.composite(weave.point(lambda v: v // 3), height, bare)
+    grey = height.point(lambda v: 140 + v * 80 // 255)
+    grey = ImageChops.multiply(grey, deep.point(lambda v: 200 + v * 55 // 255))
+    grey = ImageChops.add(grey, wear.point(lambda v: v // 8))
+    # threadbare: the pale weave and the dark gaps between its threads
+    threads = weave.point(lambda v: 110 + v * 100 // 255)
+    grey = Image.composite(threads, grey, bare)
     albedo = Image.merge("RGB", [grey] * 3)
+    # stains: brown, and darker blots in them
+    brown = ImageChops.multiply(albedo, Image.new("RGB", (size, size), (150, 128, 100)))
+    albedo = Image.composite(brown, albedo, stain.point(lambda v: v * 7 // 10))
+    dark = ImageChops.multiply(albedo, Image.new("RGB", (size, size), (90, 78, 66)))
+    albedo = Image.composite(dark, albedo, blot.point(lambda v: v * 55 // 100))
     rough = Image.new("L", (size, size), 240)
     rough = ImageChops.subtract(rough, wear.point(lambda v: v // 10))
     arm = Image.merge("RGB", [hollows(height, 2, 0.9), rough, Image.new("L", (size, size), 0)])
