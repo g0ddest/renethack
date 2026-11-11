@@ -87,9 +87,16 @@ fn doll_lights(g: &mut RenethackGame, on: bool) -> Result<(), String> {
     Ok(())
 }
 
-/// The probe's colour as the doll's render shows it: a strong magenta.
+/// The probe's colour as the doll's render and the map's frame show it: a
+/// magenta, red and blue alike and well above green. (The map's grade,
+/// 2f2511f9, drains a share of a colour's saturation and lifts its light
+/// tones: the probe's pure magenta reaches the frame as about (0.76, 0.47,
+/// 0.73), and a test of green under 0.6 of red and blue missed it.) No hero
+/// wears it: skin, leather, cloth and metal have blue at or below green, or
+/// red far from blue.
 fn probe(c: Color) -> bool {
-    c.a > 0.5 && c.r > 0.45 && c.b > 0.45 && c.g < 0.6 * c.r.min(c.b)
+    let rb = c.r.min(c.b);
+    c.a > 0.5 && rb > 0.4 && rb - c.g > 0.15 && (c.r - c.b).abs() < 0.2
 }
 
 fn drawn(c: Color) -> bool {
