@@ -1074,6 +1074,9 @@ const POOL: usize = 9;
 /// How long a tower of flame burns (seconds), and the flames of one:
 /// (width, height, across the cell, phase).
 const COLUMN_SECS: f32 = 1.4;
+/// How much of a column's flames' foot fades in, and how bright they burn.
+const COLUMN_FOOT: f32 = 0.3;
+const COLUMN_ENERGY: f32 = 1.9;
 const COLUMN_FLAMES: [(f32, f32, f32, f32); 3] = [
     (1.5, 3.4, 0.0, 0.0),
     (1.0, 2.3, -0.38, 0.37),
@@ -1159,7 +1162,16 @@ const BLAST_CORNER: f32 = 0.75;
 /// (this much up for one out), and the ball of flame at the heart's foot.
 const BLAST_BLAZE: f32 = 1.3;
 const BLAST_LEAN: f32 = 1.1;
-const BLAST_HEART_BLAZE: f32 = 2.2;
+const BLAST_HEART_BLAZE: f32 = 1.5;
+/// A frosty or magical blast's body: a haze of its colour (drawn over
+/// what is behind it, so it keeps its colour over a lit floor) and a soft
+/// glow in it, this much of its colour (an added light whitens what it
+/// lies on), this large at the heart and in the other cells.
+const BLAST_GLOW: f32 = 0.05;
+const BLAST_GLOW_SIZE: (f32, f32) = (3.4, 1.6);
+/// The haze at a frosty or magical blast's heart: its puffs this many
+/// times their size, in a ball as many times wider as its root.
+const BLAST_BODY: f32 = 1.8;
 /// Pieces of a ray drawn by the map this lately (seconds) were the ray of
 /// the hero's own zap, shown before the hero's use is (`ray_lately`).
 const RAY_LATELY: f32 = 1.5;
@@ -1467,8 +1479,10 @@ fn ramp_of(recipe: Recipe, color: Color) -> Gd<GradientTexture1D> {
         let k = p.hdr;
         (
             &[0.0, 0.3, 0.7, 1.0],
+            // born a hot yellow-orange, not a cream white (where many
+            // overlap they still burn white, in a small heart)
             vec![
-                rgba(1.0 * k, 0.9 * k, 0.7 * k, 1.0),
+                rgba(1.0 * k, 0.68 * k, 0.28 * k, 1.0),
                 rgba(color.r * k, color.g * k, color.b * k, 0.9),
                 rgba(color.r * 0.7, color.g * 0.25, color.b * 0.1, 0.5),
                 rgba(0.3, 0.05, 0.0, 0.0),
@@ -1912,7 +1926,10 @@ impl Vfx {
         match kind {
             Blast::Fiery => {
                 self.last_fire = self.clock;
-                let fire = rgb(1.0, 0.5, 0.16);
+                // a deep orange (born yellow-orange: `ramp_of`), so that
+                // where the flames overlap it burns yellow and only its
+                // very heart white
+                let fire = rgb(1.0, 0.4, 0.1);
                 if heart {
                     // a tower of flame, a column of fire rolling up it, a
                     // ball of flame round its foot, embers flung out, the
@@ -1922,7 +1939,7 @@ impl Vfx {
                     let low = at + Vector3::new(0.0, 0.3, 0.0);
                     self.emit_by(Recipe::Blaze, fire, low, None, BLAST_HEART_BLAZE);
                     self.emit(Recipe::Embers, rgb(1.0, 0.55, 0.2), mid, None);
-                    self.flash(at + Vector3::new(0.0, 1.4, 0.0), fire, 7.0, 1.3, 5.0);
+                    self.flash(at + Vector3::new(0.0, 1.4, 0.0), fire, 5.5, 1.3, 5.0);
                     self.mark(Mark::Scorch(EMBER), at, 2.6);
                 } else {
                     // flames leaning out from the heart
@@ -1933,15 +1950,18 @@ impl Vfx {
                 }
             }
             Blast::Frosty => {
+                // a pale-blue ball of haze glowing from within, shards and
+                // rime flung through it
                 let ice = rgb(0.62, 0.86, 1.0);
                 let lean = if heart {
                     None
                 } else {
                     Some((out + Vector3::UP).normalized())
                 };
-                self.emit(Recipe::Shards, ice, mid, lean);
+                let haze = Some(rgb(0.58, 0.76, 1.0));
+                self.blast_body(rgb(0.35, 0.62, 1.0), haze, mid, heart, size);
+                self.emit_by(Recipe::Shards, ice, mid, lean, 1.3);
                 self.emit_in_cell(Recipe::Rime, ice, mid, share);
-                self.emit_in_cell(Recipe::Haze, rgb(0.75, 0.86, 0.95), mid, share);
                 if heart {
                     self.flash(mid, ice, 3.0, 0.5, 4.0);
                 }
@@ -1986,6 +2006,11 @@ impl Vfx {
                 self.emit(Recipe::Droplets, drops, mid, None);
             }
             Blast::Magical => {
+                // a ball of its light in a haze of its colour, sparks flung
+                // from it
+                let c = vivid(color);
+                let haze = Color::from_rgb(c.r * 0.75, c.g * 0.6, c.b * 0.9);
+                self.blast_body(c, Some(haze), mid, heart, size);
                 self.emit(Recipe::Blast, color, mid, None);
                 self.emit(Recipe::Glints, color, mid, None);
                 if heart {
@@ -1994,6 +2019,36 @@ impl Vfx {
                 self.mark(Mark::Glitter(color), at, 1.2 * size);
             }
         }
+    }
+
+    /// A blast's body over a cell at `at`: a haze of `haze` (none if it
+    /// has its own), a soft glow of `color` in it, larger at the heart,
+    /// `size` its share elsewhere (a corner's less).
+    fn blast_body(
+        &mut self,
+        color: Color,
+        haze: Option<Color>,
+        at: Vector3,
+        heart: bool,
+        size: f32,
+    ) {
+        let k = if heart {
+            BLAST_GLOW_SIZE.0
+        } else {
+            BLAST_GLOW_SIZE.1 * size
+        };
+        match haze {
+            // at the heart a dense ball of it, its puffs larger
+            Some(h) if heart => self.emit_by(Recipe::Haze, h, at, None, BLAST_BODY),
+            Some(h) => self.emit_in_cell(Recipe::Haze, h, at, BLAST_SHARE * 1.4 * size),
+            None => {}
+        }
+        let dim = Color::from_rgb(
+            color.r * BLAST_GLOW,
+            color.g * BLAST_GLOW,
+            color.b * BLAST_GLOW,
+        );
+        self.emit_by(Recipe::Glow, dim, at, None, k);
     }
 
     /// What a ray of its kind sheds, shed round `at` instead (an
@@ -2052,6 +2107,9 @@ impl Vfx {
                         mat.set_shader(&shader);
                         mat.set_shader_parameter("flipbook", &book.to_variant());
                         mat.set_shader_parameter("has_flipbook", &true.to_variant());
+                        // its foot fading in: a torch's flame cut off at
+                        // the quad's edge drew a hard bright square
+                        mat.set_shader_parameter("foot", &COLUMN_FOOT.to_variant());
                         let mut mi = MeshInstance3D::new_alloc();
                         mi.set_mesh(&quad);
                         mi.set_material_override(&mat);
@@ -2502,7 +2560,8 @@ impl Vfx {
             e.process.set_emission_ring_inner_radius(p.radius * k * 0.7);
             e.process.set_emission_ring_height(BODY_TALL * band * k);
             at.y += BODY_TALL * over * k;
-        } else if !recipe.is_trail() {
+        } else {
+            // (a ray's trail left it a box along the ray)
             e.process.set_emission_shape(EmissionShape::SPHERE);
         }
         e.process.set_emission_sphere_radius(p.radius * k.sqrt());
@@ -2706,7 +2765,7 @@ impl Vfx {
             c.root
                 .set_scale(Vector3::ONE * (0.45 + 0.55 * up) * (0.85 + 0.15 * fade));
             for m in &mut c.flames {
-                m.set_shader_parameter("energy", &(2.4 * fade * waver).to_variant());
+                m.set_shader_parameter("energy", &(COLUMN_ENERGY * fade * waver).to_variant());
             }
             if c.age >= COLUMN_SECS {
                 c.root.set_visible(false);
