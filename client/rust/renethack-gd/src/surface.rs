@@ -21,8 +21,10 @@ use nh_world::{COLNO, ROWNO};
 
 const SHADER: &str = "res://shaders/map_surface.gdshader";
 const ART_ROOT: &str = "res://art/";
-/// The fine normal laid over every surface, close up.
+/// The fine normal laid over every surface, close up, and how strongly
+/// (map_surface's own default).
 const DETAIL: &str = "rock";
+const DETAIL_STRENGTH: f32 = 0.3;
 /// A cell fades in or out of view over this many seconds.
 const REVEAL_SECS: f32 = 0.25;
 /// Cells from anything known over which the darkness closes in.
@@ -214,6 +216,13 @@ impl Surfaces {
             mat.set_shader_parameter(name, &v.to_variant());
         };
         set(&mut mat, "normal_strength", side.normal_scale);
+        // the fine rock laid over every surface as weak as the material's
+        // own relief is (polished marble shows no rock through its gloss)
+        set(
+            &mut mat,
+            "detail_strength",
+            DETAIL_STRENGTH * side.normal_scale.min(1.0),
+        );
         if !textured {
             set(&mut mat, "roughness", side.roughness.unwrap_or(0.8));
             set(&mut mat, "macro", 0.3);

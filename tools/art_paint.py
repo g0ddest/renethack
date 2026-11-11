@@ -1,7 +1,8 @@
 """Textures painted from those fetched (tools/fetch_art.py runs it: the
 "painted" recipe in client/godot/art/sources.json): a corpse's skin from a
 living one, a lich's dried over its skull, linen wound round a body, a coat
-left pale to take a tint, a dark coat lit up.
+left pale to take a tint, a dark coat lit up; granite over a boulder, marble,
+a rug's pile.
 
 Everything is drawn from a seed: a run paints what the last one did. Only
 Pillow is needed.
@@ -956,3 +957,206 @@ def warts(coat, normal, orm, seed="warts"):
     rough = ImageChops.subtract(Image.new("L", size, 230), knobs.point(lambda v: v // 4))
     rough = ImageChops.add(rough.point(lambda v: v * 3 // 4), o_g.point(lambda v: v // 4))
     return {"albedo": albedo, "normal": out, "arm": Image.merge("RGB", [ao, rough, Image.new("L", size, 0)])}
+
+
+def tile_noise(rng, size, cells):
+    """Smooth noise (0..255) that tiles: `noise` drawn from a grid that
+    wraps (laid three by three and the middle kept)."""
+    grid = Image.new("L", (cells, cells))
+    grid.putdata([rng.randrange(256) for _ in range(cells * cells)])
+    big = Image.new("L", (cells * 3, cells * 3))
+    for i in range(3):
+        for j in range(3):
+            big.paste(grid, (i * cells, j * cells))
+    return big.resize((size * 3, size * 3), Image.BICUBIC).crop((size, size, size * 2, size * 2))
+
+
+def granite(stone, seed="granite"):
+    """Grey granite over a stone's own painting (a boulder's, by its UVs):
+    its cracks and hollows kept, softened, in cool greys instead of its
+    colours; the crystals of granite speckled through it, black mica and
+    white quartz; and chips struck off it here and there, fresh pale faces
+    with a dark lip under them. The albedo, the size of `stone`."""
+    rng = random.Random(seed)
+    stone = stone.convert("RGB")
+    size = stone.size
+    w, h = size
+    k = w / 1024
+    # its light and dark, its cracks' contrast held down (they read as a
+    # sponge's holes), in granite's greys
+    grey = ImageOps.autocontrast(ImageOps.grayscale(stone), cutoff=1)
+    grey = grey.filter(ImageFilter.GaussianBlur(1.8 * k))
+    grey = grey.point(lambda v: round(128 + (v - 128) * 0.45))
+    out = ImageOps.colorize(grey, black="#1d1e21", mid="#4a4b4d", white="#7a7a78")
+    # broad weathering: some faces lighter, some darker
+    mottle = noise(rng, size, 9).point(lambda v: 205 + v * 50 // 255)
+    out = ImageChops.multiply(out, Image.merge("RGB", [mottle] * 3))
+    # the crystals, soft-edged
+    specks = Image.new("RGB", size, (0, 0, 0))
+    where = Image.new("L", size, 0)
+    ds, dw = ImageDraw.Draw(specks), ImageDraw.Draw(where)
+    for colour, count, sizes in (((22, 22, 25), 0.09, (0.6, 0.9, 1.3)),
+                                 ((150, 148, 141), 0.07, (0.6, 0.9, 1.4, 1.9)),
+                                 ((100, 99, 95), 0.05, (1.2, 2.0, 2.8))):
+        for _ in range(round(w * h * count / 30)):
+            x, y = rng.random() * w, rng.random() * h
+            r = rng.choice(sizes) * k
+            box = [x - r, y - r * rng.uniform(0.6, 1.0), x + r, y + r]
+            ds.ellipse(box, fill=colour)
+            dw.ellipse(box, fill=rng.randint(110, 200))
+    where = where.filter(ImageFilter.GaussianBlur(0.6 * k))
+    out = Image.composite(specks, out, where)
+    # chips: angular pale faces, a dark lip along their lower edge
+    lips = Image.new("L", size, 0)
+    faces = Image.new("L", size, 0)
+    dl, df = ImageDraw.Draw(lips), ImageDraw.Draw(faces)
+    for _ in range(round(40 * k * k)):
+        x, y = rng.random() * w, rng.random() * h
+        r = rng.uniform(6, 26) * k
+        n = rng.randint(3, 7)
+        a0 = rng.random() * math.tau
+        pts = [(x + math.cos(a0 + i * math.tau / n + rng.uniform(-0.3, 0.3)) * r * rng.uniform(0.55, 1.0),
+                y + math.sin(a0 + i * math.tau / n + rng.uniform(-0.3, 0.3)) * r * rng.uniform(0.55, 1.0))
+               for i in range(n)]
+        dl.polygon([(px, py + 2.0 * k) for px, py in pts], fill=255)
+        df.polygon(pts, fill=rng.randint(150, 230))
+    lips = ImageChops.subtract(lips, faces.point(lambda v: 255 if v else 0))
+    lips = lips.filter(ImageFilter.GaussianBlur(0.7 * k))
+    faces = faces.filter(ImageFilter.GaussianBlur(0.5 * k))
+    out = Image.composite(Image.new("RGB", size, "#1a1a1c"), out, lips.point(lambda v: v * 7 // 10))
+    fresh = ImageChops.add(out, Image.new("RGB", size, (30, 30, 29)))
+    return Image.composite(fresh, out, faces)
+
+
+def _veins(rng, size, freq, warp, width, turns):
+    """Marble's veins: where sin(the way across, bent by turbulence)
+    crosses nought, a line about `width` wide (thicker and thinner along
+    it), and a broad soft streak about it. (veins, streaks), 0..255; they
+    tile."""
+    layers = [(tile_noise(rng, size, c), a) for c, a in ((3, 1.0), (6, 0.5), (12, 0.25), (24, 0.13), (48, 0.07))]
+    px = [l.load() for l, _ in layers]
+    thick = tile_noise(rng, size, 7).load()
+    veins = Image.new("L", (size, size))
+    streaks = Image.new("L", (size, size))
+    o, q = veins.load(), streaks.load()
+    fx, fy = turns
+    tau = math.tau
+    total = sum(a for _, a in layers)
+    for y in range(size):
+        for x in range(size):
+            # turbulence: the noise folded at its middle, sharp creases
+            n = sum(abs(p[x, y] - 128) * a for p, (_, a) in zip(px, layers)) / (128 * total)
+            v = abs(math.sin(tau * (fx * x + fy * y) / size * freq + n * warp))
+            w = width * (0.35 + 1.3 * thick[x, y] / 255)
+            o[x, y] = round(255 * max(0.0, 1.0 - v / w) ** 0.7)
+            q[x, y] = round(255 * max(0.0, 1.0 - v / 0.45) ** 2)
+    return veins, streaks
+
+
+def marble(size=512, seed="marble", slabs=0):
+    """Polished white marble: a warm white, clouded faintly, under grey
+    veins with a touch of gold that wander and branch, and fine hairlines
+    between them. With `slabs`, laid in that many slabs a side, each cut
+    from another part of the stone, fine joints between. Polished: glossy
+    (roughness about 0.2), a little less so in the veins, rough in the
+    joints. It tiles. The albedo, normal and ORM maps."""
+    rng = random.Random(seed)
+    main, streak = _veins(rng, size, 2, 4.2, 0.07, (1, 1))
+    fine, _ = _veins(rng, size, 3, 6.5, 0.035, (2, -1))
+    cloud = tile_noise(rng, size, 6)
+    soft = tile_noise(rng, size, 20)
+    if slabs:
+        # each slab its own part of the veins: the fields rolled by a step
+        # of their own under it
+        n = size // slabs
+        def cut(field):
+            out = Image.new("L", (size, size))
+            for i in range(slabs):
+                for j in range(slabs):
+                    dx, dy = rng.randrange(size), rng.randrange(size)
+                    rolled = ImageChops.offset(field, dx, dy)
+                    out.paste(rolled.crop((i * n, j * n, (i + 1) * n, (j + 1) * n)), (i * n, j * n))
+            return out
+        main, fine, cloud, streak = cut(main), cut(fine), cut(cloud), cut(streak)
+    main = tiled(main, lambda i: i.filter(ImageFilter.GaussianBlur(0.9)))
+    fine = tiled(fine, lambda i: i.filter(ImageFilter.GaussianBlur(0.5)))
+    # the ground: warm white, clouded grey faintly
+    base = Image.new("RGB", (size, size), "#e9e3d8")
+    shade = cloud.point(lambda v: 232 + v * 23 // 255)
+    shade = ImageChops.multiply(shade, soft.point(lambda v: 245 + v * 10 // 255))
+    out = ImageChops.multiply(base, Image.merge("RGB", [shade] * 3))
+    # the veins: a broad grey streak about them, a soft halo, a darker
+    # core with a little gold in it
+    streak = tiled(streak, lambda i: i.filter(ImageFilter.GaussianBlur(6)))
+    out = Image.composite(Image.new("RGB", (size, size), "#c2bcb1"), out, streak.point(lambda v: v * 45 // 100))
+    halo = tiled(main, lambda i: i.filter(ImageFilter.GaussianBlur(4)))
+    out = Image.composite(Image.new("RGB", (size, size), "#bdb7ac"), out, halo.point(lambda v: v * 7 // 10))
+    out = Image.composite(Image.new("RGB", (size, size), "#98917f"), out, main.point(lambda v: v * 75 // 100))
+    gold = above(tile_noise(rng, size, 10), 150, 60)
+    out = Image.composite(Image.new("RGB", (size, size), "#9a8458"), out,
+                          ImageChops.multiply(main, gold).point(lambda v: v * 6 // 10))
+    out = Image.composite(Image.new("RGB", (size, size), "#a8a397"), out, fine.point(lambda v: v * 6 // 10))
+    height = Image.new("L", (size, size), 200)
+    height = ImageChops.subtract(height, main.point(lambda v: v // 12))
+    rough = Image.new("L", (size, size), 72)
+    rough = ImageChops.add(rough, main.point(lambda v: v * 30 // 255))
+    rough = ImageChops.add(rough, soft.point(lambda v: v * 14 // 255))
+    if slabs:
+        n = size // slabs
+        joints = Image.new("L", (size, size), 0)
+        d = ImageDraw.Draw(joints)
+        for i in range(slabs + 1):
+            for c in (i * n - 1, i * n):
+                d.line([(c, 0), (c, size)], fill=255)
+                d.line([(0, c), (size, c)], fill=255)
+        joints = tiled(joints, lambda i: i.filter(ImageFilter.GaussianBlur(0.6)))
+        out = Image.composite(Image.new("RGB", (size, size), "#6e685e"), out, joints.point(lambda v: v * 7 // 10))
+        height = ImageChops.subtract(height, joints.point(lambda v: v * 3 // 5))
+        rough = ImageChops.add(rough, joints.point(lambda v: v * 3 // 5))
+    arm = Image.merge("RGB", [hollows(height, 3, 0.5), rough, Image.new("L", (size, size), 0)])
+    return {"albedo": out, "normal": normals(height, 1.2), "arm": arm}
+
+
+def marble_slabs(size=1024, seed="marble_slabs"):
+    """Marble laid in slabs, two a side (`marble`): a polished floor."""
+    return marble(size, seed, slabs=2)
+
+
+def pile(size=512, seed="pile"):
+    """A rug's pile that takes a tint: tufts of wool standing close, the
+    rows of its knots showing through, worn flat and paler in patches and
+    darker where it is deep. Matt (roughness about 0.95). It tiles. The
+    albedo, normal and ORM maps."""
+    rng = random.Random(seed)
+    # tufts: soft dots on a fine grid, jittered, of many heights
+    tufts = Image.new("L", (size, size), 0)
+    d = ImageDraw.Draw(tufts)
+    step = size / 128
+    for j in range(128):
+        for i in range(128):
+            x = (i + 0.5 + rng.uniform(-0.3, 0.3)) * step
+            y = (j + 0.5 + rng.uniform(-0.3, 0.3)) * step
+            r = step * rng.uniform(0.45, 0.7)
+            v = rng.randint(130, 255)
+            at_every_wrap(size, lambda dx, dy: d.ellipse([x - r + dx, y - r + dy, x + r + dx, y + r + dy], fill=v))
+    tufts = tiled(tufts, lambda i: i.filter(ImageFilter.GaussianBlur(step * 0.35)))
+    # the knots' rows across it, faint
+    rows = Image.new("L", (size, size), 0)
+    dr = ImageDraw.Draw(rows)
+    for j in range(64):
+        y = (j + 0.5) * size / 64
+        dr.line([(0, y), (size, y)], fill=110, width=max(1, size // 512))
+    rows = tiled(rows, lambda i: i.filter(ImageFilter.GaussianBlur(1.0)))
+    # worn patches: the pile flattened and paler; deep patches darker
+    wear = above(tile_noise(rng, size, 5), 150, 70)
+    deep = tile_noise(rng, size, 12)
+    height = ImageChops.subtract(tufts, rows)
+    height = ImageChops.subtract(height, wear.point(lambda v: v * 3 // 5))
+    grey = height.point(lambda v: 150 + v * 80 // 255)
+    grey = ImageChops.multiply(grey, deep.point(lambda v: 215 + v * 40 // 255))
+    grey = ImageChops.add(grey, wear.point(lambda v: v // 6))
+    albedo = Image.merge("RGB", [grey] * 3)
+    rough = Image.new("L", (size, size), 240)
+    rough = ImageChops.subtract(rough, wear.point(lambda v: v // 10))
+    arm = Image.merge("RGB", [hollows(height, 2, 0.9), rough, Image.new("L", (size, size), 0)])
+    return {"albedo": albedo, "normal": normals(height, 1.6), "arm": arm}

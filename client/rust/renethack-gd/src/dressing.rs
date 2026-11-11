@@ -938,6 +938,13 @@ const RUG_LINE: f32 = 0.025;
 const RUG_LINE_IN: f32 = 0.06;
 const RUG_SHADE: u8 = 48;
 const RUG_BORDER_SHADE: u8 = 52;
+/// A rug's fringe on its short ends: tassels of its border's wool this
+/// wide, one every this many metres along the end, reaching out this far
+/// (or the shorter, for a frayed one), lighter than the border.
+const FRINGE_WIDE: f32 = 0.02;
+const FRINGE_STEP: f32 = 0.055;
+const FRINGE_LONG: (f32, f32) = (0.09, 0.06);
+const FRINGE_SHADE: u8 = 58;
 
 /// What the plan reads of a cell: its terrain as known; whether something
 /// stands or lies on ground never shown bare (it is inside a room all the
@@ -1346,18 +1353,20 @@ fn rug(look: &mut Look, ctx: &Ctx) -> bool {
     let Some((cloth, edge)) = ctx.branch.dress.rug else {
         return false;
     };
-    let (Some(cloth), Some(edge)) = (
+    let (Some(cloth), Some(edge), Some(wool)) = (
         trim(ctx, cloth, RUG_SHADE),
         trim(ctx, edge, RUG_BORDER_SHADE),
+        trim(ctx, edge, FRINGE_SHADE),
     ) else {
         return false;
     };
     // a rectangle (x0, z0, x1, z1) in the cell's own metres, cut to the
-    // cell, laid `y` up
+    // cell, laid `y` up: flat on the floor, casting no shadow (a thin
+    // slab's own shadow fell on the floor beside it in a hard band)
     let lay = |look: &mut Look, r: [f32; 4], paint: Paint, y: f32| {
         let [x0, z0, x1, z1] = [r[0].max(-0.5), r[1].max(-0.5), r[2].min(0.5), r[3].min(0.5)];
         if x1 - x0 > 0.005 && z1 - z0 > 0.005 {
-            look.solid(
+            look.ground_tile(
                 cuboid(x1 - x0, 0.004, z1 - z0),
                 paint,
                 at((x0 + x1) / 2.0, y, (z0 + z1) / 2.0),
@@ -1380,7 +1389,52 @@ fn rug(look: &mut Look, ctx: &Ctx) -> bool {
             lay(look, strip, edge, 0.0045);
         }
     }
+    fringe(look, rect, wool);
     true
+}
+
+/// The fringe along a rug's short ends (`rect` in the cell's own metres):
+/// tassels reaching out from its edge, a few frayed short and each a
+/// little askew; those whose middle is in this cell.
+fn fringe(look: &mut Look, rect: [f32; 4], wool: Paint) {
+    let [x0, z0, x1, z1] = rect;
+    // along x when the rug is longer across z: its ends lie at z0 and z1
+    let across = x1 - x0 <= z1 - z0;
+    let (a0, a1) = if across { (x0, x1) } else { (z0, z1) };
+    let ends = if across { [z0, z1] } else { [x0, x1] };
+    let n = ((a1 - a0 - 2.0 * RUG_BORDER_IN) / FRINGE_STEP)
+        .floor()
+        .max(0.0) as i32;
+    let start = (a0 + a1) / 2.0 - (n as f32 - 1.0) / 2.0 * FRINGE_STEP;
+    for (side, &end) in ends.iter().enumerate() {
+        let out = if side == 0 { -1.0 } else { 1.0 };
+        for i in 0..n {
+            // which tassel: the same each time the cell is drawn
+            let h = (i as u32)
+                .wrapping_mul(2_654_435_761)
+                .wrapping_add((end * 1000.0) as i32 as u32)
+                .rotate_left(13)
+                .wrapping_mul(0x85eb_ca6b);
+            let long = if h.is_multiple_of(5) {
+                FRINGE_LONG.1
+            } else {
+                FRINGE_LONG.0
+            };
+            let along = start + i as f32 * FRINGE_STEP;
+            let mid = end + out * long / 2.0;
+            let (x, z) = if across { (along, mid) } else { (mid, along) };
+            if !(-0.5..0.5).contains(&x) || !(-0.5..0.5).contains(&z) {
+                continue;
+            }
+            let askew = ((h >> 8) % 21) as f32 - 10.0;
+            let mesh = if across {
+                cuboid(FRINGE_WIDE, 0.01, long)
+            } else {
+                cuboid(long, 0.01, FRINGE_WIDE)
+            };
+            look.sheet(mesh, wool, at(x, 0.002, z), Vector3::new(0.0, askew, 0.0));
+        }
+    }
 }
 
 /// How light an inlay's stone is: held down, so it reads as another stone

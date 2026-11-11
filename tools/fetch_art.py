@@ -484,10 +484,12 @@ def do_painted(w, item):
             image.save(out, "JPEG", quality=88, optimize=True)
             w.put(f"{item['out']}_{name}.jpg", out.getvalue())
         return
+    elif item["paint"] == "granite":
+        image = art_paint.granite(source())
     elif item["paint"] == "relief":
         image = art_paint.relief(source(), item["radius"], item["light"])
-    elif item["paint"] in ("fur", "scales", "membrane", "weave", "floral", "forged", "winingas", "lames",
-                           "ringmail"):
+    elif item["paint"] in ("fur", "scales", "membrane", "weave", "floral", "forged", "winingas", "marble",
+                           "marble_slabs", "pile", "lames", "ringmail"):
         # a material's maps from nothing (or baked on meshes of a .gltf
         # under ART by their UVs: `from`, `mesh` or `meshes`): `out` and
         # the map's name

@@ -338,7 +338,7 @@ const MAIN: BranchLook = BranchLook {
         embers: false,
         corners: true,
         formations: false,
-        rug: Some(("banner_red", "banner_ochre")),
+        rug: Some(("rug_red", "rug_ochre")),
     },
     under: Under::Rock,
     reflect: 1.0,
