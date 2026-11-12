@@ -24,8 +24,10 @@ uniform float fade = 0.0;
 // how much of the frame's grade shows: none in the overview, whose far,
 // plain view has no mood to set (map_view.rs eases it)
 uniform float shown = 1.0;
-// how far the mid-tones are pressed down (0: none)
-uniform float gloom = 0.14;
+// how far the mid-tones are pressed down (0: none), the dim floor about
+// the hero too (with the frame's edges kept, b941ffac, its p50 rose a
+// fifth: the low key is kept here, not by the edges)
+uniform float gloom = 0.23;
 // how far the hottest highlights are lifted towards white, their hue kept
 uniform float lift = 0.45;
 // the split tone: the lights a little warmer where they are warm, the
@@ -50,8 +52,8 @@ void fragment() {
 	vec3 col = texture(screen, SCREEN_UV).rgb;
 	const vec3 LUMA = vec3(0.2126, 0.7152, 0.0722);
 	float l0 = dot(col, LUMA);
-	// the mid-tones pressed down, the darks and the hottest kept
-	float g = gloom * shown * smoothstep(0.02, 0.15, l0) * (1.0 - smoothstep(0.35, 0.8, l0));
+	// the mid-tones pressed down, the darkest and the hottest kept
+	float g = gloom * shown * smoothstep(0.0, 0.1, l0) * (1.0 - smoothstep(0.35, 0.8, l0));
 	float l1 = l0 * (1.0 - g);
 	// only the hottest lifted (by the luma: lifting each channel turned a
 	// torch's orange redder, not brighter)
