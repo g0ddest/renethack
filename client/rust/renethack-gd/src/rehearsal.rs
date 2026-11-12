@@ -549,6 +549,10 @@ impl Rehearsal {
             Some(8) => {
                 let ground = Vector3::new((X0 + 7) as f32, 0.0, (Y0 + 4) as f32);
                 map.vfx().blast(Blast::Fiery, (1, 0), red, ground);
+                // (a magical blast's heart: its ball is drawn as nothing
+                // else is)
+                let beside = Vector3::new((X0 + 9) as f32, 0.0, (Y0 + 4) as f32);
+                map.vfx().blast(Blast::Magical, (0, 0), red, beside);
             }
             // what the prologue's scenes stand beside their levels
             Some(9) => map.warm_prologue(),

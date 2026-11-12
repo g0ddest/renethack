@@ -345,37 +345,37 @@ const BLASTS: [Blown; 7] = [
         shot: "blasts-frost",
         later: "blasts-frost-later",
         expl: 6,
-        at: (5, 3),
+        at: (6, 4),
     },
     Blown {
         shot: "blasts-gas",
         later: "blasts-gas-later",
         expl: 1,
-        at: (5, 3),
+        at: (6, 4),
     },
     Blown {
         shot: "blasts-dark",
         later: "blasts-dark-later",
         expl: 0,
-        at: (5, 3),
+        at: (6, 4),
     },
     Blown {
         shot: "blasts-water",
         later: "blasts-water-later",
         expl: 3,
-        at: (5, 3),
+        at: (6, 4),
     },
     Blown {
         shot: "blasts-mud",
         later: "blasts-mud-later",
         expl: 2,
-        at: (5, 3),
+        at: (6, 4),
     },
     Blown {
         shot: "blasts-magic",
         later: "blasts-magic-later",
         expl: 4,
-        at: (5, 3),
+        at: (6, 4),
     },
 ];
 

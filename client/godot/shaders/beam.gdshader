@@ -158,7 +158,7 @@ void fragment() {
 		glow = mix(color.rgb, vec3(1.0), 0.5) * darts * 1.8 + color.rgb * guide;
 	} else if (style == FIRE) {
 		// flame running from the start to the end, widening as it goes,
-		// its edge licking and its heat churning: white-yellow at its
+		// its edge licking and its heat churning: yellow at its
 		// hottest, orange, a deep red at its ragged edges, a little smoke
 		// beyond them
 		float flow = m - t * 4.5;
@@ -170,14 +170,18 @@ void fragment() {
 		float off = (n2 - 0.5) * 0.4 * spread;
 		float body = smoothstep(half_w, half_w * 0.2, abs(side - off));
 		float heat = body * (0.35 + 0.95 * n2) * mix(1.25, 0.85, smoothstep(0.0, ray_len, m));
-		vec3 fire = mix(vec3(0.45, 0.03, 0.0), vec3(1.0, 0.36, 0.04), smoothstep(0.05, 0.45, heat));
-		fire = mix(fire, vec3(1.0, 0.75, 0.3), smoothstep(0.45, 0.85, heat));
-		fire = mix(fire, vec3(1.0, 0.95, 0.8), smoothstep(0.9, 1.25, heat));
-		glow = fire * heat * 2.0;
-		float smoke = smoothstep(half_w * 1.6, half_w, abs(side - off)) * (1.0 - body)
-			* smoothstep(0.3, 0.7, n) * smoothstep(0.5, 2.0, m);
-		cover = smoke * 0.35;
-		tint = vec3(0.06, 0.04, 0.03);
+		// (a dark red, a deep orange, a small yellow heart, never white;
+		// its body covers what is behind it, so that it stays orange over
+		// a lit floor)
+		vec3 fire = mix(vec3(0.3, 0.015, 0.0), vec3(0.8, 0.15, 0.012), smoothstep(0.05, 0.4, heat));
+		fire = mix(fire, vec3(1.0, 0.4, 0.05), smoothstep(0.4, 0.8, heat));
+		fire = mix(fire, vec3(1.0, 0.72, 0.24), smoothstep(1.0, 1.25, heat));
+		glow = fire * (0.22 + 0.42 * heat);
+		float smoke = smoothstep(half_w * 1.9, half_w, abs(side - off)) * (1.0 - body)
+			* smoothstep(0.25, 0.65, n) * smoothstep(0.4, 1.6, m);
+		float veil = smoke * 0.6;
+		cover = veil + body * 0.6;
+		tint = vec3(0.04, 0.03, 0.025) * veil / max(cover, 0.001);
 	} else if (style == COLD) {
 		// a hard white core, jagged like a crystal's edge, among shards of
 		// ice (thin diamonds along the ray, catching the light), in a cold

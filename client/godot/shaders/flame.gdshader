@@ -14,6 +14,10 @@ uniform float fps = 24.0;
 // how much of the picture's foot fades in (a flame standing in the air,
 // as a fire elemental's do; none on a torch)
 uniform float foot = 0.0;
+// a fire's tower (vfx.rs): how much deeper its orange is than a torch's,
+// and how much of it is left as it dies (a torch's: none deeper, all)
+uniform float deeper = 0.0;
+uniform float left = 1.0;
 // each flame its own
 instance uniform float phase = 0.0;
 
@@ -62,8 +66,9 @@ void fragment() {
 		vec3 fire = mix(vec3(1.0, 0.26, 0.04), vec3(1.0, 0.45, 0.08), smoothstep(0.15, 0.55, heat));
 		fire = mix(fire, vec3(1.0, 0.62, 0.2), smoothstep(0.6, 0.95, heat));
 		float stand = foot > 0.0 ? smoothstep(0.0, foot, 1.0 - UV.y) : 1.0;
-		ALBEDO = fire * heat * energy * 1.1 * stand;
-		ALPHA = clamp(heat * 1.5, 0.0, 1.0) * stand * 0.8;
+		fire = mix(fire, fire * vec3(1.0, 0.55, 0.35), deeper);
+		ALBEDO = fire * heat * energy * 1.1 * stand * left;
+		ALPHA = clamp(heat * 1.5, 0.0, 1.0) * stand * 0.8 * left;
 	} else {
 		float y = 1.0 - UV.y;
 		float t = TIME + phase;

@@ -21,6 +21,8 @@ use std::collections::HashMap;
 #[path = "vfx_marks.rs"]
 mod marks;
 pub use marks::Mark;
+#[path = "vfx_shapes.rs"]
+mod shapes;
 
 use godot::classes::base_material_3d::{
     BillboardMode, BlendMode, Flags, ShadingMode, Transparency,
@@ -331,6 +333,8 @@ enum Recipe {
     Sparks,
     /// A flare at the point of contact.
     Flash,
+    /// A round burst of light, no rays (magic striking, a light bursting).
+    Bloom,
     Droplets,
     /// A ring spreading out and fading.
     Ring,
@@ -377,6 +381,13 @@ enum Recipe {
     Spread,
     /// A soft glow round a point, lingering (an item glowing).
     Glow,
+    /// Dark smoke rolling up off a fire.
+    Soot,
+    /// A small dusky puff (a spell gathering at the hand).
+    Murk,
+    /// A ball of a colour, drawn over what is behind it: a blast's heart
+    /// that keeps its hue (added light whitens what it lies on).
+    Core,
 }
 
 struct Params {
@@ -418,6 +429,7 @@ impl Recipe {
     /// the colours of rock.
     fn own_color(self) -> Option<Color> {
         match self {
+            Recipe::Soot => Some(Color::from_rgb(0.035, 0.03, 0.028)),
             Recipe::Smoke => Some(Color::from_rgb(0.05, 0.03, 0.07)),
             Recipe::Dust | Recipe::Puff => Some(Color::from_rgb(0.62, 0.55, 0.47)),
             Recipe::Grit | Recipe::Chips => Some(Color::from_rgb(0.3, 0.26, 0.22)),
@@ -443,6 +455,11 @@ impl Recipe {
     fn explosiveness(self) -> f32 {
         if self.ring().is_some() {
             0.25
+        } else if self == Recipe::Soot {
+            // it rolls off the fire while it burns
+            0.3
+        } else if self == Recipe::Embers {
+            0.7
         } else if matches!(self, Recipe::Motes | Recipe::Runes | Recipe::Cloud) || self.is_trail() {
             0.6
         } else {
@@ -462,8 +479,30 @@ impl Recipe {
     fn is_smoke(self) -> bool {
         matches!(
             self,
-            Recipe::Haze | Recipe::Smoke | Recipe::Gas | Recipe::Dust | Recipe::Puff
+            Recipe::Haze
+                | Recipe::Smoke
+                | Recipe::Gas
+                | Recipe::Dust
+                | Recipe::Puff
+                | Recipe::Soot
+                | Recipe::Murk
+                | Recipe::Core
         )
+    }
+
+    /// Rolling fire (fire.gdshader): its particles' colour is their heat,
+    /// their soot and their thickness (`ramp_of`), not a colour.
+    fn is_fire(self) -> bool {
+        matches!(
+            self,
+            Recipe::Flames | Recipe::Tongues | Recipe::Pillar | Recipe::Blaze
+        )
+    }
+
+    /// Its texture is a sheet of shapes (`frames`) and a particle shows one
+    /// of them all its life, upright: runes.
+    fn picks(self) -> bool {
+        matches!(self, Recipe::Runes | Recipe::Halo)
     }
 
     /// The frames of its texture's flipbook (columns, rows), played once
@@ -473,11 +512,15 @@ impl Recipe {
             Recipe::Tongues
             | Recipe::Pillar
             | Recipe::Blaze
+            | Recipe::Flames
             | Recipe::Haze
             | Recipe::Smoke
             | Recipe::Gas
             | Recipe::Dust
+            | Recipe::Soot
+            | Recipe::Murk
             | Recipe::Puff => Some((8, 8)),
+            Recipe::Runes | Recipe::Halo => Some((2, 2)),
             _ => None,
         }
     }
@@ -516,34 +559,40 @@ impl Recipe {
                 hdr: 2.2,
                 ..base
             },
+            // a few hot points turning about the hand (the spell's body is
+            // its murk)
             Recipe::Swirl => Params {
-                amount: 28,
+                amount: 9,
                 life: 0.8,
                 speed: (0.3, 0.7),
                 spread: 70.0,
-                radius: 0.45,
+                size: (0.1, 0.18),
+                radius: 0.3,
+                hdr: 2.2,
                 ..base
             },
+            // (a fire's: `hdr` is nothing to it, its colours are the
+            // shader's)
             Recipe::Flames => Params {
-                amount: 36,
-                life: 0.55,
-                speed: (0.6, 1.6),
-                spread: 40.0,
+                amount: 9,
+                life: 0.7,
+                speed: (0.5, 1.3),
+                spread: 30.0,
                 gravity: Vector3::new(0.0, 1.5, 0.0),
-                size: (0.08, 0.16),
-                radius: 0.25,
-                hdr: 2.5,
+                size: (0.3, 0.55),
+                radius: 0.2,
+                damping: 1.0,
                 ..base
             },
             Recipe::Shards => Params {
-                amount: 26,
+                amount: 12,
                 life: 0.7,
                 speed: (1.0, 2.4),
                 spread: 70.0,
                 gravity: Vector3::new(0.0, -6.0, 0.0),
-                size: (0.03, 0.06),
-                radius: 0.15,
-                hdr: 2.5,
+                size: (0.1, 0.2),
+                radius: 0.3,
+                hdr: 1.4,
                 ..base
             },
             Recipe::Bolts => Params {
@@ -617,6 +666,17 @@ impl Recipe {
                 hdr: 3.5,
                 ..base
             },
+            Recipe::Bloom => Params {
+                amount: 2,
+                life: 0.16,
+                speed: (0.0, 0.05),
+                spread: 180.0,
+                size: (0.45, 0.6),
+                radius: 0.0,
+                damping: 0.0,
+                hdr: 1.8,
+                ..base
+            },
             Recipe::Droplets => Params {
                 amount: 16,
                 life: 0.5,
@@ -644,7 +704,7 @@ impl Recipe {
                 ..base
             },
             Recipe::Pillar => Params {
-                amount: 56,
+                amount: 30,
                 life: 1.0,
                 speed: (1.2, 3.4),
                 spread: 12.0,
@@ -667,16 +727,54 @@ impl Recipe {
                 hdr: 0.8,
                 ..base
             },
+            // flung up, then rising slowly and dying
             Recipe::Embers => Params {
-                amount: 40,
-                life: 1.4,
-                speed: (0.6, 2.6),
-                spread: 30.0,
-                gravity: Vector3::new(0.0, 0.5, 0.0),
-                size: (0.03, 0.06),
+                amount: 34,
+                life: 2.2,
+                speed: (0.5, 2.4),
+                spread: 38.0,
+                gravity: Vector3::new(0.0, 0.35, 0.0),
+                size: (0.05, 0.09),
+                radius: 0.5,
+                damping: 0.9,
+                ..base
+            },
+            Recipe::Soot => Params {
+                amount: 22,
+                life: 2.0,
+                speed: (0.5, 1.3),
+                spread: 25.0,
+                gravity: Vector3::new(0.0, 0.4, 0.0),
+                size: (0.7, 1.2),
                 radius: 0.45,
-                damping: 0.6,
-                hdr: 3.0,
+                damping: 0.8,
+                hdr: 0.6,
+                additive: false,
+                ..base
+            },
+            Recipe::Murk => Params {
+                amount: 9,
+                life: 0.8,
+                speed: (0.1, 0.35),
+                spread: 180.0,
+                gravity: Vector3::new(0.0, 0.25, 0.0),
+                size: (0.22, 0.4),
+                radius: 0.08,
+                damping: 1.0,
+                hdr: 0.5,
+                additive: false,
+                ..base
+            },
+            Recipe::Core => Params {
+                amount: 6,
+                life: 0.9,
+                speed: (0.0, 0.1),
+                spread: 180.0,
+                size: (0.8, 1.1),
+                radius: 0.1,
+                damping: 0.0,
+                hdr: 0.9,
+                additive: false,
                 ..base
             },
             // a body's, seen at the game's distance: the ring's radius
@@ -730,12 +828,12 @@ impl Recipe {
             // metres, a shorter one sheds fewer; a ray shows for a moment,
             // so they come thick while it does
             Recipe::Tongues => Params {
-                amount: 300,
+                amount: 200,
                 life: 0.8,
                 speed: (0.2, 0.7),
                 spread: 30.0,
                 gravity: Vector3::new(0.0, 2.2, 0.0),
-                size: (0.3, 0.6),
+                size: (0.45, 0.9),
                 damping: 1.2,
                 hdr: 1.6,
                 ..base
@@ -748,7 +846,7 @@ impl Recipe {
                 gravity: Vector3::new(0.0, -1.2, 0.0),
                 size: (0.12, 0.24),
                 damping: 0.6,
-                hdr: 3.0,
+                hdr: 1.6,
                 ..base
             },
             Recipe::Haze => Params {
@@ -842,7 +940,7 @@ impl Recipe {
                 size: (0.5, 0.9),
                 radius: 0.12,
                 damping: 1.0,
-                hdr: 3.6,
+                hdr: 1.1,
                 ..base
             },
             Recipe::Spread => Params {
@@ -942,7 +1040,7 @@ fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
             let rich = richer(c);
             (Recipe::Swirl, rich, Some((rich, 3.5, 1.3)))
         }
-        VfxKind::Force(c, _) => (Recipe::Flash, c, Some((c, 5.0, 0.3))),
+        VfxKind::Force(c, _) => (Recipe::Bloom, c, Some((c, 5.0, 0.3))),
         VfxKind::Bless => {
             let gold = rgb(1.0, 0.84, 0.45);
             (Recipe::Mend, gold, Some((gold, 2.2, 1.1)))
@@ -1076,7 +1174,11 @@ const POOL: usize = 9;
 const COLUMN_SECS: f32 = 1.4;
 /// How much of a column's flames' foot fades in, and how bright they burn.
 const COLUMN_FOOT: f32 = 0.3;
-const COLUMN_ENERGY: f32 = 1.9;
+const COLUMN_ENERGY: f32 = 1.1;
+/// A fire's smoke: how far over its foot it rolls off (metres), and how
+/// much nearer than the flames it is sorted (drawn over them).
+const SOOT_HIGH: f32 = 1.5;
+const SOOT_OVER: f32 = 2.0;
 const COLUMN_FLAMES: [(f32, f32, f32, f32); 3] = [
     (1.5, 3.4, 0.0, 0.0),
     (1.0, 2.3, -0.38, 0.37),
@@ -1140,6 +1242,8 @@ const IMPACT_OFF: f32 = 0.25;
 const LIT: Color = Color::from_rgb(1.0, 0.93, 0.78);
 const LIT_LIGHT: (f32, f32, f32) = (7.0, 1.6, 9.0);
 const BEAM_SECS: f32 = 0.45;
+/// The longest step effects age by in a frame (seconds).
+const SLOW_FRAME: f32 = 0.1;
 /// How long a whole ray's head takes to run its length, and a ray shows
 /// at its brightest once it stops growing, before it fades.
 const RUN_SECS: f32 = BEAM_SECS * 0.4;
@@ -1167,11 +1271,16 @@ const BLAST_HEART_BLAZE: f32 = 1.5;
 /// what is behind it, so it keeps its colour over a lit floor) and a soft
 /// glow in it, this much of its colour (an added light whitens what it
 /// lies on), this large at the heart and in the other cells.
-const BLAST_GLOW: f32 = 0.03;
+const BLAST_GLOW: f32 = 0.1;
 const BLAST_GLOW_SIZE: (f32, f32) = (3.4, 1.6);
 /// The haze at a frosty or magical blast's heart: its puffs this many
 /// times their size, in a ball as many times wider as its root.
 const BLAST_BODY: f32 = 1.8;
+/// A magical blast's heart: this many times its colour (over one it reads
+/// as a light at the game's distance, and still as its hue).
+const MAGIC_CORE: f32 = 1.5;
+/// A spell gathering at the hand: its murk this much of its colour.
+const CAST_MURK: f32 = 0.4;
 /// Pieces of a ray drawn by the map this lately (seconds) were the ray of
 /// the hero's own zap, shown before the hero's use is (`ray_lately`).
 const RAY_LATELY: f32 = 1.5;
@@ -1190,25 +1299,22 @@ fn particle_textures() -> HashMap<Recipe, Gd<Texture2D>> {
     let kenney = "res://art/cc0/kenney/particles/";
     let books = "res://art/cc0/unity-labs/flipbooks/";
     let smoke = format!("{books}WispySmoke01_8x8.png");
-    [
+    let mut all: HashMap<Recipe, Gd<Texture2D>> = [
         (Recipe::Flash, format!("{rpicster}effect_3.png")),
-        (Recipe::Glints, format!("{rpicster}spotlight_5.png")),
-        (Recipe::Flare, format!("{rpicster}spotlight_5.png")),
-        (Recipe::Runes, format!("{rpicster}spotlight_8.png")),
-        (Recipe::Halo, format!("{kenney}magic_05.png")),
-        (Recipe::Mend, format!("{kenney}star_01.png")),
         (Recipe::Wisps, format!("{kenney}twirl_02.png")),
         (Recipe::Ring, format!("{kenney}circle_02.png")),
-        (Recipe::Rime, format!("{kenney}star_04.png")),
-        (Recipe::Twinkles, format!("{kenney}star_01.png")),
-        (Recipe::Spread, format!("{kenney}star_01.png")),
         (Recipe::Tongues, format!("{books}FireBall04_8x8.png")),
-        (Recipe::Pillar, format!("{books}FireBall01_8x8.png")),
+        // (FireBall01 is burnt out to white over half of each ball: no
+        // heat left in it to draw a fire's colours by)
+        (Recipe::Pillar, format!("{books}FireBall02_8x8.png")),
         (Recipe::Blaze, format!("{books}FireBall02_8x8.png")),
+        (Recipe::Flames, format!("{books}FireBall02_8x8.png")),
         (Recipe::Haze, smoke.clone()),
         (Recipe::Smoke, smoke.clone()),
         (Recipe::Gas, smoke.clone()),
         (Recipe::Dust, smoke.clone()),
+        (Recipe::Soot, smoke.clone()),
+        (Recipe::Murk, smoke.clone()),
         (Recipe::Puff, smoke),
     ]
     .into_iter()
@@ -1217,7 +1323,28 @@ fn particle_textures() -> HashMap<Recipe, Gd<Texture2D>> {
             .ok()
             .map(|t| (r, t))
     })
-    .collect()
+    .collect();
+    // drawn here (`shapes`): hot specks for glints, flares and what a
+    // spell flings, slivers of ice, runes, wisps of light; never a stock
+    // four-point star
+    let speck = shapes::speck();
+    for r in [
+        Recipe::Glints,
+        Recipe::Flare,
+        Recipe::Twinkles,
+        Recipe::Spread,
+        Recipe::Swirl,
+    ] {
+        all.insert(r, speck.clone());
+    }
+    let sliver = shapes::sliver();
+    all.insert(Recipe::Rime, sliver.clone());
+    all.insert(Recipe::Shards, sliver);
+    let runes = shapes::runes();
+    all.insert(Recipe::Runes, runes.clone());
+    all.insert(Recipe::Halo, runes);
+    all.insert(Recipe::Mend, shapes::wisp());
+    all
 }
 /// Motes of dust around the camera's focus in the main dungeon.
 const DUST: i32 = 220;
@@ -1248,6 +1375,9 @@ pub struct Vfx {
     /// A number for the next ray's pattern.
     rays_drawn: u32,
     columns: Vec<Column>,
+    /// Rolling fire's shader (fire.gdshader), a tower of flame's (the
+    /// torches').
+    fire_shader: Option<Gd<Shader>>,
     flame_shader: Option<Gd<Shader>>,
     flame_book: Option<Gd<Texture2D>>,
     /// When (`clock`) the last explosion went off, and the last fire.
@@ -1475,17 +1605,19 @@ fn ramp_of(recipe: Recipe, color: Color) -> Gd<GradientTexture1D> {
                 color.with_alpha(0.0),
             ],
         )
-    } else if matches!(recipe, Recipe::Tongues | Recipe::Pillar | Recipe::Blaze) {
-        let k = p.hdr;
+    } else if recipe.is_fire() {
+        // not a colour: how hot it is, how much of it is soot, how thick
+        // (fire.gdshader): it cools, and rolls off as dark smoke
+        return fire_ramp();
+    } else if recipe == Recipe::Embers {
+        // a yellow-orange speck dying to a dull red
         (
-            &[0.0, 0.3, 0.7, 1.0],
-            // born a hot yellow-orange, not a cream white (where many
-            // overlap they still burn white, in a small heart)
+            &[0.0, 0.25, 0.7, 1.0],
             vec![
-                rgba(1.0 * k, 0.68 * k, 0.28 * k, 1.0),
-                rgba(color.r * k, color.g * k, color.b * k, 0.9),
-                rgba(color.r * 0.7, color.g * 0.25, color.b * 0.1, 0.5),
-                rgba(0.3, 0.05, 0.0, 0.0),
+                rgba(2.6, 1.1, 0.24, 1.0),
+                rgba(1.6, 0.5, 0.08, 1.0),
+                rgba(0.7, 0.12, 0.02, 0.8),
+                rgba(0.3, 0.03, 0.0, 0.0),
             ],
         )
     } else if recipe.ring().is_some() {
@@ -1509,6 +1641,26 @@ fn ramp_of(recipe: Recipe, color: Color) -> Gd<GradientTexture1D> {
     let mut g = Gradient::new_gd();
     g.set_offsets(&PackedFloat32Array::from(offsets));
     g.set_colors(&PackedColorArray::from(&colors[..]));
+    let mut t = GradientTexture1D::new_gd();
+    t.set_gradient(&g);
+    t.set_use_hdr(true);
+    t
+}
+
+/// A flame's life for fire.gdshader: (heat, soot, -, thickness).
+fn fire_ramp() -> Gd<GradientTexture1D> {
+    let rgba = Color::from_rgba;
+    let mut g = Gradient::new_gd();
+    g.set_offsets(&PackedFloat32Array::from(&[0.0, 0.1, 0.45, 0.72, 1.0][..]));
+    g.set_colors(&PackedColorArray::from(
+        &[
+            rgba(1.0, 0.0, 0.0, 0.0),
+            rgba(1.0, 0.0, 0.0, 1.0),
+            rgba(0.6, 0.1, 0.0, 1.0),
+            rgba(0.25, 0.7, 0.0, 0.8),
+            rgba(0.0, 1.0, 0.0, 0.0),
+        ][..],
+    ));
     let mut t = GradientTexture1D::new_gd();
     t.set_gradient(&g);
     t.set_use_hdr(true);
@@ -1567,6 +1719,7 @@ impl Vfx {
             hits: Vec::new(),
             rays_drawn: 0,
             columns: Vec::new(),
+            fire_shader: godot::tools::try_load::<Shader>("res://shaders/fire.gdshader").ok(),
             flame_shader: godot::tools::try_load::<Shader>("res://shaders/flame.gdshader").ok(),
             flame_book: godot::tools::try_load::<Texture2D>(
                 "res://art/cc0/unity-labs/flipbooks/Flame02_16x4.png",
@@ -1654,9 +1807,11 @@ impl Vfx {
         let rgb = Color::from_rgb;
         match kind {
             Ray::Fire => {
-                let fire = rgb(1.0, 0.48, 0.13);
+                let fire = rgb(1.0, 0.4, 0.1);
                 self.emit_by(Recipe::Flames, fire, near, Some(Vector3::UP), 1.3);
-                self.emit_by(Recipe::Embers, rgb(1.0, 0.55, 0.2), near, Some(out), 1.2);
+                self.emit_by(Recipe::Embers, fire, near, Some(out), 1.2);
+                let over = near + Vector3::new(0.0, 0.7, 0.0);
+                self.emit_by(Recipe::Soot, fire, over, None, 0.6);
                 self.flash(near, fire, 5.0, 0.9, 4.0);
             }
             Ray::Cold => self.frost_burst(near + back * 0.2, Some(out), foot + back * 0.3),
@@ -1798,10 +1953,19 @@ impl Vfx {
             // a strike on stone: a flash, larger than a blow's, and
             // flecks of light flung every way
             VfxKind::Impact(_) => {
-                self.emit_by(Recipe::Flash, bright, at, None, k * IMPACT_FLASH);
+                self.emit_by(Recipe::Bloom, bright, at, None, k * IMPACT_FLASH);
                 self.emit_by(Recipe::Flare, bright, at, None, k * IMPACT_FLASH);
             }
             _ if recipe == Recipe::Sparks => self.emit_by(Recipe::Flash, bright, at, None, k),
+            // a spell gathering: a dusky puff of its colour, the hot
+            // points turning in it
+            VfxKind::Cast(_) => {
+                let m = CAST_MURK;
+                let murk = Color::from_rgb(color.r * m, color.g * m, color.b * m);
+                self.emit_by(Recipe::Murk, murk, at, None, k);
+            }
+            // a thing burning: embers off its flames
+            VfxKind::Fire => self.emit_by(Recipe::Embers, color, at, None, k * 0.6),
             // a glow rising with the runes; wisps turning in a drink's
             // glow, and in a healing's with its stars
             VfxKind::Halo => self.emit_by(Recipe::Aura, color, at, None, k),
@@ -1824,7 +1988,7 @@ impl Vfx {
             VfxKind::Lit => {
                 let low = Vector3::new(at.x, at.y + 0.4, at.z);
                 self.emit_by(Recipe::Spread, LIT, low, None, k);
-                self.emit_by(Recipe::Flash, LIT, at + Vector3::UP * 1.0, None, k * 2.0);
+                self.emit_by(Recipe::Bloom, LIT, at + Vector3::UP * 1.0, None, k * 2.0);
                 let (energy, secs, range) = LIT_LIGHT;
                 self.flash(at + Vector3::UP * 1.4, LIT, energy, secs, range);
             }
@@ -1938,7 +2102,10 @@ impl Vfx {
                     self.emit(Recipe::Pillar, fire, at + Vector3::new(0.0, 0.3, 0.0), None);
                     let low = at + Vector3::new(0.0, 0.3, 0.0);
                     self.emit_by(Recipe::Blaze, fire, low, None, BLAST_HEART_BLAZE);
-                    self.emit(Recipe::Embers, rgb(1.0, 0.55, 0.2), mid, None);
+                    self.emit(Recipe::Embers, fire, mid, None);
+                    // dark smoke rolling up off it
+                    let over = at + Vector3::new(0.0, SOOT_HIGH, 0.0);
+                    self.emit(Recipe::Soot, fire, over, None);
                     self.flash(at + Vector3::new(0.0, 1.4, 0.0), fire, 5.5, 1.3, 5.0);
                     self.mark(Mark::Scorch(EMBER), at, 2.6);
                 } else {
@@ -1952,7 +2119,7 @@ impl Vfx {
             Blast::Frosty => {
                 // a pale-blue ball of haze glowing from within, shards and
                 // rime flung through it
-                let ice = rgb(0.62, 0.86, 1.0);
+                let ice = rgb(0.45, 0.7, 1.0);
                 let lean = if heart {
                     None
                 } else {
@@ -1961,7 +2128,9 @@ impl Vfx {
                 // dusky: a cold grey-blue, not a bright one
                 let haze = Some(rgb(0.4, 0.5, 0.62));
                 self.blast_body(rgb(0.35, 0.62, 1.0), haze, mid, heart, size);
-                self.emit_by(Recipe::Shards, ice, mid, lean, 1.3);
+                if !corner {
+                    self.emit_by(Recipe::Shards, ice, mid, lean, 1.3);
+                }
                 // (a few glints of rime in it: the body is the haze)
                 self.emit_in_cell(Recipe::Rime, ice, mid, share * 0.4);
                 if heart {
@@ -2014,8 +2183,12 @@ impl Vfx {
                 // dusky: its colour darkened, as smoke lit from within
                 let haze = Color::from_rgb(c.r * 0.42, c.g * 0.34, c.b * 0.5);
                 self.blast_body(c, Some(haze), mid, heart, size);
-                // sparks flung from its heart alone (the body is the haze)
+                // at its heart a ball of its own colour (drawn over the
+                // haze: it keeps its hue) and sparks flung from it
                 if heart {
+                    let core =
+                        Color::from_rgb(c.r * MAGIC_CORE, c.g * MAGIC_CORE, c.b * MAGIC_CORE);
+                    self.emit(Recipe::Core, core, mid, None);
                     self.emit(Recipe::Blast, color, mid, None);
                 }
                 if heart {
@@ -2115,6 +2288,8 @@ impl Vfx {
                         // its foot fading in: a torch's flame cut off at
                         // the quad's edge drew a hard bright square
                         mat.set_shader_parameter("foot", &COLUMN_FOOT.to_variant());
+                        // a deep orange, not a torch's yellow
+                        mat.set_shader_parameter("deeper", &1.0f32.to_variant());
                         let mut mi = MeshInstance3D::new_alloc();
                         mi.set_mesh(&quad);
                         mi.set_material_override(&mat);
@@ -2510,7 +2685,8 @@ impl Vfx {
             Some(i) => i,
             None if pool.len() < POOL => {
                 let tex = self.textures.get(&recipe).unwrap_or(&self.soft);
-                let e = new_emitter(&mut self.root, recipe, tex);
+                let fire = self.fire_shader.as_ref().filter(|_| recipe.is_fire());
+                let e = new_emitter(&mut self.root, recipe, tex, fire);
                 pool.push(e);
                 pool.len() - 1
             }
@@ -2690,6 +2866,10 @@ impl Vfx {
 
     /// Advance everything by `delta` seconds; the dust follows `focus`.
     pub fn process(&mut self, delta: f32, focus: Vector3) {
+        // a slow frame ages nothing by more than a step: the particles
+        // do not leap ahead by it either, and a burst would be over
+        // before it was seen
+        let delta = delta.min(SLOW_FRAME);
         self.clock += delta;
         self.dust
             .set_position(focus + Vector3::new(0.0, DUST_HIGH.0, 0.0));
@@ -2770,7 +2950,10 @@ impl Vfx {
             c.root
                 .set_scale(Vector3::ONE * (0.45 + 0.55 * up) * (0.85 + 0.15 * fade));
             for m in &mut c.flames {
-                m.set_shader_parameter("energy", &(COLUMN_ENERGY * fade * waver).to_variant());
+                m.set_shader_parameter("energy", &(COLUMN_ENERGY * waver).to_variant());
+                // (thinning out as it dies: its light gone, its body
+                // stood on as a grey veil)
+                m.set_shader_parameter("left", &fade.to_variant());
             }
             if c.age >= COLUMN_SECS {
                 c.root.set_visible(false);
@@ -3035,12 +3218,19 @@ fn process_material(recipe: Recipe, p: &Params) -> Gd<ParticleProcessMaterial> {
         tex.set_curve(&curve);
         m.set_param_texture(Parameter::SCALE, &tex);
     }
-    // turned any way: a ring, smoke and flame are no two alike
-    if grows.is_some() || recipe.frames().is_some() {
+    // turned any way: a ring, smoke, flame and ice are no two alike
+    let turned = matches!(recipe, Recipe::Rime | Recipe::Shards);
+    if grows.is_some() || turned || (recipe.frames().is_some() && !recipe.picks()) {
         m.set_param_min(Parameter::ANGLE, 0.0);
         m.set_param_max(Parameter::ANGLE, 360.0);
     }
-    if recipe.frames().is_some() {
+    if recipe.picks() {
+        // one shape of its sheet, all its life
+        m.set_param_min(Parameter::ANIM_SPEED, 0.0);
+        m.set_param_max(Parameter::ANIM_SPEED, 0.0);
+        m.set_param_min(Parameter::ANIM_OFFSET, 0.0);
+        m.set_param_max(Parameter::ANIM_OFFSET, 1.0);
+    } else if recipe.frames().is_some() {
         // its flipbook once over its life, from a little way in
         m.set_param_min(Parameter::ANIM_SPEED, 1.0);
         m.set_param_max(Parameter::ANIM_SPEED, 1.0);
@@ -3057,7 +3247,12 @@ const EMITTER_SEEN: Aabb = Aabb {
     size: Vector3::new(6.0, 5.0, 6.0),
 };
 
-fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, tex: &Gd<Texture2D>) -> Emitter {
+fn new_emitter(
+    root: &mut Gd<Node3D>,
+    recipe: Recipe,
+    tex: &Gd<Texture2D>,
+    fire: Option<&Gd<Shader>>,
+) -> Emitter {
     let p = recipe.params();
     let mut m = process_material(recipe, &p);
     let mean = (p.size.0 + p.size.1) / 2.0;
@@ -3084,6 +3279,14 @@ fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, tex: &Gd<Texture2D>) -> Em
             m = b.upcast();
         }
         node.set_material_override(&m);
+    } else if let Some(shader) = fire {
+        node.set_draw_pass_mesh(0, &quad(mean));
+        let mut mat = ShaderMaterial::new_gd();
+        mat.set_shader(shader);
+        mat.set_shader_parameter("book", &tex.to_variant());
+        let (h, v) = recipe.frames().unwrap_or((1, 1));
+        mat.set_shader_parameter("frames", &Vector2::new(h as f32, v as f32).to_variant());
+        node.set_material_override(&mat);
     } else {
         node.set_draw_pass_mesh(0, &quad(mean));
         let mat = particle_material(tex, p.additive, p.lit, recipe.frames());
@@ -3094,6 +3297,10 @@ fn new_emitter(root: &mut Gd<Node3D>, recipe: Recipe, tex: &Gd<Texture2D>) -> Em
             m.set_flag(Flags::DISABLE_DEPTH_TEST, true);
         }
         node.set_material_override(&mat);
+    }
+    if recipe == Recipe::Soot {
+        // drawn over the flames it rolls off
+        node.set_sorting_offset(SOOT_OVER);
     }
     node.set_cast_shadows_setting(ShadowCastingSetting::OFF);
     node.set_visibility_aabb(EMITTER_SEEN);
