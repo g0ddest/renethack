@@ -190,6 +190,7 @@ texels where a figure glows (`*_glow.jpg`); nothing else was changed.
 |---|---|
 | `owner/prologue/marduk.glb` | Marduk the Creator: a god-king in a tiered horned crown, ivory and gold robes, a rod and a ring of rule (62k triangles) |
 | `owner/prologue/moloch.glb` | Moloch: a bull-headed dark god, a furnace in his chest, chains, a torn cape (62k triangles) |
+| `owner/prologue/amulet.glb` | The Amulet of Yendor: tarnished gold, rings of glyphs, a red stone in claws, a short chain (30k triangles) |
 
 ## Fonts
 

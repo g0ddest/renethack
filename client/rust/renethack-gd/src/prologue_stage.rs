@@ -11,7 +11,7 @@
 //!   the furnace in his chest breathing, half lost in a black fog against
 //!   smoke the fires behind him light, embers rising; braziers between;
 //! - the Amulet: a cavern of Gehennom under a smouldering sky, its lava in
-//!   a ring of rock, the Amulet sinking into it, glowing;
+//!   a ring of rock, the Amulet sinking into it, its stone glowing;
 //! - the god: their altar in a vaulted shrine, light pouring down on it,
 //!   braziers either side;
 //! - the hero: the title's chamber, the hero in their kit;
@@ -21,13 +21,13 @@
 //! read (`prepare_prologue`), and the rehearsal draws one of each under
 //! the start-up veil (`warm_prologue`).
 //!
-//! The gods are generated models (the owner's, their maps cut to 2K:
-//! `art/owner/prologue/`), drawn by `prologue_figure.gdshader` with a life
-//! no rig gives them (breath, cloth swaying, a glow pulsing).
+//! The gods and the Amulet are generated models (the owner's, their maps
+//! cut to 2K: `art/owner/prologue/`), drawn by `prologue_figure.gdshader`
+//! with a life no rig gives them (breath, cloth swaying, a glow pulsing).
 
 use std::time::{Duration, Instant};
 
-use godot::classes::base_material_3d::{Feature, Flags, ShadingMode, TextureParam};
+use godot::classes::base_material_3d::{Flags, ShadingMode, TextureParam};
 use godot::classes::fast_noise_lite::NoiseType;
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::image::Format;
@@ -46,7 +46,7 @@ use nh_world::{Pack, World};
 
 use super::{MapView, flicker, role_monster};
 use crate::art::{Finish, no_shadow};
-use crate::meshes::{cuboid, cylinder, plane, sphere, torus};
+use crate::meshes::{cuboid, plane};
 use crate::prologue::Beat;
 use crate::rehearsal::glyph;
 use crate::title_scene::{Fire, TitleScene};
@@ -75,12 +75,16 @@ const BOOK_ON: f32 = 0.612;
 /// air over its lava.
 const EMBERS: Color = Color::from_rgb(0.2, 0.045, 0.015);
 const SKY_TOP: Color = Color::from_rgb(0.012, 0.004, 0.003);
-/// The Amulet's own glow, where it starts above the lava and where it is
-/// gone under, and how much bigger than life it is drawn.
-const AMULET_GLOW: Color = Color::from_rgb(1.0, 0.8, 0.42);
+/// The Amulet: where it starts above the lava and where it is gone under,
+/// how tall it is drawn (its chain to the foot of its disc, bigger than
+/// life), the lava's light on it from below, its stone's red light, and a
+/// beat of the stone's glow every so many seconds.
 const AMULET_FROM: f32 = 3.6;
 const AMULET_TO: f32 = -0.7;
-const AMULET_SIZE: f32 = 2.6;
+const AMULET_TALL: f32 = 1.25;
+const LAVA_LIGHT: Color = Color::from_rgb(1.0, 0.42, 0.14);
+const STONE_LIGHT: Color = Color::from_rgb(1.0, 0.08, 0.04);
+const STONE_BEAT: f32 = 2.4;
 /// The haze the light pours through while the prologue plays (the air's
 /// own: none, the scenes' haze where it shows), and how brightly the light
 /// pouring down lights it.
@@ -93,8 +97,6 @@ const SHAFT_DENSITY: f32 = 0.25;
 const FIRE_HAZE: f32 = 0.4;
 /// How far the sky over Gehennom is.
 const SKY: f32 = 40.0;
-/// The Amulet's chain: how many links in its loop.
-const CHAIN_LINKS: usize = 30;
 /// Time a frame may spend standing the next beat's set pieces.
 const PIECES_BUDGET: Duration = Duration::from_millis(3);
 /// The sets' pieces: the Sigil's Vault dungeon kit's (CC0) vaults,
@@ -179,13 +181,37 @@ const MOLOCH: Figure = Figure {
         ("rim_power", U::F(4.0)),
     ],
 };
-/// A breath of each god every so many seconds, and Moloch's furnace (in
-/// his model's own space).
+const AMULET: Figure = Figure {
+    key: "amulet",
+    glb: "res://art/owner/prologue/amulet.glb",
+    maps: "res://art/owner/prologue/amulet",
+    glow: true,
+    uniforms: &[
+        // old gold, darkened; the stone's glow beating
+        ("tint", U::V3(0.5, 0.42, 0.3)),
+        ("rough", U::F(0.1)),
+        ("breath_secs", U::F(STONE_BEAT)),
+        // (a dark garnet, its light deep in it)
+        ("glow_color", U::V3(0.85, 0.02, 0.03)),
+        ("glow_energy", U::F(0.4)),
+        ("glow_dark", U::F(0.35)),
+        (
+            "heart",
+            U::V3(AMULET_STONE.0, AMULET_STONE.1, AMULET_STONE.2),
+        ),
+        ("heart_radius", U::F(0.09)),
+        ("heart_energy", U::F(2.0)),
+        ("glow_pulse", U::F(0.7)),
+    ],
+};
+/// A breath of each god every so many seconds; Moloch's furnace (in his
+/// model's own space), and where the Amulet's stone is in its.
 const MARDUK_BREATH: f32 = 5.5;
 const MOLOCH_BREATH: f32 = 4.0;
 const MOLOCH_HEART: (f32, f32, f32) = (0.10, 0.29, 0.24);
+const AMULET_STONE: (f32, f32, f32) = (0.0, -0.38, 0.12);
 /// What the prologue's figures are, loaded ahead in the background.
-pub(super) const FIGURES: [&str; 2] = [MARDUK.glb, MOLOCH.glb];
+pub(super) const FIGURES: [&str; 3] = [MARDUK.glb, MOLOCH.glb, AMULET.glb];
 /// The descent: the cells the hero walks to the stairs on, a step every
 /// this many seconds.
 const WALK: [(i32, i32); 4] = [(40, 10), (40, 9), (40, 8), (40, 7)];
@@ -256,6 +282,16 @@ struct Smoke {
     climb: f32,
 }
 
+/// The Amulet as drawn: its figure, its material, the lava's light on it
+/// and its stone's light.
+pub(super) struct Amulet {
+    /// A pivot at its stone, the figure in it.
+    node: Gd<Node3D>,
+    mat: Option<Gd<ShaderMaterial>>,
+    lava: Gd<OmniLight3D>,
+    stone: Gd<OmniLight3D>,
+}
+
 /// A beat's scene as drawn: what stands beside its level, and what moves.
 pub(super) struct Stage {
     beat: Beat,
@@ -271,7 +307,7 @@ pub(super) struct Stage {
     furnace: Option<Gd<OmniLight3D>>,
     /// Smoke rising, and how thick it grows.
     smoke: Vec<(Gd<ShaderMaterial>, f32)>,
-    amulet: Option<(Gd<Node3D>, Gd<OmniLight3D>)>,
+    amulet: Option<Amulet>,
     /// The gods still to stand (each its own frame's work ahead: its
     /// model, its material's maps, its smoke and its light), then the set
     /// pieces.
@@ -475,7 +511,7 @@ impl MapView {
                 }
             }
             Beat::Amulet => {
-                stage.amulet = Some(self.stage_amulet(&mut stage.root, mid));
+                stage.amulet = Some(self.stage_amulet(&mut stage.root, mid, AMULET_TALL));
                 self.dome(&mut stage.root, mid);
                 // the lava's heat glowing in the air over it
                 let heat = Color::from_rgb(0.5, 0.13, 0.03);
@@ -855,24 +891,41 @@ impl MapView {
         stage.fires.push((light, energy, phase));
     }
 
-    /// The Amulet of Yendor at `at`, high over it, and its glow.
-    fn stage_amulet(
-        &mut self,
-        root: &mut Gd<Node3D>,
-        at: Vector3,
-    ) -> (Gd<Node3D>, Gd<OmniLight3D>) {
-        let mut amulet = self.amulet_model();
-        let k = AMULET_SIZE / 10.0;
-        amulet.set_scale(Vector3::new(k, k, k));
-        amulet.set_position(at + Vector3::new(0.0, AMULET_FROM, 0.0));
-        root.add_child(&amulet);
-        let glow = light(
-            root,
-            AMULET_GLOW,
-            at + Vector3::new(0.0, AMULET_FROM, 0.0),
-            3.5,
+    /// The Amulet of Yendor high over `at`, `tall` from its chain to its
+    /// foot, turning about its stone; the lava's light on it from below and
+    /// its stone's red light.
+    fn stage_amulet(&mut self, root: &mut Gd<Node3D>, at: Vector3, tall: f32) -> Amulet {
+        let high = at + Vector3::new(0.0, AMULET_FROM, 0.0);
+        let mut node = Node3D::new_alloc();
+        node.set_name("Amulet");
+        node.set_position(high);
+        root.add_child(&node);
+        let mut mat = None;
+        if let Some((mut figure, m, k)) = self.stand_figure(root, &AMULET, high, 0.0, tall) {
+            // (the figure in a pivot at its stone)
+            let (sx, sy, _) = AMULET_STONE;
+            figure.reparent(&node);
+            figure.set_position(-Vector3::new(sx, sy, 0.0) * k);
+            mat = Some(m);
+        }
+        let front = AMULET_STONE.2 * tall / 1.9 + 0.12;
+        let mut stone = light(
+            &mut node,
+            STONE_LIGHT,
+            Vector3::new(0.0, 0.0, front),
+            0.9 * tall,
         );
-        (amulet, glow)
+        stone.set_param(Param::ENERGY, 0.0);
+        // (it lights the claws and the gold round the stone, not the stone)
+        stone.set_param(Param::SPECULAR, 0.0);
+        let mut lava = light(root, LAVA_LIGHT, high, 3.0);
+        lava.set_param(Param::ENERGY, 0.0);
+        Amulet {
+            node,
+            mat,
+            lava,
+            stone,
+        }
     }
 
     /// The scene `secs` into its beat (`descent`: seconds into the last
@@ -938,18 +991,32 @@ impl MapView {
             m.set_shader_parameter("density", &(*density * rise).to_variant());
         }
         let mut amulet_at = None;
-        if let Some((amulet, glow)) = stage.amulet.as_mut() {
-            // it sinks slowly, turning, and is gone under the lava
+        if let Some(a) = stage.amulet.as_mut() {
+            // it sinks slowly, swaying on its chain (its back is plain: it
+            // never turns it to us), and is gone under the lava; the lava's
+            // light on it the stronger the nearer, its stone beating
             let k = smooth((t / 13.0).min(1.0));
             let y = AMULET_FROM + (AMULET_TO - AMULET_FROM) * k;
             let at = mid + Vector3::new(0.0, y, 0.0);
-            amulet.set_position(at);
-            amulet.set_rotation(Vector3::new(0.2, t * 0.6, 0.0));
-            glow.set_position(at + Vector3::new(0.4, 0.6, 1.2));
-            glow.set_param(
+            a.node.set_position(at);
+            a.node.set_rotation(Vector3::new(
+                0.08 * (t * 0.7).sin(),
+                0.45 * (t * 0.45).sin(),
+                0.05 * (t * 0.9 + 1.0).sin(),
+            ));
+            let gone = smooth(((0.2 - y) / 0.9).clamp(0.0, 1.0));
+            let near = smooth(((AMULET_FROM - y) / (AMULET_FROM - 0.3)).clamp(0.0, 1.0));
+            a.lava.set_position(Vector3::new(at.x, 0.35, at.z + 0.5));
+            a.lava
+                .set_param(Param::ENERGY, (0.5 + 1.6 * near) * (1.0 - gone));
+            a.stone.set_param(
                 Param::ENERGY,
-                2.2 * (1.0 - smooth(((y - 0.2) / -0.9).clamp(0.0, 1.0))),
+                0.9 * rise * (0.3 + 0.7 * inhale(t, STONE_BEAT)) * (1.0 - gone),
             );
+            if let Some(m) = a.mat.as_mut() {
+                m.set_shader_parameter("clock", &t.to_variant());
+                m.set_shader_parameter("rise", &rise.to_variant());
+            }
             amulet_at = Some(at);
         }
         let (eye, aim) = camera(beat, t, descent.map(|d| d as f32), mid, hero, amulet_at);
@@ -997,7 +1064,7 @@ impl MapView {
         );
         self.stand_marduk(&mut stage, mid + v(-2.0, 0.0, 0.5), 30.0, 1.2);
         self.stand_moloch(&mut stage, mid + v(2.0, 0.0, 0.5), -30.0, 1.4);
-        stage.amulet = Some(self.stage_amulet(&mut stage.root, mid));
+        stage.amulet = Some(self.stage_amulet(&mut stage.root, mid, 0.6));
         for (b, most) in &mut stage.beams {
             b.set_param(Param::ENERGY, *most);
         }
@@ -1007,6 +1074,10 @@ impl MapView {
         }
         for (m, density) in &mut stage.smoke {
             m.set_shader_parameter("density", &density.to_variant());
+        }
+        if let Some(a) = stage.amulet.as_mut() {
+            a.lava.set_param(Param::ENERGY, 2.0);
+            a.stone.set_param(Param::ENERGY, 1.0);
         }
         let mut book = self.book_model();
         book.set_position(mid + v(0.0, 0.0, 1.0));
@@ -1621,95 +1692,6 @@ impl MapView {
             book.add_child(&pages);
         }
         book
-    }
-
-    /// The Amulet of Yendor, ten times its size (the meshes are cached to
-    /// the centimetre): a disc of gold, a ring of studs round a red stone
-    /// cut and glowing, its bail and a loop of its chain above.
-    fn amulet_model(&mut self) -> Gd<Node3D> {
-        let mut amulet = Node3D::new_alloc();
-        amulet.set_name("Amulet");
-        let gold = self
-            .kept("gold", || {
-                let mut m = StandardMaterial3D::new_gd();
-                m.set_albedo(Color::from_rgb(1.0, 0.78, 0.36));
-                m.set_metallic(0.6);
-                m.set_roughness(0.32);
-                m.set_specular(0.8);
-                Some(m.upcast::<Material>())
-            })
-            .unwrap_or_else(|| self.art.flat(AMULET_GLOW, Finish::Glossy));
-        let ruby = self
-            .kept("ruby", || {
-                let mut m = StandardMaterial3D::new_gd();
-                m.set_albedo(Color::from_rgb(0.55, 0.02, 0.02));
-                m.set_roughness(0.08);
-                m.set_specular(1.0);
-                m.set_feature(Feature::EMISSION, true);
-                m.set_emission(Color::from_rgb(0.9, 0.05, 0.02));
-                m.set_emission_energy_multiplier(1.3);
-                m.set_feature(Feature::RIM, true);
-                m.set_rim(0.3);
-                m.set_rim_tint(0.9);
-                Some(m.upcast::<Material>())
-            })
-            .unwrap_or_else(|| self.art.flat(Color::from_rgb(0.9, 0.1, 0.06), Finish::Gem));
-        // the disc stands up, its face to +z
-        let face = |z: f32| Vector3::new(0.0, 0.0, z);
-        let up = Vector3::new(90.0, 0.0, 0.0);
-        let parts = [
-            (cylinder(1.2, 1.2, 0.26), face(0.0)),
-            (torus(1.12, 1.34), face(0.0)),
-        ];
-        for (key, at) in parts {
-            let mesh = self.art.mesh(key);
-            let mut mi = add_mesh(&mut amulet, &mesh, &gold, at);
-            mi.set_rotation_degrees(up);
-        }
-        // either face alike (it turns as it sinks): a ring of studs round
-        // a ring, the stone cut in it, its pavilion in the disc
-        let ring = self.art.mesh(torus(0.64, 0.78));
-        let stud = self.art.mesh(sphere(0.11));
-        let pavilion = self.art.mesh(cylinder(0.55, 0.0, 0.35));
-        let crown = self.art.mesh(cylinder(0.34, 0.55, 0.22));
-        for side in [1.0f32, -1.0] {
-            let mut mi = add_mesh(&mut amulet, &ring, &gold, face(0.14 * side));
-            mi.set_rotation_degrees(up);
-            for i in 0..12 {
-                let a = i as f32 * std::f32::consts::TAU / 12.0;
-                let at = Vector3::new(0.95 * a.cos(), 0.95 * a.sin(), 0.14 * side);
-                add_mesh(&mut amulet, &stud, &gold, at);
-            }
-            for (mesh, z) in [(&pavilion, 0.025), (&crown, 0.31)] {
-                let mut mi = add_mesh(&mut amulet, mesh, &ruby, face(z * side));
-                mi.set_rotation_degrees(Vector3::new(90.0 * side, 0.0, 0.0));
-            }
-        }
-        // the bail over it, across the disc, and the chain from it
-        let bail = self.art.mesh(torus(0.16, 0.28));
-        let mut b = add_mesh(&mut amulet, &bail, &gold, Vector3::new(0.0, 1.5, 0.0));
-        b.set_rotation_degrees(Vector3::new(0.0, 0.0, 90.0));
-        let link = self.art.mesh(torus(0.07, 0.14));
-        let (c, r) = (Vector3::new(0.0, 3.7, 0.0), 2.0);
-        for i in 0..CHAIN_LINKS {
-            let a = -std::f32::consts::FRAC_PI_2
-                + (i as f32 + 0.5) * std::f32::consts::TAU / CHAIN_LINKS as f32;
-            let at = c + Vector3::new(r * a.cos(), r * a.sin(), 0.0);
-            let along = Vector3::new(-a.sin(), a.cos(), 0.0);
-            // each link across the one before
-            let axis = if i % 2 == 0 {
-                Vector3::BACK
-            } else {
-                Vector3::new(a.cos(), a.sin(), 0.0)
-            };
-            let side = along.cross(axis);
-            let mut mi = add_mesh(&mut amulet, &link, &gold, at);
-            mi.set_transform(Transform3D::new(
-                Basis::from_cols(along * 1.5, axis, side),
-                at,
-            ));
-        }
-        amulet
     }
 }
 
