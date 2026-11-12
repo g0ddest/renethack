@@ -777,9 +777,11 @@ impl Recipe {
                 additive: false,
                 ..base
             },
-            // a body's, seen at the game's distance: the ring's radius
+            // a body's, seen at the game's distance: the ring's radius. A
+            // dusky glow (the body in it must still be read: bright, it
+            // whited them out), the wisps and stars in it its hot points
             Recipe::Aura => Params {
-                amount: 32,
+                amount: 16,
                 life: 1.4,
                 speed: (0.4, 0.95),
                 spread: 8.0,
@@ -787,18 +789,18 @@ impl Recipe {
                 size: (0.35, 0.6),
                 radius: 0.3,
                 damping: 0.5,
-                hdr: 2.0,
+                hdr: 0.5,
                 ..base
             },
             Recipe::Wisps => Params {
-                amount: 12,
+                amount: 8,
                 life: 1.2,
                 speed: (0.5, 1.0),
                 spread: 10.0,
                 size: (0.45, 0.75),
                 radius: 0.25,
                 damping: 0.6,
-                hdr: 2.6,
+                hdr: 1.2,
                 ..base
             },
             Recipe::Halo => Params {
@@ -1042,7 +1044,8 @@ fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
         }
         VfxKind::Force(c, _) => (Recipe::Bloom, c, Some((c, 5.0, 0.3))),
         VfxKind::Bless => {
-            let gold = rgb(1.0, 0.84, 0.45);
+            // an old gold, not cream
+            let gold = rgb(1.0, 0.66, 0.24);
             (Recipe::Mend, gold, Some((gold, 2.2, 1.1)))
         }
     }
