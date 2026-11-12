@@ -1660,15 +1660,6 @@ impl Art {
         true
     }
 
-    /// As `complete`, whatever this frame's budget has left: a scene set
-    /// up at once, whose figures no later frame completes (the
-    /// prologue's gods).
-    pub fn complete_now(&mut self, m: &mut Model) {
-        let spent = self.spent.take();
-        self.complete(m);
-        self.spent = spent;
-    }
-
     /// A new frame of the map: the budget for new instances starts again.
     pub fn begin_frame(&mut self) {
         self.spent = Some(std::time::Duration::ZERO);

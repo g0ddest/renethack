@@ -6,8 +6,10 @@
 //! camera of its own moving slowly through it:
 //! - the Book: a tome on the god's altar in a candlelit sanctum, books and
 //!   scrolls about it, a chandelier over it;
-//! - the rebellion: a vaulted temple of pillars, Marduk a figure of light
-//!   in a shaft of it, Moloch a dark one in a black fog, braziers between;
+//! - the rebellion: a vaulted temple of pillars, Marduk the god-king in a
+//!   shaft of light, dust drifting in it; Moloch twice his height behind,
+//!   the furnace in his chest breathing, half lost in a black fog against
+//!   smoke the fires behind him light, embers rising; braziers between;
 //! - the Amulet: a cavern of Gehennom under a smouldering sky, its lava in
 //!   a ring of rock, the Amulet sinking into it, glowing;
 //! - the god: their altar in a vaulted shrine, light pouring down on it,
@@ -18,24 +20,32 @@
 //! A beat's set is built a few pieces a frame while the beat before is
 //! read (`prepare_prologue`), and the rehearsal draws one of each under
 //! the start-up veil (`warm_prologue`).
+//!
+//! The gods are generated models (the owner's, their maps cut to 2K:
+//! `art/owner/prologue/`), drawn by `prologue_figure.gdshader` with a life
+//! no rig gives them (breath, cloth swaying, a glow pulsing).
 
 use std::time::{Duration, Instant};
 
 use godot::classes::base_material_3d::{Feature, Flags, ShadingMode, TextureParam};
+use godot::classes::fast_noise_lite::NoiseType;
+use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::image::Format;
 use godot::classes::light_3d::Param;
+use godot::classes::particle_process_material::{EmissionShape, Parameter};
 use godot::classes::rendering_server::FogVolumeShape;
 use godot::classes::{
-    FogMaterial, FogVolume, Gradient, GradientTexture2D, Image, ImageTexture, Material, Mesh,
-    MeshInstance3D, Node3D, OmniLight3D, PackedScene, Resource, SphereMesh, SpotLight3D,
-    StandardMaterial3D,
+    FastNoiseLite, FogMaterial, FogVolume, GpuParticles3D, Gradient, GradientTexture1D,
+    GradientTexture2D, Image, ImageTexture, Material, Mesh, MeshInstance3D, Node3D, NoiseTexture3D,
+    OmniLight3D, PackedScene, ParticleProcessMaterial, QuadMesh, Resource, Shader, ShaderMaterial,
+    SphereMesh, SpotLight3D, StandardMaterial3D, Texture2D, Texture3D,
 };
 use godot::prelude::*;
 use nh_protocol::{Catalog, Glyph, GlyphKind, LevelNotice, mg};
 use nh_world::{Pack, World};
 
-use super::{MapView, ModelLook, flicker, role_monster};
-use crate::art::{Finish, Model, Pose, no_shadow};
+use super::{MapView, flicker, role_monster};
+use crate::art::{Finish, no_shadow};
 use crate::meshes::{cuboid, cylinder, plane, sphere, torus};
 use crate::prologue::Beat;
 use crate::rehearsal::glyph;
@@ -53,10 +63,9 @@ pub struct PrologueHero {
 
 /// Where a scene stands on the map: the cell everything is laid round.
 const MID: (i32, i32) = (40, 9);
-/// The light pouring down and the black fog: their colours, how thick the
-/// fog grows.
+/// The light pouring down, and how thick the black fog over Moloch's legs
+/// grows.
 const HOLY: Color = Color::from_rgb(1.0, 0.93, 0.72);
-const DARK: Color = Color::from_rgb(0.05, 0.02, 0.08);
 const FOG_DENSITY: f32 = 2.4;
 /// The candles' light over the Book, and how high the Book lies on the
 /// altar (its top, the cloth on it).
@@ -103,13 +112,80 @@ const SCROLL: &str = "res://art/cc0/quaternius/props/Scroll_1.gltf";
 pub(super) const KIT: [&str; 9] = [
     VAULT, BARREL, PILLAR, WALL, ARCH, CANDLES, BOULDER, BOOK, SCROLL,
 ];
-/// The gods of the rebellion, as the bestiary draws them: Marduk a being
-/// of light, Moloch a horned dark one (outlined by the fires behind him),
-/// each this tall.
-const MARDUK: &str = "Angel";
-const MOLOCH: &str = "pit fiend";
+/// The gods of the rebellion: Marduk the god-king, and Moloch twice his
+/// height, outlined by the fires behind him, his furnace's light on his
+/// chains.
+const MARDUK_TALL: f32 = 3.2;
+const MOLOCH_TALL: f32 = 6.4;
 const MOLOCH_RIM: Color = Color::from_rgb(1.0, 0.36, 0.12);
-const GOD_TALL: f32 = 3.6;
+const FURNACE: Color = Color::from_rgb(1.0, 0.45, 0.16);
+/// The smoke the fires behind Moloch light, how it smoulders, and how
+/// brightly the embers' glow low in his black fog lights it.
+const SMOULDER: Color = Color::from_rgb(0.28, 0.06, 0.02);
+const UNDER_HAZE: f32 = 3.0;
+/// The smoke's shader (`prologue_smoke.gdshader`).
+const SMOKE_SHADER: &str = "res://shaders/prologue_smoke.gdshader";
+/// The figures' looks (`prologue_figure.gdshader`): the generated models,
+/// their maps beside them.
+const FIGURE_SHADER: &str = "res://shaders/prologue_figure.gdshader";
+const MARDUK: Figure = Figure {
+    key: "marduk",
+    glb: "res://art/owner/prologue/marduk.glb",
+    maps: "res://art/owner/prologue/marduk",
+    glow: false,
+    uniforms: &[
+        // ivory and gold, dulled under the grade; a light from within him
+        ("tint", U::V3(0.95, 0.88, 0.74)),
+        ("rough", U::F(0.05)),
+        ("breath_secs", U::F(MARDUK_BREATH)),
+        ("breath_depth", U::F(0.006)),
+        ("breath_lift", U::F(0.004)),
+        ("chest", U::V2(0.62, 0.8)),
+        ("sway", U::F(0.012)),
+        ("sway_secs", U::F(7.0)),
+        ("hang", U::V2(0.04, 0.6)),
+        ("radiance", U::F(0.14)),
+        ("rim_color", U::V3(1.0, 0.82, 0.55)),
+        ("rim_energy", U::F(1.0)),
+        ("rim_power", U::F(3.0)),
+    ],
+};
+const MOLOCH: Figure = Figure {
+    key: "moloch",
+    glb: "res://art/owner/prologue/moloch.glb",
+    maps: "res://art/owner/prologue/moloch",
+    glow: true,
+    uniforms: &[
+        ("breath_secs", U::F(MOLOCH_BREATH)),
+        ("breath_depth", U::F(0.009)),
+        ("breath_lift", U::F(0.006)),
+        ("chest", U::V2(0.55, 0.78)),
+        // (his cape, behind him)
+        ("sway", U::F(0.03)),
+        ("sway_secs", U::F(6.0)),
+        ("hang", U::V2(0.15, 0.75)),
+        ("behind", U::F(1.0)),
+        ("glow_color", U::V3(1.0, 0.3, 0.06)),
+        ("glow_energy", U::F(1.0)),
+        ("glow_pulse", U::F(0.5)),
+        (
+            "heart",
+            U::V3(MOLOCH_HEART.0, MOLOCH_HEART.1, MOLOCH_HEART.2),
+        ),
+        ("heart_radius", U::F(0.17)),
+        ("heart_energy", U::F(2.2)),
+        ("rim_color", U::V3(0.9, 0.3, 0.1)),
+        ("rim_energy", U::F(0.25)),
+        ("rim_power", U::F(4.0)),
+    ],
+};
+/// A breath of each god every so many seconds, and Moloch's furnace (in
+/// his model's own space).
+const MARDUK_BREATH: f32 = 5.5;
+const MOLOCH_BREATH: f32 = 4.0;
+const MOLOCH_HEART: (f32, f32, f32) = (0.10, 0.29, 0.24);
+/// What the prologue's figures are, loaded ahead in the background.
+pub(super) const FIGURES: [&str; 2] = [MARDUK.glb, MOLOCH.glb];
 /// The descent: the cells the hero walks to the stairs on, a step every
 /// this many seconds.
 const WALK: [(i32, i32); 4] = [(40, 10), (40, 9), (40, 8), (40, 7)];
@@ -139,6 +215,47 @@ const fn piece(scene: &'static str, (x, y, z): (f32, f32, f32), yaw: f32, scale:
     }
 }
 
+/// A uniform of a figure's shader: a number, a pair, a triple.
+#[derive(Debug, Clone, Copy)]
+enum U {
+    F(f32),
+    V2(f32, f32),
+    V3(f32, f32, f32),
+}
+
+impl U {
+    fn variant(self) -> Variant {
+        match self {
+            U::F(x) => x.to_variant(),
+            U::V2(x, y) => Vector2::new(x, y).to_variant(),
+            U::V3(x, y, z) => Vector3::new(x, y, z).to_variant(),
+        }
+    }
+}
+
+/// A figure of the prologue's: its model, its maps (`<maps>_albedo.jpg`,
+/// `_orm`, `_normal`, and `_glow` if it glows), and how its shader draws it.
+#[derive(Debug, Clone, Copy)]
+struct Figure {
+    key: &'static str,
+    glb: &'static str,
+    maps: &'static str,
+    glow: bool,
+    uniforms: &'static [(&'static str, U)],
+}
+
+/// Smoke's looks (`prologue_smoke.gdshader`): how thick at its thickest,
+/// the share of that everywhere, its colour lit and its own glow, how fast
+/// it rises (metres a second).
+#[derive(Debug, Clone, Copy)]
+struct Smoke {
+    density: f32,
+    least: f32,
+    albedo: Color,
+    emission: Color,
+    climb: f32,
+}
+
 /// A beat's scene as drawn: what stands beside its level, and what moves.
 pub(super) struct Stage {
     beat: Beat,
@@ -146,17 +263,53 @@ pub(super) struct Stage {
     candle: Option<Gd<OmniLight3D>>,
     /// The light pouring down, the most of its energy.
     beams: Vec<(Gd<SpotLight3D>, f32)>,
-    fog: Option<Gd<FogMaterial>>,
-    shade: Option<Gd<OmniLight3D>>,
     /// The braziers' lights, each at its brightness and its own phase.
     fires: Vec<(Gd<OmniLight3D>, f32, f64)>,
-    /// The gods' figures (the bestiary's models, given back after).
-    figures: Vec<Model>,
+    /// The gods' materials (their clock and their life coming up).
+    gods: Vec<Gd<ShaderMaterial>>,
+    /// Moloch's furnace's light: it breathes with him.
+    furnace: Option<Gd<OmniLight3D>>,
+    /// Smoke rising, and how thick it grows.
+    smoke: Vec<(Gd<ShaderMaterial>, f32)>,
     amulet: Option<(Gd<Node3D>, Gd<OmniLight3D>)>,
-    /// Set pieces still to stand.
+    /// The gods still to stand (each its own frame's work ahead: its
+    /// model, its material's maps, its smoke and its light), then the set
+    /// pieces.
+    gods_due: Vec<God>,
     todo: Vec<Piece>,
     /// The descent: the cell the hero stands on now.
     walked: usize,
+}
+
+/// A god to stand on a stage: where, turned how far, how tall.
+#[derive(Debug, Clone, Copy)]
+enum God {
+    Marduk(Vector3, f32, f32),
+    Moloch(Vector3, f32, f32),
+}
+
+impl Stage {
+    fn new(beat: Beat, root: Gd<Node3D>) -> Stage {
+        Stage {
+            beat,
+            root,
+            candle: None,
+            beams: Vec::new(),
+            fires: Vec::new(),
+            gods: Vec::new(),
+            furnace: None,
+            smoke: Vec::new(),
+            amulet: None,
+            gods_due: Vec::new(),
+            todo: Vec::new(),
+            walked: 0,
+        }
+    }
+
+    /// Everything of it stood.
+    fn built(&self) -> bool {
+        self.gods_due.is_empty() && self.todo.is_empty()
+    }
 }
 
 impl MapView {
@@ -200,23 +353,18 @@ impl MapView {
         // black past what is lit
         self.env.set_bg_color(Color::BLACK);
         self.env.set_fog_light_color(Color::BLACK);
-        let built_ahead = ready
-            .as_ref()
-            .is_some_and(|s| s.beat == beat && s.todo.is_empty());
+        let built_ahead = ready.as_ref().is_some_and(|s| s.beat == beat && s.built());
         let mut stage = match ready {
             Some(stage) if stage.beat == beat => stage,
             other => {
                 if let Some(stage) = other {
                     self.free_stage(stage);
                 }
-                self.build_stage(beat, catalog)
+                self.build_stage(beat)
             }
         };
         self.build_pieces(&mut stage, None);
         stage.root.set_visible(true);
-        for m in &mut stage.figures {
-            m.node.set_visible(true);
-        }
         self.stage = Some(stage);
         self.stage_camera = None;
         self.keep_prologue_air();
@@ -236,11 +384,11 @@ impl MapView {
     /// Build `beat`'s set ahead, hidden till its beat, a few pieces a frame
     /// (`PIECES_BUDGET`): the frames of the beat before have room for it,
     /// and the change under the black has the less to do.
-    pub fn prepare_prologue(&mut self, beat: Beat, catalog: &Catalog) {
+    pub fn prepare_prologue(&mut self, beat: Beat, _catalog: &Catalog) {
         if self
             .next_stage
             .as_ref()
-            .is_some_and(|s| s.beat == beat && s.todo.is_empty())
+            .is_some_and(|s| s.beat == beat && s.built())
         {
             return;
         }
@@ -251,11 +399,8 @@ impl MapView {
                 if let Some(stage) = other {
                     self.free_stage(stage);
                 }
-                let mut stage = self.build_stage(beat, catalog);
+                let mut stage = self.build_stage(beat);
                 stage.root.set_visible(false);
-                for m in &mut stage.figures {
-                    m.node.set_visible(false);
-                }
                 stage
             }
         };
@@ -264,7 +409,7 @@ impl MapView {
             godot_print!(
                 "map: the prologue's {beat:?} built ahead for {:.1} ms, {} pieces to go",
                 began.elapsed().as_secs_f64() * 1000.0,
-                stage.todo.len()
+                stage.gods_due.len() + stage.todo.len()
             );
         }
         self.next_stage = Some(stage);
@@ -273,23 +418,12 @@ impl MapView {
     /// `beat`'s set but its pieces (`build_pieces` stands them): its lights,
     /// the haze the light pours through, the braziers, the gods, the
     /// Amulet, the sky.
-    fn build_stage(&mut self, beat: Beat, catalog: &Catalog) -> Stage {
+    fn build_stage(&mut self, beat: Beat) -> Stage {
         let mut root = Node3D::new_alloc();
         root.set_name("PrologueStage");
         self.root.add_child(&root);
-        let mut stage = Stage {
-            beat,
-            root,
-            candle: None,
-            beams: Vec::new(),
-            fog: None,
-            shade: None,
-            fires: Vec::new(),
-            figures: Vec::new(),
-            amulet: None,
-            todo: set(beat),
-            walked: 0,
-        };
+        let mut stage = Stage::new(beat, root);
+        stage.todo = set(beat);
         // the pieces stand in the order listed
         stage.todo.reverse();
         let mid = Vector3::new(MID.0 as f32, 0.0, MID.1 as f32);
@@ -321,40 +455,13 @@ impl MapView {
                 );
             }
             Beat::Rebellion => {
-                // Marduk in the light pouring down on him, Moloch in his
-                // black fog, a light that takes light away in it
-                let marduk = v(37.7, 0.0, 10.0);
-                let moloch = v(42.3, 0.0, 10.0);
-                let tall = GOD_TALL;
-                stage.figures.extend(self.figure(
-                    catalog,
-                    MARDUK,
-                    Color::WHITE,
-                    marduk,
-                    55.0,
-                    tall,
-                ));
-                let shadow = Color::from_rgb(0.22, 0.16, 0.2);
-                stage
-                    .figures
-                    .extend(self.figure(catalog, MOLOCH, shadow, moloch, -55.0, tall));
-                let from = marduk + v(-1.5, 8.0, -2.5);
-                stage
-                    .beams
-                    .push((beam(&mut stage.root, marduk, from, HOLY, 9.0), 4.5));
-                let mut l = light(&mut stage.root, HOLY, marduk + v(0.8, 2.4, 1.6), 5.0);
-                l.set_param(Param::ENERGY, 0.0);
-                l.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
-                stage.candle = Some(l);
-                // Moloch's outline, the fires behind him
-                let rim = light(&mut stage.root, MOLOCH_RIM, moloch + v(0.6, 2.6, -1.6), 4.5);
-                stage.fires.push((rim, 2.4, 0.7));
-                let dark_at = moloch + v(0.0, 1.2, 0.0);
-                stage.fog = Some(black_fog(&mut stage.root, dark_at));
-                let mut shade = light(&mut stage.root, DARK, dark_at, 4.5);
-                shade.set_negative(true);
-                shade.set_param(Param::ENERGY, 0.0);
-                stage.shade = Some(shade);
+                // Marduk in the light pouring down on him; Moloch behind,
+                // twice his height, in his black fog and his smoke
+                // (stood in this order)
+                stage.gods_due = vec![
+                    God::Moloch(v(42.6, 0.0, 6.8), -30.0, MOLOCH_TALL),
+                    God::Marduk(v(37.6, 0.0, 10.2), 50.0, MARDUK_TALL),
+                ];
                 haze(
                     &mut stage.root,
                     v(40.0, 3.5, 9.5),
@@ -362,8 +469,9 @@ impl MapView {
                     0.03,
                     None,
                 );
-                for (k, x) in [37.6, 42.4].into_iter().enumerate() {
-                    self.stage_brazier(&mut stage, v(x, 0.0, 6.4), k as f64 * 2.1);
+                // (one between the gods, before the altar)
+                for (k, (x, z)) in [(37.6, 6.4), (40.4, 8.0)].into_iter().enumerate() {
+                    self.stage_brazier(&mut stage, v(x, 0.0, z), k as f64 * 2.1);
                 }
             }
             Beat::Amulet => {
@@ -413,10 +521,19 @@ impl MapView {
         stage
     }
 
-    /// Stand the stage's pieces still to stand, for at most `budget` (all
-    /// of them: None).
+    /// Stand the stage's gods and pieces still to stand, for at most
+    /// `budget` (all of them: None).
     fn build_pieces(&mut self, stage: &mut Stage, budget: Option<Duration>) {
         let began = Instant::now();
+        while let Some(god) = stage.gods_due.pop() {
+            match god {
+                God::Marduk(at, yaw, tall) => self.stand_marduk(stage, at, yaw, tall),
+                God::Moloch(at, yaw, tall) => self.stand_moloch(stage, at, yaw, tall),
+            }
+            if budget.is_some_and(|b| began.elapsed() >= b) {
+                return;
+            }
+        }
         while let Some(p) = stage.todo.pop() {
             if let Some(scene) = self.kit(p.scene) {
                 stand_piece(&mut stage.root, &scene, p);
@@ -432,33 +549,300 @@ impl MapView {
         self.kept(path, || godot::tools::try_load::<PackedScene>(path).ok())
     }
 
-    /// A monster of the bestiary (the catalog's `name`) stood as a figure
-    /// of a scene: `tall` high at `at`, turned `yaw` degrees, `tint`ed.
-    fn figure(
+    /// A figure of the prologue's stood on the stage: `tall` high, its
+    /// soles at `at`, turned `yaw` degrees, drawn in its own material (made
+    /// once and kept: its maps and its shader's looks). The figure, and its
+    /// scale.
+    fn stand_figure(
         &mut self,
-        catalog: &Catalog,
-        name: &str,
-        tint: Color,
+        root: &mut Gd<Node3D>,
+        figure: &Figure,
         at: Vector3,
         yaw: f32,
         tall: f32,
-    ) -> Option<Model> {
-        let info = catalog.monsters.iter().find(|m| m.name == name)?;
-        let art = self.art.manifest().monster(info, 0);
-        let height = art.height.max(0.1);
-        let mut m = self.art.take(&ModelLook {
-            art,
-            tint,
-            pose: Pose::Alive,
-        });
-        // built now: nothing completes a figure later (a frame's budget
-        // spent on the god before would leave this one a stand-in)
-        self.art.complete_now(&mut m);
-        let k = tall / height;
-        m.node.set_scale(Vector3::new(k, k, k));
-        m.node.set_position(at);
-        m.node.set_rotation_degrees(Vector3::new(0.0, yaw, 0.0));
-        Some(m)
+    ) -> Option<(Gd<Node3D>, Gd<ShaderMaterial>, f32)> {
+        let scene = self.kit(figure.glb)?;
+        let mut node = scene.instantiate()?.try_cast::<Node3D>().ok()?;
+        let mat = self.figure_material(figure)?;
+        let (mut lo, mut hi) = (f32::MAX, f32::MIN);
+        for n in node
+            .find_children_ex("*")
+            .type_("MeshInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+        {
+            if let Ok(mut mi) = n.try_cast::<MeshInstance3D>() {
+                let b = mi.get_aabb();
+                lo = lo.min(b.position.y);
+                hi = hi.max(b.position.y + b.size.y);
+                mi.set_material_override(&mat);
+                no_shadow(&mut mi);
+            }
+        }
+        if hi <= lo {
+            node.queue_free();
+            return None;
+        }
+        let k = tall / (hi - lo);
+        node.set_scale(Vector3::new(k, k, k));
+        node.set_rotation_degrees(Vector3::new(0.0, yaw, 0.0));
+        node.set_position(at - Vector3::new(0.0, lo * k, 0.0));
+        root.add_child(&node);
+        Some((node, mat, k))
+    }
+
+    /// A figure's material: its shader, its maps, its looks.
+    fn figure_material(&mut self, figure: &Figure) -> Option<Gd<ShaderMaterial>> {
+        let shader = self.kept("figure shader", || {
+            godot::tools::try_load::<Shader>(FIGURE_SHADER).ok()
+        })?;
+        let f = *figure;
+        self.kept(f.key, move || {
+            let mut m = ShaderMaterial::new_gd();
+            m.set_shader(&shader);
+            let maps = [
+                ("albedo_map", "albedo"),
+                ("orm_map", "orm"),
+                ("normal_map", "normal"),
+                ("glow_map", "glow"),
+            ];
+            for (uniform, map) in maps {
+                if map == "glow" && !f.glow {
+                    continue;
+                }
+                let tex =
+                    godot::tools::try_load::<Texture2D>(&format!("{}_{map}.jpg", f.maps)).ok()?;
+                m.set_shader_parameter(uniform, &tex.to_variant());
+            }
+            for &(name, u) in f.uniforms {
+                m.set_shader_parameter(name, &u.variant());
+            }
+            Some(m)
+        })
+    }
+
+    /// Marduk the Creator at `at` (`tall` high, turned `yaw`): in the light
+    /// pouring down on him, dust drifting in it, a warm light before him.
+    fn stand_marduk(&mut self, stage: &mut Stage, at: Vector3, yaw: f32, tall: f32) {
+        let v = Vector3::new;
+        let k = tall / MARDUK_TALL;
+        if let Some((_, mat, _)) = self.stand_figure(&mut stage.root, &MARDUK, at, yaw, tall) {
+            stage.gods.push(mat);
+        }
+        let from = at + v(-1.5, 8.0, -2.5) * k;
+        stage
+            .beams
+            .push((beam(&mut stage.root, at, from, HOLY, 9.0), 4.5));
+        let mut l = light(&mut stage.root, HOLY, at + v(0.8, 2.4, 1.6) * k, 5.0 * k);
+        l.set_param(Param::ENERGY, 0.0);
+        l.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
+        stage.candle = Some(l);
+        // dust in the light, lit as it drifts through it
+        let mut dust = self.motes(
+            v(1.1, 2.0, 1.1) * k,
+            90,
+            0.045 * k.sqrt(),
+            Color::from_rgba(0.95, 0.9, 0.78, 0.55),
+        );
+        dust.set_position(at + v(0.0, 2.2, 0.0) * k);
+        stage.root.add_child(&dust);
+    }
+
+    /// Moloch at `at` (`tall` high, turned `yaw`): the furnace in his chest
+    /// lighting his chains, the fires behind him outlining him against the
+    /// smoke they light, a black fog over his legs glowing low, embers
+    /// rising out of it.
+    fn stand_moloch(&mut self, stage: &mut Stage, at: Vector3, yaw: f32, tall: f32) {
+        let v = Vector3::new;
+        let k = tall / MOLOCH_TALL;
+        let turn = Basis::from_euler(EulerOrder::YXZ, v(0.0, yaw.to_radians(), 0.0));
+        if let Some((node, mat, _)) = self.stand_figure(&mut stage.root, &MOLOCH, at, yaw, tall) {
+            stage.gods.push(mat);
+            // the furnace's light a little before it
+            let (hx, hy, hz) = MOLOCH_HEART;
+            let heart = node.get_transform() * v(hx, hy, hz + 0.25);
+            let mut f = light(&mut stage.root, FURNACE, heart, 3.2 * k);
+            f.set_param(Param::ENERGY, 0.0);
+            stage.furnace = Some(f);
+        }
+        // the fires behind him, either side, above his shoulders
+        for (x, phase) in [(-1.7, 0.7), (1.9, 2.3)] {
+            let rim = light(
+                &mut stage.root,
+                MOLOCH_RIM,
+                at + turn * v(x, 4.8, -1.8) * k,
+                5.5 * k,
+            );
+            stage.fires.push((rim, 2.0, phase));
+        }
+        // the smoke about and behind him they light, smouldering, rising
+        let back = Smoke {
+            density: 0.22,
+            least: 0.15,
+            albedo: Color::from_rgb(0.3, 0.26, 0.24),
+            emission: SMOULDER,
+            climb: 0.35,
+        };
+        let at_back = at + turn * v(0.0, 3.8, -1.2) * k;
+        let size = v(11.0, 9.0, 3.6) * k;
+        if let Some(m) = self.smoke(&mut stage.root, at_back, turn, size, back) {
+            stage.smoke.push((m, back.density));
+        }
+        // the black fog over his legs, rising slowly, the embers' glow low
+        // in it
+        let dark_at = at + turn * v(0.0, 1.0, 0.9) * k;
+        let black = Smoke {
+            density: FOG_DENSITY,
+            least: 0.45,
+            albedo: Color::from_rgb(0.09, 0.07, 0.065),
+            emission: Color::BLACK,
+            climb: 0.15,
+        };
+        let size = v(8.0, 3.4, 5.5) * k;
+        if let Some(m) = self.smoke(&mut stage.root, dark_at, turn, size, black) {
+            stage.smoke.push((m, black.density));
+        }
+        let mut under = light(
+            &mut stage.root,
+            FURNACE,
+            at + turn * v(0.0, 0.4, 1.2) * k,
+            4.5 * k,
+        );
+        under.set_param(Param::VOLUMETRIC_FOG_ENERGY, UNDER_HAZE);
+        stage.fires.push((under, 1.2, 1.7));
+        // embers rising out of it
+        let mut embers = self.rising_embers(v(2.6, 0.6, 1.8) * k, 90, 0.09 * k.sqrt());
+        embers.set_position(at + turn * v(0.0, 0.8, 0.7) * k);
+        stage.root.add_child(&embers);
+    }
+
+    /// Smoke `size` round `at` turned `turn` (an ellipsoid), its looks
+    /// `look`: its material (the beat's clock and its thickness set as it
+    /// plays; thin till then).
+    fn smoke(
+        &mut self,
+        root: &mut Gd<Node3D>,
+        at: Vector3,
+        turn: Basis,
+        size: Vector3,
+        look: Smoke,
+    ) -> Option<Gd<ShaderMaterial>> {
+        let shader = self.kept("smoke shader", || {
+            godot::tools::try_load::<Shader>(SMOKE_SHADER).ok()
+        })?;
+        let noise = self.smoke_noise()?;
+        let mut mat = ShaderMaterial::new_gd();
+        mat.set_shader(&shader);
+        mat.set_shader_parameter("noise", &noise.to_variant());
+        mat.set_shader_parameter("density", &0.0f32.to_variant());
+        mat.set_shader_parameter("least", &look.least.to_variant());
+        let rgb = |c: Color| Vector3::new(c.r, c.g, c.b).to_variant();
+        mat.set_shader_parameter("albedo", &rgb(look.albedo));
+        mat.set_shader_parameter("emission", &rgb(look.emission));
+        mat.set_shader_parameter("climb", &look.climb.to_variant());
+        let mut fog = FogVolume::new_alloc();
+        fog.set_shape(FogVolumeShape::ELLIPSOID);
+        fog.set_size(size);
+        fog.set_transform(Transform3D::new(turn, at));
+        fog.set_material(&mat);
+        root.add_child(&fog);
+        Some(mat)
+    }
+
+    /// Motes drifting slowly in a box `extents` round where they are put
+    /// (the dungeon's dust's looks, `amount` of them `size` across,
+    /// `color`).
+    fn motes(
+        &mut self,
+        extents: Vector3,
+        amount: i32,
+        size: f32,
+        color: Color,
+    ) -> Gd<GpuParticles3D> {
+        let mut m = ParticleProcessMaterial::new_gd();
+        m.set_emission_shape(EmissionShape::BOX);
+        m.set_emission_box_extents(extents);
+        m.set_direction(Vector3::UP);
+        m.set_spread(180.0);
+        m.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 0.02);
+        m.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 0.08);
+        m.set_gravity(Vector3::new(0.0, 0.01, 0.0));
+        m.set_param_min(Parameter::SCALE, 0.6);
+        m.set_param_max(Parameter::SCALE, 1.3);
+        m.set_turbulence_enabled(true);
+        m.set_turbulence_noise_strength(0.35);
+        m.set_turbulence_noise_scale(4.0);
+        m.set_color_ramp(&fading(color));
+        let mut p = GpuParticles3D::new_alloc();
+        p.set_process_material(&m);
+        p.set_amount(amount);
+        p.set_lifetime(7.0);
+        p.set_pre_process_time(7.0);
+        p.set_draw_pass_mesh(0, &quad_mesh(size));
+        p.set_material_override(&crate::vfx::particle_material(
+            &crate::vfx::soft_texture(),
+            false,
+            true,
+            None,
+        ));
+        p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        p.set_visibility_aabb(Aabb::new(-extents * 2.0, extents * 4.0));
+        p
+    }
+
+    /// Embers flung up and drifting from a box `extents` round where they
+    /// are put, `amount` of them `size` across (a torch's embers' looks).
+    fn rising_embers(&mut self, extents: Vector3, amount: i32, size: f32) -> Gd<GpuParticles3D> {
+        let mut m = ParticleProcessMaterial::new_gd();
+        m.set_emission_shape(EmissionShape::BOX);
+        m.set_emission_box_extents(extents);
+        m.set_direction(Vector3::UP);
+        m.set_spread(20.0);
+        m.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 0.5);
+        m.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 1.1);
+        m.set_gravity(Vector3::new(0.0, 0.06, 0.0));
+        m.set_param_min(Parameter::SCALE, 0.6);
+        m.set_param_max(Parameter::SCALE, 1.4);
+        m.set_turbulence_enabled(true);
+        m.set_turbulence_noise_strength(0.5);
+        m.set_turbulence_noise_scale(2.0);
+        m.set_color_ramp(&crate::vfx::ramp(Color::from_rgb(1.0, 0.42, 0.12), 4.0));
+        let mut p = GpuParticles3D::new_alloc();
+        p.set_process_material(&m);
+        p.set_amount(amount);
+        p.set_lifetime(4.5);
+        p.set_pre_process_time(4.5);
+        p.set_randomness_ratio(0.5);
+        p.set_draw_pass_mesh(0, &quad_mesh(size));
+        p.set_material_override(&crate::vfx::particle_material(
+            &crate::vfx::soft_texture(),
+            true,
+            false,
+            None,
+        ));
+        p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        p.set_visibility_aabb(Aabb::new(
+            -extents - Vector3::new(1.0, 1.0, 1.0),
+            extents * 2.0 + Vector3::new(2.0, 6.0, 2.0),
+        ));
+        p
+    }
+
+    /// A noise for smoke's thickness, made once and kept.
+    fn smoke_noise(&mut self) -> Option<Gd<Texture3D>> {
+        self.kept("smoke noise", || {
+            let mut noise = FastNoiseLite::new_gd();
+            noise.set_noise_type(NoiseType::SIMPLEX_SMOOTH);
+            noise.set_frequency(0.06);
+            let mut t = NoiseTexture3D::new_gd();
+            t.set_width(48);
+            t.set_height(48);
+            t.set_depth(48);
+            t.set_seamless(true);
+            t.set_noise(&noise);
+            Some(t.upcast::<Texture3D>())
+        })
     }
 
     /// A brazier of the title's chamber burning at `at` on the stage.
@@ -527,7 +911,7 @@ impl MapView {
         if let Some(c) = stage.candle.as_mut() {
             let energy = match beat {
                 Beat::Book => 1.7 * flicker(secs * 1.3),
-                Beat::Rebellion => 1.3 * rise,
+                Beat::Rebellion => 1.5 * rise,
                 _ => 2.6 * rise,
             };
             c.set_param(Param::ENERGY, energy);
@@ -538,11 +922,20 @@ impl MapView {
         for (l, energy, phase) in &mut stage.fires {
             l.set_param(Param::ENERGY, *energy * flicker(secs * 1.1 + *phase));
         }
-        if let Some(fog) = stage.fog.as_mut() {
-            fog.set_density(FOG_DENSITY * rise);
+        // the gods breathe, their cloth and the smoke about them stir
+        for m in &mut stage.gods {
+            m.set_shader_parameter("clock", &t.to_variant());
+            m.set_shader_parameter("rise", &rise.to_variant());
         }
-        if let Some(shade) = stage.shade.as_mut() {
-            shade.set_param(Param::ENERGY, 3.0 * rise);
+        if let Some(f) = stage.furnace.as_mut() {
+            f.set_param(
+                Param::ENERGY,
+                2.8 * rise * (0.35 + 0.65 * inhale(t, MOLOCH_BREATH)),
+            );
+        }
+        for (m, density) in &mut stage.smoke {
+            m.set_shader_parameter("clock", &t.to_variant());
+            m.set_shader_parameter("density", &(*density * rise).to_variant());
         }
         let mut amulet_at = None;
         if let Some((amulet, glow)) = stage.amulet.as_mut() {
@@ -578,28 +971,16 @@ impl MapView {
     /// What the prologue's sets hold beside their levels, all at once in
     /// the rehearsal's room, their shaders, models and textures drawn under
     /// the start-up veil (the kit's scenes loaded and kept): every piece,
-    /// the gods, a brazier, light pouring down through a haze, the black
-    /// fog, the beats' lights lit (a fog at nothing, a light at nothing,
-    /// would not draw what they draw), the Amulet, the sky. Gone as the
-    /// rehearsal clears its level.
+    /// the gods with their light, dust, smoke and embers, a brazier, light
+    /// pouring down through a haze, the beats' lights lit (a fog at
+    /// nothing, a light at nothing, would not draw what they draw), the
+    /// Amulet, the sky. Gone as the rehearsal clears its level.
     pub fn warm_prologue(&mut self) {
         self.end_stage();
         let mut root = Node3D::new_alloc();
         root.set_name("PrologueWarm");
         self.root.add_child(&root);
-        let mut stage = Stage {
-            beat: Beat::Rebellion,
-            root,
-            candle: None,
-            beams: Vec::new(),
-            fog: None,
-            shade: None,
-            fires: Vec::new(),
-            figures: Vec::new(),
-            amulet: None,
-            todo: Vec::new(),
-            walked: 0,
-        };
+        let mut stage = Stage::new(Beat::Rebellion, root);
         let mid = Vector3::new(MID.0 as f32, 0.0, MID.1 as f32);
         let v = Vector3::new;
         for (i, &path) in KIT.iter().enumerate() {
@@ -607,11 +988,6 @@ impl MapView {
             stage.todo.push(piece(path, at, 0.0, 0.25));
         }
         self.build_pieces(&mut stage, None);
-        let at = mid + v(-1.5, 0.0, 0.0);
-        let from = at + v(-1.0, 4.0, -1.0);
-        stage
-            .beams
-            .push((beam(&mut stage.root, at, from, HOLY, 9.0), 6.0));
         haze(
             &mut stage.root,
             mid + v(0.0, 1.5, 0.0),
@@ -619,24 +995,19 @@ impl MapView {
             0.03,
             Some(EMBERS),
         );
-        let mut fog = black_fog(&mut stage.root, mid + v(1.5, 1.2, 0.0));
-        fog.set_density(FOG_DENSITY);
-        stage.fog = Some(fog);
-        let mut holy = light(&mut stage.root, HOLY, mid + v(-1.5, 2.6, 0.0), 6.0);
-        holy.set_param(Param::ENERGY, 2.6);
-        let mut shade = light(&mut stage.root, DARK, mid + v(1.5, 1.2, 0.0), 4.5);
-        shade.set_negative(true);
-        shade.set_param(Param::ENERGY, 3.0);
-        if let Some(catalog) = self.title_catalog.clone() {
-            let shadow = Color::from_rgb(0.22, 0.16, 0.2);
-            for (name, tint, x) in [(MARDUK, Color::WHITE, -2.0), (MOLOCH, shadow, 2.0)] {
-                let at = mid + v(x, 0.0, 0.5);
-                stage
-                    .figures
-                    .extend(self.figure(&catalog, name, tint, at, 0.0, 1.2));
-            }
-        }
+        self.stand_marduk(&mut stage, mid + v(-2.0, 0.0, 0.5), 30.0, 1.2);
+        self.stand_moloch(&mut stage, mid + v(2.0, 0.0, 0.5), -30.0, 1.4);
         stage.amulet = Some(self.stage_amulet(&mut stage.root, mid));
+        for (b, most) in &mut stage.beams {
+            b.set_param(Param::ENERGY, *most);
+        }
+        let lit = [stage.candle.as_mut(), stage.furnace.as_mut()];
+        for l in lit.into_iter().flatten() {
+            l.set_param(Param::ENERGY, 2.6);
+        }
+        for (m, density) in &mut stage.smoke {
+            m.set_shader_parameter("density", &density.to_variant());
+        }
         let mut book = self.book_model();
         book.set_position(mid + v(0.0, 0.0, 1.0));
         stage.root.add_child(&book);
@@ -691,9 +1062,6 @@ impl MapView {
     }
 
     fn free_stage(&mut self, stage: Stage) {
-        for m in stage.figures {
-            self.art.give(m);
-        }
         let mut root = stage.root;
         if root.is_instance_valid() {
             root.queue_free();
@@ -727,6 +1095,31 @@ impl MapView {
     }
 }
 
+/// How far into a breath of `period` seconds `t` is: 0 out, 1 in (as
+/// `prologue_figure.gdshader` breathes).
+fn inhale(t: f32, period: f32) -> f32 {
+    0.5 + 0.5 * (std::f32::consts::TAU * t / period.max(0.1)).sin()
+}
+
+/// A particle's colour over its life: `color` faded in and out.
+fn fading(color: Color) -> Gd<GradientTexture1D> {
+    let mut g = Gradient::new_gd();
+    g.set_offsets(&PackedFloat32Array::from(&[0.0, 0.2, 0.8, 1.0][..]));
+    g.set_colors(&PackedColorArray::from(
+        &[color.with_alpha(0.0), color, color, color.with_alpha(0.0)][..],
+    ));
+    let mut ramp = GradientTexture1D::new_gd();
+    ramp.set_gradient(&g);
+    ramp
+}
+
+/// A particle's quad, `size` across.
+fn quad_mesh(size: f32) -> Gd<QuadMesh> {
+    let mut q = QuadMesh::new_gd();
+    q.set_size(Vector2::new(size, size));
+    q
+}
+
 /// `t` eased in and out (0..1).
 fn smooth(t: f32) -> f32 {
     let t = t.clamp(0.0, 1.0);
@@ -753,10 +1146,10 @@ fn camera(
             (aim + v(0.0, 0.55, 0.85).normalized() * d, aim)
         }
         // the temple from low down its nave, the light and the dark face
-        // to face, moving in
+        // to face, moving in (looking up the more, Moloch's horns kept)
         Beat::Rebellion => {
             let k = smooth(t / 12.0);
-            let aim = v(mid.x, 2.7 + 0.3 * k, mid.z);
+            let aim = v(mid.x, 3.0 + 0.6 * k, mid.z);
             (
                 v(mid.x + 0.9 - 1.4 * k, 1.5 + 0.2 * k, mid.z + 8.5 - 1.5 * k),
                 aim,
@@ -951,21 +1344,6 @@ fn light(root: &mut Gd<Node3D>, color: Color, at: Vector3, range: f32) -> Gd<Omn
     l
 }
 
-/// A black fog round `at`.
-fn black_fog(root: &mut Gd<Node3D>, at: Vector3) -> Gd<FogMaterial> {
-    let mut mat = FogMaterial::new_gd();
-    mat.set_density(0.0);
-    mat.set_albedo(DARK);
-    mat.set_edge_fade(0.8);
-    let mut fog = FogVolume::new_alloc();
-    fog.set_shape(FogVolumeShape::ELLIPSOID);
-    fog.set_size(Vector3::new(4.0, 3.2, 3.6));
-    fog.set_position(at);
-    fog.set_material(&mat);
-    root.add_child(&fog);
-    mat
-}
-
 /// A beat's set: the pieces stood round its level, in the order they
 /// stand.
 fn set(beat: Beat) -> Vec<Piece> {
@@ -1002,7 +1380,10 @@ fn set(beat: Beat) -> Vec<Piece> {
             }
             for z in [4.5, 8.5, 12.5] {
                 for x in [36.0, 44.0] {
-                    s.push(piece(PILLAR, (x, 0.0, z), 0.0, 1.0));
+                    // (none behind Moloch: lit, it showed through his cape)
+                    if (x, z) != (44.0, 4.5) {
+                        s.push(piece(PILLAR, (x, 0.0, z), 0.0, 1.0));
+                    }
                 }
             }
             for z in [6.5, 10.5, 14.5] {

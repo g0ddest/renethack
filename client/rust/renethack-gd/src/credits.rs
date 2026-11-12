@@ -409,6 +409,11 @@ const PROSE: &[(&str, &str)] = &[
         "The symbols of the icons of the spells and of the hero's states",
         "credits-md-spell-icons-about",
     ),
+    ("Generated for this project", "credits-md-generated"),
+    (
+        "The models listed under “Generated for this project”",
+        "credits-md-generated-models",
+    ),
     ("Fonts", "credits-md-fonts"),
     ("The UI's fonts are under", "credits-md-fonts-ofl"),
     ("Sound credits", "credits-md-sound"),

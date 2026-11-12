@@ -178,6 +178,19 @@ given a glow, an outline and a shadow, and scaled down.
 | `ccby/game-icons/lorc/fist.svg` | Fist (Bare) | Lorc | https://game-icons.net/1x1/lorc/fist.html |
 | `ccby/game-icons/lorc/hourglass.svg` | Hourglass (Busy) | Lorc | https://game-icons.net/1x1/lorc/hourglass.html |
 
+## Generated for this project
+
+The models under `owner/` were made for this game with Meshy, on its
+owner's account: a concept picture, then a textured mesh. Their 4K maps
+were cut to 2K and written as JPEGs beside a GLB that holds the geometry and
+names them, with a map of what glows taken from the albedo's fiery or red
+texels where a figure glows (`*_glow.jpg`); nothing else was changed.
+
+| Where | What |
+|---|---|
+| `owner/prologue/marduk.glb` | Marduk the Creator: a god-king in a tiered horned crown, ivory and gold robes, a rod and a ring of rule (62k triangles) |
+| `owner/prologue/moloch.glb` | Moloch: a bull-headed dark god, a furnace in his chest, chains, a torn cape (62k triangles) |
+
 ## Fonts
 
 The UI's fonts are under the SIL Open Font License 1.1 (not CC0); each

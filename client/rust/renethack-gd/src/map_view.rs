@@ -9337,8 +9337,9 @@ impl MapView {
             ["albedo", "emission"]
                 .map(|m| format!("res://art/cc0/texturecan/lava_flow/lava_flow_{m}.jpg")),
         );
-        // the prologue's sets (its warm-up draws one of each)
+        // the prologue's sets and figures (its warm-up draws one of each)
         paths.extend(prologue_stage::KIT.map(String::from));
+        paths.extend(prologue_stage::FIGURES.map(String::from));
         paths
     }
 

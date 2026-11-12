@@ -1561,7 +1561,7 @@ fn texture(n: i32, alpha: impl Fn(f32, f32) -> f32) -> Gd<Texture2D> {
 /// A billboard particle material: the soft disc in the particles' colour.
 /// `frames`: the texture is a flipbook of these columns and rows, played
 /// once over a particle's life.
-fn particle_material(
+pub(crate) fn particle_material(
     tex: &Gd<Texture2D>,
     additive: bool,
     shaded: bool,
@@ -1670,7 +1670,7 @@ fn fire_ramp() -> Gd<GradientTexture1D> {
     t
 }
 
-fn ramp(color: Color, hdr: f32) -> Gd<GradientTexture1D> {
+pub(crate) fn ramp(color: Color, hdr: f32) -> Gd<GradientTexture1D> {
     let mut g = Gradient::new_gd();
     let hot = Color::from_rgba(color.r * hdr, color.g * hdr, color.b * hdr, 1.0);
     // it cools in its own colour, never whiter or redder
