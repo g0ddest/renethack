@@ -414,6 +414,10 @@ const PROSE: &[(&str, &str)] = &[
         "The models listed under “Generated for this project”",
         "credits-md-generated-models",
     ),
+    (
+        "The bestiary's and the heroes' generated bodies",
+        "credits-md-generated-bodies",
+    ),
     ("Fonts", "credits-md-fonts"),
     ("The UI's fonts are under", "credits-md-fonts-ofl"),
     ("Sound credits", "credits-md-sound"),

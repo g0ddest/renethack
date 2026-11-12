@@ -32,6 +32,11 @@ const SINK_SECS: f32 = 0.9;
 /// Seconds a body with no corpse lies still before it fades: it fell,
 /// then it goes (it lay a second and was gone in a blink before).
 const LIE_SECS: f32 = 0.35;
+/// A body taller than this (metres) falls across the cells beside its
+/// own: it lies this long and fades in this.
+const LONG_BODY: f32 = 2.0;
+const LONG_LIE_SECS: f32 = 0.1;
+const LONG_SINK_SECS: f32 = 0.5;
 /// Seconds a body takes to blink out.
 const BLINK_SECS: f32 = 0.25;
 const SINK_DEPTH: f32 = 0.12;
@@ -385,7 +390,14 @@ impl MapView {
             // no corpse: NetHack left none, so none is shown; it lies a
             // moment, then fades as it sinks a little
             f.sunk += delta;
-            let s = ((f.sunk - LIE_SECS) / SINK_SECS).clamp(0.0, 1.0);
+            // (a body longer than its cell lies over its neighbours: it
+            // goes at once, and quicker)
+            let (lie, sink) = if f.height > LONG_BODY {
+                (LONG_LIE_SECS, LONG_SINK_SECS)
+            } else {
+                (LIE_SECS, SINK_SECS)
+            };
+            let s = ((f.sunk - lie) / sink).clamp(0.0, 1.0);
             let mut node = f.model.node.clone();
             node.set_position(f.at - Vector3::new(0.0, SINK_DEPTH * f.height * s, 0.0));
             see_through(&mut f.meshes, s);

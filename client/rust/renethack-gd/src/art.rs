@@ -23,7 +23,8 @@ use godot::classes::{
     Animation, AnimationLibrary, AnimationPlayer, ArrayMesh, BaseMaterial3D, BoneAttachment3D,
     Decal, FileAccess, Material, Mesh, MeshInstance3D, Node, Node3D, OrmMaterial3D, PackedScene,
     RenderingServer, ResourceLoader, Shader, ShaderMaterial, Skeleton3D, Skin as GdSkin,
-    StandardMaterial3D, Texture2D, VisualInstance3D,
+    SpringBoneCollisionCapsule3D, SpringBoneSimulator3D, StandardMaterial3D, Texture2D,
+    VisualInstance3D,
 };
 use godot::prelude::*;
 use nh_art::{ArtManifest, MaterialSpec, Proc, Resolved, Skin};
@@ -202,6 +203,33 @@ const RIM_SPECULAR: f32 = 0.5;
 pub const CREATURE_LAYER: u32 = 1 << 6;
 /// The pass round a living creature's outline (`Art::rim`).
 const EDGE_SHADER: &str = "res://shaders/creature_edge.gdshader";
+/// A hero's two-sided material's back faces darkened (an open coat's
+/// inside, `Art::hero_edge_lined_pass`).
+const LINING_SHADER: &str = "res://shaders/lining.gdshader";
+/// A detailed body's outline (`ModelSpec::outline`) and how bright.
+const OUTLINE_SHADER: &str = "res://shaders/creature_outline.gdshader";
+const OUTLINE_STRENGTH: f32 = 0.16;
+/// Inside a detailed body's outline, a faint rim on what faces up (the
+/// head's crown, the shoulders: the edge shader's `top` at 1), so that
+/// unlit at 7 m it is a shape and not a line round dark bulk: how strong
+/// (of the outline's own share) and from how far off facing the eye.
+const OUTLINE_RIM: f32 = 1.4;
+const OUTLINE_RIM_FROM: f32 = 0.55;
+
+fn outline_strength(share: u8) -> f32 {
+    OUTLINE_STRENGTH * f32::from(share) / 100.0
+}
+
+/// The edge a creature's rimmed materials take in the game's light: their
+/// own (a dark one's by its colour), a creature dyed black's, or a
+/// detailed body's outline.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum Edge {
+    Own,
+    Dark,
+    /// (hundredths of `OUTLINE_STRENGTH`)
+    Outline(u8),
+}
 /// A living creature's contact shadow (`Art::ground`): how dark it is at
 /// its middle, and how much wider and longer than the body's own bounds
 /// on the floor (metres more, and the most it is across).
@@ -579,7 +607,7 @@ pub struct Art {
     derived: HashMap<(i64, u32, bool, Option<usize>), Gd<Material>>,
     /// A creature's materials with their rim (`rimmed`), by the material
     /// each was made from, and the ids of those made (they take none more).
-    rims: HashMap<(i64, bool, [u8; 3]), Gd<Material>>,
+    rims: HashMap<(i64, Edge, [u8; 3]), Gd<Material>>,
     rimmed: HashSet<i64>,
     /// The metal materials made (`keep_metal`, by id: they may be freed)
     /// with their metallic where the level mirrors all of the sky, and how
@@ -595,9 +623,12 @@ pub struct Art {
     /// The pass that edges them (`EDGE_SHADER`), once loaded (None: not
     /// yet asked for; Some(None): missing).
     hero_edge: Option<Option<Gd<Material>>>,
+    /// The same with the lining after it (`LINING_SHADER`), for a hero's
+    /// two-sided material (a generated body's open coat).
+    hero_edge_lined: Option<Option<Gd<Material>>>,
     /// The hero's materials with her edge, by the material each was made
     /// from, and the ids of those made.
-    hero_edged: HashMap<i64, Gd<Material>>,
+    hero_edged: HashMap<(i64, bool), Gd<Material>>,
     hero_edged_ids: HashSet<i64>,
     /// The edges drawn now: in the game's light, not the gallery's nor the
     /// title's (`set_edges_lit`).
@@ -605,6 +636,8 @@ pub struct Art {
     /// The same, brighter, for a dark creature (`DARK_EDGE`), one for each
     /// colour an edge takes (`edge_colour`).
     dark_edges: HashMap<[u8; 3], Option<Gd<Material>>>,
+    /// The outline of a detailed body (`OUTLINE_SHADER`).
+    outline_edge: HashMap<u8, Option<Gd<Material>>>,
     /// A thing on the floor's glint (`GLINT_SHADER`), the same way, and
     /// gold's (warmer and smaller).
     glint: Option<Option<Gd<Material>>>,
@@ -723,10 +756,12 @@ impl Art {
             untwin: HashMap::new(),
             matte: HashSet::new(),
             hero_edge: None,
+            hero_edge_lined: None,
             hero_edged: HashMap::new(),
             hero_edged_ids: HashSet::new(),
             edges_lit: true,
             dark_edges: HashMap::new(),
+            outline_edge: HashMap::new(),
             glint: None,
             coin_glint: None,
             contact: None,
@@ -1630,6 +1665,7 @@ impl Art {
         if let Some(w) = m.worn.as_mut() {
             w.set_hero();
         }
+        simulate_skirt(&m);
         m
     }
 
@@ -1763,6 +1799,17 @@ impl Art {
 
     /// The death clip a model falls with and its seconds; None: a body
     /// built in code, or a model without one.
+    /// The clip a model casts a spell with where its rig has its own
+    /// (`Anims::cast`); None: the human rig's.
+    pub fn cast_clip(&self, m: &Model) -> Option<String> {
+        let spec = self.manifest.model_at(m.key.model).1;
+        let name = spec.anims.cast.clone()?;
+        m.player
+            .as_ref()?
+            .has_animation(name.as_str())
+            .then_some(name)
+    }
+
     pub fn death(&self, m: &Model) -> Option<(String, f32)> {
         let spec = self.manifest.model_at(m.key.model).1;
         if spec.proc.is_some() {
@@ -1937,7 +1984,16 @@ impl Art {
         if RIM > 0.0 {
             // (a creature dyed black takes the dark one's edge, whatever
             // its maps: a raven's feathers, a pudding)
-            self.rim(m, look.tint);
+            // (a detailed body by its outline: `ModelSpec::outline`)
+            let outline = self.manifest.model_at(look.art.model).1.outline;
+            let edge = if outline > 0.0 {
+                Edge::Outline((outline.min(2.0) * 100.0).round() as u8)
+            } else if reads_black(look.tint) {
+                Edge::Dark
+            } else {
+                Edge::Own
+            };
+            self.rim(m, edge, look.tint);
         }
         // what is seen through or only sensed throws no shadow, nor takes
         // the light of the creatures seen; a thing on the floor lights the
@@ -2082,9 +2138,10 @@ impl Art {
     /// the lights' rim is a hairline on a smooth body and dim on a dark
     /// one (a homunculus in a dark corridor, a manes on Gehennom's floor
     /// were lost). Each material is copied once; a stand-in is rimmed once
-    /// it is built. `tint`: the creature's colour (dyed black, or dark, its
-    /// edge is the dark one's, `dark_edge_pass`).
-    fn rim(&mut self, m: &Model, tint: Color) {
+    /// it is built. `edge`: which edge it takes (dyed black, or dark, the
+    /// dark one's, `dark_edge_pass`; a detailed body its outline); `tint`:
+    /// the creature's colour.
+    fn rim(&mut self, m: &Model, edge: Edge, tint: Color) {
         let Some(inner) = m.inner.as_ref() else {
             return;
         };
@@ -2103,7 +2160,7 @@ impl Art {
             // (a surface's would not show)
             if let Some(src) = mi.get_material_override() {
                 if !self.rimmed.contains(&src.instance_id().to_i64()) {
-                    let rimmed = self.rimmed_material(&src, tint);
+                    let rimmed = self.rimmed_material(&src, edge, tint);
                     mi.set_material_override(&rimmed);
                 }
                 continue;
@@ -2116,7 +2173,7 @@ impl Art {
                 if self.rimmed.contains(&src.instance_id().to_i64()) {
                     continue;
                 }
-                let rimmed = self.rimmed_material(&src, tint);
+                let rimmed = self.rimmed_material(&src, edge, tint);
                 mi.set_surface_override_material(i, &rimmed);
             }
         }
@@ -2143,6 +2200,48 @@ impl Art {
             .clone()
     }
 
+    /// The hero's edge pass with the lining after it: a two-sided
+    /// material's back faces darkened (`LINING_SHADER`).
+    fn hero_edge_lined_pass(&mut self) -> Option<Gd<Material>> {
+        let lit = self.edges_lit;
+        self.hero_edge_lined
+            .get_or_insert_with(|| {
+                let mut edge = edge_material(lit, HERO_EDGE_STRENGTH, HERO_EDGE_FROM, None)?;
+                if let Ok(shader) = godot::tools::try_load::<Shader>(LINING_SHADER) {
+                    let mut lining = ShaderMaterial::new_gd();
+                    lining.set_shader(&shader);
+                    edge.set_next_pass(&lining);
+                }
+                Some(edge)
+            })
+            .clone()
+    }
+
+    /// A detailed body's outline (`ModelSpec::outline`), lit as the edges
+    /// are (`set_edges_lit`).
+    fn outline_pass(&mut self, share: u8) -> Option<Gd<Material>> {
+        let lit = self.edges_lit;
+        self.outline_edge
+            .entry(share)
+            .or_insert_with(|| {
+                let shader = godot::tools::try_load::<Shader>(OUTLINE_SHADER).ok()?;
+                let mut m = ShaderMaterial::new_gd();
+                m.set_shader(&shader);
+                let k = if lit { outline_strength(share) } else { 0.0 };
+                m.set_shader_parameter("strength", &k.to_variant());
+                // and after it, the inner rim on the head and shoulders
+                let rim = outline_strength(share) * OUTLINE_RIM;
+                if let Some(mut inner) = edge_material(lit, rim, OUTLINE_RIM_FROM, Some(EDGE_COLD))
+                    .and_then(|m| m.try_cast::<ShaderMaterial>().ok())
+                {
+                    inner.set_shader_parameter("top", &1.0f32.to_variant());
+                    m.set_next_pass(&inner);
+                }
+                Some(m.upcast())
+            })
+            .clone()
+    }
+
     /// The edges in the game's light (`on`), or none (the gallery's light,
     /// the title, the creation form): the dark creatures' and the hero's
     /// passes, shared by all, at their strength or at none.
@@ -2152,13 +2251,31 @@ impl Art {
         }
         self.edges_lit = on;
         let dark = self.dark_edges.values().map(|m| (m, DARK_EDGE_STRENGTH));
-        let hero = self.hero_edge.iter().map(|m| (m, HERO_EDGE_STRENGTH));
+        let hero = self
+            .hero_edge
+            .iter()
+            .chain(self.hero_edge_lined.iter())
+            .map(|m| (m, HERO_EDGE_STRENGTH));
         for (slot, strength) in dark.chain(hero) {
             if let Some(m) = slot
                 && let Ok(mut m) = m.clone().try_cast::<ShaderMaterial>()
             {
                 let k = if on { strength } else { 0.0 };
                 m.set_shader_parameter("strength", &k.to_variant());
+            }
+        }
+        for (&share, m) in &self.outline_edge {
+            if let Some(m) = m
+                && let Ok(mut m) = m.clone().try_cast::<ShaderMaterial>()
+            {
+                let k = if on { outline_strength(share) } else { 0.0 };
+                m.set_shader_parameter("strength", &k.to_variant());
+                if let Some(mut inner) = m
+                    .get_next_pass()
+                    .and_then(|p| p.try_cast::<ShaderMaterial>().ok())
+                {
+                    inner.set_shader_parameter("strength", &(k * OUTLINE_RIM).to_variant());
+                }
             }
         }
     }
@@ -2170,6 +2287,10 @@ impl Art {
         let Some(inner) = m.inner.as_ref() else {
             return;
         };
+        // a generated body (the owner's, `owner/`): its two-sided coat or
+        // robe lined in shadow; today's outfits as they are
+        let lined = generated(self.manifest.model_at(m.key.model).1)
+            && std::env::var_os("RENETHACK_NO_LINING").is_none();
         for node in inner
             .find_children_ex("*")
             .type_("MeshInstance3D")
@@ -2182,7 +2303,7 @@ impl Art {
             };
             if let Some(src) = mi.get_material_override() {
                 if !self.hero_edged_ids.contains(&src.instance_id().to_i64()) {
-                    let edged = self.hero_edged_material(&src);
+                    let edged = self.hero_edged_material(&src, lined);
                     mi.set_material_override(&edged);
                 }
                 continue;
@@ -2195,7 +2316,7 @@ impl Art {
                 if self.hero_edged_ids.contains(&src.instance_id().to_i64()) {
                     continue;
                 }
-                let edged = self.hero_edged_material(&src);
+                let edged = self.hero_edged_material(&src, lined);
                 mi.set_surface_override_material(i, &edged);
             }
         }
@@ -2204,8 +2325,8 @@ impl Art {
     /// A copy of a material of the hero's with her edge for its next pass
     /// (never a see-through one: the pass knows nothing of a card's cut-
     /// outs, a hair's; nor one with a pass of its own, nor an unshaded one).
-    fn hero_edged_material(&mut self, src: &Gd<Material>) -> Gd<Material> {
-        let key = src.instance_id().to_i64();
+    fn hero_edged_material(&mut self, src: &Gd<Material>, lined: bool) -> Gd<Material> {
+        let key = (src.instance_id().to_i64(), lined);
         if let Some(m) = self.hero_edged.get(&key) {
             return m.clone();
         }
@@ -2215,7 +2336,14 @@ impl Art {
                     && m.get_transparency() == Transparency::DISABLED
                     && m.get_next_pass().is_none() =>
             {
-                match self.hero_edge_pass() {
+                // (a two-sided one of a generated body, its coat: its
+                // inside lined in shadow)
+                let pass = if lined && m.get_cull_mode() == CullMode::DISABLED {
+                    self.hero_edge_lined_pass()
+                } else {
+                    self.hero_edge_pass()
+                };
+                match pass {
                     Some(edge) => {
                         m.set_next_pass(&edge);
                         m.upcast::<Material>()
@@ -2233,9 +2361,9 @@ impl Art {
         out
     }
 
-    fn rimmed_material(&mut self, src: &Gd<Material>, tint: Color) -> Gd<Material> {
-        let black = reads_black(tint);
-        let key = (src.instance_id().to_i64(), black, rgb8(tint));
+    fn rimmed_material(&mut self, src: &Gd<Material>, edge: Edge, tint: Color) -> Gd<Material> {
+        let black = edge == Edge::Dark;
+        let key = (src.instance_id().to_i64(), edge, rgb8(tint));
         if let Some(m) = self.rims.get(&key) {
             return m.clone();
         }
@@ -2257,7 +2385,13 @@ impl Art {
                 let dark = black || reads_black(albedo);
                 let see_through = m.get_transparency();
                 let own = if black { tint } else { albedo };
-                if dark
+                if let Edge::Outline(share) = edge {
+                    if m.get_next_pass().is_none()
+                        && let Some(pass) = self.outline_pass(share)
+                    {
+                        m.set_next_pass(&pass);
+                    }
+                } else if dark
                     && matches!(see_through, Transparency::DISABLED | Transparency::ALPHA)
                     && m.get_next_pass().is_none()
                     && let Some(edge) = self.dark_edge_pass(edge_colour(own))
@@ -2384,7 +2518,7 @@ impl Art {
                 let _ = p.add_animation_library("", &lib);
                 for extra in &spec.extra_rigs {
                     if let Some(lib) = self.library(extra, spec.strip_root) {
-                        let _ = p.add_animation_library(extra.as_str(), &lib);
+                        let _ = p.add_animation_library(nh_art::played_as(extra), &lib);
                     }
                 }
                 let mut inner = inner.clone();
@@ -5326,6 +5460,92 @@ fn lit_skin(color: Color, glow: f32) -> Gd<Material> {
         m.set_emission_energy_multiplier(glow);
     }
     m.upcast()
+}
+
+/// A generated hero's coat or robe (`glb_skirt.py --chains`): its chains
+/// of skirt bones under the pelvis (`skirt_<chain>_<joint>`, three each)
+/// swing in a spring bone simulator, pushed aside by capsules on the
+/// thighs and the shins (a lunging leg carries the hem instead of piercing
+/// it). The hero's model only, and one simulator for it: the doll and the
+/// portrait draw the same instance. How stiff, how damped, how heavy, the
+/// bones' own radius, the tip past the last joint, and the legs' capsules'
+/// radii (metres of the body's skeleton): softer (0.7) the coat flared
+/// out like a bell in the walk; capsules as thick as the legs pushed it
+/// out all the time.
+const SKIRT_STIFFNESS: f32 = 4.0;
+const SKIRT_DRAG: f32 = 0.6;
+const SKIRT_GRAVITY: f32 = 1.0;
+const SKIRT_RADIUS: f32 = 0.01;
+const SKIRT_TIP: f32 = 0.08;
+const SKIRT_THIGH: f32 = 0.05;
+const SKIRT_SHIN: f32 = 0.04;
+
+fn simulate_skirt(m: &Model) {
+    if std::env::var_os("RENETHACK_NO_SKIRT_SIM").is_some() {
+        return;
+    }
+    let Some(inner) = m.inner.as_ref() else {
+        return;
+    };
+    let Some(mut skeleton) = find::<Skeleton3D>(&inner.clone().upcast()) else {
+        return;
+    };
+    if skeleton.has_node("SkirtSim") {
+        return;
+    }
+    let chains: Vec<i32> = (0..)
+        .map_while(|c| (skeleton.find_bone(&format!("skirt_{c}_0")) >= 0).then_some(c))
+        .collect();
+    if chains.is_empty() {
+        return;
+    }
+    let mut sim = SpringBoneSimulator3D::new_alloc();
+    sim.set_name("SkirtSim");
+    sim.set_setting_count(chains.len() as i32);
+    for (i, c) in chains.iter().enumerate() {
+        let i = i as i32;
+        sim.set_root_bone_name(i, &format!("skirt_{c}_0"));
+        sim.set_end_bone_name(i, &format!("skirt_{c}_2"));
+        sim.set_extend_end_bone(i, true);
+        sim.set_end_bone_direction(
+            i,
+            godot::classes::spring_bone_simulator_3d::BoneDirection::FROM_PARENT,
+        );
+        sim.set_end_bone_length(i, SKIRT_TIP);
+        sim.set_stiffness(i, SKIRT_STIFFNESS);
+        sim.set_drag(i, SKIRT_DRAG);
+        sim.set_gravity(i, SKIRT_GRAVITY);
+        sim.set_radius(i, SKIRT_RADIUS);
+        sim.set_enable_all_child_collisions(i, true);
+    }
+    // the legs: a capsule along each thigh and shin (UAL's bones run along
+    // their own +Y), as long as the bone
+    for (bone, next, radius) in [
+        ("thigh_l", "calf_l", SKIRT_THIGH),
+        ("thigh_r", "calf_r", SKIRT_THIGH),
+        ("calf_l", "foot_l", SKIRT_SHIN),
+        ("calf_r", "foot_r", SKIRT_SHIN),
+    ] {
+        let n = skeleton.find_bone(next);
+        if n < 0 {
+            continue;
+        }
+        let length = skeleton.get_bone_rest(n).origin.length();
+        let mut c = SpringBoneCollisionCapsule3D::new_alloc();
+        c.set_bone_name(bone);
+        c.set_radius(radius);
+        c.set_height(length + 2.0 * radius);
+        c.set_position_offset(Vector3::new(0.0, length / 2.0, 0.0));
+        sim.add_child(&c);
+    }
+    skeleton.add_child(&sim);
+}
+
+/// A generated body (the owner's Meshy bodies, under `art/owner/`).
+fn generated(spec: &nh_art::ModelSpec) -> bool {
+    spec.scene
+        .as_deref()
+        .is_some_and(|s| s.starts_with("owner/"))
 }
 
 /// Cast shadows off for flat ground geometry (map_view).

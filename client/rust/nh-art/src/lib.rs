@@ -117,6 +117,10 @@ pub struct Anims {
     pub hit: Option<String>,
     #[serde(default)]
     pub death: Option<String>,
+    /// A spell cast at someone (a lich's, a shaman's): the rig's own clip
+    /// where it has one of another name than the human rig's.
+    #[serde(default)]
+    pub cast: Option<String>,
 }
 
 impl Anims {
@@ -141,6 +145,7 @@ impl Anims {
             &self.attack,
             &self.hit,
             &self.death,
+            &self.cast,
         ]
         .into_iter()
         .filter_map(|n| n.as_deref())
@@ -267,6 +272,14 @@ pub struct ModelSpec {
     /// that stays seen on a dark floor.
     #[serde(default)]
     pub rim: Option<f32>,
+    /// A detailed body (a generated one, of thousands of ridges and
+    /// spikes), dark or lost on a dark floor whatever its dye: in the
+    /// game's light it is edged by its outline only, where the dark
+    /// creatures' edge would trace every ridge. How strong, of the
+    /// outline's own strength (1: a black body's; less for one the light
+    /// already shows; 0: none).
+    #[serde(default)]
+    pub outline: f32,
     /// A faint glow ("#rrggbb") over the scene's own colours (runes).
     #[serde(default)]
     pub glow: Option<String>,
@@ -1014,6 +1027,13 @@ pub struct ArtManifest {
 }
 
 /// "#rrggbb" as linear-ish 0..1 components (the client treats them as sRGB).
+/// The name a library's clips are played by: a body's own copy of a
+/// shared rig's clips, made on its skeleton ("ual2@valkyrie", a generated
+/// body re-rigged to UAL's frames), plays as that rig ("ual2/Consume").
+pub fn played_as(library: &str) -> &str {
+    library.split_once('@').map_or(library, |(rig, _)| rig)
+}
+
 pub fn hex(s: &str) -> Option<[f32; 3]> {
     let s = s.strip_prefix('#')?;
     if s.len() != 6 {
@@ -1512,6 +1532,7 @@ impl ArtManifest {
             metallic: None,
             roughness: None,
             rim: None,
+            outline: 0.0,
             glow: None,
             glow_energy: 0.0,
             smooth: false,
@@ -1881,21 +1902,29 @@ mod tests {
         for kind in kinds {
             for flags in [0, mg::FEMALE] {
                 let (name, spec) = model(kind, flags);
-                assert!(!seen.contains(&name), "{kind}: {name} again");
-                seen.push(name);
                 let on = |bone: &str| spec.extras.iter().any(|e| e.bone == bone);
-                assert_eq!(on("Head"), kind != "hobbit", "{name}: a hat");
                 let armed = kind.starts_with("dwarf") || kind == "gnomish wizard";
                 assert_eq!(on("hand_r"), armed, "{name}: in hand");
+                // a generated body (one for the kind's men and women, its
+                // helmet or hood in its mesh) is told apart by its look
+                if generated(spec) {
+                    continue;
+                }
+                assert!(!seen.contains(&name), "{kind}: {name} again");
+                seen.push(name);
+                assert_eq!(on("Head"), kind != "hobbit", "{name}: a hat");
                 // nobody is the plain peasant, or a man under a woman's name
                 let woman = spec.scene.as_deref().is_some_and(|s| s.contains("Female"));
                 assert_eq!(woman, flags != 0, "{name}");
                 assert_ne!(spec.head.as_deref(), Some("bearded"), "{name}");
             }
         }
-        // a dwarf is stocky, a gnome's head is big
-        assert!(model("dwarf", 0).1.girth > 1.1);
-        assert!(model("gnome", 0).1.head_scale > 1.1);
+        // a dwarf is stocky, a gnome's head is big (a generated body is
+        // made so)
+        let dwarf = model("dwarf", 0).1;
+        assert!(generated(dwarf) || dwarf.girth > 1.1);
+        let gnome = model("gnome", 0).1;
+        assert!(generated(gnome) || gnome.head_scale > 1.1);
     }
 
     /// Orcs were one dark figure in leather, told apart by a faint tint,
@@ -2016,6 +2045,15 @@ mod tests {
         assert_ne!(model("bugbear"), model("hobgoblin"));
     }
 
+    /// A generated body (the owner's, under `owner/`): what our kits
+    /// build on a rig (a robe, a cape, wings, tentacles, a swollen head)
+    /// it has in its own mesh and painting.
+    fn generated(spec: &ModelSpec) -> bool {
+        spec.scene
+            .as_deref()
+            .is_some_and(|s| s.starts_with("owner/"))
+    }
+
     /// The mind flayer was a small red imp, the minotaur, the ettin and
     /// every giant a big peasant: each has its own look now.
     #[test]
@@ -2034,8 +2072,12 @@ mod tests {
         // a mind flayer's mouth is tentacles, a master's more of them
         let (_, flayer) = model("mind flayer");
         let (_, master) = model("master mind flayer");
-        assert_eq!(on_head(flayer, "tentacle"), 4);
-        assert!(on_head(master, "tentacle") > 4);
+        if generated(flayer) {
+            assert_ne!(model("mind flayer").0, model("master mind flayer").0);
+        } else {
+            assert_eq!(on_head(flayer, "tentacle"), 4);
+            assert!(on_head(master, "tentacle") > 4);
+        }
         // a bull's horns on the minotaur, two heads on the ettin
         assert_eq!(on_head(model("minotaur").1, "tusk"), 2);
         assert!(model("ettin").1.second_head.is_some());
@@ -2070,7 +2112,10 @@ mod tests {
             let baby = art.monster(find(&format!("baby {colour} dragon")), 0);
             let grown = art.monster(find(&format!("{colour} dragon")), 0);
             let name = art.model_at(grown.model).0;
-            assert!(name.starts_with("dragon_adult"), "{colour}: {name}");
+            assert!(
+                name.starts_with("dragon_adult") || name.starts_with("dragon_owner"),
+                "{colour}: {name}"
+            );
             assert!(
                 grown.height > 1.5 * baby.height,
                 "{colour}: {} against {}",
@@ -2114,7 +2159,7 @@ mod tests {
                 .get("@Main")
                 .and_then(|c| hex(c.trim_start_matches('=')));
             assert!(
-                main.is_some_and(|c| c.iter().all(|&v| v < 0.25)),
+                generated(spec) || main.is_some_and(|c| c.iter().all(|&v| v < 0.25)),
                 "{prefix}black dragon: {main:?}"
             );
         }
@@ -2170,13 +2215,18 @@ mod tests {
             ("arch-lich", &magenta),
         ] {
             let (name, spec) = art.model_at(art.monster(find(who), 0).model);
-            assert_eq!(spec.head.as_deref(), Some("lich"), "{who}");
+            if !generated(spec) {
+                assert_eq!(spec.head.as_deref(), Some("lich"), "{who}");
+            }
             assert!(spec.rim.is_some(), "{who} has no rim");
             let robe = spec
                 .recolor
                 .get("_Body")
                 .and_then(|c| hex(c.trim_start_matches('=')));
-            assert!(robe.is_some_and(robed), "{who}: {robe:?}");
+            assert!(
+                generated(spec) || robe.is_some_and(robed),
+                "{who}: {robe:?}"
+            );
             assert!(!seen.contains(&name), "{who} looks as another");
             seen.push(name);
         }
@@ -2277,7 +2327,10 @@ mod tests {
             assert!(wears(who, "garment_wings"), "{who} has no feathers");
         }
         for who in ["pit fiend", "balrog", "Orcus", "amorous demon", "Geryon"] {
-            assert!(wears(who, "bat_wings"), "{who} has no bat's wings");
+            assert!(
+                wears(who, "bat_wings") || generated(model(who).1),
+                "{who} has no bat's wings"
+            );
         }
         // each demon and each demon lord a model of its own, not the imp's
         // rig in another tint (art loop iteration 1, #2)
@@ -2329,13 +2382,20 @@ mod tests {
         // the liches robed and cloaked, the vampires caped, the mind
         // flayers' heads swollen, Medusa on a serpent's tail
         for who in ["lich", "demilich", "master lich", "arch-lich"] {
-            assert!(wears(who, "cloak_worn"), "{who} has no cloak");
+            assert!(
+                wears(who, "cloak_worn") || generated(model(who).1),
+                "{who} has no cloak"
+            );
         }
         for who in ["vampire", "vampire leader", "Vlad the Impaler"] {
-            assert!(wears(who, "cape_worn"), "{who} has no cape");
+            assert!(
+                wears(who, "cape_worn") || generated(model(who).1),
+                "{who} has no cape"
+            );
         }
         for who in ["mind flayer", "master mind flayer"] {
-            assert!(model(who).1.head_scale > 1.2, "{who}");
+            let spec = model(who).1;
+            assert!(spec.head_scale > 1.2 || generated(spec), "{who}");
         }
         assert!(wears("Medusa", "serpent_tail"));
         // the marilith and Geryon raised on a serpent's coiled tail, she
@@ -2651,7 +2711,12 @@ mod tests {
                 // "<library>/<clip>" is a clip of another library on the
                 // same skeleton
                 let (file, clip) = match clip.split_once('/') {
-                    Some((lib, clip)) if spec.extra_rigs.iter().any(|r| r == lib) => {
+                    Some((lib, clip)) if spec.extra_rigs.iter().any(|r| played_as(r) == lib) => {
+                        let lib = spec
+                            .extra_rigs
+                            .iter()
+                            .find(|r| played_as(r) == lib)
+                            .unwrap();
                         (art.library(lib).unwrap().to_string(), clip)
                     }
                     _ => (file.clone(), clip),

@@ -421,7 +421,14 @@ impl MapView {
         let clip = match kind {
             ActKind::Crackle => false,
             ActKind::Cast(_) | ActKind::Curse(_) => {
-                toward.is_some_and(|to| self.act_toward(cell, to, world, CAST_CLIP))
+                // (a rig of its own casts with its own clip)
+                let clip = self
+                    .cells
+                    .get(&cell)
+                    .and_then(|n| n.look.entity.and_then(|i| n.models.get(i)))
+                    .and_then(|m| self.art.cast_clip(m))
+                    .unwrap_or_else(|| CAST_CLIP.to_string());
+                toward.is_some_and(|to| self.act_toward(cell, to, world, &clip))
             }
             ActKind::Zap { at_self: false } => {
                 toward.is_some_and(|to| self.act_toward(cell, to, world, ZAP_CLIP))

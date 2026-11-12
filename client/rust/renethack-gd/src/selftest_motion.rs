@@ -227,7 +227,10 @@ pub(super) fn motion() -> Vec<Step> {
             "the kind of monster to make",
             |p| matches!(p, Prompt::Text { query, .. } if query.contains("Create what kind of monster")),
         ),
-        Step::Dialog(DialogEvent::TextSubmitted("hill orc".into())),
+        // (RENETHACK_MOTION_FOE: another to fight, a caster)
+        Step::Dialog(DialogEvent::TextSubmitted(
+            std::env::var("RENETHACK_MOTION_FOE").unwrap_or_else(|_| "hill orc".into()),
+        )),
         Step::Request("a command after the monster", command),
         Step::Call("7 m off, as in play", |g| {
             g.ui.as_mut().ok_or("no UI")?.map.set_distance(7.0, 0.2);
@@ -235,9 +238,54 @@ pub(super) fn motion() -> Vec<Step> {
         }),
         Step::Wait("the camera on the hero", camera_settled),
     ]);
-    for round in 0..ROUNDS {
+    // RENETHACK_MOTION_CHASE=1 (the pilot of generated bodies: the orc
+    // wears one in the shooting manifest): she steps away twice and it
+    // comes after her (`motion-chase-<leg>-<frame>`: its walk), and the
+    // test ends with the orc's fight
+    let chase = std::env::var("RENETHACK_MOTION_CHASE").is_ok();
+    // RENETHACK_MOTION_WAITS=n: she only waits, n turns (its spells seen)
+    let waits: Option<usize> = std::env::var("RENETHACK_MOTION_WAITS")
+        .ok()
+        .and_then(|n| n.parse().ok());
+    for leg in 0..if chase && waits.is_none() { 3 } else { 0 } {
+        // (east, where there is floor: it comes after her in profile, not
+        // behind her from the camera)
+        steps.push(Step::KeyFrom("a step away", |g| {
+            let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
+            let free = g
+                .world
+                .map
+                .cell(hx + 1, hy)
+                .is_some_and(|c| c.entity().is_none());
+            let k = if free {
+                'l'
+            } else {
+                super::audio_tests::open_way(g)?
+            };
+            Ok(KeyInput::plain(Key::Char(k)))
+        }));
+        steps.push(Step::Call("the burst begins", |_| {
+            FRAME.store(frames(), Ordering::Relaxed);
+            Ok(())
+        }));
+        for k in 0..BURST {
+            let name: &'static str = format!("motion-chase-{leg}-{k}").leak();
+            steps.extend([
+                Step::Wait("a few frames on", |_| {
+                    Ok(frames() >= FRAME.load(Ordering::Relaxed) + APART)
+                }),
+                Step::Shot(name),
+                Step::Call("the next frame of the burst", |_| {
+                    FRAME.store(frames(), Ordering::Relaxed);
+                    Ok(())
+                }),
+            ]);
+        }
+        steps.push(Step::Request("the next command", command));
+    }
+    for round in 0..waits.unwrap_or(if chase { ROUNDS + 6 } else { ROUNDS }) {
         // (`m` lets a search pass the turn beside a hostile)
-        if round < WAITS {
+        if round < waits.unwrap_or(WAITS) {
             steps.extend([
                 Step::KeyFrom("m, to wait beside it", |_| {
                     Ok(KeyInput::plain(Key::Char('m')))
@@ -280,6 +328,10 @@ pub(super) fn motion() -> Vec<Step> {
             }),
             Step::Call("she faces the orc beside her", |g| faces_the_orc(g)),
         ]);
+    }
+    if chase {
+        steps.extend(super::quit());
+        return steps;
     }
     for _ in 0..2 {
         steps.extend([

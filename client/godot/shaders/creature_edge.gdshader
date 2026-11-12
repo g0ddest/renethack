@@ -10,10 +10,13 @@ uniform vec3 color : source_color = vec3(0.62, 0.70, 1.0);
 uniform float strength = 0.35;
 // how far from facing the eye the edge begins (0 facing, 1 side-on)
 uniform float from = 0.4;
+// how much of it is kept to the parts facing up (1: the head's crown and
+// the shoulders only, a generated body's inner rim inside its outline)
+uniform float top = 0.45;
 
 void fragment() {
 	vec3 n = normalize(NORMAL);
 	float edge = smoothstep(from, 0.95, 1.0 - clamp(dot(n, normalize(VIEW)), 0.0, 1.0));
 	float up = (INV_VIEW_MATRIX * vec4(n, 0.0)).y;
-	ALBEDO = color * strength * edge * (0.55 + 0.45 * clamp(up + 0.3, 0.0, 1.0));
+	ALBEDO = color * strength * edge * ((1.0 - top) + top * clamp(up + 0.3, 0.0, 1.0));
 }

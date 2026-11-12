@@ -1794,10 +1794,20 @@ fn leader_palm(g: &RenethackGame) -> Result<Option<f32>, String> {
     let [right, palm] = probes.as_slice() else {
         return Ok(None);
     };
+    // (the model the dwarf leader wears: today's, or a generated body's)
     let art = kit_art()?;
+    let cat = g.catalog.as_deref().ok_or("no catalog")?;
+    let kind = cat
+        .monsters
+        .iter()
+        .find(|m| m.name == "dwarf leader")
+        .ok_or("no dwarf leader in the catalog")?;
     let extra = art
-        .model_index("dwarf_leader")
-        .and_then(|i| art.model_at(i).1.extras.iter().find(|e| e.two.is_some()))
+        .model_at(art.monster(kind, 0).model)
+        .1
+        .extras
+        .iter()
+        .find(|e| e.two.is_some())
         .ok_or("the dwarf leader holds nothing in both hands")?;
     let (pos, rot, two) = (extra.pos, extra.rot, extra.two.unwrap_or_default());
     let deg = Vector3::new(rot[0], rot[1], rot[2]) * (std::f32::consts::PI / 180.0);
@@ -1830,7 +1840,32 @@ fn leader_two_hands() -> Vec<Step> {
         ),
         Step::Dialog(DialogEvent::TextSubmitted("peaceful dwarf leader".into())),
         Step::AnswerUntil('n', "a command after the creation", idle_command),
+        Step::Call("does it hold anything in both hands", |g| {
+            // a generated body (the owner's dwarf) holds its mattock in
+            // one hand: its arms are too short to cross its chest to the
+            // haft (the left palm stopped 31 cm short)
+            let art = kit_art()?;
+            let cat = g.catalog.as_deref().ok_or("no catalog")?;
+            let kind = cat.monsters.iter().find(|m| m.name == "dwarf leader");
+            let two = kind.is_some_and(|k| {
+                art.model_at(art.monster(k, 0).model)
+                    .1
+                    .extras
+                    .iter()
+                    .any(|e| e.two.is_some())
+            });
+            if !two {
+                godot_print!(
+                    "selftest: two-hands: the dwarf leader holds its mattock in one hand (a generated body)"
+                );
+                *LEADER_PALM.lock().map_err(|e| e.to_string())? = (LEADER_FRAMES, 0.0);
+            }
+            Ok(())
+        }),
         Step::Wait("the dwarf leader's palm on the haft, frame after frame", |g| {
+            if LEADER_PALM.lock().map_err(|e| e.to_string())?.0 >= LEADER_FRAMES {
+                return Ok(true);
+            }
             let Some(off) = leader_palm(g)? else {
                 return Ok(false);
             };

@@ -144,12 +144,123 @@ const HUES: Rows = &[
     ),
 ];
 
+/// The pilot of generated bodies: today's black dragon and lich, each
+/// beside the generated one (worn by the next monster of the row in the
+/// shooting manifest: the silver dragon, the demilich, the barbed devil).
+pub(super) const GENERATED: Rows = &[
+    (4, &["black dragon", "silver dragon"]),
+    (3, &["lich", "demilich", "master lich"]),
+];
+
+/// And the demon: today's horned devil, the generated one (the balrog's
+/// in the shooting manifest), today's pit fiend.
+pub(super) const GENERATED_DEMON: Rows = &[(3, &["horned devil", "balrog", "pit fiend"])];
+
+/// The generated bodies in the game's light beside those they replace,
+/// a picture a kind (`dark-creatures` with RENETHACK_DARK=<kind>): one of
+/// each row, in its middle (the camera's wide angle tilts what stands at
+/// the frame's edge), wears the generated body in the shooting manifest:
+/// a monster of the kind's size not otherwise in the row.
+pub(super) const PILOT: &[(&str, Rows)] = &[
+    ("generated", GENERATED),
+    ("demon", GENERATED_DEMON),
+    ("dragons", &[(4, &["black dragon", "silver dragon"])]),
+    (
+        "liches",
+        &[(2, &["lich", "master lich", "demilich", "arch-lich"])],
+    ),
+    (
+        "demons",
+        &[(2, &["horned devil", "pit fiend", "nalfeshnee", "balrog"])],
+    ),
+    (
+        "flayers",
+        &[(2, &["mind flayer", "human zombie", "master mind flayer"])],
+    ),
+    (
+        "vampires",
+        &[(
+            2,
+            &[
+                "vampire",
+                "vampire leader",
+                "human mummy",
+                "Vlad the Impaler",
+            ],
+        )],
+    ),
+    (
+        "trolls",
+        &[(3, &["troll", "ice troll", "water troll", "rock troll"])],
+    ),
+    // the kinds on the generated bodies, as the manifest now dresses them
+    (
+        "kinds-a",
+        &[
+            (2, &["lich", "demilich", "master lich", "arch-lich"]),
+            (
+                2,
+                &[
+                    "mind flayer",
+                    "master mind flayer",
+                    "vampire",
+                    "vampire leader",
+                ],
+            ),
+        ],
+    ),
+    (
+        "kinds-b",
+        &[
+            (3, &["troll", "ice troll", "rock troll", "water troll"]),
+            (3, &["Olog-hai", "pit fiend", "balrog", "Vlad the Impaler"]),
+        ],
+    ),
+    // the generated giant, dwarf and gnome on the hero's skeleton
+    (
+        "giants-gen",
+        &[
+            (3, &["giant", "hill giant", "stone giant"]),
+            (3, &["fire giant", "frost giant", "ettin"]),
+        ],
+    ),
+    (
+        "mines-gen",
+        &[
+            (2, &["dwarf", "dwarf leader", "gnome", "gnome leader"]),
+            (
+                2,
+                &["dwarf ruler", "gnome ruler", "hobbit", "gnomish wizard"],
+            ),
+        ],
+    ),
+    (
+        "kinds-c",
+        &[(
+            2,
+            &["horned devil", "barbed devil", "bone devil", "ice devil"],
+        )],
+    ),
+];
+
+static SINCE: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
+
 pub(super) fn late_monsters() -> Vec<Step> {
     let mut steps = start();
     steps.push(Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
     }));
-    let pictures: [(Lay, &str, &str); 10] = [
+    let pictures: [(Lay, &str, &str); 12] = [
+        (
+            |g| lay_out(g, GENERATED_DEMON),
+            "late-demon",
+            "late-demon-close",
+        ),
+        (
+            |g| lay_out(g, GENERATED),
+            "late-generated",
+            "late-generated-close",
+        ),
         (
             |g| lay_out(g, DRAGONS),
             "late-dragons",
@@ -196,11 +307,40 @@ pub(super) fn late_monsters() -> Vec<Step> {
             }),
             Step::Wait("the camera on them", camera_settled),
             Step::Shot(far),
-            Step::Call("closer", |g| zoom_by(g, -3.0)),
+            // (the pilot's pictures at 7 m, the others at 8)
+            if far == "late-generated" || far == "late-demon" {
+                Step::Call("closer", |g| zoom_by(g, -4.0))
+            } else {
+                Step::Call("closer", |g| zoom_by(g, -3.0))
+            },
             Step::Wait("the camera closer", camera_settled),
             Step::Shot(close),
-            Step::Call("back", |g| zoom_by(g, 3.0)),
         ]);
+        // RENETHACK_LATE_LIFE=1: five more of the close picture a second
+        // apart (`<close>-t<n>`): what stands idle is seen to live
+        if std::env::var("RENETHACK_LATE_LIFE").is_ok() {
+            for k in 1..=5 {
+                let name: &'static str = format!("{close}-t{k}").leak();
+                steps.extend([
+                    Step::Call("a second begins", |_| {
+                        *SINCE.lock().unwrap() = Some(std::time::Instant::now());
+                        Ok(())
+                    }),
+                    Step::Wait("a second on", |_| {
+                        Ok(SINCE
+                            .lock()
+                            .unwrap()
+                            .is_some_and(|t| t.elapsed().as_secs_f32() >= 1.0))
+                    }),
+                    Step::Shot(name),
+                ]);
+            }
+        }
+        steps.extend([if far == "late-generated" || far == "late-demon" {
+            Step::Call("back", |g| zoom_by(g, 4.0))
+        } else {
+            Step::Call("back", |g| zoom_by(g, 3.0))
+        }]);
     }
     steps.extend(quit());
     steps

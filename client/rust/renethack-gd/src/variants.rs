@@ -237,6 +237,11 @@ pub fn mismatches() -> Vec<String> {
     out
 }
 
+/// The hero's edge pass and the lining drawn after it on a generated body
+/// (art.rs).
+const EDGE: &str = "res://shaders/creature_edge.gdshader";
+const LINING: &str = "res://shaders/lining.gdshader";
+
 /// A material for a shader as the census names it: a standard material's
 /// settings, a shader file, or none (Godot's default).
 fn material_of(name: &str) -> Result<Option<Gd<Material>>, String> {
@@ -248,6 +253,18 @@ fn material_of(name: &str) -> Result<Option<Gd<Material>>, String> {
         let shader = godot::tools::try_load::<Shader>(path).map_err(|e| format!("{path}: {e}"))?;
         let mut m = ShaderMaterial::new_gd();
         m.set_shader(&shader);
+        // the lining is only ever drawn after a hero's edge (art.rs's
+        // `hero_edge_lined_pass`): made as it is drawn, in that chain (made
+        // alone, a frame of the game still compiled it after the veil)
+        if path == LINING {
+            let edge =
+                godot::tools::try_load::<Shader>(EDGE).map_err(|e| format!("{EDGE}: {e}"))?;
+            let mut first = ShaderMaterial::new_gd();
+            first.set_shader(&edge);
+            first.set_shader_parameter("strength", &0.0f32.to_variant());
+            first.set_next_pass(&m);
+            return Ok(Some(first.upcast()));
+        }
         return Ok(Some(m.upcast()));
     }
     standard_material(name)

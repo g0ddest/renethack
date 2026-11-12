@@ -192,6 +192,26 @@ texels where a figure glows (`*_glow.jpg`); nothing else was changed.
 | `owner/prologue/moloch.glb` | Moloch: a bull-headed dark god, a furnace in his chest, chains, a torn cape (62k triangles) |
 | `owner/prologue/amulet.glb` | The Amulet of Yendor: tarnished gold, rings of glyphs, a red stone in claws, a short chain (30k triangles) |
 
+The bestiary's and the heroes' generated bodies were made the same way and
+rigged by Meshy (the black dragon on bones of our own). Their maps were cut
+to 1K (the Valkyrie's to 2K); some albedos were dyed for the game's dark
+light, and the Mines folk's coloured ones are Meshy retextures. Bodies that
+wear our kits were re-rigged to our skeleton and clips.
+
+| Where | What |
+|---|---|
+| `owner/dragon_black.glb` | A black dragon, wings spread (31k triangles) |
+| `owner/lich2.glb`, `lich2_brown.jpg`, `lich2_red.jpg` | A robed lich, in three colours (31k triangles) |
+| `owner/demon.glb` | A horned demon, the balrog and the pit fiend (31k triangles) |
+| `owner/devil.glb`, `devil_ice.jpg`, `devil_bone.jpg` | A lean devil: horned, barbed, ice and bone (31k triangles) |
+| `owner/flayer.glb` | A mind flayer (31k triangles) |
+| `owner/vampire.glb` | A caped vampire lord (31k triangles) |
+| `owner/troll.glb` | A troll (31k triangles) |
+| `owner/giant.glb` | A hill giant with a skull belt and a fur mantle (31k triangles) |
+| `owner/dwarf.glb`, `dwarf_red.jpg`, `dwarf_blue.jpg`, `dwarf_magenta.jpg` | An armoured dwarf, in his rank's colours (21k triangles) |
+| `owner/gnome.glb`, `gnome_brown.jpg`, `gnome_blue.jpg`, `gnome_magenta.jpg`, `gnome_wizard.jpg` | A hooded gnome, in his rank's colours (21k triangles) |
+| `owner/valkyrie.glb` | The owner's woman warrior, the female Valkyrie: cloth wraps, a long split coat (41k triangles) |
+
 ## Fonts
 
 The UI's fonts are under the SIL Open Font License 1.1 (not CC0); each

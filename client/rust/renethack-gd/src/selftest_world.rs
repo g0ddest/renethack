@@ -1003,7 +1003,16 @@ pub(super) fn dark_creatures() -> Vec<Step> {
     steps.extend([
         Step::Call("lay out the rows on a dark floor", |g| {
             let cat = g.catalog.clone().ok_or("no catalog")?;
-            crate::gallery::lay_out_rows_on(&mut g.world, &cat, ROWS, "S_darkroom")?;
+            // RENETHACK_DARK=<kind>: the pilot's rows instead (`PILOT`)
+            let kind = std::env::var("RENETHACK_DARK").ok();
+            let rows = super::late_tests::PILOT
+                .iter()
+                .find(|(k, _)| Some(*k) == kind.as_deref())
+                .map_or(ROWS, |(_, rows)| rows);
+            // RENETHACK_DARK_FLOOR=S_room: the same rows in a lit room
+            let floor =
+                std::env::var("RENETHACK_DARK_FLOOR").unwrap_or_else(|_| "S_darkroom".into());
+            crate::gallery::lay_out_rows_on(&mut g.world, &cat, rows, &floor)?;
             Ok(())
         }),
         Step::Wait("the rows drawn", |g| {

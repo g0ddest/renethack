@@ -773,3 +773,44 @@ pub(super) fn worn() -> Vec<Step> {
     steps.extend(quit());
     steps
 }
+
+/// `worn-generated` (the pilot's): a debug-mode female Valkyrie, on the
+/// owner's generated body, wishes for plate mail and a cloak and wears
+/// them: what shows of them on a body whose clothes are its own painting
+/// (`worn-generated-rest`, `-7m`), for the owner's word on baked armour.
+pub(super) fn worn_generated() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode, seed 1", |g| {
+        g.debug_mode = true;
+        g.seed = Some(1);
+        Ok(())
+    })];
+    steps.extend(hero("valkyrie", "female", "neutral"));
+    for (what, letter) in [("plate mail", "plate mail"), ("leather cloak", "cloak")] {
+        steps.extend(super::audio_tests::wish(what));
+        steps.extend([
+            super::key('W'),
+            Step::Request("what to wear", |p| !matches!(p, Prompt::Command)),
+            match letter {
+                "plate mail" => {
+                    Step::KeyFrom("the plate mail's letter", |g| letter_key(g, "plate mail"))
+                }
+                _ => Step::KeyFrom("the cloak's letter", |g| letter_key(g, "cloak")),
+            },
+            Step::Request("a command after wearing it", command),
+        ]);
+    }
+    steps.extend([
+        Step::Wait("the camera on the hero", camera_settled),
+        Step::Wait("a frame", |_| Ok(true)),
+        Step::Shot("worn-generated-rest"),
+        Step::Call("7 m off", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(7.0, 0.5);
+            Ok(())
+        }),
+        Step::Wait("the camera 7 m off", camera_settled),
+        Step::Wait("a frame", |_| Ok(true)),
+        Step::Shot("worn-generated-7m"),
+    ]);
+    steps.extend(quit());
+    steps
+}
