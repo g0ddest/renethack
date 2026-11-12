@@ -512,6 +512,13 @@ const TORCH_CAP: f32 = 0.6;
 const TORCH_CAP_RANGE: f32 = 2.5;
 /// How a torch's light falls off with distance (Godot's attenuation).
 const TORCH_DECAY: f32 = 1.2;
+/// The hero's own pool taken back from the creatures beside them, the
+/// same way: a pet at their heels sat in its hot spot (a dirty off-white
+/// dog came out near 0.8 by a torch). As far as this, never past most of
+/// the pool's own reach (there it would take more than the pool gives).
+const HERO_CAP: f32 = 0.7;
+const HERO_CAP_RANGE: f32 = 4.5;
+const HERO_CAP_REACH: f32 = 0.8;
 /// When a healing's glow rises round the hero after the line telling of
 /// it (seconds): after a potion's own glow (`hero::DRUNK_AT`).
 const HEALED_AT: f32 = 1.15;
@@ -4037,6 +4044,8 @@ pub struct MapView {
     ring_sized: Option<(Option<InstanceId>, f32)>,
     ring_tex: Gd<godot::classes::Texture2D>,
     hero_light: Gd<OmniLight3D>,
+    /// Its light taken back from the creatures beside the hero (`HERO_CAP`).
+    hero_cap: Gd<OmniLight3D>,
     /// The glow from below round the hero where the floors burn.
     underglow: Gd<OmniLight3D>,
     /// The low light all round the hero outside a lit room
@@ -4780,6 +4789,7 @@ impl MapView {
         hero_light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
         hero_light.set_shadow(true);
         hero_light.set_visible(false);
+        let hero_cap = light_cap(&mut hero_light, HERO_CAP_RANGE, 1.0);
         root.add_child(&hero_light);
 
         // the glow of the fire under a branch's floors, low round the hero
@@ -4930,6 +4940,7 @@ impl MapView {
             ring_sized: None,
             ring_tex,
             hero_light,
+            hero_cap,
             underglow,
             near_fill,
             rim_glow: None,
@@ -5774,9 +5785,15 @@ impl MapView {
         // the hero's own pool, as bright as the branch has it (a lamp in
         // hand keeps its own)
         if !self.hero_gear.lamp() {
-            self.hero_light
-                .set_param(Param::ENERGY, HERO_LIGHT_ENERGY * HERO_GAIN * l.hero_light);
+            let energy = HERO_LIGHT_ENERGY * HERO_GAIN * l.hero_light;
+            self.hero_light.set_param(Param::ENERGY, energy);
             self.hero_light.set_param(Param::RANGE, l.hero_range);
+            self.hero_cap.set_color(HERO_LIGHT);
+            self.hero_cap.set_param(Param::ENERGY, energy * HERO_CAP);
+            self.hero_cap.set_param(
+                Param::RANGE,
+                (l.hero_range * HERO_CAP_REACH).min(HERO_CAP_RANGE),
+            );
         }
         self.show_reflect();
         self.show_sky_sea(match l.under {
@@ -8007,6 +8024,10 @@ impl MapView {
             self.hero_light.set_param(Param::ENERGY, energy);
             self.hero_light.set_param(Param::RANGE, range);
             self.hero_light.set_shadow(!lamp);
+            self.hero_cap.set_color(color);
+            self.hero_cap.set_param(Param::ENERGY, energy * HERO_CAP);
+            self.hero_cap
+                .set_param(Param::RANGE, (range * HERO_CAP_REACH).min(HERO_CAP_RANGE));
         }
     }
 
@@ -11326,7 +11347,7 @@ impl MapView {
 type TorchWall = ((i32, i32), (i32, i32));
 
 /// A light's twin that takes some of its light back from the creatures
-/// close to it (`TORCH_CAP`): negative, on their layer alone, as far as
+/// close to it (`TORCH_CAP`, `HERO_CAP`): negative, on their layer alone, as far as
 /// `range` and falling off as the light does (`decay`), its energy set as
 /// a share of the light's; a child of it, it moves and hides with it.
 fn light_cap(light: &mut Gd<OmniLight3D>, range: f32, decay: f32) -> Gd<OmniLight3D> {
