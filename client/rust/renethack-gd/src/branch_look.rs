@@ -690,7 +690,10 @@ fn plane_look(plane: Plane) -> BranchLook {
             cap: "gilded",
             ambient: rgb(0.6, 0.58, 0.72),
             ambient_energy: 0.3,
-            fill_scale: 2.0,
+            // (its pale marble under a doubled fill and the hero's full
+            // pool blew out to white, p99 235: lit, it is cold stone)
+            fill_scale: 1.1,
+            hero_light: 0.7,
             fog: rgb(0.7, 0.66, 0.9),
             fog_density: 0.003,
             darkness: rgb(0.012, 0.01, 0.035),
@@ -698,8 +701,7 @@ fn plane_look(plane: Plane) -> BranchLook {
             under: Under::Stars,
             grade: Grade {
                 saturation: 0.85,
-                brightness: 1.05,
-                highlights: rgb(1.04, 1.02, 0.96),
+                highlights: rgb(1.0, 1.0, 0.96),
                 ..NEUTRAL
             },
             dress: Dress::NONE,
