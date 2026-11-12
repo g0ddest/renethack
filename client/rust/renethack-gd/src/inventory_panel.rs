@@ -1957,7 +1957,7 @@ impl InventoryPanel {
         hero_rect.set_visible(false);
         doll_area.add_child(&hero_rect);
         let mut doll = Vec::new();
-        let ghost_color = Color::from_rgba(0.72, 0.54, 0.23, 0.28);
+        let ghost_color = Color::from_rgba(0.72, 0.54, 0.23, 0.5);
         let mut slot_area = doll_area.clone();
         let mut add_slot = |slot: DollSlot, x: f32, y: f32, doll: &mut Vec<(DollSlot, Socket)>| {
             let mut s = Socket::new(CELL, &looks);

@@ -1,4 +1,4 @@
-// A thing on the floor's glint (art.rs: over each one): a small star of
+// A thing on the floor's glint (art.rs: over each one): a small point of
 // light that flares now and then, each thing at its own moment (by where
 // it lies), so what lies about catches the eye at the game's distance.
 // A flat square stood up here to face the eye.

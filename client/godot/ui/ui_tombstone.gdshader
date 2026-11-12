@@ -1,7 +1,7 @@
 // The end screen's tombstone (genl_outrip's picture, drawn): a granite
 // headstone with a round top on a plinth, lit from the top left, its face
 // polished inside a carved line, moss at its foot, on a strip of earth
-// and grass with pebbles and a few flowers, casting a soft shadow; the
+// and grass with pebbles and a few dead stalks, casting a soft shadow; the
 // night behind it a cold glow round its top, its edge caught by that
 // light, a candle burning on its plinth. All of it fades out at the
 // control's edges, into the page. tombstone.rs sets `size` to the
@@ -23,7 +23,8 @@ uniform vec4 stone_dark : source_color = vec4(0.26, 0.25, 0.24, 1.0);
 uniform vec4 moss_color : source_color = vec4(0.2, 0.26, 0.12, 1.0);
 uniform vec4 earth_color : source_color = vec4(0.13, 0.095, 0.065, 1.0);
 uniform vec4 grass_color : source_color = vec4(0.15, 0.22, 0.09, 1.0);
-uniform vec4 flower_color : source_color = vec4(0.86, 0.82, 0.64, 1.0);
+// (the dead stalks at its foot)
+uniform vec4 flower_color : source_color = vec4(0.2, 0.17, 0.11, 1.0);
 // the night behind the stone, and the cold light round its top
 uniform vec4 night_color : source_color = vec4(0.05, 0.06, 0.09, 1.0);
 uniform vec4 moon_color : source_color = vec4(0.44, 0.52, 0.66, 1.0);
@@ -192,14 +193,25 @@ void fragment() {
 		e += flame_color.rgb * e * lit * lit * 1.2;
 		col = mix(col, vec4(e, 1.0), spread);
 	}
-	vec2 flowers[7] = vec2[](vec2(0.14, 3.0), vec2(0.2, -1.0), vec2(0.27, 5.0), vec2(0.36, 9.0),
+	// what grew at its foot, long dead: dry stalks with a seed head each,
+	// dull as the earth, lit only by the candle (no bloom: bright dots of
+	// flowers here read as cute)
+	vec2 stalks[7] = vec2[](vec2(0.14, 3.0), vec2(0.2, -1.0), vec2(0.27, 5.0), vec2(0.36, 9.0),
 		vec2(0.64, 8.0), vec2(0.76, 2.0), vec2(0.83, -2.0));
 	for (int i = 0; i < 7; i++) {
-		vec2 c = vec2(flowers[i].x * size.x, size.y - ground_h + 8.0 + flowers[i].y);
-		float r = length(p - c);
-		float petal = 1.0 - smoothstep(2.2, 3.4, r);
-		vec3 bloom = mix(vec3(0.85, 0.68, 0.25), flower_color.rgb, smoothstep(0.6, 1.4, r));
-		col = mix(col, vec4(bloom, 1.0), petal * spread);
+		float h = hash(vec2(float(i), 4.2));
+		float tall = 7.0 + 8.0 * h;
+		vec2 foot = vec2(stalks[i].x * size.x, size.y - ground_h + 12.0 + stalks[i].y);
+		// leaning, more towards its head
+		float up = clamp((foot.y - p.y) / tall, 0.0, 1.0);
+		float lean = (h - 0.5) * 7.0 * up * up;
+		float stem = (1.0 - smoothstep(0.4, 1.1, abs(p.x - foot.x - lean)))
+			* step(p.y, foot.y) * step(foot.y - tall, p.y);
+		vec2 top = foot + vec2((h - 0.5) * 7.0, -tall);
+		float head = 1.0 - smoothstep(1.2, 2.2, length((p - top) * vec2(1.0, 0.75)));
+		vec3 dry = flower_color.rgb * (0.7 + 0.5 * h);
+		dry += flame_color.rgb * dry * lit * lit;
+		col = mix(col, vec4(dry, 1.0), max(stem * 0.85, head) * spread);
 	}
 	// the candle: a stub of wax on the plinth, its flame and the halo
 	// round it

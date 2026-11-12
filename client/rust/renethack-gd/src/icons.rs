@@ -171,8 +171,10 @@ pub fn emblem(glyph: Glyph) -> Gd<Texture2D> {
     tex
 }
 
-/// A glyph engraved in one colour, outline only (slot silhouettes,
-/// filter tabs); `white` so the caller's modulate colours it.
+/// A glyph struck in relief as the bar's emblems are, in a pale metal
+/// the caller's modulate colours (slot silhouettes, filter tabs, the
+/// lists' class marks): a thin line drawing of it read as a wireframe in
+/// an empty box.
 pub fn glyph_icon(glyph: Glyph) -> Gd<Texture2D> {
     if let Some(t) = GLYPHS.with(|g| g.borrow().get(&glyph).cloned()) {
         return t;
@@ -1522,7 +1524,7 @@ enum Style {
     /// Embossed surfaces with an outline and a shadow; the class's main
     /// surface.
     Filled(Mat),
-    /// White strokes along the outlines (tinted by the caller).
+    /// Struck as `Struck`, in a pale metal for the caller to tint.
     Stroke,
     /// One solid shape struck in gold, as the HUD's emblems
     /// (`ui_icon.gdshader`): its edges rounded and lit from the top left,
@@ -1532,6 +1534,9 @@ enum Style {
 
 /// The struck emblems' gold: old gold, dulled (theme::GOLD a little grey).
 const STRUCK_GOLD: [f32; 3] = [0.6, 0.47, 0.25];
+/// The pale metal of an emblem its user tints (`glyph_icon`): its lit
+/// faces near white, so the tint is the colour they show.
+const STRUCK_PALE: [f32; 3] = [0.8, 0.8, 0.8];
 
 fn mix(a: [f32; 3], b: [f32; 3], t: f32) -> [f32; 3] {
     [
@@ -1573,16 +1578,12 @@ fn paint(g: Glyph, style: Style, n: usize) -> Vec<u8> {
             );
             let mut c = [0.0f32; 4];
             match style {
-                Style::Stroke => {
-                    let w = 0.045;
-                    let d = ls
-                        .iter()
-                        .map(|(f, _)| f(p).abs() - w)
-                        .fold(f32::MAX, f32::min);
-                    let a = cover(d / 0.9);
-                    c = [1.0, 1.0, 1.0, a];
-                }
-                Style::Struck => {
+                Style::Stroke | Style::Struck => {
+                    // gold, or a pale metal a modulate colours
+                    let (metal, glint) = match style {
+                        Style::Stroke => (STRUCK_PALE, [1.0, 1.0, 1.0]),
+                        _ => (STRUCK_GOLD, [0.9, 0.8, 0.62]),
+                    };
                     // a little bolder than the outline
                     let solid = |q: V| all(q) - 0.03;
                     // the relief's height: rising over the rounded edge,
@@ -1624,9 +1625,9 @@ fn paint(g: Glyph, style: Style, n: usize) -> Vec<u8> {
                         let sp = ((n3.0 * hv.0 + n3.1 * hv.1 + n3.2 * hv.2) / hl).max(0.0);
                         let spec = sp.powi(24);
                         let t = ((p.1 + 0.9) / 1.8).clamp(0.0, 1.0);
-                        let gold = STRUCK_GOLD.map(|v| v * (1.2 - 0.4 * t));
+                        let gold = metal.map(|v| v * (1.2 - 0.4 * t));
                         let mut col = gold.map(|v| v * (0.3 + 0.95 * diff));
-                        col = mix(col, [0.9, 0.8, 0.62], spec * 0.18);
+                        col = mix(col, glint, spec * 0.18);
                         // the grooves dark
                         col = mix(col, gold.map(|v| v * 0.32), groove(p) * 0.85);
                         c = over(c, col, a);
