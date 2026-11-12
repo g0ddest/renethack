@@ -176,6 +176,7 @@ fn lamp_offset(kind: Lamp) -> Vector3 {
         Lamp::Lava => at(0.0, 0.4, 0.0),
         Lamp::Down => at(0.0, -0.05, 0.3),
         Lamp::Holy => at(0.0, 2.4, 0.0),
+        Lamp::Gate(x, z) => at(f32::from(x) * 1.1, 1.9, f32::from(z) * 1.1),
     }
 }
 
@@ -970,6 +971,10 @@ enum Lamp {
     /// An Astral Plane's altar lit from above by its god, a shaft of light
     /// in a thin mist.
     Holy,
+    /// A castle's gate, lit warm from over the water before it (the way
+    /// out of it, in x and z): its bridge, raised or let down, read faint
+    /// in the wall's shadow at the game's distance.
+    Gate(i8, i8),
 }
 
 /// One mesh of a cell, relative to the cell's centre on the ground.
@@ -2023,6 +2028,21 @@ const CORNICE: f32 = 0.07;
 /// How far a raised drawbridge leans out from upright over its water, on
 /// its chains (degrees).
 const DRAWBRIDGE_LEAN: f32 = 18.0;
+/// A drawbridge's planks: warm, heavy timber, a step lighter than a door's
+/// (the old grey planks were one with the grey stone and the dark water
+/// about them, faint at the game's distance).
+const BRIDGE_WOOD: &str = "planks";
+const SHADE_BRIDGE: u8 = 110;
+/// The gate's own light (`Lamp::Gate`): its colour, energy and reach.
+const GATE_LIGHT: Color = Color::from_rgb(1.0, 0.68, 0.42);
+const GATE_ENERGY: f32 = 3.4;
+const GATE_RANGE: f32 = 3.5;
+
+/// A drawbridge's planks (`BRIDGE_WOOD`), if the manifest has them.
+fn bridge_wood(ctx: &Ctx) -> Option<Paint> {
+    ctx.mat(BRIDGE_WOOD)
+        .map(|m| Paint::Pbr(m, SHADE_BRIDGE, Role::Door))
+}
 
 /// A chain of iron links from `from` to `to` (the cell's own metres),
 /// each link turned a quarter from the last; too small to cast a shadow.
@@ -2771,8 +2791,9 @@ fn terrain_base(
             // laid across the way, two iron straps along it, and from its
             // far end its chains running up to the top of the gate (it
             // was a flat slab)
-            let wood = main(SHADE_LIT);
+            let wood = bridge_wood(ctx).unwrap_or(main(SHADE_LIT));
             let iron = trim(SHADE_LIT);
+            look.lamp = Some(Lamp::Gate(0, 0));
             // (the way over it runs along x before a side wall)
             let along = vertical;
             const PLANKS: u32 = 6;
@@ -2827,7 +2848,8 @@ fn terrain_base(
                 .remap(ctx.art.terrain(Terrain::Wall).material)
                 .map_or(main(SHADE_LIT), |m| Paint::Pbr(m, SHADE_LIT, Role::Wall));
             let iron = pbr(ctx.mat("iron"), SHADE_LIT, Role::Prop, DEEP);
-            let wood = pbr(art.material, SHADE_LIT, Role::Door, FLOOR_UNSEEN);
+            let wood = bridge_wood(ctx)
+                .unwrap_or_else(|| pbr(art.material, SHADE_LIT, Role::Door, FLOOR_UNSEEN));
             door_frame(look, along_x, cut, ctx, stone, true);
             let (a, b) = if along_x { (0, 1) } else { (2, 3) };
             let out = if around.liquid[b] && !around.liquid[a] {
@@ -2841,6 +2863,12 @@ fn terrain_base(
             // camera above (upright, it showed only its edge in a side
             // wall)
             let face = out * 0.4;
+            let way = if out > 0.0 { 1 } else { -1 };
+            look.lamp = Some(if along_x {
+                Lamp::Gate(0, way)
+            } else {
+                Lamp::Gate(way, 0)
+            });
             let lean = if cut { 0.0f32 } else { DRAWBRIDGE_LEAN };
             let (ls, lc) = lean.to_radians().sin_cos();
             // a point of the bridge `y` up it and `n` out from its face, `u`
@@ -9402,6 +9430,11 @@ impl MapView {
                 light.set_param(Param::ENERGY, 2.6);
                 light.set_param(Param::RANGE, 3.6);
                 light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 2.0);
+            }
+            Lamp::Gate(..) => {
+                light.set_color(GATE_LIGHT);
+                light.set_param(Param::ENERGY, GATE_ENERGY);
+                light.set_param(Param::RANGE, GATE_RANGE);
             }
             Lamp::Holy => {
                 light.set_color(HOLY.0);
