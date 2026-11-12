@@ -2153,12 +2153,12 @@ impl SettingsPage {
         self.about.get_text().to_string()
     }
 
-    /// The row of `field` can change now: not dimmed, its arrows there
-    /// (self-tests).
+    /// The row of `field` can change now: not dimmed, an arrow there (the
+    /// one with nothing beyond it is dim on a live row too) (self-tests).
     pub fn row_live(&self, field: Field) -> bool {
         self.rows
             .iter()
-            .any(|r| r.field == field && !r.left.is_disabled())
+            .any(|r| r.field == field && !(r.left.is_disabled() && r.right.is_disabled()))
     }
 
     /// The rows of the section shown: each one's name and value as the
