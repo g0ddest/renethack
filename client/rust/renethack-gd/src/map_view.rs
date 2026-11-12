@@ -12036,6 +12036,30 @@ mod tests {
     }
 
     #[test]
+    fn a_used_rooms_floor_has_bones_by_its_walls_sokoban_none() {
+        let f = Fixture::new();
+        let map = level(&f.cat, &HALL);
+        let count = |branch: Branch| {
+            let mut bones = 0;
+            for r in 1..6 {
+                for c in 1..24 {
+                    let at = (PICTURE_AT.0 + c, PICTURE_AT.1 + r);
+                    for s in dressing_at(&f, &map, branch, at) {
+                        if matches!(s.paint, Paint::Flat(col, _) if col == dressing::BONE) {
+                            bones += 1;
+                            // by a wall: the room's rim of cells
+                            assert!(r == 1 || r == 5 || c == 1 || c == 23, "{at:?}");
+                        }
+                    }
+                }
+            }
+            bones
+        };
+        assert!(count(Branch::Main) > 0);
+        assert_eq!(count(Branch::Sokoban), 0);
+    }
+
+    #[test]
     fn a_rooms_floor_is_dressed_only_where_it_shows_bare() {
         let f = Fixture::new();
         let cat = &f.cat;

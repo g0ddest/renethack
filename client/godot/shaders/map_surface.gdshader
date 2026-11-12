@@ -619,6 +619,11 @@ void fragment() {
 		float g = smoothstep(0.06, 0.5, texture(fow_tex, cell / FIELD).b) * grime;
 		albedo *= 1.0 - 0.45 * g * g;
 		rough = min(rough + 0.1 * g, 1.0);
+		// and old stains worn into it here and there: ragged dark blots of
+		// no shape (round dark ones read as holes to step round)
+		float st = smoothstep(0.68, 0.76, tn2(wpos.xz * 0.38 + vec2(37.1, 13.9)))
+			* smoothstep(0.35, 0.6, tn2(wpos.xz * 1.6 + vec2(5.3, 29.7)));
+		albedo *= 1.0 - 0.4 * st * grime;
 	}
 	vec3 lava = vec3(0.0);
 	if ((grime > 0.0 || fissures > 0.0) && branch_cracks > 0.0) {

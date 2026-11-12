@@ -127,6 +127,9 @@ pub struct Dress {
     pub embers: bool,
     /// Rubble heaped and sunk in a room's corners.
     pub corners: bool,
+    /// What lies about a room long used: stones fallen at its walls' feet,
+    /// old bones sunk in the dirt by a wall.
+    pub debris: bool,
     /// Rock grown into a cave's walls.
     pub formations: bool,
     /// A worn rug laid in a small room's middle (one too small for a band
@@ -165,6 +168,7 @@ impl Dress {
         cracks: false,
         embers: false,
         corners: false,
+        debris: false,
         formations: false,
         rug: None,
     };
@@ -342,6 +346,7 @@ const MAIN: BranchLook = BranchLook {
         cracks: true,
         embers: false,
         corners: true,
+        debris: true,
         formations: false,
         rug: Some(("rug_red", "rug_ochre")),
     },
@@ -477,6 +482,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
                 cracks: true,
                 embers: true,
                 corners: true,
+                debris: true,
                 // heavy and plain, its braziers smouldering (lighting
                 // nothing); no inlay (its floors are its fire's)
                 piers: true,

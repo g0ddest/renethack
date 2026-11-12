@@ -10,7 +10,10 @@
 //! seams of fire in Gehennom; chains on the side walls; moss at their
 //! feet; small cobwebs high in the far corners, well above anybody's head.
 //! On its bare floor: cracks from the foot of its walls, rubble heaped and
-//! sunk in its corners. In a cave, rock grown into its walls from the
+//! sunk in its corners, stones fallen at its walls' feet, here and there
+//! old bones half sunk by a wall (dull, small, lying flat: never a thing
+//! to pick up, and never where something lies); stains are the floor
+//! shader's. In a cave, rock grown into its walls from the
 //! floor to their tops. Each is chosen by its cell on a fixed pattern that
 //! keeps the torches' cells free: a level looks the same every visit and
 //! as more of it comes into view.
@@ -36,7 +39,7 @@ use std::collections::HashMap;
 use super::{
     Around, CAP_HEIGHT, Ctx, Finish, Look, PLINTH_HEIGHT, Paint, Role, SHADE_LIT, SHADE_RUBBLE,
     SIDES, Side, WALL_HEIGHT, at, bevel, cell_noise, cuboid, cylinder, facets, is_pier, prism,
-    rock, torch_pattern, torus,
+    rock, sphere, torch_pattern, torus,
 };
 use crate::branch_look::{Brazier, Dress};
 
@@ -745,8 +748,12 @@ pub(super) fn floor(look: &mut Look, around: &Around, ctx: &Ctx) {
     if dress.cracks {
         cracks(look, around, ctx);
     }
-    if dress.corners && ctx.branch.rubble {
-        corner_rubble(look, around, ctx);
+    let heaped = dress.corners && ctx.branch.rubble && corner_rubble(look, around, ctx);
+    if dress.debris && !heaped {
+        if ctx.branch.rubble {
+            wall_rubble(look, around, ctx);
+        }
+        bones(look, around, ctx);
     }
     for s in &mut look.solids[first..] {
         s.shadow = false;
@@ -815,16 +822,16 @@ fn cracks(look: &mut Look, around: &Around, ctx: &Ctx) {
 /// middle as the stones at the walls' feet are: the big chunks in the
 /// corner, fallen from the walls and of their stone, the small of the
 /// rock spilled out of it.
-fn corner_rubble(look: &mut Look, around: &Around, ctx: &Ctx) {
+fn corner_rubble(look: &mut Look, around: &Around, ctx: &Ctx) -> bool {
     let (Some(rock), Some(fallen)) = (ctx.mat("bedrock"), masonry(ctx, 70)) else {
-        return;
+        return false;
     };
     let wall = |i: usize| around.sides[i] == Side::Wall;
     let corner = [(0usize, 2usize), (0, 3), (1, 2), (1, 3)]
         .into_iter()
         .find(|&(a, b)| wall(a) && wall(b));
     let Some((a, b)) = corner.filter(|_| ctx.noise(151) < 0.5) else {
-        return;
+        return false;
     };
     let (cx, cz) = (SIDES[b].0, SIDES[a].1);
     let rock = Paint::Pbr(rock, SHADE_RUBBLE, Role::Trim);
@@ -844,6 +851,86 @@ fn corner_rubble(look: &mut Look, around: &Around, ctx: &Ctx) {
         let rot = at(ctx.noise(salt + 3) * 90.0, ctx.noise(salt) * 360.0, 0.0);
         let paint = if size == 3 { fallen } else { rock };
         look.turned(facets(r, 5), paint, at(x, -r * 0.45, z), rot);
+    }
+    true
+}
+
+/// How often a wall's foot has stones fallen at it, a cell by a wall old
+/// bones (of the cells that may; the floor's stains are its shader's).
+const FALLEN: f32 = 0.2;
+const BONES: f32 = 0.08;
+/// Bone, old and dirty: dull, never white (a pale thing on the floor reads
+/// as something to pick up).
+pub(super) const BONE: Color = Color::from_rgb(0.3, 0.27, 0.22);
+
+/// A few stones fallen at the foot of a wall and sunk there, of the rock
+/// spilled out of it, along a stretch of it.
+fn wall_rubble(look: &mut Look, around: &Around, ctx: &Ctx) {
+    let Some(rock) = ctx.mat("bedrock") else {
+        return;
+    };
+    let rock = Paint::Pbr(rock, SHADE_RUBBLE, Role::Trim);
+    for (i, &(dx, dz)) in SIDES.iter().enumerate() {
+        if around.sides[i] != Side::Wall || ctx.noise(321 + i as u32) > FALLEN {
+            continue;
+        }
+        let middle = (ctx.noise(325 + i as u32) - 0.5) * 0.4;
+        let n = 3 + (ctx.noise(329 + i as u32) * 2.99) as u32;
+        for k in 0..n {
+            let salt = 340 + i as u32 * 20 + k * 3;
+            let r = [0.03, 0.04, 0.055][(ctx.noise(salt) * 2.99) as usize];
+            let along = middle + (ctx.noise(salt + 1) - 0.5) * 0.5;
+            let off = 0.43 - r * 0.7 - ctx.noise(salt + 2) * 0.08;
+            let pos = if dx == 0.0 {
+                at(along, -r * 0.45, dz * off)
+            } else {
+                at(dx * off, -r * 0.45, along)
+            };
+            let rot = at(ctx.noise(salt + 2) * 90.0, ctx.noise(salt) * 360.0, 0.0);
+            look.turned(facets(r, 5), rock, pos, rot);
+        }
+    }
+}
+
+/// Old bones half sunk in the dirt by a wall: a skull and two or three
+/// long bones lying flat about it.
+fn bones(look: &mut Look, around: &Around, ctx: &Ctx) {
+    let Some((dx, dz)) = SIDES
+        .iter()
+        .enumerate()
+        .find(|&(i, _)| around.sides[i] == Side::Wall)
+        .map(|(_, &s)| s)
+        .filter(|_| ctx.noise(311) < BONES)
+    else {
+        return;
+    };
+    let bone = Paint::Flat(BONE, Finish::Matte);
+    let along = (ctx.noise(312) - 0.5) * 0.4;
+    let (x, z) = if dx == 0.0 {
+        (along, dz * 0.24)
+    } else {
+        (dx * 0.24, along)
+    };
+    look.solid(sphere(0.045), bone, at(x, 0.004, z));
+    // (scattered, never two crossed in a clean sign)
+    let n = 3 + u32::from(ctx.noise(313) < 0.5);
+    for k in 0..n {
+        let salt = 314 + k * 3;
+        let len = 0.12 + ctx.noise(salt) * 0.1;
+        let heading = ctx.noise(salt + 1) * 180.0 + k as f32 * 47.0;
+        let (ox, oz) = (
+            (ctx.noise(salt + 2) - 0.5) * 0.36,
+            (ctx.noise(salt + 1) * 0.7 + k as f32 * 0.13).fract() * 0.36 - 0.18,
+        );
+        // (lying along the ground, half in it, inside the cell)
+        let px = (x * 0.8 + ox).clamp(-0.32, 0.32);
+        let pz = (z * 0.8 + oz).clamp(-0.32, 0.32);
+        look.turned(
+            cylinder(0.012, 0.012, len),
+            bone,
+            at(px, 0.004, pz),
+            at(90.0, heading, 0.0),
+        );
     }
 }
 
