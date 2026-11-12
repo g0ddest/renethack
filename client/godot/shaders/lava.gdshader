@@ -81,7 +81,13 @@ vec4 ground_blur(vec2 p) {
 	vec2 q = p * 0.42;
 	vec4 slow = vec4(tl2(q + vec2(7.3, 2.9)), tl2(q + vec2(1.7, 15.1)),
 		tl2(q + vec2(13.9, 8.3)), tl2(q + vec2(4.1, 11.7)));
-	f += (slow - 0.5) * 0.3 * big * step(0.004, wide);
+	f += (slow - 0.5) * 0.45 * big * step(0.004, wide);
+	// and a nearer wander over that: a long shore along a row of cells
+	// ran straight, a field's bays square (the Plane of Fire's)
+	vec2 q2 = p * 0.95;
+	vec4 mid = vec4(tl2(q2 + vec2(19.7, 3.3)), tl2(q2 + vec2(6.1, 23.9)),
+		tl2(q2 + vec2(27.3, 12.7)), tl2(q2 + vec2(10.9, 30.1)));
+	f += (mid - 0.5) * 0.22 * big * step(0.004, wide);
 	vec2 middle = floor(p + 0.5);
 	ivec2 at = clamp(ivec2(middle), ivec2(0), ivec2(FIELD) - 1);
 	float core = 1.0 - smoothstep(0.15, 0.45, length(p - middle));
@@ -142,19 +148,28 @@ void fragment() {
 	// keeps its lava
 	vec2 uv = (wpos.xz + 0.5) / FIELD;
 	float empty = texture(stand_tex, uv).g;
+	vec2 d = vec2(1.0) / FIELD;
+	float wide = (empty * 4.0
+		+ (texture(stand_tex, uv + vec2(d.x, 0.0)).g + texture(stand_tex, uv - vec2(d.x, 0.0)).g
+		+ texture(stand_tex, uv + vec2(0.0, d.y)).g + texture(stand_tex, uv - vec2(0.0, d.y)).g) * 2.0
+		+ texture(stand_tex, uv + d).g + texture(stand_tex, uv - d).g
+		+ texture(stand_tex, uv + vec2(d.x, -d.y)).g
+		+ texture(stand_tex, uv + vec2(-d.x, d.y)).g) / 16.0;
 	float fray = 0.0;
 	if (empty > 0.001) {
-		vec2 d = vec2(1.0) / FIELD;
-		float wide = (empty * 4.0
-			+ (texture(stand_tex, uv + vec2(d.x, 0.0)).g + texture(stand_tex, uv - vec2(d.x, 0.0)).g
-			+ texture(stand_tex, uv + vec2(0.0, d.y)).g + texture(stand_tex, uv - vec2(0.0, d.y)).g) * 2.0
-			+ texture(stand_tex, uv + d).g + texture(stand_tex, uv - d).g
-			+ texture(stand_tex, uv + vec2(d.x, -d.y)).g
-			+ texture(stand_tex, uv + vec2(-d.x, d.y)).g) / 16.0;
 		vec2 middle = floor(wpos.xz + 0.5);
 		float core = 1.0 - smoothstep(0.15, 0.4, length(wpos.xz - middle));
 		fray = mix(empty, wide, 0.6) + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.45
 			+ (tl2(wpos.xz * 0.42 + vec2(5.3, 17.9)) - 0.5) * 0.3 - core;
+	}
+	// and its glow dies back from there by a slow wandering line, from
+	// the very edge to a cell and a half in (that lava crusted over, still
+	// there): it ran out along the cells in straight runs and square bays
+	float ebb = 0.0;
+	if (wide > 0.001) {
+		float wander = (tl2(wpos.xz * 0.55 + vec2(31.7, 4.9)) - 0.5) * 0.5
+			+ (tl2(wpos.xz * 0.21 + vec2(2.3, 19.1)) - 0.5) * 0.5;
+		ebb = smoothstep(0.12, 0.35, wide + wander);
 	}
 	vec2 flow = vec2(t * 0.015, t * 0.008);
 	float plates = texture(noise_tex, wpos.xz * 0.45 + flow).r;
@@ -167,13 +182,21 @@ void fragment() {
 	vec3 glow = molten.rgb * crack * seethe;
 	vec3 rock = crust.rgb * mix(0.7, 1.3, fine);
 	if (has_flow) {
-		// the flow creeps; the noise's cracks open on its channels
-		vec2 uv = wpos.xz * flow_scale + flow * 0.6;
-		vec3 g = texture(flow_glow, uv).rgb;
+		// the flow creeps; the noise's cracks open on its channels. Its
+		// photograph repeats every two metres: two takes of it, turned and
+		// scaled apart and warped by a slow noise, each where the noise
+		// has it (one take banded a big field in rows of the same blots)
+		vec2 base = wpos.xz * flow_scale;
+		vec2 warp = vec2(tl2(wpos.xz * 0.35 + vec2(3.7, 1.3)), tl2(wpos.xz * 0.35 + vec2(8.1, 5.9))) - 0.5;
+		vec2 uv1 = base + warp * 0.4 + flow * 0.6;
+		const mat2 TURN = mat2(vec2(0.799, 0.602), vec2(-0.602, 0.799));
+		vec2 uv2 = TURN * (base * 0.77) + vec2(0.31, 0.57) - warp * 0.35 + flow * 0.45;
+		float take = smoothstep(0.4, 0.6, tl2(wpos.xz * 0.21 + vec2(13.3, 2.1)));
+		vec3 g = mix(texture(flow_glow, uv1).rgb, texture(flow_glow, uv2).rgb, take);
 		float channel = dot(g, vec3(0.5, 0.4, 0.1));
 		crack = max(channel * 1.2, crack * 0.35);
 		glow = molten.rgb * crack * seethe;
-		rock = texture(flow_albedo, uv).rgb * 0.6;
+		rock = mix(texture(flow_albedo, uv1).rgb, texture(flow_albedo, uv2).rgb, take) * 0.6;
 	}
 
 	// along its shore the crust thickens over it, its very edge a line of
@@ -185,9 +208,12 @@ void fragment() {
 	// toward what nothing is known of its crust closes over it, a thin
 	// line of glow where it does, and past that it lies cooled black (a
 	// hole there showed the ground under the level lit, a square of it)
+	crack *= 1.0 - ebb;
+	glow = molten.rgb * max(crack, rim * 0.8) * seethe;
 	float cooled = 0.0;
-	if (fray > 0.0) {
-		float line = smoothstep(0.27, 0.33, fray) * (1.0 - smoothstep(0.33, 0.39, fray));
+	if (empty > 0.001) {
+		// (where its glow has ebbed already, no line: it ran straight)
+		float line = smoothstep(0.27, 0.33, fray) * (1.0 - smoothstep(0.33, 0.39, fray)) * (1.0 - ebb);
 		cooled = smoothstep(0.33, 0.39, fray);
 		crack *= 1.0 - smoothstep(0.05, 0.3, fray);
 		glow = molten.rgb * max(max(crack, rim * 0.8), line * 0.45) * seethe * (1.0 - cooled);

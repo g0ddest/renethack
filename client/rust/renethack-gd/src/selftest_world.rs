@@ -932,6 +932,58 @@ pub(super) fn lava_edge() -> Vec<Step> {
     steps
 }
 
+/// The ground's edges against what is not known (the art loop's
+/// iteration 3: the Plane of Fire's rectangular bays, the banded repeat
+/// of a big lava field, ice cut square on arrival at Gehennom 31), for
+/// pictures before and after (not part of `make test-client`): a big lava
+/// field half seen (`ground-edges-lava`) and the arrival's ice, floor and
+/// pool (`ground-edges-ice`), each at the game's distance and close
+/// (`-close`).
+pub(super) fn ground_edges() -> Vec<Step> {
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    type Lay = fn(&mut RenethackGame) -> Result<(), String>;
+    let lays: [(Lay, &'static str, &'static str); 2] = [
+        (
+            |g| {
+                let cat = g.catalog.clone().ok_or("no catalog")?;
+                crate::gallery::lay_out_ground_edges(&mut g.world, &cat, false)?;
+                Ok(())
+            },
+            "ground-edges-lava",
+            "ground-edges-lava-close",
+        ),
+        (
+            |g| {
+                let cat = g.catalog.clone().ok_or("no catalog")?;
+                crate::gallery::lay_out_ground_edges(&mut g.world, &cat, true)?;
+                Ok(())
+            },
+            "ground-edges-ice",
+            "ground-edges-ice-close",
+        ),
+    ];
+    for (lay, far_shot, close) in lays {
+        steps.extend([
+            Step::Call("lay out the ground", lay),
+            Step::Wait("the ground drawn", |g| {
+                let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                Ok(drawn == Some(g.world.map.generation()))
+            }),
+            Step::Call("the game's distance", |g| far(g, 11.0)),
+            Step::Wait("the camera on it", drawn_here),
+            Step::Shot(far_shot),
+            Step::Call("closer", |g| far(g, 7.0)),
+            Step::Wait("the camera closer", drawn_here),
+            Step::Shot(close),
+        ]);
+    }
+    steps.extend(quit());
+    steps
+}
+
 /// Dark creatures on a dark floor in the game's own light (the art loop's
 /// first critique, #6: a black dragon, a black pudding and a shade lost
 /// on dark stone), as a hero with infravision sees them there, and

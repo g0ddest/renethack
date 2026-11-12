@@ -106,7 +106,13 @@ vec4 ground_blur(vec2 p) {
 	vec2 q = p * 0.42;
 	vec4 slow = vec4(tl2(q + vec2(7.3, 2.9)), tl2(q + vec2(1.7, 15.1)),
 		tl2(q + vec2(13.9, 8.3)), tl2(q + vec2(4.1, 11.7)));
-	f += (slow - 0.5) * 0.3 * big * step(0.004, wide);
+	f += (slow - 0.5) * 0.45 * big * step(0.004, wide);
+	// and a nearer wander over that: a long shore along a row of cells
+	// ran straight, a field's bays square (the Plane of Fire's)
+	vec2 q2 = p * 0.95;
+	vec4 mid = vec4(tl2(q2 + vec2(19.7, 3.3)), tl2(q2 + vec2(6.1, 23.9)),
+		tl2(q2 + vec2(27.3, 12.7)), tl2(q2 + vec2(10.9, 30.1)));
+	f += (mid - 0.5) * 0.22 * big * step(0.004, wide);
 	vec2 middle = floor(p + 0.5);
 	ivec2 at = clamp(ivec2(middle), ivec2(0), ivec2(FIELD) - 1);
 	float core = 1.0 - smoothstep(0.15, 0.45, length(p - middle));

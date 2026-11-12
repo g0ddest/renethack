@@ -250,8 +250,9 @@ impl Surfaces {
             mat.set_shader_parameter("ground_tex", &self.ground.to_variant());
         }
         // (the fire's cracks, in floors and the ground below, keep clear
-        // of what stands on them)
-        if matches!(role, Role::Floor | Role::Void) {
+        // of what stands on them; floors and ice fray where nothing is
+        // drawn beside them)
+        if matches!(role, Role::Floor | Role::Void | Role::Ice) {
             mat.set_shader_parameter("stand_tex", &self.standing.to_variant());
         }
         // the rock the level is cut from is rock, never blocks

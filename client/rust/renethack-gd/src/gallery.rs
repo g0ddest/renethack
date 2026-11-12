@@ -688,6 +688,46 @@ pub fn lay_out_lava_edge(world: &mut World, cat: &Catalog) -> Result<(i32, i32),
     Ok((cx, cy))
 }
 
+/// The ground's edges against what is not known, for pictures (the
+/// `ground-edges` scene): `ice`, the Gehennom arrival the art director
+/// met (three seen columns, ice, floor and a pool, nothing about them);
+/// else a big lava field half seen, a lit floor's bay cut into it from the
+/// west and a lone floor cell notched into its north edge, the rest of its
+/// edge against nothing known.
+pub fn lay_out_ground_edges(
+    world: &mut World,
+    cat: &Catalog,
+    ice: bool,
+) -> Result<(i32, i32), String> {
+    let map = &mut world.map;
+    map.clear();
+    let lit = cmap(cat, "S_room")?;
+    let (cx, cy) = (40, 10);
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    if ice {
+        let frozen = cmap(cat, "S_ice")?;
+        let pool = cmap(cat, "S_pool")?;
+        for y in cy - 1..=cy + 1 {
+            map.print(cx - 1, y, &frozen, None);
+            map.print(cx, y, if y == cy - 1 { &frozen } else { &lit }, None);
+            map.print(cx + 1, y, &pool, None);
+        }
+        map.print(cx, cy, &hero, Some(&lit));
+    } else {
+        let lava = cmap(cat, "S_lava")?;
+        for y in cy - 4..=cy + 4 {
+            for x in cx - 7..=cx + 8 {
+                let bay = x <= cx - 5 && (cy - 1..=cy + 1).contains(&y);
+                let notch = (x, y) == (cx + 4, cy - 4);
+                map.print(x, y, if bay || notch { &lit } else { &lava }, None);
+            }
+        }
+        map.print(cx - 6, cy, &hero, Some(&lit));
+    }
+    world.view_center = Some((cx, cy));
+    Ok((cx, cy))
+}
+
 /// As `lay_out_rows`, on a floor of `floor` (a dark one: "S_darkroom").
 pub fn lay_out_rows_on(
     world: &mut World,

@@ -238,7 +238,13 @@ vec4 ground_blur(vec2 p) {
 	vec2 q = p * 0.42;
 	vec4 slow = vec4(tl2(q + vec2(7.3, 2.9)), tl2(q + vec2(1.7, 15.1)),
 		tl2(q + vec2(13.9, 8.3)), tl2(q + vec2(4.1, 11.7)));
-	f += (slow - 0.5) * 0.3 * big * step(0.004, wide);
+	f += (slow - 0.5) * 0.45 * big * step(0.004, wide);
+	// and a nearer wander over that: a long shore along a row of cells
+	// ran straight, a field's bays square (the Plane of Fire's)
+	vec2 q2 = p * 0.95;
+	vec4 mid = vec4(tl2(q2 + vec2(19.7, 3.3)), tl2(q2 + vec2(6.1, 23.9)),
+		tl2(q2 + vec2(27.3, 12.7)), tl2(q2 + vec2(10.9, 30.1)));
+	f += (mid - 0.5) * 0.22 * big * step(0.004, wide);
 	vec2 middle = floor(p + 0.5);
 	ivec2 at = clamp(ivec2(middle), ivec2(0), ivec2(FIELD) - 1);
 	float core = 1.0 - smoothstep(0.15, 0.45, length(p - middle));
@@ -423,11 +429,12 @@ void fragment() {
 		near_lava = (1.0 - smoothstep(0.0, 0.35, own - v.g)) * step(0.001, v.g);
 		near_ice = edge_kind == 1.0 ? (1.0 - smoothstep(0.0, 0.2, own - v.b)) * step(0.001, v.b) : 0.0;
 	}
-	// a floor's edge where nothing is drawn beside it (the dark past what
-	// is seen, a floor NetHack leaves unmapped out of sight): frayed by the
-	// noise as a shore is, never a square step
+	// a floor's or ice's edge where nothing is drawn beside it (the dark
+	// past what is seen, a floor NetHack leaves unmapped out of sight):
+	// frayed by the noise as a shore is, never a square step (ice ended
+	// square and pale on arrival at Gehennom 31, against the floor's fray)
 	float edge_fade = 0.0;
-	if (edge_kind == 1.0) {
+	if (edge_kind == 1.0 || edge_kind == 4.0) {
 		vec2 suv = (wpos.xz + 0.5) / FIELD;
 		float empty = texture(stand_tex, suv).g;
 		if (empty > 0.001 && empty + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.6 > 0.5) {
@@ -449,6 +456,9 @@ void fragment() {
 			float fray = mix(empty, wide, 0.5) + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.3
 				- core * 0.5;
 			edge_fade = smoothstep(0.08, 0.45, fray) * (1.0 - 0.6 * overview);
+			// (pale ice faded all the way went darker than the dark beyond
+			// it, a black band round it before its fray)
+			edge_fade *= edge_kind == 4.0 ? 0.7 : 1.0;
 		}
 	}
 	vec3 n = normalize(wnrm);
@@ -750,7 +760,9 @@ void fragment() {
 	ALBEDO = color;
 	ROUGHNESS = rough;
 	// rock's tops and ledges mirror nothing at all
-	SPECULAR = (chunks > 0.0 ? specular * (1.0 - up) : specular) * (1.0 - rim_near);
+	// (faded ice keeps no glints over the dark beyond it)
+	SPECULAR = (chunks > 0.0 ? specular * (1.0 - up) : specular) * (1.0 - rim_near)
+		* (edge_kind == 4.0 ? 1.0 - edge_fade : 1.0);
 	METALLIC = metallic * orm.b;
 	// what metal mirrors (map_view's metal sky) falls on no stone, wet
 	// floor or ice (the dark is tuned without it): only on the metal the
