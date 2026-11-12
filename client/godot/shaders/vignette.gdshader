@@ -10,10 +10,14 @@ shader_type canvas_item;
 
 uniform sampler2D screen : hint_screen_texture, filter_linear_mipmap;
 uniform vec3 edge_color : source_color = vec3(0.016, 0.018, 0.026);
-// where the darkening starts and ends, as a share of the way to a corner
-uniform float radius = 0.74;
-uniform float softness = 0.48;
-uniform float strength = 0.55;
+// where the darkening starts and ends, as a share of the way to a corner,
+// and how dark it goes: the corners heavy, the sides a fifth darker (from
+// 0.74 and 0.48 the frame's outer 15 % lost a third of its light, the
+// sides near half, and a foe standing there, where archers stand, was
+// near invisible)
+uniform float radius = 0.88;
+uniform float softness = 0.46;
+uniform float strength = 0.58;
 uniform float grain = 0.025;
 // a new level comes up out of black (map_view.rs)
 uniform float fade = 0.0;
