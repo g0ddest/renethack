@@ -908,6 +908,21 @@ pub fn put_feature(
     Ok(())
 }
 
+/// A thing lying on a cell of `CORRIDORS`' floor (`unlit`: a dark room's).
+pub fn put_object(
+    world: &mut World,
+    cat: &Catalog,
+    (class, appearance): (&str, &str),
+    at: (i32, i32),
+    unlit: bool,
+) -> Result<(), String> {
+    let (x, y) = corridor_cell(at);
+    let floor = cmap(cat, if unlit { "S_darkroom" } else { "S_room" })?;
+    let thing = object(cat, class, appearance, false)?;
+    world.map.print(x, y, &thing, Some(&floor));
+    Ok(())
+}
+
 /// A piece of a ray on a cell of `CORRIDORS`, over the lit floor, as the
 /// engine draws one: a zap glyph of NetHack's beam type `beam` (`ZT_*`)
 /// along `step` (the way the ray goes), or a wand of digging's beam

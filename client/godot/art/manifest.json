@@ -58,7 +58,7 @@
   "dark_iron": {"color": "#4a4541", "metallic": 0.6, "roughness": 0.6},
   "runed_steel": {"textures": "cc0/ambientcg/Metal038/Metal038", "uv_scale": 6.0, "color": "#b4bcc8", "metallic": 0.8, "roughness": 0.6, "normal_scale": 0.6, "emission": "#6fa8ff", "emission_energy": 0.5},
   "gold": {"color": "#c8983a", "metallic": 0.8, "roughness": 0.3},
-  "coin_gold": {"color": "#f4c43a", "metallic": 0.8, "roughness": 0.3, "rim": 0.4, "emission": "#ffbe2a", "emission_energy": 0.32},
+  "coin_gold": {"color": "#b08a2c", "metallic": 0.8, "roughness": 0.35, "rim": 0.25},
   "glass": {"color": "#b0d0dc", "roughness": 0.03, "alpha": 0.5},
   "clear_glass": {"color": "#5c8c96", "roughness": 0.02, "metallic": 0.3, "alpha": 0.3, "rim": 0.6},
   "carved_stone": {"textures": "cc0/polyhaven/textures/stone_wall_04/stone_wall_04", "uv_scale": 0.4, "color": "#a8aaac"},

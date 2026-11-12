@@ -87,7 +87,7 @@ pub enum Pose {
 /// boulder: Sokoban's dozen boulders each sat in a loot spotlight), a
 /// faint pool (heavy things: arms, armour, tools, food; rocks and stones),
 /// the full pool and its glint (the small things worth stooping for), or
-/// the full pool and coins' own glints (gold).
+/// a half pool and two small glints of its own (gold).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Sheen {
     None,
@@ -185,13 +185,16 @@ const SHINE_MORE: f32 = 0.35;
 const SHINE_ENERGY: f32 = 0.9;
 /// A heavy thing's pool, this share of a small thing's (`Sheen::Faint`).
 const SHINE_FAINT: f32 = 0.35;
-/// Where a pile of gold catches the light: warm glints over its coins
-/// (shares of its reach across and along, and metres up), each flaring at
-/// its own moment (by where it lies), as big as a small thing's one.
-const COIN_GLINTS: [(f32, f32, f32); 3] =
-    [(-0.28, -0.2, 0.09), (0.3, 0.05, 0.07), (-0.02, 0.3, 0.11)];
-const COIN_GLINT_SIZE: f32 = 0.26;
-const COIN_GLINT: Color = Color::from_rgb(1.0, 0.9, 0.62);
+/// Where a pile of gold catches the light: two small warm glints on its
+/// coins (shares of its reach across and along, and metres up), each
+/// flaring at its own moment (by where it lies). Gold is dark warm metal
+/// lit by what lights the floor: its pool this share of a small thing's
+/// (the full pool, three large glints and a glow of its own made a pile
+/// the brightest thing in a room, a white blob).
+const COIN_GLINTS: [(f32, f32, f32); 2] = [(-0.24, -0.12, 0.09), (0.22, 0.2, 0.08)];
+const COIN_GLINT_SIZE: f32 = 0.18;
+const COIN_GLINT: Color = Color::from_rgb(1.0, 0.76, 0.4);
+const COIN_SHINE: f32 = 0.5;
 
 /// A thing on the floor's model, scale and turn (the bits of the floats).
 type WareKey = (usize, u32, [u32; 3]);
@@ -1932,6 +1935,7 @@ impl Art {
         // faint pool is a weaker light)
         d.set_emission_energy(match sheen {
             Sheen::Faint => SHINE_ENERGY * SHINE_FAINT,
+            Sheen::Coins => SHINE_ENERGY * COIN_SHINE,
             _ => SHINE_ENERGY,
         });
         d.set_modulate(SHINE);

@@ -28,9 +28,9 @@ void fragment() {
 	// a quick flare and a slower fade, once a period
 	float t = fract(TIME / period + phase);
 	float flare = smoothstep(0.0, 0.05, t) * (1.0 - smoothstep(0.05, 0.2, t));
-	// a four-pointed star: thin rays and a soft heart
+	// a small hot point, drawn out a little to either side: no star
 	vec2 c = abs(corner);
-	float rays = max(exp(-c.x * 16.0) * (1.0 - c.y), exp(-c.y * 16.0) * (1.0 - c.x));
-	float heart = exp(-dot(corner, corner) * 12.0);
-	ALBEDO = color * (rays * 1.6 + heart * 2.2) * flare;
+	float heart = exp(-dot(corner, corner) * 14.0);
+	float streak = exp(-c.y * 22.0) * exp(-c.x * 3.5) * (1.0 - c.x);
+	ALBEDO = color * (streak * 0.7 + heart * 2.2) * flare;
 }

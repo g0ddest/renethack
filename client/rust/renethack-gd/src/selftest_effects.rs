@@ -10,7 +10,7 @@
 //! the magic a first hour shows worked on the hero in the corridors' west
 //! room, as its lines tell it: a scroll of light read in the dark, enchant
 //! armour on the shield, enchant weapon on the spear in hand, a curse
-//! lifted, a bolt of force cast at the wall. Pictures only
+//! lifted, a bolt of force cast at the wall; gold lies about the room. Pictures only
 //! (`--screenshots`): not part of `make test-client`.
 
 use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
@@ -20,7 +20,7 @@ use super::{Step, camera_settled, map_view, quit, start};
 use crate::engulf::{Flesh, Inside, Stuff};
 use crate::gallery::{
     CorridorScene, corridor_cell, lay_out_corridors, lay_out_scene, put_blast, put_engulfed,
-    put_feature, put_ray,
+    put_feature, put_object, put_ray,
 };
 use crate::game::RenethackGame;
 use crate::vfx::VfxKind;
@@ -548,6 +548,9 @@ const MAGIC_SCENE: CorridorScene = CorridorScene {
     others: &[],
 };
 
+/// Where gold lies in the `magic` room.
+const GOLD: [(i32, i32); 3] = [(4, 4), (8, 4), (3, 2)];
+
 /// When the last line of magic was told (seconds; steps are plain
 /// functions).
 static TOLD_AT: AtomicU32 = AtomicU32::new(0);
@@ -572,6 +575,11 @@ fn told_since(secs: f32) -> bool {
 fn lay_out_magic(g: &mut RenethackGame, unlit: bool) -> Result<(), String> {
     let cat = g.catalog.clone().ok_or("no catalog")?;
     lay_out_scene(&mut g.world, &cat, &MAGIC_SCENE, unlit)?;
+    // gold lying about it, near the hero and by the walls: in the dark
+    // and in the room's light
+    for at in GOLD {
+        put_object(&mut g.world, &cat, ("$", "gold piece"), at, unlit)?;
+    }
     ui_map(g)?.set_showcase(false);
     Ok(())
 }
