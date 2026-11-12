@@ -726,6 +726,98 @@ pub fn lay_out_rows_on(
     Ok((cx, cy))
 }
 
+/// How far apart `lay_out_colours`' rows stand: a dragon's wings, three
+/// cells in front of the row behind it, hid half of each body there.
+const ROWS_APART: i32 = 4;
+
+/// Where `lay_out_colours` stands each creature of `rows` (each so many
+/// cells apart, its names): its name, its cell, and how far east and west
+/// of it its neighbours leave it (half the gap).
+pub fn colour_cells(rows: &[(i32, &[&'static str])]) -> Vec<(&'static str, i32, i32, f32)> {
+    let (cx, cy) = (40, 10);
+    let mut out = Vec::new();
+    for (i, &(gap, names)) in rows.iter().enumerate() {
+        let left = cx - gap * (names.len() as i32 - 1) / 2;
+        for (j, name) in names.iter().enumerate() {
+            out.push((
+                *name,
+                left + gap * j as i32,
+                cy - 2 + ROWS_APART * i as i32,
+                gap as f32 / 2.0,
+            ));
+        }
+    }
+    out
+}
+
+/// Creatures told apart by their colour for pictures (the `creature-colour`
+/// scene): rows of them four cells apart, on an unlit floor or (`lit`) in
+/// a lit room of a common size within its walls, the first row along its
+/// north wall under its torches; the hero `hero` cells east of the rows'
+/// middle beside the first row, among them or far off (outside the room,
+/// on a patch of unlit floor: nothing of theirs lights the rows). `bare`:
+/// the floor alone.
+pub fn lay_out_colours(
+    world: &mut World,
+    cat: &Catalog,
+    rows: &[(i32, &[&'static str])],
+    lit: bool,
+    hero: i32,
+    bare: bool,
+) -> Result<(i32, i32), String> {
+    let map = &mut world.map;
+    map.clear();
+    let floor = cmap(cat, if lit { "S_room" } else { "S_darkroom" })?;
+    let dark = cmap(cat, "S_darkroom")?;
+    let (cx, cy) = (40, 10);
+    let cells = colour_cells(rows);
+    let top = if lit { cy - 3 } else { cy - 5 };
+    let bottom = cy - 2 + ROWS_APART * (rows.len() as i32 - 1) + 3;
+    let west = cells.iter().map(|c| c.1).min().unwrap_or(cx) - 3;
+    let east = cells.iter().map(|c| c.1).max().unwrap_or(cx) + 3;
+    let east = if lit { east } else { east.max(cx + hero + 1) };
+    for y in top..=bottom {
+        for x in west..=east {
+            let (n, s, w, e) = (y == top, y == bottom, x == west, x == east);
+            let sym = match (lit, n, s, w, e) {
+                (false, ..) | (true, false, false, false, false) => None,
+                (_, true, _, true, _) => Some("S_tlcorn"),
+                (_, true, _, _, true) => Some("S_trcorn"),
+                (_, _, true, true, _) => Some("S_blcorn"),
+                (_, _, true, _, true) => Some("S_brcorn"),
+                (_, true, ..) | (_, _, true, ..) => Some("S_hwall"),
+                _ => Some("S_vwall"),
+            };
+            match sym {
+                Some(sym) => map.print(x, y, &cmap(cat, sym)?, None),
+                None => map.print(x, y, &floor, None),
+            }
+        }
+    }
+    // (a hero outside the room stands on a patch of unlit floor)
+    let at = (cx + hero, cy - 1);
+    let under_hero = if at.0 > east {
+        for y in at.1 - 1..=at.1 + 1 {
+            for x in at.0 - 1..=at.0 + 1 {
+                map.print(x, y, &dark, None);
+            }
+        }
+        &dark
+    } else {
+        &floor
+    };
+    if !bare {
+        for &(name, x, y, _) in &cells {
+            let g = monster(cat, name, 0, GlyphKind::Mon)?;
+            map.print(x, y, &g, Some(&floor));
+        }
+    }
+    let valkyrie = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(at.0, at.1, &valkyrie, Some(under_hero));
+    world.view_center = Some((cx, cy - 3));
+    Ok((cx, cy))
+}
+
 /// The whole map at once: rooms of lit and remembered floor between walls,
 /// corridors, doors, a few monsters and objects. The heaviest redraw a
 /// level can ask for (magic mapping, a return to an explored level).

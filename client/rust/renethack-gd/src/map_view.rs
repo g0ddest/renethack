@@ -490,11 +490,23 @@ const HERO_STUDIO: [(Vector3, Color, f32); 5] = [
 /// Every creature seen is lit from behind and above, its back and outline
 /// standing out of the floor whatever the light about it (six soldier ants
 /// in a lit room were dark specks on the flagstones): the way the light
-/// shines, and its energy (its colour the hero's rim's; no shine). With
-/// the moon, the back light and the hero's five it is the eighth
-/// directional light, the most Godot draws.
+/// shines, its colour and its energy (no shine). Near white: away from
+/// the hero it is all that lights a body, and in the rim's cold blue every
+/// one went blue-black (a grey rock troll blue, an arch-lich's magenta
+/// 36 degrees towards blue); in it a body shows its own colour. With the
+/// moon, the back light and the hero's five it is the eighth directional
+/// light, the most Godot draws.
 const CREATURE_LIGHT_WAY: Vector3 = Vector3::new(-55.0, 180.0, 0.0);
-const CREATURE_LIGHT_ENERGY: f32 = 0.6;
+const CREATURE_LIGHT: Color = Color::from_rgb(0.8, 0.8, 0.82);
+const CREATURE_LIGHT_ENERGY: f32 = 0.9;
+/// A torch's light taken back from the creatures close to it
+/// (`light_cap`): this share of it, as far as this (a troll under a
+/// sconce, its head a hand from the flame, came out cream, an arch-lich's
+/// purple robe pastel pink, on a floor the torch left dark).
+const TORCH_CAP: f32 = 0.6;
+const TORCH_CAP_RANGE: f32 = 2.5;
+/// How a torch's light falls off with distance (Godot's attenuation).
+const TORCH_DECAY: f32 = 1.2;
 /// When a healing's glow rises round the hero after the line telling of
 /// it (seconds): after a potion's own glow (`hero::DRUNK_AT`).
 const HEALED_AT: f32 = 1.15;
@@ -3949,6 +3961,8 @@ struct Torch {
     halo: Gd<MeshInstance3D>,
     embers: Gd<godot::classes::GpuParticles3D>,
     light: Gd<OmniLight3D>,
+    /// Its light taken back from the creatures close by (`TORCH_CAP`).
+    cap: Gd<OmniLight3D>,
     /// Where the light burns when it does not flicker.
     at: Vector3,
     /// Its own flicker (seconds ahead of the clock).
@@ -4787,7 +4801,7 @@ impl MapView {
         root.add_child(&studio_frame);
         let mut creature_light = DirectionalLight3D::new_alloc();
         creature_light.set_rotation_degrees(CREATURE_LIGHT_WAY);
-        creature_light.set_color(RIM_LIGHT);
+        creature_light.set_color(CREATURE_LIGHT);
         creature_light.set_param(Param::ENERGY, CREATURE_LIGHT_ENERGY);
         creature_light.set_param(Param::SPECULAR, 0.0);
         creature_light.set_cull_mask(CREATURE_LAYER);
@@ -5713,7 +5727,7 @@ impl MapView {
         // the creatures' own light: a rim, or the branch's key
         let (way, color, energy) =
             l.creature_key
-                .unwrap_or((CREATURE_LIGHT_WAY, RIM_LIGHT, CREATURE_LIGHT_ENERGY));
+                .unwrap_or((CREATURE_LIGHT_WAY, CREATURE_LIGHT, CREATURE_LIGHT_ENERGY));
         self.creature_light.set_rotation_degrees(way);
         self.creature_light.set_color(color);
         self.creature_light.set_param(Param::ENERGY, energy);
@@ -6509,7 +6523,7 @@ impl MapView {
         light.set_color(TORCH);
         light.set_cull_mask(!SCONCE_LAYER);
         light.set_param(Param::RANGE, TORCH_RANGE);
-        light.set_param(Param::ATTENUATION, 1.2);
+        light.set_param(Param::ATTENUATION, TORCH_DECAY);
         light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 1.5);
         light.set_param(Param::SHADOW_BIAS, 0.03);
         light.set_param(Param::SHADOW_NORMAL_BIAS, 1.2);
@@ -6519,6 +6533,7 @@ impl MapView {
         light.set_distance_fade_shadow(10.0);
         light.set_distance_fade_length(4.0);
         light.set_shadow(false);
+        let cap = light_cap(&mut light, TORCH_CAP_RANGE, TORCH_DECAY);
         self.root.add_child(&light);
         Torch {
             node,
@@ -6529,6 +6544,7 @@ impl MapView {
             halo,
             embers,
             light,
+            cap,
             at: Vector3::ZERO,
             phase: 0.0,
             shadow: false,
@@ -6565,9 +6581,11 @@ impl MapView {
             }
             let time = clock + t.phase;
             t.light.set_color(color);
-            t.light
-                .set_param(Param::ENERGY, energy * flicker(time) * waves[i]);
+            let e = energy * flicker(time) * waves[i];
+            t.light.set_param(Param::ENERGY, e);
             t.light.set_position(t.at + sway(time));
+            t.cap.set_color(color);
+            t.cap.set_param(Param::ENERGY, e * TORCH_CAP);
             let shadow = shadowed.contains(&i);
             if shadow != t.shadow {
                 t.shadow = shadow;
@@ -7351,6 +7369,27 @@ impl MapView {
         self.distance = (self.distance + steps * 1.5).clamp(MIN_DISTANCE, MAX_DISTANCE);
         self.aim_lift = 0.0;
         self.place_camera();
+    }
+
+    /// Self-tests: the creatures and the hero alone drawn before a plain
+    /// bright colour, nothing of the level (which pixels of a picture are
+    /// theirs), or all again.
+    pub fn set_matte(&mut self, on: bool) {
+        let all = 0xF_FFFF & !DOLL_LAYER;
+        self.camera.set_cull_mask(if on {
+            all & (CREATURE_LAYER | RIM_LAYER)
+        } else {
+            all
+        });
+        // (behind them a colour no creature is, clear of the air's)
+        let (behind, air) = if on {
+            (Color::from_rgb(1.0, 0.0, 1.0), 0.0)
+        } else {
+            (self.branch_look.darkness, 1.0)
+        };
+        self.env.set_bg_color(behind);
+        self.env.set_fog_sky_affect(air);
+        self.env.set_volumetric_fog_sky_affect(air);
     }
 
     /// Self-tests: the camera this far away, nearer than a player may zoom
@@ -11238,6 +11277,24 @@ impl MapView {
 
 /// A wall cell a torch hangs on, and the way it faces into its room.
 type TorchWall = ((i32, i32), (i32, i32));
+
+/// A light's twin that takes some of its light back from the creatures
+/// close to it (`TORCH_CAP`): negative, on their layer alone, as far as
+/// `range` and falling off as the light does (`decay`), its energy set as
+/// a share of the light's; a child of it, it moves and hides with it.
+fn light_cap(light: &mut Gd<OmniLight3D>, range: f32, decay: f32) -> Gd<OmniLight3D> {
+    let mut cap = OmniLight3D::new_alloc();
+    cap.set_negative(true);
+    cap.set_cull_mask(CREATURE_LAYER);
+    cap.set_param(Param::RANGE, range);
+    cap.set_param(Param::ATTENUATION, decay);
+    // (out of the haze: a negative light darkens the air it reaches)
+    cap.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
+    cap.set_param(Param::ENERGY, 0.0);
+    cap.set_shadow(false);
+    light.add_child(&cap);
+    cap
+}
 
 /// A torch hangs on the wall at (x, y) by the torches' pattern (`north`: a
 /// room's north wall, else a side wall): every fifth cell of the north

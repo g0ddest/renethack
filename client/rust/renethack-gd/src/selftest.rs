@@ -5291,6 +5291,7 @@ impl SelfTest {
             "overview" => world_looks::overview(),
             "places" => world_looks::places(),
             "dark-creatures" => world_looks::dark_creatures(),
+            "creature-colour" => world_looks::creature_colour(),
             "lighting" => world_looks::lighting(),
             "drawbridge" => world_looks::drawbridge(),
             "lava-edge" => world_looks::lava_edge(),

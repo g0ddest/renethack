@@ -99,8 +99,10 @@ pub enum Sheen {
 /// A living creature's rim (`Art::rim`): its strength, how much of the
 /// creature's own colour it takes (the rest is the light's), and the
 /// roughness its materials keep at most for the rim to stay round its
-/// edges (Godot narrows a rim on a smoother surface).
-const RIM: f32 = 0.6;
+/// edges (Godot narrows a rim on a smoother surface). Each light's rim
+/// is broad on so rough a body: stronger and half of the light's colour, a
+/// torch's washed a purple robe to pastel pink and a troll to cream.
+const RIM: f32 = 0.45;
 /// The light that comes through skin's thin parts (ears, fingers, a
 /// nose) from behind, warmed by the blood under it, and how bright its rim
 /// is (`skin_lit`). Not subsurface scattering: that switches every surface
@@ -141,8 +143,55 @@ fn reads_black(c: Color) -> bool {
     let spread = c.r.max(c.g).max(c.b) - c.r.min(c.g).min(c.b);
     luminance < DARK_EDGE || (luminance < BLACK_LUMINANCE && spread < BLACK_SPREAD)
 }
+/// A dark creature's edge (`edge_colour`): round one of no hue (black,
+/// grey), a cool grey (the hero's own edge's blue turned a grey rock troll
+/// blue); round one of a hue (an owlbear's brown read as a black hole in a
+/// white-blue outline), its own, so pale (how much of the hue, over this
+/// grey) and from this purity on (a channel's spread over the brightest).
+const EDGE_COLD: Color = Color::from_rgb(0.7, 0.75, 0.88);
+const EDGE_GREY: f32 = 0.72;
+const EDGE_HUE: f32 = 0.55;
+const EDGE_HUED: f32 = 0.35;
+
+/// The colour of a dark creature's edge, by its own colour `c`.
+fn edge_colour(c: Color) -> Color {
+    let top = c.r.max(c.g).max(c.b);
+    let spread = top - c.r.min(c.g).min(c.b);
+    if top <= 0.0 || spread / top < EDGE_HUED {
+        return EDGE_COLD;
+    }
+    let to = |x: f32| EDGE_GREY + (x / top - EDGE_GREY) * EDGE_HUE;
+    Color::from_rgb(to(c.r), to(c.g), to(c.b))
+}
+
+/// An edge pass (`EDGE_SHADER`) of this strength in the game's light
+/// (`lit`), none out of it, from so far off facing the eye, in `color` or
+/// the shader's own.
+fn edge_material(
+    lit: bool,
+    strength: f32,
+    from: f32,
+    color: Option<Color>,
+) -> Option<Gd<Material>> {
+    let shader = godot::tools::try_load::<Shader>(EDGE_SHADER).ok()?;
+    let mut m = ShaderMaterial::new_gd();
+    m.set_shader(&shader);
+    let k = if lit { strength } else { 0.0 };
+    m.set_shader_parameter("strength", &k.to_variant());
+    m.set_shader_parameter("from", &from.to_variant());
+    if let Some(c) = color {
+        m.set_shader_parameter("color", &c.to_variant());
+    }
+    Some(m.upcast())
+}
+
+/// A colour as three bytes (a key for what is made by colour).
+fn rgb8(c: Color) -> [u8; 3] {
+    let b = |x: f32| (x.clamp(0.0, 1.0) * 255.0).round() as u8;
+    [b(c.r), b(c.g), b(c.b)]
+}
 const SKIN_RIM: f32 = 0.14;
-const RIM_TINT: f32 = 0.5;
+const RIM_TINT: f32 = 1.0;
 const RIM_ROUGHNESS: f32 = 0.95;
 /// The specular a rimmed material keeps at most: smoother for its rim, it
 /// is not to shine more for it.
@@ -530,7 +579,7 @@ pub struct Art {
     derived: HashMap<(i64, u32, bool, Option<usize>), Gd<Material>>,
     /// A creature's materials with their rim (`rimmed`), by the material
     /// each was made from, and the ids of those made (they take none more).
-    rims: HashMap<(i64, bool), Gd<Material>>,
+    rims: HashMap<(i64, bool, [u8; 3]), Gd<Material>>,
     rimmed: HashSet<i64>,
     /// The metal materials made (`keep_metal`, by id: they may be freed)
     /// with their metallic where the level mirrors all of the sky, and how
@@ -553,8 +602,9 @@ pub struct Art {
     /// The edges drawn now: in the game's light, not the gallery's nor the
     /// title's (`set_edges_lit`).
     edges_lit: bool,
-    /// The same, brighter, for a dark creature (`DARK_EDGE`).
-    dark_edge: Option<Option<Gd<Material>>>,
+    /// The same, brighter, for a dark creature (`DARK_EDGE`), one for each
+    /// colour an edge takes (`edge_colour`).
+    dark_edges: HashMap<[u8; 3], Option<Gd<Material>>>,
     /// A thing on the floor's glint (`GLINT_SHADER`), the same way, and
     /// gold's (warmer and smaller).
     glint: Option<Option<Gd<Material>>>,
@@ -676,7 +726,7 @@ impl Art {
             hero_edged: HashMap::new(),
             hero_edged_ids: HashSet::new(),
             edges_lit: true,
-            dark_edge: None,
+            dark_edges: HashMap::new(),
             glint: None,
             coin_glint: None,
             contact: None,
@@ -1896,7 +1946,7 @@ impl Art {
         if RIM > 0.0 {
             // (a creature dyed black takes the dark one's edge, whatever
             // its maps: a raven's feathers, a pudding)
-            self.rim(m, reads_black(look.tint));
+            self.rim(m, look.tint);
         }
         // what is seen through or only sensed throws no shadow, nor takes
         // the light of the creatures seen; a thing on the floor lights the
@@ -2041,9 +2091,9 @@ impl Art {
     /// the lights' rim is a hairline on a smooth body and dim on a dark
     /// one (a homunculus in a dark corridor, a manes on Gehennom's floor
     /// were lost). Each material is copied once; a stand-in is rimmed once
-    /// it is built. `black`: the creature is dyed black (its edge the dark
-    /// one's, `edge_pass`).
-    fn rim(&mut self, m: &Model, black: bool) {
+    /// it is built. `tint`: the creature's colour (dyed black, or dark, its
+    /// edge is the dark one's, `dark_edge_pass`).
+    fn rim(&mut self, m: &Model, tint: Color) {
         let Some(inner) = m.inner.as_ref() else {
             return;
         };
@@ -2062,7 +2112,7 @@ impl Art {
             // (a surface's would not show)
             if let Some(src) = mi.get_material_override() {
                 if !self.rimmed.contains(&src.instance_id().to_i64()) {
-                    let rimmed = self.rimmed_material(&src, black);
+                    let rimmed = self.rimmed_material(&src, tint);
                     mi.set_material_override(&rimmed);
                 }
                 continue;
@@ -2075,34 +2125,31 @@ impl Art {
                 if self.rimmed.contains(&src.instance_id().to_i64()) {
                     continue;
                 }
-                let rimmed = self.rimmed_material(&src, black);
+                let rimmed = self.rimmed_material(&src, tint);
                 mi.set_surface_override_material(i, &rimmed);
             }
         }
     }
 
     /// The pass a dark creature's rimmed materials (its colour under
-    /// `DARK_EDGE`, or NetHack's black) draw its edge in, so that a black
-    /// dragon or a shade reads on a dark floor; the hero's (`hero`), a
-    /// subtler one. Another creature has none: a cold sheen round every
-    /// outline read as plastic.
-    fn edge_pass(&mut self, hero: bool) -> Option<Gd<Material>> {
+    /// `DARK_EDGE`, or NetHack's black) draw its edge in, in `color`
+    /// (`edge_colour`), so that a black dragon or a shade reads on a dark
+    /// floor. Another creature has none: a cold sheen round every outline
+    /// read as plastic.
+    fn dark_edge_pass(&mut self, color: Color) -> Option<Gd<Material>> {
         let lit = self.edges_lit;
-        let (slot, strength, from) = if hero {
-            (&mut self.hero_edge, HERO_EDGE_STRENGTH, HERO_EDGE_FROM)
-        } else {
-            (&mut self.dark_edge, DARK_EDGE_STRENGTH, DARK_EDGE_FROM)
-        };
-        slot.get_or_insert_with(|| {
-            let shader = godot::tools::try_load::<Shader>(EDGE_SHADER).ok()?;
-            let mut m = ShaderMaterial::new_gd();
-            m.set_shader(&shader);
-            let k = if lit { strength } else { 0.0 };
-            m.set_shader_parameter("strength", &k.to_variant());
-            m.set_shader_parameter("from", &from.to_variant());
-            Some(m.upcast())
-        })
-        .clone()
+        self.dark_edges
+            .entry(rgb8(color))
+            .or_insert_with(|| edge_material(lit, DARK_EDGE_STRENGTH, DARK_EDGE_FROM, Some(color)))
+            .clone()
+    }
+
+    /// The hero's edge pass: subtler, in the shader's own cold colour.
+    fn hero_edge_pass(&mut self) -> Option<Gd<Material>> {
+        let lit = self.edges_lit;
+        self.hero_edge
+            .get_or_insert_with(|| edge_material(lit, HERO_EDGE_STRENGTH, HERO_EDGE_FROM, None))
+            .clone()
     }
 
     /// The edges in the game's light (`on`), or none (the gallery's light,
@@ -2113,11 +2160,10 @@ impl Art {
             return;
         }
         self.edges_lit = on;
-        for (slot, strength) in [
-            (&self.dark_edge, DARK_EDGE_STRENGTH),
-            (&self.hero_edge, HERO_EDGE_STRENGTH),
-        ] {
-            if let Some(Some(m)) = slot
+        let dark = self.dark_edges.values().map(|m| (m, DARK_EDGE_STRENGTH));
+        let hero = self.hero_edge.iter().map(|m| (m, HERO_EDGE_STRENGTH));
+        for (slot, strength) in dark.chain(hero) {
+            if let Some(m) = slot
                 && let Ok(mut m) = m.clone().try_cast::<ShaderMaterial>()
             {
                 let k = if on { strength } else { 0.0 };
@@ -2178,7 +2224,7 @@ impl Art {
                     && m.get_transparency() == Transparency::DISABLED
                     && m.get_next_pass().is_none() =>
             {
-                match self.edge_pass(true) {
+                match self.hero_edge_pass() {
                     Some(edge) => {
                         m.set_next_pass(&edge);
                         m.upcast::<Material>()
@@ -2196,8 +2242,9 @@ impl Art {
         out
     }
 
-    fn rimmed_material(&mut self, src: &Gd<Material>, black: bool) -> Gd<Material> {
-        let key = (src.instance_id().to_i64(), black);
+    fn rimmed_material(&mut self, src: &Gd<Material>, tint: Color) -> Gd<Material> {
+        let black = reads_black(tint);
+        let key = (src.instance_id().to_i64(), black, rgb8(tint));
         if let Some(m) = self.rims.get(&key) {
             return m.clone();
         }
@@ -2215,12 +2262,14 @@ impl Art {
                 // (never on a see-through one: the pass knows nothing of
                 // the cut-outs of a card of feathers or hair; but a dark
                 // one seen through all over, a pudding's slime, has none)
-                let dark = black || reads_black(m.get_albedo());
+                let albedo = m.get_albedo();
+                let dark = black || reads_black(albedo);
                 let see_through = m.get_transparency();
+                let own = if black { tint } else { albedo };
                 if dark
                     && matches!(see_through, Transparency::DISABLED | Transparency::ALPHA)
                     && m.get_next_pass().is_none()
-                    && let Some(edge) = self.edge_pass(false)
+                    && let Some(edge) = self.dark_edge_pass(edge_colour(own))
                 {
                     m.set_next_pass(&edge);
                 }
@@ -5392,6 +5441,30 @@ mod tests {
         // red, blue and magenta read by their hue; grey and white by light
         for c in [1, 4, 5, 7, 15] {
             assert!(!reads_black(nh_color(c)), "colour {c}");
+        }
+    }
+
+    #[test]
+    fn a_dark_creature_s_edge_is_of_its_own_hue_round_black_a_cool_grey() {
+        use crate::theme::nh_color;
+        // black and grey: the cool grey, never the hero's blue
+        let cold = edge_colour(nh_color(0));
+        assert_eq!(cold, EDGE_COLD);
+        assert_eq!(edge_colour(Color::from_rgb(0.12, 0.12, 0.13)), EDGE_COLD);
+        assert!(cold.b - cold.r < 0.25, "{cold:?}");
+        // an owlbear's dark brown: a pale tan, red over green over blue
+        let tan = edge_colour(Color::from_rgb(0.2, 0.12, 0.06));
+        assert!(tan.r > tan.g && tan.g > tan.b, "{tan:?}");
+        // a dark red stays red, a dark blue blue, each paler than its own
+        let red = edge_colour(Color::from_rgb(0.2, 0.03, 0.03));
+        assert!(
+            red.r > red.g + 0.3 && (red.g - red.b).abs() < 0.01,
+            "{red:?}"
+        );
+        let blue = edge_colour(Color::from_rgb(0.03, 0.05, 0.2));
+        assert!(blue.b > blue.r + 0.3, "{blue:?}");
+        for c in [tan, red, blue] {
+            assert!(c.r.min(c.g).min(c.b) > 0.25, "{c:?}");
         }
     }
 

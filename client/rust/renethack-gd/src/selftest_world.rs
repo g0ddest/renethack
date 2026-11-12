@@ -970,6 +970,143 @@ pub(super) fn dark_creatures() -> Vec<Step> {
     steps
 }
 
+/// Creatures told apart by their colour (the art loop's iteration 3: away
+/// from the hero bodies went blue-black, beside her under a torch pale),
+/// for pictures before and after (not part of `make test-client`): four
+/// dragons, and the critic's trolls, owlbear and liches, on an unlit floor
+/// with the hero far off (`creature-colour-dark`) and among them
+/// (`-near`), in a lit room with the trolls' row under the torches of its
+/// north wall, the hero outside it (`-torch`) and among them
+/// (`-torchnear`), each at the game's distance (`-11`) and close on the
+/// trolls' row (`-7`), and each once more with the creatures and the hero
+/// alone drawn (`-matte`: which pixels are theirs). The log tells where
+/// each stands on the screen.
+pub(super) fn creature_colour() -> Vec<Step> {
+    const ROWS: &[(i32, &[&str])] = &[
+        (2, &["troll", "rock troll", "owlbear", "lich", "arch-lich"]),
+        (
+            3,
+            &["red dragon", "blue dragon", "green dragon", "yellow dragon"],
+        ),
+    ];
+    /// The scenes (lit, how far east the hero stands) and the views of
+    /// each (the camera's distance, the cell it looks at); the pictures, a
+    /// scene after another.
+    const SCENES: [(bool, i32); 4] = [(false, 16), (false, 1), (true, 13), (true, 1)];
+    const VIEWS: [(f32, (i32, i32)); 2] = [(11.0, (40, 8)), (7.0, (40, 7))];
+    const SHOTS: [[&str; 2]; 8] = [
+        ["creature-colour-dark-11", "creature-colour-dark-11-matte"],
+        ["creature-colour-dark-7", "creature-colour-dark-7-matte"],
+        ["creature-colour-near-11", "creature-colour-near-11-matte"],
+        ["creature-colour-near-7", "creature-colour-near-7-matte"],
+        ["creature-colour-torch-11", "creature-colour-torch-11-matte"],
+        ["creature-colour-torch-7", "creature-colour-torch-7-matte"],
+        [
+            "creature-colour-torchnear-11",
+            "creature-colour-torchnear-11-matte",
+        ],
+        [
+            "creature-colour-torchnear-7",
+            "creature-colour-torchnear-7-matte",
+        ],
+    ];
+    /// The next view to show (steps are plain functions), and when the
+    /// last change to the picture was asked for.
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+    static MOMENT: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
+    fn next_view(g: &mut RenethackGame) -> Result<(), String> {
+        let i = NEXT.fetch_add(1, Ordering::Relaxed);
+        let (lit, hero) = SCENES[i / VIEWS.len() % SCENES.len()];
+        let (distance, at) = VIEWS[i % VIEWS.len()];
+        if i.is_multiple_of(VIEWS.len()) {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            crate::gallery::lay_out_colours(&mut g.world, &cat, ROWS, lit, hero, false)?;
+        }
+        g.world.view_center = Some(at);
+        far(g, distance)
+    }
+    fn marks(g: &mut RenethackGame) -> Result<(), String> {
+        let ui = g.ui.as_ref().ok_or("no UI")?;
+        let mut cells = crate::gallery::colour_cells(ROWS);
+        if let Some((x, y)) = g.world.map.hero() {
+            cells.push(("hero", x, y, 0.6));
+        }
+        godot_print!("selftest: colour: view");
+        for (name, x, y, half) in cells {
+            // (the box round a body as tall as a dragon, a little narrower
+            // than its neighbours leave it, half a cell deep each way)
+            let w = (half - 0.3).min(1.2);
+            let mut corners = Vec::new();
+            for (dx, dz, h) in [
+                (-w, -0.5, 2.8),
+                (w, -0.5, 2.8),
+                (-w, 0.6, 0.0),
+                (w, 0.6, 0.0),
+            ] {
+                if let Some(p) = ui
+                    .map
+                    .on_screen(Vector3::new(x as f32 + dx, h, y as f32 + dz))
+                {
+                    corners.push(p);
+                }
+            }
+            if corners.len() == 4 {
+                let (x0, x1) = corners
+                    .iter()
+                    .fold((f32::MAX, f32::MIN), |(a, b), p| (a.min(p.x), b.max(p.x)));
+                let (y0, y1) = corners
+                    .iter()
+                    .fold((f32::MAX, f32::MIN), |(a, b), p| (a.min(p.y), b.max(p.y)));
+                godot_print!("selftest: colour: {name}: {x0:.0} {y0:.0} {x1:.0} {y1:.0}");
+            }
+        }
+        Ok(())
+    }
+    fn matte(g: &mut RenethackGame, on: bool) -> Result<(), String> {
+        g.ui.as_mut().ok_or("no UI")?.map.set_matte(on);
+        Ok(())
+    }
+    fn moment() -> [Step; 2] {
+        [
+            Step::Call("a moment", |_| {
+                *MOMENT.lock().unwrap_or_else(|e| e.into_inner()) = Some(std::time::Instant::now());
+                Ok(())
+            }),
+            Step::Wait("the picture settled", |_| {
+                let since = *MOMENT.lock().unwrap_or_else(|e| e.into_inner());
+                Ok(since.is_some_and(|t| t.elapsed().as_secs_f32() > 0.6))
+            }),
+        ]
+    }
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    for [shot, alone] in SHOTS {
+        steps.extend([
+            Step::Call("the next view", next_view),
+            Step::Wait("the rows drawn", |g| {
+                let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                Ok(drawn == Some(g.world.map.generation()))
+            }),
+            Step::Wait("the camera on them", drawn_here),
+        ]);
+        steps.extend(moment());
+        steps.extend([
+            Step::Call("where each stands", marks),
+            Step::Shot(shot),
+            Step::Call("the creatures alone", |g| matte(g, true)),
+        ]);
+        steps.extend(moment());
+        steps.extend([
+            Step::Shot(alone),
+            Step::Call("all drawn again", |g| matte(g, false)),
+        ]);
+    }
+    steps.extend(quit());
+    steps
+}
+
 /// Lava's shores and the Plane of Fire (the critics' second pass, #9), for
 /// pictures before and after (not part of `make test-client`): Orcus'
 /// town and the Wizard's tower (their lava), and the Plane of Fire, each
