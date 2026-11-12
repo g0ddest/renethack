@@ -288,6 +288,10 @@ const AIM_SOUTH: f32 = 1.2;
 
 /// Brightness (%) of floors; what is remembered the surface shader darkens.
 const SHADE_LIT: u8 = 92;
+/// Ice: dark slate, cold and glossy, pale only where it catches a light
+/// (at a floor's brightness its pale photograph was the brightest thing in
+/// a Gehennom frame, brighter than the hero).
+const SHADE_ICE: u8 = 36;
 /// Stairs are of the floor's stone, a little darker than the floor.
 const SHADE_STAIRS: u8 = 75;
 /// The bedrock under and around the level, and the rock mass.
@@ -1768,7 +1772,7 @@ fn ground_layers(look: &mut Look, own: Ground, near: &Near, ctx: &Ctx) {
             Ground::Water => (Paint::Liquid(Liquid::Water), SURFACE_Y),
             Ground::Lava => (Paint::Liquid(Liquid::Lava), SURFACE_Y),
             Ground::Ice => match ctx.remap(ctx.art.terrain(Terrain::Ice).material) {
-                Some(m) => (Paint::Pbr(m, SHADE_LIT, Role::Ice), 0.0),
+                Some(m) => (Paint::Pbr(m, SHADE_ICE, Role::Ice), 0.0),
                 None => continue,
             },
             Ground::None => continue,
@@ -2732,7 +2736,7 @@ fn terrain_base(
             look.sunk = true;
         }
         Terrain::Ice => {
-            let ice = pbr(art.material, SHADE_LIT, Role::Ice, FLOOR_UNSEEN);
+            let ice = pbr(art.material, SHADE_ICE, Role::Ice, FLOOR_UNSEEN);
             look.ground_tile(tile, ice, Vector3::ZERO);
         }
         Terrain::Lava => {
@@ -5670,6 +5674,14 @@ impl MapView {
             self.level_look
         };
         self.branch_look = l;
+        // (how much of a lava field runs molten, by the branch)
+        if let Some(Ok(mut m)) = self
+            .liquids
+            .get(&Liquid::Lava)
+            .map(|m| m.clone().try_cast::<ShaderMaterial>())
+        {
+            m.set_shader_parameter("running", &l.molten.to_variant());
+        }
         self.built_look = crate::branch_look::built(l);
         self.sanctum_look = crate::branch_look::sanctum(l);
         self.still_water();
@@ -7192,6 +7204,7 @@ impl MapView {
                         m.set_shader_parameter("flow_glow", &e.to_variant());
                         m.set_shader_parameter("has_flow", &true.to_variant());
                     }
+                    m.set_shader_parameter("running", &self.branch_look.molten.to_variant());
                 }
                 m.upcast()
             }

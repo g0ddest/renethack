@@ -276,7 +276,10 @@ impl Surfaces {
             Role::Prop | Role::Trim => set(&mut mat, "glow", 0.02),
             Role::Ice => {
                 set(&mut mat, "glow", 0.03);
-                set(&mut mat, "specular", 0.7);
+                // glossy, a broad sheen where it catches a light (smoother,
+                // dark as it is, its relief glittered as with stars)
+                set(&mut mat, "specular", 0.55);
+                set(&mut mat, "roughness_bias", -0.42);
             }
             Role::Ruin => {
                 set(&mut mat, "glow", 0.02);

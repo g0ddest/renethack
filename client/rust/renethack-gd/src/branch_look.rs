@@ -187,6 +187,10 @@ pub struct BranchLook {
     /// round the hero (the fire under Gehennom's floors).
     pub embers: bool,
     pub underglow: Option<Color>,
+    /// How much of a lava field's middle runs molten, its rivers and pools
+    /// (0-1); the rest a dark cooled crust, its veins aglow faintly. Its
+    /// shores glow whatever this is.
+    pub molten: f32,
     /// Manifest materials and what they become in this branch.
     pub remap: &'static [(&'static str, &'static str)],
     /// The walls are the rock itself, broken and irregular (caves).
@@ -282,6 +286,7 @@ const NEUTRAL: Grade = Grade {
 };
 
 const MAIN: BranchLook = BranchLook {
+    molten: 0.35,
     door: None,
     lanterns: false,
     candles: false,
@@ -456,6 +461,8 @@ pub fn look_of(branch: Branch) -> BranchLook {
             swamps: true,
             embers: true,
             underglow: Some(rgb(1.0, 0.36, 0.12)),
+            // (its fields cooled the most: black crust, fire in its veins)
+            molten: 0.3,
             dust: 1.5,
             // (its darkness tuned without it: the fire alone shines on iron)
             reflect: 0.05,
@@ -632,6 +639,8 @@ fn plane_look(plane: Plane) -> BranchLook {
             cool_shadows: 0.0,
             cracks: 1.4,
             embers: true,
+            // (the plane's own fire: more of its lava runs, never a sheet)
+            molten: 0.5,
             reflect: 0.3,
             // (near neutral: the air and the light carry the fire's colour,
             // warmed again by the grade everything turned orange)

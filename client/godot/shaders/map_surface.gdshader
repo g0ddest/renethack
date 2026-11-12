@@ -655,7 +655,9 @@ void fragment() {
 	if (near_ice > 0.0) {
 		float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
 		vec3 frost = vec3(0.78, 0.84, 0.9) * mix(0.55, 0.95, tn2(wpos.xz * 3.1));
-		albedo = mix(albedo, frost * max(luma * 2.2, 0.35), near_ice * 0.5);
+		// (a rime as dark as the ice it rims: white, it was the brightest
+		// patch beside the dark slate ice)
+		albedo = mix(albedo, frost * max(luma * 1.3, 0.16), near_ice * 0.5);
 		rough = mix(rough, 0.3, near_ice);
 	}
 	if (near_lava > 0.0) {

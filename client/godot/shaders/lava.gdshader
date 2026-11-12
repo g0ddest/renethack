@@ -26,6 +26,9 @@ uniform sampler2D stand_tex : filter_linear, repeat_disable;
 uniform sampler2D flow_albedo : source_color, filter_linear_mipmap, repeat_enable;
 uniform sampler2D flow_glow : source_color, filter_linear_mipmap, repeat_enable;
 uniform bool has_flow = false;
+// how much of a field's middle runs molten (map_view sets it by the
+// branch): its rivers and pools; the rest cooled crust
+uniform float running = 0.35;
 uniform float flow_scale = 0.45;
 
 const vec2 FIELD = vec2(80.0, 21.0);
@@ -133,6 +136,8 @@ void fragment() {
 	// leads there, its shore
 	vec4 field = ground_blur(wpos.xz);
 	float shore = 0.0;
+	// how near a shore it lies, over a cell or so (it runs hot there)
+	float nearshore = 0.0;
 	if (max(max(field.r, field.b), field.a) > 0.0) {
 		vec4 v = ground_lead(wpos.xz, field);
 		float k = ground_kind(v);
@@ -140,6 +145,7 @@ void fragment() {
 			discard;
 		}
 		shore = 1.0 - smoothstep(0.0, 0.3, v.g - max(max(v.r, v.b), v.a));
+		nearshore = 1.0 - smoothstep(0.25, 1.1, v.g - max(max(v.r, v.b), v.a));
 	}
 	// where nothing is drawn beside it (past what the hero has seen) its
 	// edge frays as a floor's does, wandering over a couple of metres and
@@ -178,7 +184,8 @@ void fragment() {
 	float heat = texture(noise_tex, wpos.xz * 0.12 + vec2(t * 0.004, 0.0)).r;
 	float gap = 0.012 + heat * 0.03;
 	float crack = 1.0 - smoothstep(gap * 0.4, gap, abs(plates - 0.5) - (fine - 0.5) * 0.08);
-	float seethe = 0.8 + 0.2 * sin(t * 2.1 + plates * 13.0);
+	// (it breathes slowly)
+	float seethe = 0.78 + 0.22 * sin(t * 0.7 + plates * 5.0);
 	vec3 glow = molten.rgb * crack * seethe;
 	vec3 rock = crust.rgb * mix(0.7, 1.3, fine);
 	if (has_flow) {
@@ -199,10 +206,21 @@ void fragment() {
 		rock = mix(texture(flow_albedo, uv1).rgb, texture(flow_albedo, uv2).rgb, take) * 0.6;
 	}
 
-	// along its shore the crust thickens over it, its very edge a line of
-	// glow where it meets the ground
+	// most of a field is a dark cooled crust, its veins aglow faintly (it
+	// glowed edge to edge, one bright carpet): it runs molten along its
+	// shores, in a few rivers wandering through it with the flow, and in
+	// pools; its very edge a line of glow where it meets the ground
+	vec2 bend = vec2(tl2(wpos.xz * 0.09 + vec2(4.7, 8.3)), tl2(wpos.xz * 0.09 + vec2(12.1, 1.9))) - 0.5;
+	vec2 drift = wpos.xz + vec2(t * 0.02, t * 0.011);
+	float course = tl2(drift * 0.13 + bend * 1.6 + vec2(17.3, 5.1));
+	float river = 1.0 - smoothstep(running * 0.09, running * 0.09 + 0.03, abs(course - 0.5));
+	float pool = smoothstep(0.78 - running * 0.25, 0.86 - running * 0.25,
+		tl2(wpos.xz * 0.21 + vec2(9.9, 21.3)));
+	float hot = clamp(max(river, pool) + nearshore, 0.0, 1.0);
+	crack *= mix(0.06, 1.0, hot);
+	// (the cooled crust black-brown: the flow's photograph is a red rock)
+	rock = mix(crust.rgb * mix(0.7, 1.3, fine), rock, 0.25 + 0.75 * hot);
 	float rim = smoothstep(0.75, 0.97, shore);
-	crack *= 1.0 - smoothstep(0.2, 0.75, shore) * (1.0 - rim);
 	glow = molten.rgb * max(crack, rim * 0.8) * seethe;
 
 	// toward what nothing is known of its crust closes over it, a thin
@@ -232,6 +250,8 @@ void fragment() {
 	}
 	ALBEDO = mix(rock, molten.rgb * 0.3, crack);
 	ROUGHNESS = mix(0.9, 0.4, crack);
+	// (the crust dull: the lava's own lights shone on it as a red sheen)
+	SPECULAR = mix(0.08, 0.5, max(crack, hot));
 	// nor does it mirror the metal sky (map_view's): it shines by its fire
 	RADIANCE = vec4(0.0, 0.0, 0.0, 1.0);
 	EMISSION = (glow * energy + rock * 0.15 * heat) * mix(0.35, 1.0, seen);
