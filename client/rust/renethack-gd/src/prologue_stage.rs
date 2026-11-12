@@ -35,10 +35,10 @@ use godot::classes::light_3d::Param;
 use godot::classes::particle_process_material::{EmissionShape, Parameter};
 use godot::classes::rendering_server::FogVolumeShape;
 use godot::classes::{
-    FastNoiseLite, FogMaterial, FogVolume, GpuParticles3D, Gradient, GradientTexture1D,
-    GradientTexture2D, Image, ImageTexture, Material, Mesh, MeshInstance3D, Node3D, NoiseTexture3D,
-    OmniLight3D, PackedScene, ParticleProcessMaterial, QuadMesh, Resource, Shader, ShaderMaterial,
-    SphereMesh, SpotLight3D, StandardMaterial3D, Texture2D, Texture3D,
+    CameraAttributesPractical, FastNoiseLite, FogMaterial, FogVolume, GpuParticles3D, Gradient,
+    GradientTexture1D, GradientTexture2D, Image, ImageTexture, Material, Mesh, MeshInstance3D,
+    Node3D, NoiseTexture3D, OmniLight3D, PackedScene, ParticleProcessMaterial, QuadMesh, Resource,
+    Shader, ShaderMaterial, SphereMesh, SpotLight3D, StandardMaterial3D, Texture2D, Texture3D,
 };
 use godot::prelude::*;
 use nh_protocol::{Catalog, Glyph, GlyphKind, LevelNotice, mg};
@@ -97,6 +97,12 @@ const SHAFT_DENSITY: f32 = 0.25;
 const FIRE_HAZE: f32 = 0.4;
 /// How far the sky over Gehennom is.
 const SKY: f32 = 40.0;
+/// The close beats' depth of field (the Book, the Amulet): what lies this
+/// far past what the camera looks at begins to blur, sharp to soft over
+/// this far, and at most this much.
+const FOCUS_BEHIND: f32 = 0.8;
+const FOCUS_SOFT: f32 = 2.5;
+const FOCUS_BLUR: f32 = 0.05;
 /// Time a frame may spend standing the next beat's set pieces.
 const PIECES_BUDGET: Duration = Duration::from_millis(3);
 /// The sets' pieces: the Sigil's Vault dungeon kit's (CC0) vaults,
@@ -542,6 +548,15 @@ impl MapView {
                 );
                 let mut high = light(&mut stage.root, CANDLE, mid + v(0.0, 4.6, -0.5), 6.0);
                 high.set_param(Param::ENERGY, 0.35);
+                // dust drifting in the light, lit as it passes through it
+                let mut dust = self.motes(
+                    v(0.9, 2.2, 0.9),
+                    80,
+                    0.04,
+                    Color::from_rgba(0.95, 0.9, 0.78, 0.55),
+                );
+                dust.set_position(altar + v(0.0, 2.4, 0.6));
+                stage.root.add_child(&dust);
                 for (k, x) in [38.4, 41.6].into_iter().enumerate() {
                     self.stage_brazier(&mut stage, v(x, 0.0, 8.4), k as f64 * 1.7);
                 }
@@ -1021,6 +1036,8 @@ impl MapView {
         }
         let (eye, aim) = camera(beat, t, descent.map(|d| d as f32), mid, hero, amulet_at);
         self.stage_camera = Some((eye, aim));
+        let close = matches!(beat, Beat::Book | Beat::Amulet);
+        self.focus(close.then(|| eye.distance_to(aim)));
         if std::env::var("QA_STAGE").is_ok() && (t * 10.0) as i32 % 20 == 0 {
             godot_print!(
                 "QA stage: {beat:?} t {t:.1} shown {} titled {} title {} cells {} drawn {} eye {eye:?} aim {aim:?} cam {:?} root vis {}",
@@ -1121,9 +1138,34 @@ impl MapView {
         self.stage.as_ref().map(|s| s.beat)
     }
 
+    /// The camera sharp to `near` metres and a little past, blurring
+    /// beyond (a close beat's), or sharp throughout (None).
+    fn focus(&mut self, near: Option<f32>) {
+        let Some(near) = near else {
+            if self.camera.get_attributes().is_some() {
+                self.camera.set_attributes(Gd::null_arg());
+            }
+            return;
+        };
+        let Some(mut attrs) = self.kept("focus", || {
+            let mut a = CameraAttributesPractical::new_gd();
+            a.set_dof_blur_far_enabled(true);
+            a.set_dof_blur_far_transition(FOCUS_SOFT);
+            a.set_dof_blur_amount(FOCUS_BLUR);
+            Some(a)
+        }) else {
+            return;
+        };
+        attrs.set_dof_blur_far_distance(near + FOCUS_BEHIND);
+        if self.camera.get_attributes().is_none() {
+            self.camera.set_attributes(&attrs);
+        }
+    }
+
     /// Let the beat's scene go: its set, its gods, the Amulet; and the next
     /// beat's, if it was built ahead.
     pub(super) fn end_stage(&mut self) {
+        self.focus(None);
         for stage in [self.stage.take(), self.next_stage.take()]
             .into_iter()
             .flatten()
