@@ -107,6 +107,11 @@ const RIM: f32 = 0.6;
 /// of the frame to Godot's separate-specular pipelines, and the first
 /// start's warm-up and the title took three times as long for it.
 const SKIN_BACKLIGHT: Color = Color::from_rgb(0.3, 0.1, 0.06);
+/// Skin's albedo under its maps (`skin_lit`): a base character's painted
+/// skin was a pale peach, the lightest thing on the figure at 7 m (a
+/// Caveman's, a Monk's, a Tourist's bare arms near white). Darker and a
+/// little warmer, it keeps a value step from the hair and the cloth.
+const SKIN_TONE: Color = Color::from_rgb(0.84, 0.79, 0.76);
 /// A creature whose colour is darker than this (its luminance) gets the
 /// brighter edge, so strong, from so far off facing the eye: an outline,
 /// not a wash (wider and stronger, a raven's wings and a black unicorn's
@@ -118,9 +123,11 @@ const DARK_EDGE_FROM: f32 = 0.5;
 /// same pass): subtler than a dark creature's, so that she reads on a dark
 /// floor at 11 m without being washed pale. Like the dark creatures' edge,
 /// in the game's light only (`Art::set_edges_lit`): never in the gallery's,
-/// nor behind the title and the creation form.
+/// nor behind the title and the creation form. Only where her surface
+/// turns away from the eye: begun nearer facing it, from the high camera
+/// it lay over her arms and legs whole (a Valkyrie's sleeves lavender).
 const HERO_EDGE_STRENGTH: f32 = 0.34;
-const HERO_EDGE_FROM: f32 = 0.46;
+const HERO_EDGE_FROM: f32 = 0.7;
 /// NetHack's black, as a creature may be dyed in it (a slate, `nh_color(0)`):
 /// a colour of no more luminance than this and no more spread between its
 /// channels (a red of as little luminance reads by its own hue).
@@ -5243,6 +5250,8 @@ fn skin_lit(m: &Gd<Material>) -> Gd<Material> {
         return m.clone();
     };
     skin_shading(&mut out, SKIN_BACKLIGHT);
+    let albedo = mul(out.get_albedo(), SKIN_TONE);
+    out.set_albedo(albedo);
     out.set_feature(Feature::RIM, true);
     out.set_rim(SKIN_RIM);
     out.set_rim_tint(0.85);

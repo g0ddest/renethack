@@ -949,6 +949,12 @@ fn hands_as_held(g: &RenethackGame) -> Result<(), String> {
 /// Frames the inventory's doll has been given to render a kit's hero.
 static DOLL_FRAMES: AtomicU64 = AtomicU64::new(0);
 
+/// The camera this far off the kit's hero, eased.
+fn kit_distance(g: &mut RenethackGame, metres: f32) -> Result<(), String> {
+    g.ui.as_mut().ok_or("no UI")?.map.set_distance(metres, 0.5);
+    Ok(())
+}
+
 /// Every role in both genders with the starting kit NetHack gives it
 /// (`kits.rs`, after u_init.c): what the hero holds, on which arm, on the
 /// back and on the head, what hangs round the neck and covers the hands,
@@ -958,7 +964,8 @@ static DOLL_FRAMES: AtomicU64 = AtomicU64::new(0);
 /// title shows the same hero in the same kit. Pictures of each with
 /// `--screenshots`. RENETHACK_ROLES=knight,priest: only those;
 /// RENETHACK_KITS_LOOK=1: pictures only; RENETHACK_KIT_FAR=1: each also
-/// 7 m off, as a player sees them close in play.
+/// 7 m off, as a player sees them close in play; RENETHACK_KIT_PLAY=1: each
+/// also 7 m and 11 m off in the room they start in.
 pub(super) fn kits() -> Vec<Step> {
     let mut steps = vec![Step::Call("seed 1, the first hero", |g| {
         g.seed = Some(1);
@@ -1027,6 +1034,25 @@ pub(super) fn kits() -> Vec<Step> {
             Step::Wait("a frame", |_| Ok(true)),
             Step::Shot(rest),
         ]);
+        // RENETHACK_KIT_PLAY=1: as in play, the HUD out, at 7 m and at the
+        // game's 11 m (`<rest>-7m`, `<rest>-11m`): how the hero reads in
+        // the room they start in (sheets of their look)
+        if std::env::var_os("RENETHACK_KIT_PLAY").is_some() {
+            let near: &'static str = format!("{rest}-7m").leak();
+            let far: &'static str = format!("{rest}-11m").leak();
+            steps.extend([
+                Step::Call("7 m off", |g| kit_distance(g, 7.0)),
+                Step::Wait("the camera 7 m off", camera_settled),
+                Step::Wait("a frame", |_| Ok(true)),
+                Step::Shot(near),
+                Step::Call("11 m off", |g| kit_distance(g, 11.0)),
+                Step::Wait("the camera 11 m off", camera_settled),
+                Step::Wait("a frame", |_| Ok(true)),
+                Step::Shot(far),
+                Step::Call("close up again", |g| kit_distance(g, 2.8)),
+                Step::Wait("the camera close again", camera_settled),
+            ]);
+        }
         if std::env::var_os("RENETHACK_KIT_FAR").is_some() {
             // as a player sees them close in play (sheets of the outfits)
             let far: &'static str = format!("{rest}-7m").leak();

@@ -452,36 +452,39 @@ const STEED_LAYER: u32 = 1 << 5;
 /// hero here instead, from wherever that camera last stood. A polymorphed
 /// hero is out of their outfit and goes without them: a monster's model
 /// is lit as the monsters about it are (under them a red dragon came out
-/// pale pink).
+/// pale pink). A key and faint fills, 3.8 in all: at 9.9, the fills from
+/// every side together stronger than the key, she stood studio-lit and
+/// flat in the grim frame, her cloth washed pale and her own colours lost
+/// (a Wizard's deep blue robe grey-lilac).
 const HERO_STUDIO: [(Vector3, Color, f32); 5] = [
     // the key, from the upper left, not too steep: the legs get it too
     (
         Vector3::new(-0.3, -0.55, 0.0),
         Color::from_rgb(1.0, 0.9, 0.78),
-        3.4,
+        1.7,
     ),
     (
         Vector3::new(-0.2, 0.7, 0.0),
         Color::from_rgb(0.9, 0.8, 0.7),
-        1.1,
+        0.45,
     ),
     // a warm bounce from below, as off a lit floor
     (
         Vector3::new(0.45, 0.3, 0.0),
         Color::from_rgb(1.0, 0.82, 0.62),
-        2.6,
+        0.6,
     ),
     // a level fill for the legs and the boots
     (
         Vector3::new(0.05, -0.35, 0.0),
         Color::from_rgb(0.95, 0.88, 0.8),
-        1.2,
+        0.35,
     ),
     // and a cold one from behind
     (
         Vector3::new(-0.3, 2.6, 0.0),
         Color::from_rgb(0.62, 0.7, 1.0),
-        1.6,
+        0.7,
     ),
 ];
 /// Every creature seen is lit from behind and above, its back and outline

@@ -2143,7 +2143,9 @@ mod tests {
             assert!(!tints.contains(&r.tint), "{who} is tinted as another");
             tints.push(r.tint);
         }
-        // the domestic dogs pale, as their glyph is white
+        // the domestic dogs a dirty off-white, as their glyph is white:
+        // pale enough to fill their ring in a corridor, and no clean cream
+        // (the brightest thing in a lit room, over the hero)
         for who in ["little dog", "dog", "large dog"] {
             let spec = art.model_at(art.monster(find(who), 0).model).1;
             let coat = spec
@@ -2151,7 +2153,7 @@ mod tests {
                 .get("@Material")
                 .and_then(|c| hex(c.trim_start_matches('=')));
             assert!(
-                coat.is_some_and(|c| c.iter().all(|&v| v > 0.6)),
+                coat.is_some_and(|c| c.iter().all(|&v| v > 0.38 && v < 0.7)),
                 "{who}: {coat:?}"
             );
         }
