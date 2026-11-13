@@ -364,7 +364,8 @@ pub struct ModelSpec {
     pub far: Option<FarMesh>,
     /// The hue of an outlined body's edge (its outline and the inner rim
     /// on its head and shoulders), in place of the cold one: a coloured
-    /// dragon's colour carries into the dark round its outline.
+    /// dragon's colour carries into the dark round its outline. None: its
+    /// `dye`'s, if dyed (a rank's colour).
     #[serde(default)]
     pub edge_color: Option<String>,
     /// At rest with a shield, this body lets it down at its side (as every

@@ -2073,7 +2073,10 @@ impl Art {
             };
             // (an outlined body's edge in its own hue, if it has one)
             let spec = self.manifest.model_at(look.art.model).1;
-            let tint = match (edge, spec.edge_color.as_deref().and_then(nh_art::hex)) {
+            // (else its rank's dye: a lich's, a troll's, a dwarf's colour
+            // carries into the dark round it too)
+            let hue = spec.edge_color.as_deref().or(spec.dye.as_deref());
+            let tint = match (edge, hue.and_then(nh_art::hex)) {
                 (Edge::Outline(_), Some(c)) => rgb(c),
                 _ => look.tint,
             };
