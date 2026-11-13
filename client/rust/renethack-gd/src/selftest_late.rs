@@ -280,6 +280,30 @@ pub(super) const PILOT: &[(&str, Rows)] = &[
             (4, &["pony", "horse", "warhorse"]),
         ],
     ),
+    // the other canines, the big cats and the unicorns on those bodies,
+    // each in a coat of its own
+    (
+        "canines-coats",
+        &[
+            (2, &["coyote", "fox", "jackal", "wolf", "warg"]),
+            (
+                2,
+                &[
+                    "winter wolf cub",
+                    "winter wolf",
+                    "hell hound pup",
+                    "hell hound",
+                ],
+            ),
+        ],
+    ),
+    (
+        "cats-coats",
+        &[
+            (2, &["housecat", "jaguar", "lynx", "panther", "tiger"]),
+            (4, &["white unicorn", "gray unicorn", "black unicorn"]),
+        ],
+    ),
     // the generated dog, weighted from the husky's skeleton
     (
         "dogs-gen",

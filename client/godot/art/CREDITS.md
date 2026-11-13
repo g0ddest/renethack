@@ -213,9 +213,9 @@ wear our kits were re-rigged to our skeleton and clips.
 | `owner/gnome.glb`, `gnome_brown.jpg`, `gnome_blue.jpg`, `gnome_magenta.jpg`, `gnome_wizard.jpg` | A hooded gnome, in his rank's colours (21k triangles) |
 | `owner/valkyrie.glb` | The owner's woman warrior, the female Valkyrie: cloth wraps, a long split coat (41k triangles) |
 | `owner/dog.glb` | A wiry grey hound: the little dog, the dog and the large dog, its weights taken from Quaternius' husky so that the husky's clips play on it (12k triangles) |
-| `owner/cat.glb` | A grey tabby: the kitten, the housecat and the large cat, its weights taken from Quaternius' husky (12k triangles) |
-| `owner/wolf.glb` | A grey wolf: the wolf and the jackal, its weights taken from Quaternius' wolf (12k triangles) |
-| `owner/horse.glb` | A dark bay horse: the pony, the horse and the warhorse, its weights taken from Quaternius' horse (15k triangles) |
+| `owner/cat.glb`, `cat_lynx.jpg`, `cat_panther.jpg`, `cat_jaguar.jpg`, `cat_tiger.jpg` | A grey tabby: the kitten, the housecat and the large cat, its weights taken from Quaternius' husky (12k triangles); its coat recoloured for the lynx and the panther, and retextured by Meshy for the jaguar's rosettes and the tiger's stripes |
+| `owner/wolf.glb`, `wolf_coyote.jpg`, `wolf_fox.jpg`, `wolf_jackal.jpg`, `wolf_warg.jpg`, `wolf_winter.jpg`, `wolf_hellhound.jpg` | A grey wolf, its weights taken from Quaternius' wolf (12k triangles); its coat recoloured for the coyote, the fox, the jackal, the warg, the winter wolf and the hell hound |
+| `owner/horse.glb`, `unicorn_white.jpg`, `unicorn_gray.jpg`, `unicorn_black.jpg` | A dark bay horse: the pony, the horse and the warhorse, its weights taken from Quaternius' horse (15k triangles); its coat recoloured for the three unicorns |
 
 ## Fonts
 

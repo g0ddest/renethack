@@ -1901,11 +1901,12 @@ mod tests {
     fn species_of_a_class_are_told_apart() {
         let (art, cat) = (manifest(), catalog());
         let m = |n: &str| art.monster(cat.monsters.iter().find(|m| m.name == n).unwrap(), 0);
-        // the same model, but bigger and coloured differently
+        // the same body, but bigger and in a coat of its own
         let (jackal, wolf) = (m("jackal"), m("wolf"));
-        assert_eq!(jackal.model, wolf.model);
+        let (j, w) = (art.model_at(jackal.model).1, art.model_at(wolf.model).1);
+        assert_eq!(j.scene, w.scene);
         assert!(wolf.height > jackal.height);
-        assert_ne!(jackal.tint, wolf.tint);
+        assert!(jackal.tint != wolf.tint || j.albedo != w.albedo);
         // a female of a class with women gets a woman's model
         let human = cat.monsters.iter().find(|m| m.name == "human").unwrap();
         assert_ne!(

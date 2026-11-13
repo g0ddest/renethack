@@ -12823,22 +12823,30 @@ mod tests {
     }
 
     /// A unicorn's colour is its alignment, what a player goes by to touch
-    /// its horn or throw it a gem: the white, the gray and the black are
-    /// drawn white, gray and black, far apart (the black was a pale gray:
-    /// its tint was lifted to keep it off a dark floor, the dark edge's
-    /// work now).
+    /// its horn or throw it a gem: the white, the gray and the black each
+    /// wear a coat of that colour (`unicorn_<colour>.jpg`; the sheets for
+    /// their values, far apart), untinted so that nothing greys it, and a
+    /// horn.
     #[test]
     fn the_unicorns_are_their_alignments_colours() {
         let f = Fixture::new();
-        let [white, gray, black] =
-            ["white unicorn", "gray unicorn", "black unicorn"].map(|n| luma(tint_of(&f, n).1));
-        assert!(white > 0.75, "white {white}");
-        assert!((0.3..0.6).contains(&gray), "gray {gray}");
-        assert!(black < 0.15, "black {black}");
-        assert!(
-            white - gray > 0.25 && gray - black > 0.25,
-            "{white} {gray} {black}"
-        );
+        for c in ["white", "gray", "black"] {
+            let name = format!("{c} unicorn");
+            let cell = Cell {
+                glyph: Some(monster(&f.cat, &name, 0)),
+                ..feature(&f.cat, "S_room")
+            };
+            let look = f.look(&cell);
+            let drawn = &look.models[look.entity.expect("a unicorn")].look;
+            let spec = f.art.model_at(drawn.art.model).1;
+            let coat = format!("owner/unicorn_{c}.jpg");
+            assert_eq!(spec.albedo.as_deref(), Some(coat.as_str()), "{name}");
+            assert_eq!(drawn.tint, Color::WHITE, "{name}");
+            assert!(
+                spec.extras.iter().any(|e| e.model == "horn"),
+                "{name} has no horn"
+            );
+        }
     }
 
     /// Every monster named for a colour, and the black raven and vampire
