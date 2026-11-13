@@ -108,13 +108,17 @@ SCENES = {
     # dark creatures on dark stone in the game's light, people beside them,
     # the generated dogs' row: for the census, not timed
     "dark-creatures": ("dark-creatures", [], 600),
+    # four used rooms (chains, cobwebs, broken furniture), and the rings
+    # on stairs, altars and a drawbridge: for the census, not timed
+    "furnish": ("furnish", [], 600),
+    "ring-steps": ("ring-steps", [], 600),
     # every creature and thing a batch at a time: with --census, what the
     # game can draw (not a timing)
     "variants": ("variants", [], 1800),
 }
 CENSUS_ONLY = (
     "through", "outfits", "late-monsters", "command-wheel", "spells", "places", "bestiary",
-    "dark-creatures",
+    "dark-creatures", "furnish", "ring-steps",
 )
 DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants", *CENSUS_ONLY)]
 
