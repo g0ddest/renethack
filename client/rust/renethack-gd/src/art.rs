@@ -698,8 +698,11 @@ pub struct Art {
     /// The soft disc a contact shadow is (`ground`).
     contact: Option<Gd<Texture2D>>,
     proc_anims: HashMap<(Proc, Option<String>), Gd<AnimationLibrary>>,
-    /// The clips built in code on the characters' skeleton (`proc/read`).
-    proc_clips: Option<Gd<AnimationLibrary>>,
+    /// The clips built in code on the characters' skeleton (`proc/read`),
+    /// by the idle they are built on: a body re-rigged with its own frames
+    /// (the generated Valkyrie) has its own idle, and clips built on hers
+    /// threw a kit's off hand off its haft.
+    proc_clips: HashMap<i64, Gd<AnimationLibrary>>,
     /// Meshes shaded smooth, by the source mesh's id.
     smoothed: HashMap<i64, Gd<Mesh>>,
     /// Materials with another albedo, by the source material's id and the
@@ -824,7 +827,7 @@ impl Art {
             coin_glint: None,
             contact: None,
             proc_anims: HashMap::new(),
-            proc_clips: None,
+            proc_clips: HashMap::new(),
             smoothed: HashMap::new(),
             repainted: HashMap::new(),
             dyed: HashMap::new(),

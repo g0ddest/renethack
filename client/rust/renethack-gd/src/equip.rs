@@ -979,20 +979,21 @@ impl Art {
         if player.has_animation_library(PROC_CLIPS) {
             return;
         }
-        let lib = match &self.proc_clips {
-            Some(l) => l.clone(),
-            None => {
-                let Some(idle) = player.get_animation("Idle") else {
-                    return;
-                };
+        let Some(idle) = player.get_animation("Idle") else {
+            return;
+        };
+        // (built once for each idle: a body with its own frames has its own)
+        let lib = self
+            .proc_clips
+            .entry(idle.instance_id().to_i64())
+            .or_insert_with(|| {
                 let mut lib = AnimationLibrary::new_gd();
                 for (name, secs, pose) in PROC_POSES {
                     let _ = lib.add_animation(name, &pose_clip(&idle, secs, pose));
                 }
-                self.proc_clips = Some(lib.clone());
                 lib
-            }
-        };
+            })
+            .clone();
         let _ = player.add_animation_library(PROC_CLIPS, &lib);
     }
 }
