@@ -102,7 +102,15 @@ pub(crate) struct PrologueShown {
     /// and whether the beat's voice is still to start.
     pub(crate) narration: Option<crate::narration::Narration>,
     voice_due: bool,
+    /// How long the beat has been held at its start, in black, for its
+    /// scene to be drawn (`SCENE_WAIT`).
+    held: f64,
 }
+
+/// A beat waits in black at its start, at most this long, till its scene
+/// is drawn (its models built): on a busy machine a beat played out while
+/// its hero was still being built, its scene never seen.
+const SCENE_WAIT: f64 = 4.0;
 
 /// Arguments after `--` on the Godot command line.
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -5684,6 +5692,7 @@ impl RenethackGame {
             replay,
             narration,
             voice_due: false,
+            held: 0.0,
         });
         self.prologue_fade = None;
         if replay {
@@ -5771,7 +5780,14 @@ impl RenethackGame {
             }
             return false;
         }
-        let event = self.prologue.as_mut().and_then(|p| p.run.tick(delta));
+        let drawn = self.ui.as_ref().is_none_or(|ui| ui.map.title_drawn());
+        let event = self.prologue.as_mut().and_then(|p| {
+            let wait = p.run.secs() == 0.0 && !drawn && !p.run.leaving() && p.held < SCENE_WAIT;
+            if wait {
+                p.held += delta;
+            }
+            p.run.tick(if wait { 0.0 } else { delta })
+        });
         match event {
             Some(crate::prologue::Event::Beat(beat)) => {
                 let hero = self.prologue_hero();
@@ -5799,6 +5815,7 @@ impl RenethackGame {
                 }
                 if let Some(p) = self.prologue.as_mut() {
                     p.voice_due = p.narration.is_some();
+                    p.held = 0.0;
                 }
                 if let Some(ui) = self.ui.as_mut() {
                     ui.audio.hush();

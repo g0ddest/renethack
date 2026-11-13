@@ -213,6 +213,11 @@ impl Run {
         self.t
     }
 
+    /// It is going to black (to the next beat, or out).
+    pub fn leaving(&self) -> bool {
+        self.leaving.is_some()
+    }
+
     /// The beat's words.
     pub fn text(&self) -> &str {
         &self.texts[self.beat.index()]
