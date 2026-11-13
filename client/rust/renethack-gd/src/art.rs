@@ -3857,6 +3857,24 @@ pub fn footing(root: &Gd<Node3D>, share: f32) -> Option<Aabb> {
     bounds_round(&low)
 }
 
+/// Where the meshes shown under `root` stand, across the floor: the mean
+/// of their lowest `share` of their height, in its space. Not their
+/// bounds' middle: a tail lying out to one side (the generated dragon's
+/// curls off to its left) pulls that off a body standing square on its
+/// legs; nor the median, which a body on three legs (a xorn) draws off.
+pub fn footing_middle(root: &Gd<Node3D>, share: f32) -> Option<Vector3> {
+    let points = posed_points(root);
+    let all = bounds_round(&points)?;
+    let top = all.position.y + all.size.y * share;
+    let low: Vec<Vector3> = points
+        .into_iter()
+        .filter(|p| p.is_finite() && p.y <= top)
+        .collect();
+    let n = low.len() as f32;
+    let sum = low.iter().fold(Vector3::ZERO, |a, p| a + *p);
+    (n > 0.0).then(|| Vector3::new(sum.x / n, all.position.y, sum.z / n))
+}
+
 fn bounds_round(points: &[Vector3]) -> Option<Aabb> {
     // (a mesh too small to build has bounds of NaN: they are no bounds)
     let mut points = points.iter().copied().filter(|p| p.is_finite());

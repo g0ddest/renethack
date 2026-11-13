@@ -14,8 +14,8 @@
 //! newt with none (the dragon dropped them). Pictures of the map and the
 //! doll in each form with `--screenshots`.
 
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::{Mutex, OnceLock};
 
 use godot::classes::DisplayServer;
 use godot::obj::Singleton;
@@ -62,8 +62,47 @@ static BEFORE: AtomicU64 = AtomicU64::new(0);
 /// there.
 static SOUTH: Mutex<Option<((i32, i32), Glyph)>> = Mutex::new(None);
 
-fn form() -> (&'static str, &'static str, &'static str, &'static str) {
-    FORMS[NOW.load(Ordering::Relaxed).saturating_sub(1)]
+type Form = (&'static str, &'static str, &'static str, &'static str);
+
+/// The forms under test: `FORMS`, or with RENETHACK_POLY_FORMS="gray
+/// dragon;baby red dragon" (or commas) those (every body a form may wear: the
+/// generated dragon in each colour and size), their pictures named after
+/// them.
+fn forms() -> &'static [Form] {
+    static LIST: OnceLock<Vec<Form>> = OnceLock::new();
+    LIST.get_or_init(|| {
+        let Ok(names) = std::env::var("RENETHACK_POLY_FORMS") else {
+            return FORMS.to_vec();
+        };
+        let leak = |s: String| -> &'static str { s.leak() };
+        names
+            .split([',', ';'])
+            .map(str::trim)
+            .filter(|n| !n.is_empty())
+            .map(|n| {
+                let word = n
+                    .split(' ')
+                    .map(|w| {
+                        let mut c = w.chars();
+                        c.next()
+                            .map_or(String::new(), |f| f.to_uppercase().chain(c).collect())
+                    })
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                let slug = n.replace(' ', "-");
+                (
+                    leak(n.to_string()),
+                    leak(word),
+                    leak(format!("polyself-{slug}")),
+                    leak(format!("polyself-{slug}-doll")),
+                )
+            })
+            .collect()
+    })
+}
+
+fn form() -> Form {
+    forms()[NOW.load(Ordering::Relaxed).saturating_sub(1)]
 }
 
 pub(super) fn polyself() -> Vec<Step> {
@@ -77,7 +116,7 @@ pub(super) fn polyself() -> Vec<Step> {
     steps.push(Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
     }));
-    for (name, _, shot, doll) in FORMS {
+    for &(name, _, shot, doll) in forms() {
         steps.push(Step::Call("the next form", |_| {
             NOW.fetch_add(1, Ordering::Relaxed);
             Ok(())
@@ -114,7 +153,14 @@ pub(super) fn polyself() -> Vec<Step> {
         // down past its feet)
         steps.push(Step::Wait("centred on the cell", |g| {
             let off = map_view(g)?.hero_off_centre();
-            Ok(off.is_some_and(|off| off <= CENTRED))
+            let ok = off.is_some_and(|off| off <= CENTRED);
+            if let Some(off) = off.filter(|_| ok) {
+                godot::global::godot_print!(
+                    "selftest: the {} stands {off:.2} m off its cell",
+                    form().0
+                );
+            }
+            Ok(ok)
         }));
         steps.push(Step::Call(
             "on the floor, a flier as its monster flies",
