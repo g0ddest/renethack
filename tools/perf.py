@@ -103,11 +103,17 @@ SCENES = {
     # the creatures a game meets most, one by one at the game's distance
     # (the generated bodies among them): for the census, not timed
     "bestiary": ("bestiary", [], 900),
+    # dark creatures on dark stone in the game's light, people beside them,
+    # the generated dogs' row: for the census, not timed
+    "dark-creatures": ("dark-creatures", [], 600),
     # every creature and thing a batch at a time: with --census, what the
     # game can draw (not a timing)
     "variants": ("variants", [], 1800),
 }
-CENSUS_ONLY = ("through", "outfits", "late-monsters", "command-wheel", "spells", "places", "bestiary")
+CENSUS_ONLY = (
+    "through", "outfits", "late-monsters", "command-wheel", "spells", "places", "bestiary",
+    "dark-creatures",
+)
 DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants", *CENSUS_ONLY)]
 
 
