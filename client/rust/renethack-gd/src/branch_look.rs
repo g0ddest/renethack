@@ -659,13 +659,18 @@ fn plane_look(plane: Plane) -> BranchLook {
                 ("bedrock", "basalt_rock"),
                 ("floor", "basalt_floor"),
             ],
-            ambient: rgb(0.7, 0.25, 0.1),
-            ambient_energy: 0.3,
-            fog: rgb(1.0, 0.45, 0.2),
-            // (thinner: thick, it flooded the frame orange)
-            fog_density: 0.006,
+            // (dark ash between its fields, red only where the lava lights
+            // it: a red air washed the ground the lava's own hue, the frame
+            // one colour)
+            ambient: rgb(0.36, 0.3, 0.27),
+            ambient_energy: 0.14,
+            fog: rgb(0.52, 0.36, 0.28),
+            // (thinner: thick, it flooded the frame orange; its own glow
+            // low, a red veil over the ash)
+            fog_density: 0.005,
+            haze: 0.35,
             creature_key: Some((Vector3::new(-40.0, 15.0, 0.0), rgb(1.0, 0.97, 0.92), 1.8)),
-            darkness: rgb(0.08, 0.015, 0.005),
+            darkness: rgb(0.035, 0.012, 0.007),
             cool_shadows: 0.0,
             cracks: 1.4,
             embers: true,
