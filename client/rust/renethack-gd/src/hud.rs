@@ -3032,6 +3032,12 @@ impl Hud {
         &self.states
     }
 
+    /// Where the hero's states show over the HP orb, if any do: what the
+    /// inventory panel keeps clear of (`InventoryPanel::keep_clear`).
+    pub fn states_rect(&self) -> Option<Rect2> {
+        self.states.shown_rect()
+    }
+
     /// The deadly banner's words and what helps under them, while they
     /// show (self-tests).
     pub fn deadly_shown(&self) -> Option<(String, String)> {

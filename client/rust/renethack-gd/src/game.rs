@@ -4364,6 +4364,7 @@ impl RenethackGame {
         let sheet = ui.dialogs.layout_name() == Some("sheet");
         let rendered = ui.inventory.lend_doll(sheet);
         ui.dialogs.set_portrait_rendered(rendered);
+        ui.inventory.keep_clear(ui.hud.states_rect());
         ui.inventory.sync();
         let bar = ui.hud.action_bar();
         bar.set_active(active);

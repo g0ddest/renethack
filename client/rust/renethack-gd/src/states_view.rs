@@ -149,6 +149,18 @@ impl StatesRail {
         self.root.clone().upcast()
     }
 
+    /// The bounds of the pills that show (the canvas's), if any do.
+    pub fn shown_rect(&self) -> Option<Rect2> {
+        if !self.root.is_visible_in_tree() {
+            return None;
+        }
+        self.pills
+            .iter()
+            .filter(|p| p.node.is_visible())
+            .map(|p| p.node.get_global_rect())
+            .reduce(|a, b| a.merge(b))
+    }
+
     /// Stand over the HP orb (`orb::SIZE` across at the cluster's left,
     /// its top at `orb_top` in the cluster) and grow upward, as wide as
     /// its widest pill: left-aligned at the orb's left above the cluster's

@@ -70,6 +70,8 @@ const GRID_W: f32 = COLS as f32 * CELL + (COLS - 1) as f32 * CELL_GAP;
 const GRID_H: f32 = ROWS as f32 * CELL + (ROWS - 1) as f32 * CELL_GAP;
 /// The bottom cluster of the HUD and the gap above it.
 const CLUSTER_TOP: f32 = 188.0 + 8.0;
+/// The gap kept over what the panel keeps clear of (`keep_clear`).
+const CLEAR_GAP: f32 = 6.0;
 /// Double-click threshold.
 const DOUBLE_SECS: f64 = 0.35;
 /// Pixels the mouse moves before a press becomes a drag.
@@ -1564,6 +1566,8 @@ pub struct InventoryPanel {
     /// How much the list's words grow back while the panel is shrunk to
     /// fit the canvas (`layout`).
     text_k: f32,
+    /// What the panel keeps clear of (the HUD's states over the HP orb).
+    clear_of: Option<Rect2>,
     /// The rows' controls by cell index (`cells_shown`), for the focus.
     list_cells: Vec<Gd<Control>>,
     /// The switches between the grid and the list.
@@ -2319,6 +2323,7 @@ impl InventoryPanel {
             list_rows,
             list_key: Vec::new(),
             text_k: 1.0,
+            clear_of: None,
             list_cells: Vec::new(),
             view_buttons,
             pack_key: Vec::new(),
@@ -3806,10 +3811,27 @@ impl InventoryPanel {
     }
 
     /// Place and scale the panel above the HUD's bottom cluster.
+    /// Keep the panel clear of `r` (the HUD's states over the HP orb, in
+    /// the canvas): where the two share columns, its foot rises over them,
+    /// the panel shrunk to fit if it must. Its foot at the cluster's top,
+    /// the states rising above the orb were under it (a dragon's Fly).
+    pub fn keep_clear(&mut self, r: Option<Rect2>) {
+        self.clear_of = r;
+    }
+
     fn layout(&mut self) {
         let view = self.root.get_viewport_rect().size;
-        let room_h = view.y - CLUSTER_TOP - 8.0;
-        let s = ((view.x - 32.0) / WIDTH).min(room_h / HEIGHT).min(1.0);
+        let wide = ((view.x - 32.0) / WIDTH).min(1.0);
+        let left = (view.x - WIDTH * wide) / 2.0;
+        let mut foot = view.y - CLUSTER_TOP;
+        if let Some(r) = self.clear_of
+            && r.position.x < left + WIDTH * wide
+            && r.position.x + r.size.x > left
+        {
+            foot = foot.min(r.position.y - CLEAR_GAP);
+        }
+        let room_h = foot - 8.0;
+        let s = wide.min(room_h / HEIGHT).max(0.1);
         let scale = Vector2::new(s, s);
         if self.frame.get_scale() != scale {
             self.frame.set_scale(scale);
@@ -3824,7 +3846,7 @@ impl InventoryPanel {
         }
         let pos = Vector2::new(
             ((view.x - WIDTH * s) / 2.0).round(),
-            (view.y - CLUSTER_TOP - HEIGHT * s).max(8.0).round(),
+            (foot - HEIGHT * s).max(8.0).round(),
         );
         if self.frame.get_position() != pos {
             self.frame.set_position(pos);
