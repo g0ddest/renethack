@@ -101,9 +101,11 @@ fn words(g: &mut RenethackGame) -> Result<(), String> {
 
 /// During the descent the hero's feet are never under what they stand on
 /// (the floor, a tread of the stairs) by more than a few centimetres: she
-/// walks down the stairs, she does not sink through them.
+/// walks down the stairs, she does not sink through them; and the camera
+/// holds steady (`camera_steady`).
 fn feet_on_ground(g: &RenethackGame) -> Result<(), String> {
     const SUNK: f32 = 0.05;
+    camera_steady(g)?;
     let in_descent = g
         .prologue
         .as_ref()
@@ -118,6 +120,67 @@ fn feet_on_ground(g: &RenethackGame) -> Result<(), String> {
         return Err(format!(
             "in the descent the hero's feet are {under:.2} m under what she stands on, at {feet:?}"
         ));
+    }
+    Ok(())
+}
+
+/// The Descent's camera as last seen: the beat's seconds then, where it
+/// was and what it looked at, and how fast each was moving.
+type Seen = (f64, Vector3, Vector3, Option<(Vector3, Vector3)>);
+static CAMERA_SEEN: std::sync::Mutex<Option<Seen>> = std::sync::Mutex::new(None);
+
+/// Its path, and what it looks at, are smooth through the Descent: from one
+/// frame to the next neither changes its pace by more than this
+/// (metres a second, a second), nor jolts at her footfalls on the stairs.
+const CAMERA_JOLT: f32 = 2.5;
+
+/// The Descent's camera holds steady: no jolt in its path or its aim from
+/// one frame to the next (her steps down the treads stay on her body);
+/// it lists its height and its aim's for a second of her walk down.
+fn camera_steady(g: &RenethackGame) -> Result<(), String> {
+    let mut seen = CAMERA_SEEN.lock().unwrap_or_else(|e| e.into_inner());
+    let Some((p, (eye, aim))) = g
+        .prologue
+        .as_ref()
+        .filter(|p| p.run.beat() == Beat::Descent && p.run.secs() > 0.1)
+        .zip(g.ui.as_ref().and_then(|ui| ui.map.prologue_view()))
+    else {
+        *seen = None;
+        return Ok(());
+    };
+    let t = p.run.secs();
+    if (3.4..4.4).contains(&t) {
+        godot_print!(
+            "selftest: the descent's camera at {t:.4} s: its height {:.5} m, its aim's {:.5} m",
+            eye.y,
+            aim.y
+        );
+    }
+    let last = seen.take();
+    *seen = Some((t, eye, aim, None));
+    let Some((t0, eye0, aim0, pace0)) = last else {
+        return Ok(());
+    };
+    let dt = (t - t0) as f32;
+    if dt < 0.004 {
+        *seen = Some((t0, eye0, aim0, pace0));
+        return Ok(());
+    }
+    let pace = ((eye - eye0) / dt, (aim - aim0) / dt);
+    *seen = Some((t, eye, aim, Some(pace)));
+    if let Some((eye_pace, aim_pace)) = pace0 {
+        for (what, a, b) in [
+            ("its path", eye_pace, pace.0),
+            ("its aim", aim_pace, pace.1),
+        ] {
+            let jolt = (b - a).length() / dt;
+            if jolt > CAMERA_JOLT {
+                return Err(format!(
+                    "the descent's camera jolts at {t:.2} s: {what}'s pace changed by \
+                     {jolt:.1} m/s a second ({a:?} to {b:?})"
+                ));
+            }
+        }
     }
     Ok(())
 }

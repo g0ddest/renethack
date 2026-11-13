@@ -4164,6 +4164,13 @@ pub struct MapView {
     /// An item's glow on the hero's rim light: its colour and the seconds
     /// left of it (`pulse_rim`).
     rim_glow: Option<(Color, f32)>,
+    /// The low light about the hero at this share of its light (the
+    /// prologue's descent takes it as she goes down into the dark; 1 in
+    /// the game).
+    hero_dim: f32,
+    /// The shares of her key and fills, pool, rim and that low light the
+    /// prologue last set (`hero_dark`).
+    hero_shares: [f32; 4],
     rim: Gd<OmniLight3D>,
     /// The hero's key and fills (`HERO_STUDIO`), off while they are
     /// polymorphed.
@@ -5082,6 +5089,8 @@ impl MapView {
             underglow,
             near_fill,
             rim_glow: None,
+            hero_dim: 1.0,
+            hero_shares: [1.0; 4],
             rim,
             hero_studio: studio_frame,
             creature_light,
@@ -5548,7 +5557,7 @@ impl MapView {
                 let fill = self.branch_look.near_fill;
                 if fill > 0.0 && !in_lit {
                     self.near_fill
-                        .set_param(Param::ENERGY, fill * NEAR_FILL_GAIN);
+                        .set_param(Param::ENERGY, fill * NEAR_FILL_GAIN * self.hero_dim);
                     self.near_fill
                         .set_position(p + at(0.0, NEAR_FILL_HEIGHT, 0.0));
                     self.near_fill.set_visible(true);
@@ -8316,7 +8325,7 @@ impl MapView {
         let cell = (feet.x.round() as i32, feet.z.round() as i32);
         let Some(nodes) = self.cells.get(&cell) else {
             let on_flight = self.prologue_beat() == Some(crate::prologue::Beat::Descent)
-                && (feet.x - prologue_stage::START.0 as f32).abs() <= 1.0;
+                && (feet.x - prologue_stage::START.0 as f32).abs() <= 2.0;
             let top = prologue_stage::flight_top(feet.z)
                 .filter(|_| on_flight)
                 .or_else(|| {

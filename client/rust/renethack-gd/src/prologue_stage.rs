@@ -340,12 +340,17 @@ pub const MOUTH: f32 = 8.5;
 const FLAT_SPEED: f32 = 1.1;
 const STAIR_STEP: f32 = 0.55;
 const STEP_DROP: f32 = 0.45;
-/// The flight: the kit's stairs, two of them one under the other, each
-/// this long and this deep, and their treads as the model has them from
-/// its top (the tread's top, from z, to z: it rises to its -z); the walls
-/// either side (their middles this far off its own), and the torches on
-/// them (over which tread, on which side: -1 the left), this bright.
-const FLIGHT: &str = "res://art/cc0/sigilsvault/dungeon/pieces/stairs_small_01.glb";
+/// The flight: the kit's wide stairs (4 m across: two of its narrow ones
+/// read as a slot), two of them one under the other, each this long and
+/// this deep, and their treads as the model has them from its top (the
+/// tread's top, from z, to z: it rises to its -z); the walls either side
+/// (their middles this far off its own), and the torches on them (over
+/// which tread, on which side: -1 the left): warm pools on the stone, this
+/// bright, reaching this far, falling off this fast, the stone near black
+/// between them; each with a low light raking down the treads below it
+/// (their nosings catch it, their risers' shadows fall on the next), this
+/// bright, this far.
+const FLIGHT: &str = "res://art/cc0/sigilsvault/dungeon/pieces/stairs_large_01.glb";
 const FLIGHTS: usize = 2;
 const FLIGHT_LONG: f32 = 4.0;
 const FLIGHT_DROP: f32 = 3.0;
@@ -362,24 +367,42 @@ const FLIGHT_TREADS: [(f32, f32, f32); 10] = [
     (0.337, 1.612, 2.0),
 ];
 const TREADS: usize = FLIGHT_TREADS.len() * FLIGHTS;
-const FLIGHT_WALL: f32 = 1.25;
+const FLIGHT_WALL: f32 = 2.25;
 const FLIGHT_TORCHES: [(usize, f32); 2] = [(5, -1.0), (9, 1.0)];
-const FLIGHT_TORCH: f32 = 2.1;
-const FLIGHT_TORCH_RANGE: f32 = 4.5;
+const FLIGHT_TORCH: f32 = 1.5;
+const FLIGHT_TORCH_RANGE: f32 = 3.2;
+const FLIGHT_TORCH_FALL: f32 = 1.8;
+const RAKE: f32 = 1.4;
+const RAKE_RANGE: f32 = 4.0;
 /// The cold light from deep below at the stairs' foot (the game's stairs
 /// down have it too): she goes down into it, dark against it, and is
 /// gone; this bright, reaching this far.
-const FOOT_LIGHT: f32 = 1.6;
-const FOOT_RANGE: f32 = 4.0;
-/// The descent's camera this high over the hall's floor, coming after her
-/// at this share of her pace as far as the arch.
-const CAMERA_OVER: f32 = 2.3;
-const CAMERA_FOLLOWS: f32 = 0.6;
+const FOOT_LIGHT: f32 = 4.0;
+const FOOT_RANGE: f32 = 4.2;
+const FOOT_MIST: f32 = 0.05;
+/// The descent's hall's braziers burn at this share of the hall's light
+/// elsewhere, and go out as she walks away from them.
+const HALL_FIRES: f32 = 0.3;
+/// The descent's camera: a crane move of its own, from behind her to over
+/// the stairs' mouth (not into the arch), eased in and out over this long
+/// of her walk; it looks at a point this far ahead of her and this high
+/// over the stairs' slope, her way along smoothed over this long (never
+/// her height: her steps down the treads are her body's, not the frame's).
+const CAMERA_FROM: (f32, f32, f32) = (0.45, 2.2, -2.0);
+const CAMERA_TO: (f32, f32, f32) = (0.3, 2.9, -1.7);
+const CAMERA_DOLLY: f32 = 6.0;
+const CAMERA_AHEAD: f32 = 1.4;
+const CAMERA_AIM_UP: f32 = 0.6;
+const CAMERA_SMOOTH: f32 = 1.6;
 /// The hero's own lights (map_view `HERO_STUDIO`) leave her as she goes
 /// down: all of them till she is this far under the hall's floor, none
 /// past this.
 const DARK_FROM: f32 = 0.6;
 const DARK_TO: f32 = 3.4;
+/// All the way down her pool (it lit the hall's walls more than its fires),
+/// her cold rim (it lit the stairs' walls blue about her: the cold light is
+/// the deep's) and the low light about her are kept at these shares.
+const DESCENT_LIGHTS: [f32; 3] = [0.4, 0.3, 0.35];
 /// The descent's hall was laid out going north; it stands turned half
 /// round about this point (x, z) now that she goes south (all of it north
 /// enough that its stairs end before the level's last row: the bedrock
@@ -486,6 +509,9 @@ pub(super) struct Stage {
     beams: Vec<(Gd<SpotLight3D>, f32)>,
     /// The braziers' lights, each at its brightness and its own phase.
     fires: Vec<(Gd<OmniLight3D>, f32, f64)>,
+    /// The descent's hall's braziers: they fall behind as she goes down,
+    /// and out.
+    behind: Vec<(Gd<OmniLight3D>, f32, f64)>,
     /// The gods' materials (their clock and their life coming up).
     gods: Vec<Gd<ShaderMaterial>>,
     /// The god's statue's material (its stone tinted by the hero's god).
@@ -518,6 +544,7 @@ impl Stage {
             candle: None,
             beams: Vec::new(),
             fires: Vec::new(),
+            behind: Vec::new(),
             gods: Vec::new(),
             statue: None,
             furnace: None,
@@ -777,6 +804,7 @@ impl MapView {
                     let at = turned(piece(VAULT, (x, 0.0, 8.6), 0.0, 1.0)).at;
                     self.stage_brazier(&mut stage, at, k as f64 * 1.9);
                 }
+                stage.behind = std::mem::take(&mut stage.fires);
                 for (k, (tread_k, side)) in FLIGHT_TORCHES.into_iter().enumerate() {
                     let (top, z0, z1) = tread(tread_k);
                     let face = v(
@@ -794,6 +822,14 @@ impl MapView {
                     FOOT_RANGE,
                 );
                 foot.set_param(Param::ENERGY, FOOT_LIGHT);
+                // (in a thin cold mist, which it lights: the deep glows)
+                haze(
+                    &mut stage.root,
+                    v(START.0 as f32, top + 0.8, end - 1.2),
+                    v(4.0, 2.4, 3.6),
+                    FOOT_MIST,
+                    None,
+                );
             }
             Beat::Hero => {}
         }
@@ -1508,11 +1544,14 @@ impl MapView {
             }
             self.open_flight();
         }
-        let depth = match beat {
-            Beat::Descent => self.hero_stands().map_or(0.0, |(p, _)| -p.y),
-            _ => 0.0,
-        };
-        self.hero_dark(1.0 - smooth(((depth - DARK_FROM) / (DARK_TO - DARK_FROM)).clamp(0.0, 1.0)));
+        if beat == Beat::Descent {
+            let depth = self.hero_stands().map_or(0.0, |(p, _)| -p.y);
+            let k = 1.0 - smooth(((depth - DARK_FROM) / (DARK_TO - DARK_FROM)).clamp(0.0, 1.0));
+            // (her cold rim low all the way: it lit the stairs' walls blue
+            // about her, and the cold light is the deep's)
+            let [pool, rim, near] = DESCENT_LIGHTS;
+            self.hero_dark([k, pool * k, rim * k * k, near * k]);
+        }
         // the lava's own lights low over it in the Amulet's cavity: its rocks
         // lit at their feet, dark above (the game's are higher; its next
         // level lays them again)
@@ -1550,6 +1589,11 @@ impl MapView {
         }
         for (l, energy, phase) in &mut stage.fires {
             l.set_param(Param::ENERGY, *energy * flicker(secs * 1.1 + *phase));
+        }
+        let left = descent.map_or(0.0, |d| smooth(((d as f32 - 0.5) / 3.5).clamp(0.0, 1.0)));
+        for (l, energy, phase) in &mut stage.behind {
+            let k = HALL_FIRES * (1.0 - left);
+            l.set_param(Param::ENERGY, *energy * k * flicker(secs * 1.1 + *phase));
         }
         // the gods breathe, their cloth and the smoke about them stir
         for m in &mut stage.gods {
@@ -1769,6 +1813,11 @@ impl MapView {
         self.stage.as_ref().map(|s| s.beat)
     }
 
+    /// Where the beat's camera is and what it looks at (self-tests).
+    pub fn prologue_view(&self) -> Option<(Vector3, Vector3)> {
+        self.stage_camera
+    }
+
     /// The camera sharp to `near` metres and a little past, blurring
     /// beyond (a close beat's), or sharp throughout (None).
     fn focus(&mut self, near: Option<f32>) {
@@ -1797,6 +1846,7 @@ impl MapView {
     /// beat's, if it was built ahead.
     pub(super) fn end_stage(&mut self) {
         self.focus(None);
+        self.hero_dark([1.0; 4]);
         for stage in [self.stage.take(), self.next_stage.take()]
             .into_iter()
             .flatten()
@@ -1849,7 +1899,7 @@ impl MapView {
     fn open_flight(&mut self) {
         let x = START.0;
         let (_, _, end) = tread(TREADS - 1);
-        let cells: Vec<(i32, i32)> = (x - 1..=x + 1)
+        let cells: Vec<(i32, i32)> = (x - 2..=x + 2)
             .flat_map(|cx| {
                 ((MOUTH + 0.5).floor() as i32..=end.ceil() as i32).map(move |cz| (cx, cz))
             })
@@ -1860,19 +1910,37 @@ impl MapView {
         }
     }
 
-    /// The hero's own key and fills at `k` of their light (the dark below
-    /// the descent's stairs takes her: 1 is the game's).
-    fn hero_dark(&mut self, k: f32) {
+    /// The hero's own lights at these shares of their light: her key and
+    /// fills (they light her alone), her pool, her rim, the low light about
+    /// her (the dark of the descent takes them: all 1 is the game's).
+    fn hero_dark(&mut self, shares: [f32; 4]) {
+        if self
+            .hero_shares
+            .iter()
+            .zip(shares)
+            .all(|(a, b)| (a - b).abs() < 1e-4)
+        {
+            return;
+        }
+        self.hero_shares = shares;
+        let [studio, pool, rim, near] = shares;
+        self.hero_dim = near;
         for (i, (_, _, energy)) in super::HERO_STUDIO.iter().enumerate() {
             if let Some(mut l) = self
                 .hero_studio
                 .get_child(i as i32)
                 .and_then(|n| n.try_cast::<godot::classes::DirectionalLight3D>().ok())
-                && (l.get_param(Param::ENERGY) - energy * k).abs() > 1e-4
             {
-                l.set_param(Param::ENERGY, energy * k);
+                l.set_param(Param::ENERGY, energy * studio);
             }
         }
+        let full = if self.hero_gear.lamp() {
+            super::LAMP_POOL_ENERGY
+        } else {
+            super::HERO_LIGHT_ENERGY * super::HERO_GAIN * self.branch_look.hero_light
+        };
+        self.hero_light.set_param(Param::ENERGY, full * pool);
+        self.rim.set_param(Param::ENERGY, super::RIM_ENERGY * rim);
     }
 
     /// A torch on a wall of the descent's stairs: the game's own (its
@@ -1902,8 +1970,27 @@ impl MapView {
         t.light.set_position(at);
         t.light.set_param(Param::ENERGY, FLIGHT_TORCH);
         t.light.set_param(Param::RANGE, FLIGHT_TORCH_RANGE);
+        t.light.set_param(Param::ATTENUATION, FLIGHT_TORCH_FALL);
+        t.light.set_shadow(true);
         t.light.set_visible(true);
         stage.fires.push((t.light, FLIGHT_TORCH, phase));
+        // low by the wall, raking down the treads below it towards the
+        // middle of the way
+        let mut rake = SpotLight3D::new_alloc();
+        rake.set_color(super::TORCH);
+        rake.set_param(Param::ENERGY, RAKE);
+        rake.set_param(Param::RANGE, RAKE_RANGE);
+        rake.set_param(Param::ATTENUATION, 1.4);
+        rake.set_param(Param::SPOT_ANGLE, 38.0);
+        rake.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
+        // (no shadow of its own: the torch's above it casts the nosings'; a
+        // shadowed spot is a pipeline the game never draws, compiled when the
+        // game came up after it)
+        rake.set_shadow(false);
+        let from = face + out * 0.6 + Vector3::new(0.0, 1.1, 0.0);
+        let to = Vector3::new(START.0 as f32, face.y - 1.6, face.z + 2.0);
+        rake.set_transform(Transform3D::new(Basis::IDENTITY, from).looking_at(to));
+        stage.root.add_child(&rake);
     }
 }
 
@@ -1914,6 +2001,47 @@ enum Stride {
     Floor,
     Stairs,
     Still,
+}
+
+/// The descent's camera `d` seconds into her walk (before it, where it
+/// begins): where it is on its own eased crane move, and the point it
+/// looks at, ahead of her on the stairs' slope, her way along smoothed
+/// over `CAMERA_SMOOTH` (a triangle's weights): nothing in it steps with
+/// her.
+fn descent_view(d: f32) -> (Vector3, Vector3) {
+    let (sx, sz) = (START.0 as f32, START.1 as f32);
+    let at = |(x, y, z): (f32, f32, f32), from: f32| Vector3::new(sx + x, y, from + z);
+    let k = smooth((d / CAMERA_DOLLY).clamp(0.0, 1.0));
+    let eye = at(CAMERA_FROM, sz).lerp(at(CAMERA_TO, MOUTH), k);
+    const N: i32 = 64;
+    let (mut sum, mut weights) = (0.0, 0.0);
+    for i in -N..=N {
+        let w = (N + 1 - i.abs()) as f32;
+        let u = d + CAMERA_SMOOTH * i as f32 / (2 * N) as f32;
+        sum += w * walk_down(u).0.z;
+        weights += w;
+    }
+    let ahead = sum / weights + CAMERA_AHEAD;
+    (
+        eye,
+        Vector3::new(sx, slope_line(ahead) + CAMERA_AIM_UP, ahead),
+    )
+}
+
+/// The stairs' slope over `z`: level on the hall's floor, then down at the
+/// flights' pitch from the top tread's edge, the bend eased over two
+/// metres.
+fn slope_line(z: f32) -> f32 {
+    const BEND: f32 = 1.0;
+    let x = z - tread(0).2;
+    let run = if x <= -BEND {
+        0.0
+    } else if x >= BEND {
+        x
+    } else {
+        (x + BEND) * (x + BEND) / (4.0 * BEND)
+    };
+    -run * FLIGHT_DROP / FLIGHT_LONG
 }
 
 /// Tread `k` of the descent's stairs (0 the top, level with the hall's
@@ -2303,19 +2431,8 @@ fn camera(
             (aim + off, aim)
         }
         // behind and over her shoulder, looking down the stairs before
-        // her (from high: they go down steeper than a look from lower
-        // would see them past their top), following her slower than she
-        // goes, as far as their mouth, so that she draws away into the
-        // dark
-        Beat::Descent => {
-            let hero = hero.unwrap_or(v(START.0 as f32, 0.0, START.1 as f32));
-            let along = (hero.z - START.1 as f32).max(0.0);
-            // (never into the arch: it stops before it)
-            let z = (START.1 as f32 - 2.0 + CAMERA_FOLLOWS * along).min(MOUTH - 1.1);
-            let eye = v(START.0 as f32 + 0.45, CAMERA_OVER, z);
-            let aim = v(START.0 as f32, hero.y + 0.5, hero.z + 1.4);
-            (eye, aim)
-        }
+        // her (`descent_view`)
+        Beat::Descent => descent_view(t - crate::prologue::WALK_AT as f32),
     }
 }
 
@@ -2583,7 +2700,10 @@ fn set(beat: Beat) -> Vec<Piece> {
                 let mid = MOUTH + FLIGHT_LONG * (0.5 + n as f32);
                 s.push(piece(FLIGHT, (x, -drop, mid), 0.0, 1.0));
                 let from = MOUTH + 0.1 + FLIGHT_LONG * n as f32;
-                for k in 0..=n + 1 {
+                // (from the hall's floor down over the first flight, from
+                // its foot down over the second: walls up over it to the
+                // hall's height made it a well again)
+                for k in n..=n + 1 {
                     let y = -FLIGHT_DROP * k as f32;
                     s.push(piece(WALL, (x - FLIGHT_WALL, y, from), -90.0, 1.0));
                     s.push(piece(
@@ -2948,6 +3068,40 @@ mod tests {
             .iter()
             .fold((f32::MAX, f32::MIN), |(l, h), &(_, z)| (l.min(z), h.max(z)));
         assert!((far - near - FLIGHT_LONG).abs() < 1e-3);
+    }
+
+    #[test]
+    fn the_descent_s_camera_never_steps_with_her() {
+        // at 60 frames a second, from before her walk to past the beat's
+        // end: neither its place nor its aim changes pace by more than a
+        // fraction of a millimetre a frame (her steps down jolt nothing)
+        let dt = 1.0 / 60.0;
+        let mut seen: Vec<(Vector3, Vector3)> = Vec::new();
+        let mut worst = (0.0f32, 0.0f32);
+        for i in 0..(13.0 / dt) as i32 {
+            let d = -1.0 + i as f32 * dt;
+            seen.push(descent_view(d));
+            if let [a, b, c] = seen[seen.len().saturating_sub(3)..] {
+                let jolt = |p: Vector3, q: Vector3, r: Vector3| (r - q * 2.0 + p).length();
+                worst.0 = worst.0.max(jolt(a.0, b.0, c.0));
+                worst.1 = worst.1.max(jolt(a.1, b.1, c.1));
+            }
+        }
+        // (the most: her setting off, smoothed: 1.5 m/s a second)
+        assert!(
+            worst.0 < 2e-4 && worst.1 < 5e-4,
+            "jolts a frame (m): {worst:?}"
+        );
+        // and it keeps her in view ahead of it, short of the arch
+        for d in [0.0, 3.0, 6.0, 9.0, 12.0] {
+            let (eye, aim) = descent_view(d);
+            assert!(eye.z < MOUTH - 1.0 && aim.z > eye.z, "{d}: {eye:?} {aim:?}");
+            let feet = walk_down(d).0;
+            assert!(
+                (aim.z - feet.z - CAMERA_AHEAD).abs() < 0.3,
+                "{d}: {aim:?} {feet:?}"
+            );
+        }
     }
 
     #[test]
