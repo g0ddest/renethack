@@ -348,6 +348,12 @@ pub struct ModelSpec {
     /// instead of the outfit's sleeves (hide those).
     #[serde(default)]
     pub bare_arms: Option<String>,
+    /// At rest with a shield, this body lets it down at its side (as every
+    /// hero does behind the creation form), not raised before it: the
+    /// generated Valkyrie's shield, raised, hid her face in the portrait
+    /// and on the doll. Blows and blocks raise it as ever.
+    #[serde(default)]
+    pub shield_down: bool,
     /// Where this body holds things, by slot, where its build differs
     /// from the kits' the held slots are set for (a generated hero's
     /// shorter upper arm raises a shield before her face): instead of the
@@ -1573,6 +1579,7 @@ impl ArtManifest {
             neck: Vec::new(),
             bare_arms: None,
             held: BTreeMap::new(),
+            shield_down: false,
             bare_chest: false,
             bare_legs: false,
             feet: None,
@@ -2076,19 +2083,19 @@ mod tests {
     #[test]
     fn held_slot_of_a_body() {
         let art = manifest();
-        let plain = art.held_slot("arm_l").unwrap().clone();
+        let plain = art.held_slot("back").unwrap().clone();
         let (i, spec) = (0..art.models.len())
             .map(|i| (i, art.model_at(i).1))
-            .find(|(_, s)| s.held.contains_key("arm_l"))
-            .expect("a body with its own shield arm");
-        let own = art.held_slot_of(i, "arm_l").unwrap();
-        assert_eq!(own, &spec.held["arm_l"]);
+            .find(|(_, s)| s.held.contains_key("back"))
+            .expect("a body with its own back");
+        let own = art.held_slot_of(i, "back").unwrap();
+        assert_eq!(own, &spec.held["back"]);
         assert_ne!(own, &plain);
         assert_eq!(art.held_slot_of(i, "hand_r"), art.held_slot("hand_r"));
         let other = (0..art.models.len())
             .find(|&j| art.model_at(j).1.held.is_empty())
             .unwrap();
-        assert_eq!(art.held_slot_of(other, "arm_l"), Some(&plain));
+        assert_eq!(art.held_slot_of(other, "back"), Some(&plain));
     }
 
     /// A generated body (the owner's, under `owner/`): what our kits
@@ -3002,6 +3009,12 @@ mod tests {
         assert_eq!(held_name(&art, g.back), Some("dagger"));
         assert_eq!(g.hand_l, None, "an unlit lamp stays in the pack");
         assert_eq!(g.idle.as_deref(), Some("ual2/Idle_Shield"));
+        // the generated Valkyrie rests with it let down at her side (raised,
+        // it hid her face in the portrait); a kit's body raises it
+        let generated = art.model_index("role_valkyrie_f").unwrap();
+        let kit = art.model_index("role_valkyrie_m").unwrap();
+        assert_eq!(art.rest_idle(generated, &g).as_deref(), Some("Idle"));
+        assert_eq!(art.rest_idle(kit, &g), g.idle);
         // the spear's head leads (the sword's slash led with its butt)
         assert_eq!(g.attack.as_deref(), Some("proc/pole"));
         assert!(!g.lit());

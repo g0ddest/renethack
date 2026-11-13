@@ -523,6 +523,17 @@ impl ArtManifest {
     /// The idle of `g` with its shield let down at its side (a hero shown
     /// whole on the creation form, a shield over them from chin to knee
     /// otherwise): a lit light's, the weapon's own, or the bare one.
+    /// The idle `model` rests in with gear `g`: the gear's own, or a shield
+    /// let down at its side on a body that holds it so (`ModelSpec::
+    /// shield_down`).
+    pub fn rest_idle(&self, model: usize, g: &Gear) -> Option<String> {
+        if self.model_at(model).1.shield_down && g.arm_l.is_some() {
+            self.idle_shield_down(g)
+        } else {
+            g.idle.clone()
+        }
+    }
+
     pub fn idle_shield_down(&self, g: &Gear) -> Option<String> {
         let rules = &self.held;
         if g.lit() {

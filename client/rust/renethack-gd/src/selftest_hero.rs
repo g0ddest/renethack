@@ -695,6 +695,12 @@ fn kit_look(g: &RenethackGame, kit: &[crate::kits::KitItem]) -> Result<KitLook, 
             .collect(),
     );
     let worn = kit_worn(gear.neck.is_some(), gear.gloves.is_some());
+    // at rest, the hero's own body may let a shield down (`shield_down`)
+    let model = map_view(g)?.hero_model().map(|m| m.model_index());
+    let idle = match model {
+        Some(m) => art.rest_idle(m, &gear),
+        None => gear.idle.clone(),
+    };
     Ok((
         [
             one(gear.hand_r),
@@ -703,7 +709,7 @@ fn kit_look(g: &RenethackGame, kit: &[crate::kits::KitItem]) -> Result<KitLook, 
             one(gear.head),
             worn,
         ],
-        gear.idle,
+        idle,
         gear.attack,
     ))
 }
@@ -966,7 +972,7 @@ fn kit_distance(g: &mut RenethackGame, metres: f32) -> Result<(), String> {
 /// RENETHACK_KITS_LOOK=1: pictures only; RENETHACK_KIT_FAR=1: each also
 /// 7 m off, as a player sees them close in play; RENETHACK_KIT_PLAY=1: each
 /// also 7 m and 11 m off in the room they start in; RENETHACK_KIT_BACK=1:
-/// each also from behind.
+/// each also from behind; RENETHACK_KIT_SIDES=1: from either side.
 pub(super) fn kits() -> Vec<Step> {
     let mut steps = vec![Step::Call("seed 1, the first hero", |g| {
         g.seed = Some(1);
@@ -1036,14 +1042,26 @@ pub(super) fn kits() -> Vec<Step> {
             Step::Shot(rest),
         ]);
         // RENETHACK_KIT_BACK=1: also seen from behind (`<rest>-back`): what
-        // hangs on the back, against it
+        // hangs on the back, against it; RENETHACK_KIT_SIDES=1: and from
+        // either side (`<rest>-left`, `<rest>-right`): what the off arm holds
+        let mut turns: Vec<&str> = Vec::new();
         if std::env::var_os("RENETHACK_KIT_BACK").is_some() {
-            let back: &'static str = format!("{rest}-back").leak();
+            turns.push("back");
+        }
+        if std::env::var_os("RENETHACK_KIT_SIDES").is_some() {
+            turns.extend(["left", "right"]);
+        }
+        for side in turns {
+            let shot: &'static str = format!("{rest}-{side}").leak();
             steps.extend([
-                Step::Call("turned away", |g| kit_turn(g, 180.0)),
+                match side {
+                    "back" => Step::Call("turned away", |g| kit_turn(g, 180.0)),
+                    "left" => Step::Call("her left side to the camera", |g| kit_turn(g, 270.0)),
+                    _ => Step::Call("her right side to the camera", |g| kit_turn(g, 90.0)),
+                },
                 Step::Wait("a frame", |_| Ok(true)),
                 Step::Wait("another frame", |_| Ok(true)),
-                Step::Shot(back),
+                Step::Shot(shot),
                 Step::Call("facing the camera again", |g| kit_turn(g, 0.0)),
                 Step::Wait("a frame", |_| Ok(true)),
             ]);

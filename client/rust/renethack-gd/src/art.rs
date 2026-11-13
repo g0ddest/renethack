@@ -1827,7 +1827,7 @@ impl Art {
         }
         // the gear's idle and attack (a sword, a shield, a lamp, fists)
         let gear = m.worn.as_ref().map(|w| w.gear());
-        let idle = gear.and_then(|g| has(g.idle.as_deref()));
+        let idle = gear.and_then(|g| has(self.manifest.rest_idle(m.key.model, g).as_deref()));
         let attack = gear.and_then(|g| has(g.attack.as_deref()));
         Clips {
             idle: idle.or_else(|| has(spec.anims.idle.as_deref())),

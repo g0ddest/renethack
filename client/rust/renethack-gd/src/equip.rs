@@ -360,8 +360,14 @@ impl Art {
         m.worn = Some(worn);
         // the idle the gear calls for, unless the model is busy
         let spec = self.manifest.model_at(m.key.model).1;
-        let old_idle = old.idle.clone().or(spec.anims.idle.clone());
-        let new_idle = gear.idle.clone().or(spec.anims.idle.clone());
+        let old_idle = self
+            .manifest
+            .rest_idle(m.key.model, &old)
+            .or(spec.anims.idle.clone());
+        let new_idle = self
+            .manifest
+            .rest_idle(m.key.model, gear)
+            .or(spec.anims.idle.clone());
         if let (Some(p), Some(idle)) = (m.player.as_mut(), new_idle)
             && old_idle.as_deref() != Some(idle.as_str())
             && p.has_animation(idle.as_str())
