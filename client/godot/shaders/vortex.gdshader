@@ -1,9 +1,11 @@
 // Weather that moves about as a creature (creature_kit.rs): a vortex's
 // funnel and an air elemental's wind, banded by noise that flows round and
 // up them and fades at their foot and top, denser where they are seen
-// edge on; a fog cloud's puffs (`soft`), thinning to nothing at their
-// rims. A funnel's inner shell has its u moved on by 2: it turns faster
-// and is denser. The shape spins here, its mesh's bounds still.
+// edge on, a fire's in soot between its bands; a light's halo (`soft`),
+// thinning to nothing at its rim; a fog cloud's puffs (`soft`, `murk`), a
+// mist in drifting patches. A funnel's inner shell has its u moved on by
+// 2: it turns faster and is denser. The shape spins here, its mesh's
+// bounds still.
 shader_type spatial;
 render_mode blend_mix, depth_draw_never, cull_disabled, shadows_disabled, specular_disabled;
 
@@ -20,6 +22,15 @@ uniform float density = 0.6;
 uniform float soft = 0.0;
 // the turns a second it spins (the way a creature's Body spins)
 uniform float spin = 0.0;
+// how much of what lies between a glowing one's bands is soot, dark and
+// giving no light (a fire's smoke rolling round with its flame)
+uniform float soot = 0.0;
+// 1 for a mist (a cloud's puffs): no thick heart in each puff (a puff
+// thickest where it faces the eye was a cotton ball), as thin in its
+// middle as near its rim, in patches that drift through it
+uniform float murk = 0.0;
+
+const vec3 SOOT = vec3(0.045, 0.035, 0.03);
 
 varying vec3 local;
 
@@ -73,11 +84,16 @@ void fragment() {
 	float ends = smoothstep(0.0, 0.18, y) * (1.0 - smoothstep(0.65, 1.0, y));
 	ends = mix(ends, 1.0, soft);
 	float edge = 1.0 - abs(dot(NORMAL, VIEW));
-	float body = mix(0.3 + 0.7 * edge * edge, (1.0 - edge) * (1.0 - edge), soft);
-	float a = density * ends * body * mix(0.25, 1.0, band) * (0.5 + n) * (1.0 + 0.5 * inner);
+	float puff = (1.0 - edge) * (1.0 - edge);
+	float mist = (0.4 + 0.6 * (1.0 - edge)) * smoothstep(0.3, 0.72, n);
+	float body = mix(0.3 + 0.7 * edge * edge, mix(puff, mist, murk), soft);
+	// (its soot as thick as its flame, not thin as the gaps between bands)
+	float gaps = mix(0.25, 0.65, soot);
+	float a = density * ends * body * mix(gaps, 1.0, band) * (0.5 + n) * (1.0 + 0.5 * inner);
 	vec3 col = color.rgb * mix(0.7, 1.25, n * band);
-	ALBEDO = col;
-	EMISSION = col * glow * (0.6 + 0.8 * band);
+	float burn = 1.0 - soot * (1.0 - band);
+	ALBEDO = mix(SOOT, col, burn);
+	EMISSION = col * glow * (0.6 + 0.8 * band) * burn;
 	ROUGHNESS = 1.0;
 	ALPHA = clamp(a, 0.0, 1.0);
 }

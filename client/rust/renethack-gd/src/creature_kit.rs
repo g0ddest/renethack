@@ -49,8 +49,9 @@ const TONGUES: [([f32; 3], f32, f32); 6] = [
 /// How a weather's funnel, puffs or wind are drawn (the weather shader's
 /// parameters): its colour, its own light, the bands round it, the turns
 /// they make from its foot to its top, how fast they flow, how dense it
-/// is, whether it is a cloud, soft at its rims, and the turns a second it
-/// spins.
+/// is, whether it is a cloud, soft at its rims, the turns a second it
+/// spins, how much soot lies between its bands, and whether its puffs are
+/// a mist with no thick heart.
 #[derive(Clone, Copy)]
 struct Wind {
     color: Color,
@@ -61,7 +62,43 @@ struct Wind {
     density: f32,
     soft: bool,
     spin: f32,
+    soot: f32,
+    murk: bool,
 }
+
+/// Fire that moves about as a creature (a fire vortex, a fire elemental),
+/// as the fire of a blast is since it had a body: deep orange and red
+/// under dark smoke, never a cream puff. The vortex's flame (its colour,
+/// its own light, the soot between its bands); the elemental's flames
+/// (the torches' shader: their light, and how much deeper their orange
+/// is than a torch's), the smoke rolling off its head (its colour, how
+/// thick, how large and how high its middle stands) and the embers off
+/// both (their colour and how hot).
+const FIRE_FLAME: Color = Color::from_rgb(0.85, 0.24, 0.04);
+const FIRE_GLOW: f32 = 1.0;
+const FIRE_SOOT: f32 = 0.75;
+const FLAMES_ENERGY: f32 = 0.6;
+const FLAMES_DEEPER: f32 = 1.0;
+const FIRE_SMOKE: Color = Color::from_rgb(0.05, 0.04, 0.035);
+const FIRE_SMOKE_DENSITY: f32 = 0.55;
+const FIRE_SMOKE_SIZE: f32 = 0.7;
+const FIRE_SMOKE_HIGH: f32 = 0.62;
+const EMBER: Color = Color::from_rgb(1.0, 0.3, 0.05);
+const EMBER_HDR: f32 = 1.8;
+/// A fog cloud (a vampire's fog form too): a dark mist tinged with blood,
+/// seen through, no thick heart: a pale cream-pink cotton ball was the
+/// brightest thing in a dark frame. Its colour, how thick it is, and a
+/// faint light of its own, the blood in it (unlit, so dark a mist on a
+/// dark floor was not there at all).
+const FOG_MIST: Color = Color::from_rgb(0.3, 0.14, 0.13);
+const FOG_DENSITY: f32 = 0.85;
+const FOG_GLOW: f32 = 0.3;
+/// An energy vortex: magic's deep blue and its own light (the creature's
+/// bright blue, paled, at 2.2 burned a white-violet funnel brighter than
+/// anything about it), and the rope of it up its middle.
+const ENERGY: Color = Color::from_rgb(0.22, 0.3, 0.9);
+const ENERGY_GLOW: f32 = 0.8;
+const ENERGY_ROPE: Color = Color::from_rgba(0.35, 0.45, 1.0, 0.85);
 
 /// What a vortex or an elemental is made of, by its model's shape.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -435,6 +472,25 @@ impl Kit<'_> {
         if w == Weather::Flame {
             let mut figure = self.pivot(root, "Figure", [0.0; 3]);
             self.flames(&mut figure);
+            // dark smoke rolling off its head, turning slowly
+            let mut smoke = self.pivot(root, "Smoke", [0.0, FIRE_SMOKE_HIGH, 0.0]);
+            smoke.set_scale(Vector3::ONE * FIRE_SMOKE_SIZE);
+            let mut mi = MeshInstance3D::new_alloc();
+            mi.set_mesh(&self.art.mesh(shape_of(Fog)));
+            mi.set_material_override(&self.wind(Wind {
+                color: FIRE_SMOKE,
+                glow: 0.0,
+                bands: 0.0,
+                twist: 0.0,
+                speed: 0.45,
+                density: FIRE_SMOKE_DENSITY,
+                soft: true,
+                spin: 0.15,
+                soot: 0.0,
+                murk: true,
+            }));
+            mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+            smoke.add_child(&mi);
             self.motes(&mut body, w);
             return;
         }
@@ -455,24 +511,30 @@ impl Kit<'_> {
             density: 0.6,
             soft: false,
             spin: 1.0 / WAVE_PERIOD,
+            soot: 0.0,
+            murk: false,
         };
         let look = match w {
-            Weather::Fire => wind(Color::from_rgb(1.0, 0.5, 0.12), 2.0, 3.0, 0.7),
-            Weather::Energy => wind(pale(0.2), 2.2, 4.0, 0.8),
+            Weather::Fire => Wind {
+                soot: FIRE_SOOT,
+                ..wind(FIRE_FLAME, FIRE_GLOW, 3.0, 0.7)
+            },
+            Weather::Energy => wind(ENERGY, ENERGY_GLOW, 4.0, 0.8),
             Weather::Dust => Wind {
                 density: 0.75,
                 ..wind(tint, 0.0, 3.0, 0.5)
             },
-            Weather::Ice => wind(pale(0.3), 0.25, 3.0, 0.5),
+            Weather::Ice => wind(pale(0.15), 0.12, 3.0, 0.5),
             Weather::Steam => Wind {
                 density: 0.5,
                 ..wind(pale(0.55), 0.0, 2.0, 0.35)
             },
             Weather::Fog => Wind {
-                density: 0.3,
+                density: FOG_DENSITY,
                 soft: true,
                 spin: 0.1,
-                ..wind(pale(0.2), 0.0, 0.0, 0.2)
+                murk: true,
+                ..wind(FOG_MIST, FOG_GLOW, 0.0, 0.2)
             },
             Weather::Air | Weather::Flame => wind(pale(0.2), 0.0, 3.0, 0.6),
         };
@@ -492,15 +554,13 @@ impl Kit<'_> {
         // (its swaying axis turns out past them)
         mi.set_extra_cull_margin(0.3);
         still.add_child(&mi);
-        // stones in dust, shards in ice, a bright rope of energy
+        // stones in dust, shards in ice, a rope of energy (the shards and
+        // the rope in the weather's own hue: pale, they were white beads
+        // and a white thread)
         let carried = match w {
             Weather::Dust => Some((Debris, self.dark())),
-            Weather::Ice => Some((Debris, self.art.flat(pale(0.75), Finish::Glossy))),
-            Weather::Energy => Some((
-                Core,
-                self.art
-                    .flat(Color::from_rgba(0.85, 0.94, 1.0, 0.85), Finish::Flat),
-            )),
+            Weather::Ice => Some((Debris, self.art.flat(pale(0.35), Finish::Glossy))),
+            Weather::Energy => Some((Core, self.art.flat(ENERGY_ROPE, Finish::Flat))),
             _ => None,
         };
         if let Some((part, mat)) = carried {
@@ -525,6 +585,8 @@ impl Kit<'_> {
         m.set_shader_parameter("density", &look.density.to_variant());
         m.set_shader_parameter("soft", &f32::from(u8::from(look.soft)).to_variant());
         m.set_shader_parameter("spin", &look.spin.to_variant());
+        m.set_shader_parameter("soot", &look.soot.to_variant());
+        m.set_shader_parameter("murk", &f32::from(u8::from(look.murk)).to_variant());
         m.upcast()
     }
 
@@ -541,7 +603,10 @@ impl Kit<'_> {
             m.set_shader_parameter("flipbook", &book.to_variant());
             m.set_shader_parameter("has_flipbook", &true.to_variant());
         }
-        m.set_shader_parameter("energy", &0.75f32.to_variant());
+        // (deep orange and red: where its tongues overlap, a torch's own
+        // orange added up to cream)
+        m.set_shader_parameter("energy", &FLAMES_ENERGY.to_variant());
+        m.set_shader_parameter("deeper", &FLAMES_DEEPER.to_variant());
         // (the picture's flame is cut off flat at its foot)
         m.set_shader_parameter("foot", &0.3f32.to_variant());
         for (i, &(at, w, h)) in TONGUES.iter().enumerate() {
@@ -720,6 +785,8 @@ impl Kit<'_> {
             density: 0.55,
             soft: true,
             spin: 0.2,
+            soot: 0.0,
+            murk: false,
         });
         let mut mi = MeshInstance3D::new_alloc();
         mi.set_mesh(&self.art.mesh(sphere(0.42)));
@@ -751,7 +818,14 @@ impl Kit<'_> {
         m.set_turbulence_enabled(true);
         m.set_turbulence_noise_strength(0.6);
         m.set_turbulence_noise_scale(1.5);
-        m.set_color_ramp(&fading(self.tint, if w.glows() { 3.0 } else { 1.0 }));
+        // (a fire's embers, not its creature's yellow; a fog's its mist)
+        let (color, hdr) = match w {
+            Weather::Fire | Weather::Flame => (EMBER, EMBER_HDR),
+            Weather::Fog => (FOG_MIST, 1.0),
+            _ if w.glows() => (self.tint, 3.0),
+            _ => (self.tint, 1.0),
+        };
+        m.set_color_ramp(&fading(color, hdr));
         let mut p = GpuParticles3D::new_alloc();
         p.set_name("Motes");
         p.set_process_material(&m);
