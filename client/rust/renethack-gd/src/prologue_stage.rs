@@ -34,15 +34,15 @@ use godot::classes::fast_noise_lite::NoiseType;
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::image::Format;
 use godot::classes::light_3d::Param;
+use godot::classes::multi_mesh::TransformFormat;
 use godot::classes::particle_process_material::{EmissionShape, Parameter};
 use godot::classes::rendering_server::FogVolumeShape;
-use godot::classes::ribbon_trail_mesh::Shape as RibbonShape;
 use godot::classes::{
     CameraAttributesPractical, FastNoiseLite, FogMaterial, FogVolume, GpuParticles3D, Gradient,
     GradientTexture1D, GradientTexture2D, Image, ImageTexture, Material, Mesh, MeshInstance3D,
-    Node3D, NoiseTexture3D, OmniLight3D, PackedScene, ParticleProcessMaterial, PlaneMesh, QuadMesh,
-    Resource, RibbonTrailMesh, Shader, ShaderMaterial, SphereMesh, SpotLight3D, StandardMaterial3D,
-    Texture2D, Texture3D,
+    MultiMesh, MultiMeshInstance3D, Node3D, NoiseTexture3D, OmniLight3D, PackedScene,
+    ParticleProcessMaterial, PlaneMesh, QuadMesh, Resource, Shader, ShaderMaterial, SphereMesh,
+    SpotLight3D, StandardMaterial3D, Texture2D, Texture3D,
 };
 use godot::prelude::*;
 use nh_protocol::{Catalog, Glyph, GlyphKind, LevelNotice, mg};
@@ -50,7 +50,7 @@ use nh_world::{Pack, World};
 
 use super::{MapView, flicker, role_monster};
 use crate::art::{Finish, no_shadow};
-use crate::meshes::{cuboid, plane};
+use crate::meshes::{cuboid, plane, torus};
 use crate::prologue::Beat;
 use crate::rehearsal::glyph;
 use crate::title_scene::{Fire, TitleScene};
@@ -90,24 +90,51 @@ const LAVA_LIGHT: Color = Color::from_rgb(1.0, 0.42, 0.14);
 const STONE_LIGHT: Color = Color::from_rgb(1.0, 0.08, 0.04);
 const STONE_BEAT: f32 = 2.4;
 /// The lava's answer as the Amulet goes in: the surface's height, the
-/// Amulet's disc's foot below its stone and its chain's top above it (in
+/// Amulet's disc's foot below its stone and its top above it (in
 /// its model's units), the molten colour, the flare's reach and brightness
 /// and how long it dies over, the ring's spread and life, how long the spot
 /// takes to cool once the Amulet is under, and how long the garnet's red
 /// shows through as it goes.
 const LAVA_TOP: f32 = 0.0;
+/// The Amulet's chain run on up from its model's strands (their tops and
+/// ways up, in its model's units, 1.9 tall): links this many on each, this
+/// far apart, their wire's inner and outer radius, drawn this much longer
+/// than round.
+/// A strand's top and its way up (model units).
+type Strand = ((f32, f32, f32), (f32, f32, f32));
+const CHAIN_STRANDS: [Strand; 2] = [
+    ((-0.262, 0.95, -0.027), (-0.097, 0.4, 0.0)),
+    ((0.287, 0.95, -0.054), (0.118, 0.4, 0.0)),
+];
+const CHAIN_ON: usize = 80;
+const LINK_PITCH: f32 = 0.11;
+const LINK_WIRE_IN: f32 = 0.026;
+const LINK_WIRE_OUT: f32 = 0.056;
+const LINK_STRETCH: f32 = 1.5;
 const DISC_BELOW: f32 = 0.57;
-const CHAIN_ABOVE: f32 = 1.33;
+const DISC_ABOVE: f32 = 0.55;
 const MOLTEN: Color = Color::from_rgb(1.0, 0.36, 0.07);
 const FLARE_REACH: f32 = 5.5;
 const FLARE: f32 = 3.2;
 const FLARE_SECS: f32 = 1.4;
-const RING_REACH: f32 = 3.2;
+const RING_REACH: f32 = 2.6;
 const RING_SECS: f32 = 1.4;
 const COOL_SECS: f32 = 1.8;
 /// The molten spot's width and its brightest, and the ring's brightest
 /// (deep orange, never cream: brighter burns to white).
 const SPOT_WIDE: f32 = 2.2;
+/// The molten patch it leaves: how wide, how bright.
+const PATCH_WIDE: f32 = 0.95;
+const PATCH_GLOW: f32 = 0.35;
+/// The molten blobs: their colour, how many, their seed (shared by the
+/// blobs and their trails).
+const BLOB: Color = Color::from_rgb(1.0, 0.3, 0.05);
+const DROPLETS: i32 = 18;
+/// Each blob and the dimmer, smaller ones trailing it down its arc: their
+/// widths and glow, and the gap between them (seconds).
+const BLOB_GHOSTS: [(f32, f32); 3] = [(0.12, 2.6), (0.085, 1.5), (0.055, 0.8)];
+const GHOST_GAP: f32 = 0.035;
+const DROPLET_SEED: u32 = 7741;
 const SPOT_GLOW: f32 = 1.1;
 const RING_GLOW: f32 = 1.3;
 const GARNET_SECS: f32 = 0.6;
@@ -392,7 +419,10 @@ struct Splash {
     flare: Gd<OmniLight3D>,
     ring: (Gd<MeshInstance3D>, Gd<StandardMaterial3D>),
     spot: (Gd<MeshInstance3D>, Gd<StandardMaterial3D>),
+    patch: (Gd<MeshInstance3D>, Gd<StandardMaterial3D>),
     bursts: Vec<Gd<GpuParticles3D>>,
+    /// The blobs' trails, fired one after another after the touch.
+    ghosts: Vec<Gd<GpuParticles3D>>,
 }
 
 /// A beat's scene as drawn: what stands beside its level, and what moves.
@@ -1111,6 +1141,11 @@ impl MapView {
             let (sx, sy, _) = AMULET_STONE;
             figure.reparent(&node);
             figure.set_position(-Vector3::new(sx, sy, 0.0) * k);
+            // its chain runs on up out of the frame (the model's is short:
+            // its cut ends hung in the air as it sank)
+            if let Some(chain) = self.chain_on() {
+                figure.add_child(&chain);
+            }
             mat = Some(m);
         }
         let front = AMULET_STONE.2 * tall / 1.9 + 0.12;
@@ -1134,6 +1169,46 @@ impl MapView {
             tall,
             splash,
         }
+    }
+
+    /// The Amulet's chain on up from its model's two strands (in the model's
+    /// own space): links of tarnished gold, each across the one before.
+    fn chain_on(&mut self) -> Option<Gd<MultiMeshInstance3D>> {
+        let link = self.art.mesh(torus(LINK_WIRE_IN, LINK_WIRE_OUT));
+        let mat = self.kept("amulet chain", || {
+            let mut m = StandardMaterial3D::new_gd();
+            m.set_albedo(Color::from_rgb(0.36, 0.27, 0.16));
+            m.set_metallic(0.75);
+            m.set_roughness(0.42);
+            Some(m)
+        })?;
+        let mut mm = MultiMesh::new_gd();
+        mm.set_transform_format(TransformFormat::TRANSFORM_3D);
+        mm.set_mesh(&link);
+        mm.set_instance_count((CHAIN_STRANDS.len() * CHAIN_ON) as i32);
+        let mut i = 0;
+        for &(from, way) in CHAIN_STRANDS.iter() {
+            let (from, along) = (
+                Vector3::new(from.0, from.1, from.2),
+                Vector3::new(way.0, way.1, way.2).normalized(),
+            );
+            let flat = along.cross(Vector3::BACK).normalized();
+            for n in 0..CHAIN_ON {
+                let at = from + along * (LINK_PITCH * n as f32);
+                // each link across the one before
+                let axis = if n % 2 == 0 { Vector3::BACK } else { flat };
+                let side = along.cross(axis).normalized();
+                let basis = Basis::from_cols(along * LINK_STRETCH, axis, side);
+                mm.set_instance_transform(i, Transform3D::new(basis, at));
+                i += 1;
+            }
+        }
+        let mut mi = MultiMeshInstance3D::new_alloc();
+        mi.set_name("ChainOn");
+        mi.set_multimesh(&mm);
+        mi.set_material_override(&mat);
+        mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        Some(mi)
     }
 
     /// The lava's answer at `at` (on its surface), waiting for the Amulet.
@@ -1169,20 +1244,41 @@ impl MapView {
         };
         // (kept: a material freed with the rehearsal's warm-up takes its
         // shader with it, and the next made compiles it again)
+        let swell = self
+            .kept("lava swell", || {
+                swell_texture().map(|t| t.upcast::<Texture2D>())
+            })
+            .unwrap_or_else(crate::vfx::ring_texture);
         let ring_mat = self
-            .kept("splash ring", || Some(glow(&crate::vfx::ring_texture())))
-            .unwrap_or_else(|| glow(&crate::vfx::ring_texture()));
+            .kept("splash ring", || Some(glow(&swell)))
+            .unwrap_or_else(|| glow(&swell));
         let ring = flat(root, &ring_mat, at + v(0.0, 0.05, 0.0));
         let cracks = self.kept("lava cracks", || {
             crack_texture().map(|t| t.upcast::<Texture2D>())
         });
         let cracks = cracks.unwrap_or_else(crate::vfx::soft_texture);
+        // the molten patch left as it goes under: crust plates close over
+        // it unevenly (its texels' alpha the order they close in)
+        let molten = self.kept("lava patch", || {
+            patch_texture().map(|t| t.upcast::<Texture2D>())
+        });
+        let molten = molten.unwrap_or_else(crate::vfx::soft_texture);
+        let patch_mat = self
+            .kept("splash patch", || {
+                let mut m = glow(&molten);
+                m.set_transparency(Transparency::ALPHA_SCISSOR);
+                Some(m)
+            })
+            .unwrap_or_else(|| glow(&molten));
+        let patch = flat(root, &patch_mat, at + v(0.0, 0.055, 0.0));
         let spot_mat = self
             .kept("splash spot", || Some(glow(&cracks)))
             .unwrap_or_else(|| glow(&cracks));
         let spot = flat(root, &spot_mat, at + v(0.0, 0.06, 0.0));
-        let mut bursts = vec![self.droplets(), self.ember_burst(), self.smoke_puff()];
-        for b in &mut bursts {
+        let mut ghosts = self.droplets();
+        let head = ghosts.remove(0);
+        let mut bursts = vec![head, self.ember_burst(), self.smoke_puff()];
+        for b in bursts.iter_mut().chain(ghosts.iter_mut()) {
             b.set_position(at + v(0.0, 0.05, 0.0));
             root.add_child(&*b);
         }
@@ -1193,59 +1289,61 @@ impl MapView {
             flare,
             ring: (ring, ring_mat),
             spot: (spot, spot_mat),
+            patch: (patch, patch_mat),
             bursts,
+            ghosts,
         }
     }
 
-    /// Heavy droplets of molten rock thrown up, falling back in arcs, short
-    /// trails behind them (once, when it goes off).
-    fn droplets(&mut self) -> Gd<GpuParticles3D> {
-        let mut m = ParticleProcessMaterial::new_gd();
-        m.set_emission_shape(EmissionShape::SPHERE);
-        m.set_emission_sphere_radius(0.15);
-        m.set_direction(Vector3::UP);
-        m.set_spread(38.0);
-        m.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 2.0);
-        m.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 3.4);
-        m.set_gravity(Vector3::new(0.0, -9.8, 0.0));
-        m.set_param_min(Parameter::SCALE, 0.7);
-        m.set_param_max(Parameter::SCALE, 1.3);
-        m.set_color_ramp(&crate::vfx::ramp(Color::from_rgb(1.0, 0.3, 0.05), 1.1));
-        let mut p = GpuParticles3D::new_alloc();
-        p.set_process_material(&m);
-        p.set_amount(16);
-        p.set_lifetime(1.0);
-        p.set_one_shot(true);
-        p.set_explosiveness_ratio(0.9);
-        p.set_emitting(false);
-        p.set_trail_enabled(true);
-        p.set_trail_lifetime(0.14);
-        let mut trail = RibbonTrailMesh::new_gd();
-        trail.set_shape(RibbonShape::CROSS);
-        trail.set_size(0.05);
-        trail.set_sections(4);
-        p.set_draw_pass_mesh(0, &trail);
-        let trail_mat = || {
-            let mut mat = StandardMaterial3D::new_gd();
-            mat.set_shading_mode(ShadingMode::UNSHADED);
-            mat.set_transparency(Transparency::ALPHA);
-            mat.set_blend_mode(BlendMode::ADD);
-            mat.set_cull_mode(CullMode::DISABLED);
-            mat.set_flag(Flags::ALBEDO_FROM_VERTEX_COLOR, true);
-            mat.set_flag(Flags::PARTICLE_TRAILS_MODE, true);
-            mat.set_flag(Flags::DISABLE_FOG, true);
-            mat
-        };
+    /// Heavy blobs of molten rock thrown low, falling back under their
+    /// weight, big and small (once, when it goes off), and their trails:
+    /// smaller, dimmer blobs on one seed, each fired a moment after the
+    /// one before, so that they follow it down its arc (ribbon trails read
+    /// as blades of grass). The head first, the ghosts after.
+    fn droplets(&mut self) -> Vec<Gd<GpuParticles3D>> {
+        let blob = self
+            .kept("lava blob", || {
+                blob_texture().map(|t| t.upcast::<Texture2D>())
+            })
+            .unwrap_or_else(crate::vfx::soft_texture);
         let mat = self
-            .kept("splash trail", || Some(trail_mat()))
-            .unwrap_or_else(trail_mat);
-        p.set_material_override(&mat);
-        p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
-        p.set_visibility_aabb(Aabb::new(
-            Vector3::new(-2.0, -1.0, -2.0),
-            Vector3::new(4.0, 3.0, 4.0),
-        ));
-        p
+            .kept("splash blob", || {
+                Some(crate::vfx::particle_material(&blob, false, false, None))
+            })
+            .unwrap_or_else(|| crate::vfx::particle_material(&blob, false, false, None));
+        let mut out = Vec::new();
+        for (k, (wide, glow)) in BLOB_GHOSTS.into_iter().enumerate() {
+            let mut m = ParticleProcessMaterial::new_gd();
+            m.set_emission_shape(EmissionShape::SPHERE);
+            m.set_emission_sphere_radius(0.18);
+            m.set_direction(Vector3::UP);
+            m.set_spread(55.0);
+            m.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 1.9);
+            m.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 3.3);
+            m.set_gravity(Vector3::new(0.0, -9.8, 0.0));
+            m.set_param_min(Parameter::SCALE, 0.45);
+            m.set_param_max(Parameter::SCALE, 1.5);
+            m.set_color_ramp(&crate::vfx::ramp(BLOB, glow));
+            let mut p = GpuParticles3D::new_alloc();
+            p.set_name(&format!("Droplets{k}"));
+            p.set_process_material(&m);
+            p.set_amount(DROPLETS);
+            p.set_lifetime(1.1);
+            p.set_one_shot(true);
+            p.set_explosiveness_ratio(1.0);
+            p.set_use_fixed_seed(true);
+            p.set_seed(DROPLET_SEED);
+            p.set_emitting(false);
+            p.set_draw_pass_mesh(0, &quad_mesh(wide));
+            p.set_material_override(&mat);
+            p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+            p.set_visibility_aabb(Aabb::new(
+                Vector3::new(-2.0, -1.0, -2.0),
+                Vector3::new(4.0, 3.0, 4.0),
+            ));
+            out.push(p);
+        }
+        out
     }
 
     /// A burst of embers rising (once).
@@ -1448,7 +1546,7 @@ impl MapView {
                 sp.spot.0.set_visible(true);
                 touched_at = Some(sp.at);
             }
-            if sp.under.is_none() && sp.touched.is_some() && at.y + CHAIN_ABOVE * k <= LAVA_TOP {
+            if sp.under.is_none() && sp.touched.is_some() && at.y + DISC_ABOVE * k <= LAVA_TOP {
                 sp.under = Some(t);
             }
             answer(sp, t);
@@ -1526,7 +1624,8 @@ impl MapView {
             // and smoke, its glowing ring and cracks
             let sp = &mut a.splash;
             sp.touched = Some(0.0);
-            for b in &mut sp.bursts {
+            sp.under = Some(0.1);
+            for b in sp.bursts.iter_mut().chain(sp.ghosts.iter_mut()) {
                 b.restart();
             }
             sp.ring.0.set_visible(true);
@@ -1688,6 +1787,12 @@ fn answer(sp: &mut Splash, t: f32) {
         return;
     };
     let s = t - touched;
+    for (k, g) in sp.ghosts.iter_mut().enumerate() {
+        let due = GHOST_GAP * (k + 1) as f32;
+        if s >= due && s - due < 0.5 && !g.is_emitting() {
+            g.restart();
+        }
+    }
     let flare = smooth(s / 0.12) * (1.0 - smooth((s - 0.12) / FLARE_SECS));
     sp.flare.set_param(Param::ENERGY, FLARE * flare);
     let r = (s / RING_SECS).clamp(0.0, 1.0);
@@ -1704,9 +1809,10 @@ fn answer(sp: &mut Splash, t: f32) {
     } else if ring.is_visible() {
         ring.set_visible(false);
     }
-    // hot from the touch till it is under, then cooling back to crust
-    let cooled = sp.under.map_or(0.0, |u| smooth((t - u - 0.3) / COOL_SECS));
-    let heat = smooth(s / 0.15) * (1.0 - cooled) * (0.75 + 0.25 * (1.0 - smooth(s / 0.6)));
+    // the cracks hot from the touch till it is under, then gone over a
+    // moment; the molten patch it leaves closing as the crust plates meet
+    let gone = sp.under.map_or(0.0, |u| smooth((t - u) / 0.25));
+    let heat = smooth(s / 0.15) * (1.0 - gone) * (0.75 + 0.25 * (1.0 - smooth(s / 0.6)));
     let garnet = sp.under.map_or(0.0, |u| {
         let g = (t - u) / GARNET_SECS;
         if (0.0..1.0).contains(&g) {
@@ -1721,34 +1827,169 @@ fn answer(sp: &mut Splash, t: f32) {
         MOLTEN.b * (1.0 - garnet) + 0.04 * garnet,
     );
     let (spot, spot_mat) = &mut sp.spot;
-    // (closing in on where it went under as it cools)
-    let wide = SPOT_WIDE * (1.0 - 0.45 * cooled);
-    spot.set_scale(Vector3::new(wide, 1.0, wide));
+    spot.set_scale(Vector3::new(SPOT_WIDE, 1.0, SPOT_WIDE));
     let k = heat * SPOT_GLOW;
     spot_mat.set_albedo(Color::from_rgb(hot.r * k, hot.g * k, hot.b * k));
-    if heat <= 0.001 && cooled >= 1.0 {
+    if gone >= 1.0 && spot.is_visible() {
         spot.set_visible(false);
+    }
+    let (patch, patch_mat) = &mut sp.patch;
+    match sp.under {
+        Some(u) => {
+            let cooled = smooth((t - u) / COOL_SECS);
+            if cooled < 1.0 {
+                patch.set_visible(true);
+                patch.set_scale(Vector3::new(PATCH_WIDE, 1.0, PATCH_WIDE));
+                patch_mat.set_alpha_scissor_threshold(0.2 + 0.79 * cooled);
+                let k = PATCH_GLOW * smooth((t - u) / 0.3) * (1.0 - 0.5 * cooled);
+                patch_mat.set_albedo(Color::from_rgb(hot.r * k, hot.g * k, hot.b * k));
+            } else if patch.is_visible() {
+                patch.set_visible(false);
+            }
+        }
+        None => patch.set_visible(false),
     }
 }
 
-/// The crust cracked about where the Amulet goes in: glowing seams between
-/// plates, thicker and hotter towards the middle, a molten core.
+/// The crust cracked about where the Amulet goes in: a ragged molten middle
+/// and a fine network of glowing seams fading out round it, no shape to it.
 fn crack_texture() -> Option<Gd<ImageTexture>> {
     const N: usize = 128;
-    // the plates' middles, scattered (a fixed seed: the same cracks each time)
-    let mut state = 0x9E37_79B9u32;
+    let seams = voronoi_seams(N, 90, 0x9E37_79B9, 0.018);
+    let mut px = vec![0u8; N * N * 4];
+    for y in 0..N {
+        for x in 0..N {
+            let (u, v) = ((x as f32 + 0.5) / N as f32, (y as f32 + 0.5) / N as f32);
+            let r = ((u - 0.5).powi(2) + (v - 0.5).powi(2)).sqrt() * 2.0;
+            let lumpy = 0.6 * value_noise(u * 4.0, v * 4.0)
+                + 0.4 * value_noise(u * 9.0 + 5.3, v * 9.0 + 2.1);
+            let core = 1.0 - smooth((r - 0.12 - 0.3 * lumpy) / 0.16);
+            let reach = (1.0 - r).clamp(0.0, 1.0) * (0.4 + 0.6 * lumpy);
+            let k = (core * (0.6 + 0.4 * lumpy)).max(seams[y * N + x] * reach * 0.7);
+            let c = (k.clamp(0.0, 1.0) * 255.0) as u8;
+            let i = (y * N + x) * 4;
+            px[i..i + 4].copy_from_slice(&[c, c, c, 255]);
+        }
+    }
+    image_texture(N, px)
+}
+
+/// A molten blob: a round body with a hot core and a soft rim.
+fn blob_texture() -> Option<Gd<ImageTexture>> {
+    const N: usize = 32;
+    let mut px = vec![0u8; N * N * 4];
+    for y in 0..N {
+        for x in 0..N {
+            let (u, v) = (
+                (x as f32 + 0.5) / N as f32 - 0.5,
+                (y as f32 + 0.5) / N as f32 - 0.5,
+            );
+            let d = (u * u + v * v).sqrt() * 2.0;
+            let body = 1.0 - smooth((d - 0.62) / 0.3);
+            let core = 0.6 + 0.4 * (1.0 - smooth(d / 0.7));
+            let c = (core * 255.0) as u8;
+            let i = (y * N + x) * 4;
+            px[i..i + 4].copy_from_slice(&[c, c, c, (body * 255.0) as u8]);
+        }
+    }
+    image_texture(N, px)
+}
+
+/// A smooth noise round a circle (angle in radians), 0..1.
+fn round_noise(a: f32, phase: f32) -> f32 {
+    0.5 + 0.22 * (3.0 * a + phase).sin()
+        + 0.16 * (7.0 * a + 2.3 * phase).sin()
+        + 0.12 * (13.0 * a + 0.7 * phase).sin()
+}
+
+/// The swell spreading from where the Amulet went in: a broad broken band
+/// of glow, uneven in width and brightness, brightest along the crust's
+/// seams.
+fn swell_texture() -> Option<Gd<ImageTexture>> {
+    const N: usize = 192;
+    let seams = voronoi_seams(N, 48, 0x5EED_1234, 0.03);
+    let mut px = vec![0u8; N * N * 4];
+    for y in 0..N {
+        for x in 0..N {
+            let (u, v) = (
+                (x as f32 + 0.5) / N as f32 - 0.5,
+                (y as f32 + 0.5) / N as f32 - 0.5,
+            );
+            let r = (u * u + v * v).sqrt() * 2.0;
+            let a = v.atan2(u);
+            let middle = 0.7 + 0.08 * (round_noise(a, 0.3) - 0.5) * 2.0;
+            let wide = 0.06 + 0.1 * round_noise(a, 2.1);
+            let band = (-((r - middle) / wide).powi(2)).exp();
+            let lit = smooth((round_noise(a, 4.7) - 0.32) / 0.3);
+            let seam = seams[y * N + x];
+            let k = (band * lit * (0.3 + 0.7 * seam)).clamp(0.0, 1.0);
+            let c = (k * 255.0) as u8;
+            let i = (y * N + x) * 4;
+            px[i..i + 4].copy_from_slice(&[c, c, c, 255]);
+        }
+    }
+    image_texture(N, px)
+}
+
+/// The molten patch it leaves: a formless glow, hottest at its middle; its
+/// alpha the order the crust closes over it (an alpha-scissor's threshold
+/// rising closes it unevenly from its ragged edge in).
+fn patch_texture() -> Option<Gd<ImageTexture>> {
+    const N: usize = 128;
+    let seams = voronoi_seams(N, 40, 0xC0FF_EE11, 0.02);
+    let mut px = vec![0u8; N * N * 4];
+    for y in 0..N {
+        for x in 0..N {
+            let (u, v) = ((x as f32 + 0.5) / N as f32, (y as f32 + 0.5) / N as f32);
+            let (du, dv) = (u - 0.5, v - 0.5);
+            let r = (du * du + dv * dv).sqrt() * 2.0;
+            let lumpy = 0.6 * value_noise(u * 5.0, v * 5.0)
+                + 0.4 * value_noise(u * 11.0 + 3.7, v * 11.0 + 1.3);
+            let inner = (1.0 - r).clamp(0.0, 1.0);
+            let order = (inner * (0.45 + 0.9 * lumpy) - 0.08).clamp(0.0, 1.0);
+            // (its heat uneven, crust already forming in dark seams)
+            let heat = 0.3 + 0.7 * value_noise(u * 7.0 + 9.1, v * 7.0 + 4.2);
+            let crust = 1.0 - 0.7 * seams[y * N + x];
+            let bright = heat * crust * smooth(inner / 0.35);
+            let i = (y * N + x) * 4;
+            let c = (bright.clamp(0.0, 1.0) * 255.0) as u8;
+            px[i..i + 4].copy_from_slice(&[c, c, c, (order.min(1.0) * 255.0) as u8]);
+        }
+    }
+    image_texture(N, px)
+}
+
+/// A smooth value noise at (x, y), 0..1 (a fixed lattice of hashed values,
+/// eased between).
+fn value_noise(x: f32, y: f32) -> f32 {
+    let hash = |i: i32, j: i32| {
+        let mut h = (i as u32).wrapping_mul(374_761_393) ^ (j as u32).wrapping_mul(668_265_263);
+        h = (h ^ (h >> 13)).wrapping_mul(1_274_126_177);
+        ((h ^ (h >> 16)) % 10_000) as f32 / 10_000.0
+    };
+    let (i, j) = (x.floor() as i32, y.floor() as i32);
+    let (fx, fy) = (smooth(x - x.floor()), smooth(y - y.floor()));
+    let a = hash(i, j) + (hash(i + 1, j) - hash(i, j)) * fx;
+    let b = hash(i, j + 1) + (hash(i + 1, j + 1) - hash(i, j + 1)) * fx;
+    a + (b - a) * fy
+}
+
+/// How near each texel of an N×N square is to a seam between `cells`
+/// plates scattered from `seed` (1 on a seam, 0 inside a plate), seams
+/// `wide` wide.
+fn voronoi_seams(n: usize, cells: usize, seed: u32, wide: f32) -> Vec<f32> {
+    let mut state = seed | 1;
     let mut rand = move || {
         state ^= state << 13;
         state ^= state >> 17;
         state ^= state << 5;
         (state % 10_000) as f32 / 10_000.0
     };
-    let seeds: Vec<(f32, f32)> = (0..26).map(|_| (rand(), rand())).collect();
-    let mut px = vec![0u8; N * N * 4];
-    for y in 0..N {
-        for x in 0..N {
-            let (u, v) = ((x as f32 + 0.5) / N as f32, (y as f32 + 0.5) / N as f32);
-            let r = ((u - 0.5).powi(2) + (v - 0.5).powi(2)).sqrt() * 2.0;
+    let seeds: Vec<(f32, f32)> = (0..cells).map(|_| (rand(), rand())).collect();
+    let mut out = vec![0.0; n * n];
+    for y in 0..n {
+        for x in 0..n {
+            let (u, v) = ((x as f32 + 0.5) / n as f32, (y as f32 + 0.5) / n as f32);
             let (mut d1, mut d2) = (f32::MAX, f32::MAX);
             for &(sx, sy) in &seeds {
                 let d = ((u - sx).powi(2) + (v - sy).powi(2)).sqrt();
@@ -1759,17 +2000,16 @@ fn crack_texture() -> Option<Gd<ImageTexture>> {
                     d2 = d;
                 }
             }
-            let seam = 1.0 - smooth((d2 - d1) / (0.035 + 0.045 * (1.0 - r)));
-            let reach = (1.0 - r).clamp(0.0, 1.0).powf(1.4);
-            let core = 1.0 - smooth(r / 0.32);
-            let k = (seam * reach).max(core * 0.9).clamp(0.0, 1.0);
-            let c = (k * 255.0) as u8;
-            let i = (y * N + x) * 4;
-            px[i..i + 4].copy_from_slice(&[c, c, c, 255]);
+            out[y * n + x] = 1.0 - smooth((d2 - d1) / wide);
         }
     }
+    out
+}
+
+/// An N×N RGBA texture of `px`, mipmapped.
+fn image_texture(n: usize, px: Vec<u8>) -> Option<Gd<ImageTexture>> {
     let data = PackedByteArray::from(px);
-    let mut image = Image::create_from_data(N as i32, N as i32, false, Format::RGBA8, &data)?;
+    let mut image = Image::create_from_data(n as i32, n as i32, false, Format::RGBA8, &data)?;
     image.generate_mipmaps();
     ImageTexture::create_from_image(&image)
 }
