@@ -768,6 +768,54 @@ pub fn lay_out_dim_floor(world: &mut World, cat: &Catalog) -> Result<(i32, i32),
     Ok((cx, cy))
 }
 
+/// Rooms of a used dungeon for pictures (the `furnish` scene): four lit
+/// rooms walled all round, two by two, the hero in the north-west one,
+/// placed where that room is one the dressing leaves broken furniture in
+/// (`dressing::plan`: by its corner cell). Where the hero stands.
+pub fn lay_out_rooms(world: &mut World, cat: &Catalog) -> Result<(i32, i32), String> {
+    const W: i32 = 6;
+    const H: i32 = 4;
+    let map = &mut world.map;
+    map.clear();
+    let lit = cmap(cat, "S_room")?;
+    // (the first place along the row whose north-west room has it)
+    let ox = (20..50)
+        .find(|&ox| crate::map_view::cell_noise(ox, 3, 401) < 0.25)
+        .unwrap_or(30);
+    let rooms = [
+        (ox, 3),
+        (ox + W + 3, 3),
+        (ox, 3 + H + 3),
+        (ox + W + 3, 3 + H + 3),
+    ];
+    for &(x0, y0) in &rooms {
+        let (x1, y1) = (x0 + W - 1, y0 + H - 1);
+        for y in y0 - 1..=y1 + 1 {
+            for x in x0 - 1..=x1 + 1 {
+                let (n, s, w, e) = (y == y0 - 1, y == y1 + 1, x == x0 - 1, x == x1 + 1);
+                let sym = match (n, s, w, e) {
+                    (true, _, true, _) => Some("S_tlcorn"),
+                    (true, _, _, true) => Some("S_trcorn"),
+                    (_, true, true, _) => Some("S_blcorn"),
+                    (_, true, _, true) => Some("S_brcorn"),
+                    (true, ..) | (_, true, ..) => Some("S_hwall"),
+                    (_, _, true, _) | (_, _, _, true) => Some("S_vwall"),
+                    _ => None,
+                };
+                match sym {
+                    Some(sym) => map.print(x, y, &cmap(cat, sym)?, None),
+                    None => map.print(x, y, &lit, None),
+                }
+            }
+        }
+    }
+    let at = (ox + W / 2, 3 + H - 1);
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(at.0, at.1, &hero, Some(&lit));
+    world.view_center = Some((ox + W + 1, 3 + H + 1));
+    Ok((ox + W / 2, 3 + H / 2 - 1))
+}
+
 /// As `lay_out_rows`, on a floor of `floor` (a dark one: "S_darkroom").
 pub fn lay_out_rows_on(
     world: &mut World,

@@ -1227,7 +1227,7 @@ fn object_tile(catalog: &Catalog, tile: i32) -> Option<&ObjectTile> {
 }
 
 /// A stable pseudo-random number in 0..1 for a cell (and a salt).
-fn cell_noise(x: i32, y: i32, salt: u32) -> f32 {
+pub(crate) fn cell_noise(x: i32, y: i32, salt: u32) -> f32 {
     let mut h = (x as u32).wrapping_mul(0x9e37_79b1) ^ (y as u32).wrapping_mul(0x85eb_ca77) ^ salt;
     h ^= h >> 15;
     h = h.wrapping_mul(0x2c1b_3c6d);
@@ -12188,6 +12188,10 @@ mod tests {
                 | dressing::Volume::Pier
                 | dressing::Volume::Rug { .. } => {
                     panic!("{x},{y}: {v:?} in a hall")
+                }
+                // broken furniture by a wall: on bare floor by it
+                dressing::Volume::Wreck(_) => {
+                    assert_eq!(t(x, y), Some(Terrain::Floor), "{x},{y}");
                 }
             }
         }

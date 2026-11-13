@@ -132,6 +132,9 @@ pub struct Dress {
     /// a wall has them), its floor grimed and stained (map_surface).
     pub debris: bool,
     pub bones: f32,
+    /// Broken furniture left by a wall in some rooms (a split table, a
+    /// stool, a smashed crate).
+    pub wreck: bool,
     /// Rock grown into a cave's walls.
     pub formations: bool,
     /// A worn rug laid in a small room's middle (one too small for a band
@@ -172,6 +175,7 @@ impl Dress {
         corners: false,
         debris: false,
         bones: 0.0,
+        wreck: false,
         formations: false,
         rug: None,
     };
@@ -352,6 +356,7 @@ const MAIN: BranchLook = BranchLook {
         debris: true,
         // (rare high up: more below, `look_of_level`)
         bones: MAIN_BONES,
+        wreck: true,
         formations: false,
         rug: Some(("rug_red", "rug_ochre")),
     },
@@ -490,6 +495,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
                 debris: true,
                 // (common: the dead's own place)
                 bones: 0.22,
+                wreck: true,
                 // heavy and plain, its braziers smouldering (lighting
                 // nothing); no inlay (its floors are its fire's)
                 piers: true,

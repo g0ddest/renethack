@@ -60,6 +60,8 @@ pub(super) enum Piece {
     Embers,
     /// A buttress against it, where the branch builds no columns.
     Buttress,
+    /// Manacles on short chains from two rings, over a man's head.
+    Manacles,
 }
 
 /// What the face of a room's north wall at (x, y) shows by the branch's
@@ -87,6 +89,8 @@ fn north_between(x: i32, y: i32, dress: &Dress) -> Option<Piece> {
     let pick = cell_noise(x, y, 131);
     if !dress.banners.is_empty() && pick < 0.3 {
         Some(Piece::Banner)
+    } else if dress.chains && (0.3..0.44).contains(&pick) {
+        Some(Piece::Manacles)
     } else if dress.alcoves && pick > 0.94 {
         Some(Piece::Alcove)
     } else if dress.embers && pick < 0.65 {
@@ -99,7 +103,7 @@ fn north_between(x: i32, y: i32, dress: &Dress) -> Option<Piece> {
 /// A chain hangs on the face of the side wall at (x, y) towards `side`
 /// (west or east, as `SIDES`): on a few, never where a torch does.
 fn chain_here(x: i32, y: i32, side: usize, dress: &Dress) -> bool {
-    dress.chains && !torch_pattern(x, y, false) && cell_noise(x, y, 135 + side as u32) < 0.07
+    dress.chains && !torch_pattern(x, y, false) && cell_noise(x, y, 135 + side as u32) < 0.15
 }
 
 /// A cobweb may hang in the corner at (x, y), a room's north-west corner
@@ -108,7 +112,7 @@ fn chain_here(x: i32, y: i32, side: usize, dress: &Dress) -> bool {
 pub(super) fn webbed(x: i32, y: i32, sx: i32, dress: &Dress) -> bool {
     dress.cobwebs
         && !pier_here(x, y, dress)
-        && cell_noise(x, y, 136) < 0.45
+        && cell_noise(x, y, 136) < 0.7
         && !torch_pattern(x + sx, y, true)
         && !torch_pattern(x, y + 1, false)
 }
@@ -213,6 +217,7 @@ pub(super) fn wall(
             massive.push(a..look.solids.len());
         }
         Some(Piece::Banner) => banner(look, ctx, face),
+        Some(Piece::Manacles) => manacles(look, ctx, face),
         Some(Piece::Alcove) => alcove(look, ctx, face),
         Some(Piece::Embers) => embers(look, ctx, face),
         None => {}
@@ -613,6 +618,35 @@ fn chain(look: &mut Look, ctx: &Ctx, fx: f32) {
     look.turned(torus(0.04, 0.06), iron, at(x, 1.43, z), across);
 }
 
+/// Manacles on a north wall's face: two rings over a man's head, a short
+/// chain from each and an open cuff at its end, hanging against the stone.
+fn manacles(look: &mut Look, ctx: &Ctx, face: f32) {
+    let Some(iron) = trim(ctx, ctx.branch.dress.iron, SHADE_LIT) else {
+        return;
+    };
+    let z = face + 0.045;
+    // (a ring's face to the room, the links turned alternately)
+    let flat = at(90.0, 0.0, 0.0);
+    let edge = at(90.0, 90.0, 0.0);
+    let spread = 0.22 + (ctx.noise(138) - 0.5) * 0.08;
+    for (side, salt) in [(-1.0f32, 139u32), (1.0, 140)] {
+        let x = side * spread;
+        look.turned(torus(0.035, 0.065), iron, at(x, 1.86, face + 0.016), flat);
+        let n = 4 + (ctx.noise(salt) * 3.0) as usize;
+        for k in 0..n {
+            let turn = if k % 2 == 0 { edge } else { flat };
+            look.turned(
+                torus(0.014, 0.04),
+                iron,
+                at(x, 1.8 - 0.065 * k as f32, z),
+                turn,
+            );
+        }
+        let low = 1.8 - 0.065 * n as f32 - 0.06;
+        look.turned(torus(0.05, 0.08), iron, at(x, low, z + 0.01), flat);
+    }
+}
+
 /// Moss at the foot of the faces towards a room's floor that the camera
 /// sees, in clumps: up the plinth's face and a little over it, over its
 /// top, tucked into the floor's edge against it. Dark green, flat to the
@@ -748,6 +782,9 @@ pub(super) fn floor(look: &mut Look, around: &Around, ctx: &Ctx) {
     if dress.cracks {
         cracks(look, around, ctx);
     }
+    if let Some(Volume::Wreck(kind)) = ctx.volume {
+        wreck(look, around, ctx, kind);
+    }
     let heaped = dress.corners && ctx.branch.rubble && corner_rubble(look, around, ctx);
     if dress.debris && !heaped {
         if ctx.branch.rubble {
@@ -856,6 +893,67 @@ fn corner_rubble(look: &mut Look, around: &Around, ctx: &Ctx) -> bool {
     }
     true
 }
+
+/// Furniture broken and left by a wall (`Volume::Wreck`), lying flat in its
+/// cell nearer the wall: dark old wood, a hand high at most, nothing that
+/// stands (a player would read it as in the way) nor anything whole.
+fn wreck(look: &mut Look, around: &Around, ctx: &Ctx, kind: Wreck) {
+    let Some(m) = ctx.mat("wood") else {
+        return;
+    };
+    let wood = Paint::Pbr(m, WRECK_SHADE, Role::Prop);
+    // (nudged towards the wall it lies by)
+    let (wx, wz) = SIDES
+        .iter()
+        .enumerate()
+        .filter(|&(i, _)| around.sides[i] == Side::Wall)
+        .fold((0.0f32, 0.0f32), |(x, z), (_, &(dx, dz))| (x + dx, z + dz));
+    let (ox, oz) = (wx.clamp(-1.0, 1.0) * 0.12, wz.clamp(-1.0, 1.0) * 0.12);
+    let yaw = |salt: u32| ctx.noise(salt) * 360.0;
+    let lie = |look: &mut Look, mesh, x: f32, z: f32, y: f32, salt: u32| {
+        let p = at((ox + x).clamp(-0.4, 0.4), y, (oz + z).clamp(-0.4, 0.4));
+        look.turned(mesh, wood, p, at(0.0, yaw(salt), 0.0));
+    };
+    // a leg snapped off, lying on its side
+    let leg = |look: &mut Look, x: f32, z: f32, len: f32, salt: u32| {
+        let p = at((ox + x).clamp(-0.4, 0.4), 0.022, (oz + z).clamp(-0.4, 0.4));
+        look.turned(bevel(0.045, 0.045, len), wood, p, at(0.0, yaw(salt), 0.0));
+    };
+    match kind {
+        Wreck::Table => {
+            // the top in two halves, apart and askew
+            lie(look, bevel(0.38, 0.04, 0.78), -0.14, 0.0, 0.02, 410);
+            lie(look, bevel(0.34, 0.04, 0.72), 0.2, 0.05, 0.02, 411);
+            leg(look, -0.02, 0.32, 0.5, 412);
+            leg(look, 0.32, -0.3, 0.36, 413);
+            leg(look, -0.32, -0.32, 0.26, 414);
+        }
+        Wreck::Stool => {
+            // its seat flat, two legs still in it lying out, one off
+            lie(look, cylinder(0.2, 0.2, 0.04), 0.0, 0.0, 0.02, 420);
+            leg(look, 0.14, 0.24, 0.36, 421);
+            leg(look, -0.24, 0.1, 0.34, 422);
+            leg(look, 0.3, -0.24, 0.2, 423);
+        }
+        Wreck::Crate => {
+            // its planks in a low heap, a few cast off
+            for k in 0..7u32 {
+                let salt = 430 + k * 3;
+                let (x, z) = (
+                    (ctx.noise(salt) - 0.5) * 0.5,
+                    (ctx.noise(salt + 1) - 0.5) * 0.5,
+                );
+                let y = 0.012 + 0.022 * (k % 2) as f32;
+                lie(look, bevel(0.12, 0.024, 0.6), x, z, y, salt + 2);
+            }
+            // a side of it still nailed together, lying flat
+            lie(look, bevel(0.42, 0.024, 0.42), 0.0, 0.0, 0.048, 452);
+        }
+    }
+}
+
+/// Broken furniture's wood, old and dark.
+const WRECK_SHADE: u8 = 62;
 
 /// How often a wall's foot has stones fallen at it (of the cells that may;
 /// how often a cell by a wall has old bones is the branch's, `Dress`; the
@@ -993,7 +1091,24 @@ pub(super) enum Volume {
     Rug {
         rect: [f32; 4],
     },
+    /// Furniture broken and left by a room's wall (one room in
+    /// `WRECK_ONE_IN`): lying flat on the floor, never standing.
+    Wreck(Wreck),
 }
+
+/// What lies broken by a room's wall (`Volume::Wreck`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum Wreck {
+    /// A table split down its middle, its legs snapped off about it.
+    Table,
+    /// A stool on its side, a leg off.
+    Stool,
+    /// A crate smashed to its planks.
+    Crate,
+}
+
+/// One room in so many has a piece of broken furniture by a wall.
+const WRECK_ONE_IN: f32 = 4.0;
 
 /// The least run of north wall over a room's floor that has arches, the
 /// least room (wide, deep) that has a band inlaid, and the least that has
@@ -1149,18 +1264,22 @@ pub(super) fn plan(
     };
     // the rooms known whole, their walls seen all round (a dark one's
     // floor seen in part is a rectangle too, its edge no wall)
-    let rooms: Vec<(i32, i32, i32, i32)> =
-        if dress.inlay.is_some() || dress.pilasters || dress.piers || dress.rug.is_some() {
-            rooms(&inside)
-                .into_iter()
-                .filter(|&(x0, y0, x1, y1)| {
-                    (x0 - 1..=x1 + 1).all(|x| bound(x, y0 - 1) && bound(x, y1 + 1))
-                        && (y0..=y1).all(|y| bound(x0 - 1, y) && bound(x1 + 1, y))
-                })
-                .collect()
-        } else {
-            Vec::new()
-        };
+    let rooms: Vec<(i32, i32, i32, i32)> = if dress.inlay.is_some()
+        || dress.pilasters
+        || dress.piers
+        || dress.rug.is_some()
+        || dress.wreck
+    {
+        rooms(&inside)
+            .into_iter()
+            .filter(|&(x0, y0, x1, y1)| {
+                (x0 - 1..=x1 + 1).all(|x| bound(x, y0 - 1) && bound(x, y1 + 1))
+                    && (y0..=y1).all(|y| bound(x0 - 1, y) && bound(x1 + 1, y))
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
     // a small room's north wall dressed as a whole: a niche in its middle
     // with a column either side, or a pair of columns; piers in its
     // corners (by the pattern a room of a few cells got none)
@@ -1200,12 +1319,43 @@ pub(super) fn plan(
             }
         }
     }
+    // broken furniture by a wall of one room in `WRECK_ONE_IN`: on a bare
+    // cell along its walls (nothing round it that matters), by the room
+    if dress.wreck {
+        let bare = |x: i32, y: i32| floor(x, y) && !cell(x, y).matters && plain(x, y);
+        for &(x0, y0, x1, y1) in &rooms {
+            if cell_noise(x0, y0, 401) >= 1.0 / WRECK_ONE_IN {
+                continue;
+            }
+            let rim = (x0..=x1)
+                .flat_map(|x| [(x, y0), (x, y1)])
+                .chain((y0 + 1..y1).flat_map(|y| [(x0, y), (x1, y)]));
+            let at = rim
+                .filter(|&(x, y)| bare(x, y) && !out.contains_key(&(x, y)))
+                .min_by(|a, b| cell_noise(a.0, a.1, 402).total_cmp(&cell_noise(b.0, b.1, 402)));
+            if let Some(at) = at {
+                let kind = match (cell_noise(x0, y0, 403) * 3.0) as u32 {
+                    0 => Wreck::Table,
+                    1 => Wreck::Stool,
+                    _ => Wreck::Crate,
+                };
+                out.insert(at, Volume::Wreck(kind));
+            }
+        }
+    }
     // a small room's rug: over its biggest stretch of bare floor known (no
     // feature, stairs, door nor trap under it, nothing hidden by it: what
     // lies on it is drawn on it), a margin in from the walls and less
     // from what it leaves bare beside it
     if dress.rug.is_some() {
-        let bare = |x: i32, y: i32| floor(x, y) && !cell(x, y).matters;
+        // (never over the broken furniture)
+        let wrecked: Vec<(i32, i32)> = out
+            .iter()
+            .filter(|(_, v)| matches!(v, Volume::Wreck(_)))
+            .map(|(&at, _)| at)
+            .collect();
+        let bare =
+            |x: i32, y: i32| floor(x, y) && !cell(x, y).matters && !wrecked.contains(&(x, y));
         for &room in &rooms {
             let (rx0, ry0, rx1, ry1) = room;
             let (w, h) = (rx1 - rx0 + 1, ry1 - ry0 + 1);

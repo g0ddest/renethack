@@ -932,6 +932,41 @@ pub(super) fn lava_edge() -> Vec<Step> {
     steps
 }
 
+/// Rooms of a used dungeon (the art loop's fifth critique, #7: chains,
+/// cobwebs, broken furniture), for pictures before and after (not part of
+/// `make test-client`): four lit rooms, at the game's distance
+/// (`furnish`) and close on the hero's (`-close`).
+pub(super) fn furnish() -> Vec<Step> {
+    static AT: std::sync::Mutex<(i32, i32)> = std::sync::Mutex::new((0, 0));
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    steps.extend([
+        Step::Call("lay out the rooms", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            let at = crate::gallery::lay_out_rooms(&mut g.world, &cat)?;
+            *AT.lock().unwrap_or_else(|e| e.into_inner()) = at;
+            Ok(())
+        }),
+        Step::Wait("the rooms drawn", |g| {
+            let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+            Ok(drawn == Some(g.world.map.generation()))
+        }),
+        Step::Call("the game's distance", |g| far(g, 11.0)),
+        Step::Wait("the camera on them", drawn_here),
+        Step::Shot("furnish"),
+        Step::Call("closer on the hero's room", |g| {
+            g.world.view_center = Some(*AT.lock().unwrap_or_else(|e| e.into_inner()));
+            far(g, 7.0)
+        }),
+        Step::Wait("the camera closer", drawn_here),
+        Step::Shot("furnish-close"),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
 /// What lies on a dim floor about the hero (815373c7's gloom reaches the
 /// darkest floor): a dagger, a known trap, a black pudding and a raven in
 /// a dark room, for pictures before and after (not part of `make
