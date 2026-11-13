@@ -36,7 +36,7 @@ const STAGES: &[(&str, Branch)] = &[
 /// The effects the first stage fires (`act`), how many a frame go off
 /// under the start-up veil, and the frames a stage is held after them
 /// (the effects that follow others go off then).
-const ACTS: u32 = 31;
+const ACTS: u32 = 32;
 const VEILED_ACTS: u32 = 4;
 const HOLD_TAIL: u32 = 24;
 /// The bursts `act` fires along a row of the room (inside its walls).
@@ -556,6 +556,12 @@ impl Rehearsal {
             }
             // what the prologue's scenes stand beside their levels
             Some(9) => map.warm_prologue(),
+            // the marks a stepped cell lays flat, over the features (a
+            // game starts on its up stairs)
+            Some(10) => {
+                let cells: Vec<_> = (0..5).map(|i| (X0 + 2 + i, Y0 + 3)).collect();
+                map.warm_flat_marks(&cells);
+            }
             _ => {}
         }
     }

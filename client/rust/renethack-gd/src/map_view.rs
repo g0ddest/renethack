@@ -4329,6 +4329,8 @@ pub struct MapView {
     /// what it shows once (see `show_once`).
     cards: Vec<Gd<MeshInstance3D>>,
     shown_once: Vec<Gd<Node3D>>,
+    /// The marks the rehearsal lays flat once (see `warm_flat_marks`).
+    flat_warm: Vec<Gd<Decal>>,
     embers_shown: bool,
     /// Embers made ahead for the first torch.
     spare_embers: Option<Gd<godot::classes::GpuParticles3D>>,
@@ -5186,6 +5188,7 @@ impl MapView {
             shadow_frames: 0,
             cards: Vec::new(),
             shown_once: Vec::new(),
+            flat_warm: Vec::new(),
             embers_shown: false,
             spare_embers: None,
             title_clock: None,
@@ -7822,6 +7825,7 @@ impl MapView {
             self.variants.release();
         }
         self.end_stage();
+        self.put_away_flat_marks();
         self.title = None;
         if std::mem::take(&mut self.titled) {
             self.env.set_bg_color(self.branch_look.darkness);
@@ -9519,6 +9523,44 @@ impl MapView {
         }
     }
 
+    /// Each mark that lies flat on a stepped cell (`set_mark_flat`) laid
+    /// flat once over a cell of `cells` (the rehearsal's features): the
+    /// hero's, a pet's and a hostile's rings, the frame under the pointer
+    /// and the cursor. A flat mark's sheet is drawn as nothing else is: a
+    /// game that starts on its up stairs drew it first after the veil, a
+    /// frame waiting for its pipeline. Drawn here, the census lists it
+    /// (`variants.txt`), and the list's material keeps its shader for the
+    /// session (these go, and their materials with them). Gone with what
+    /// was shown once (`put_away_shown`), or as a game starts.
+    pub(crate) fn warm_flat_marks(&mut self, cells: &[(i32, i32)]) {
+        let ring = self.ring_tex.clone();
+        let frame = crate::vfx::frame_texture();
+        let marks = [
+            (&ring, HERO_RING_SIZE, HERO_RING, HERO_RING_GLOW),
+            (&ring, 0.95, PET_RING, MARK_GLOW),
+            (&ring, 1.05, HOSTILE_RING, MARK_GLOW),
+            (&frame, 1.0, HOVER_FRAME, MARK_GLOW),
+            (&frame, 1.05, CURSOR, MARK_GLOW),
+        ];
+        for (&(x, y), (tex, size, color, glow)) in cells.iter().zip(marks) {
+            let mut d = marker(&mut self.root, tex, size);
+            d.set_emission_energy(glow);
+            set_mark_flat(&mut d, color, true);
+            d.set_position(Vector3::new(x as f32, self.ground(x, y), y as f32));
+            d.set_visible(true);
+            self.flat_warm.push(d);
+        }
+    }
+
+    /// The marks `warm_flat_marks` laid, freed.
+    fn put_away_flat_marks(&mut self) {
+        for mut d in std::mem::take(&mut self.flat_warm) {
+            if d.is_instance_valid() {
+                d.queue_free();
+            }
+        }
+    }
+
     /// A pooled thing drawn once before the camera, put away by
     /// `put_away_shown` (the next frame).
     fn show_once(&mut self, mut node: Gd<Node3D>) {
@@ -9534,6 +9576,7 @@ impl MapView {
         for mut node in std::mem::take(&mut self.shown_once) {
             node.set_visible(false);
         }
+        self.put_away_flat_marks();
         if let Some(t) = self.torches.first_mut() {
             t.fire.set_visible(!self.branch_look.lanterns);
         }
