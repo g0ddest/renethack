@@ -488,7 +488,7 @@ pub fn look_of(branch: Branch) -> BranchLook {
             embers: true,
             underglow: Some(rgb(1.0, 0.36, 0.12)),
             // (its fields cooled the most: black crust, fire in its veins)
-            molten: 0.3,
+            molten: 0.15,
             dust: 1.5,
             // (its darkness tuned without it: the fire alone shines on iron)
             reflect: 0.05,

@@ -140,7 +140,13 @@ void fragment() {
 	// the blurred ground itself, smooth (by the shore's lead it stepped on
 	// where the blur's reach began, a square block of glow)
 	float rival = max(max(field.r, field.b), field.a);
-	float nearshore = smoothstep(0.04, 0.45, rival + (tl2(wpos.xz * 1.1 + vec2(7.7, 3.1)) - 0.5) * 0.1);
+	// (by the cells' own ground, not the blur: in a maze's channel a cell
+	// wide the blur holds the land's share all across it, and every cell
+	// of a Gehennom field ran molten; so only its outer quarter glows,
+	// the crust holding its middle)
+	vec4 own = texture(ground_tex, (wpos.xz + 0.5) / FIELD);
+	float land = max(max(own.r, own.b), own.a);
+	float nearshore = smoothstep(0.34, 0.5, land + (tl2(wpos.xz * 1.1 + vec2(7.7, 3.1)) - 0.5) * 0.12);
 	if (rival > 0.0) {
 		vec4 v = ground_lead(wpos.xz, field);
 		float k = ground_kind(v);
@@ -209,7 +215,24 @@ void fragment() {
 	float river = 1.0 - smoothstep(running * 0.09, running * 0.09 + 0.03, abs(course - 0.5));
 	float pool = smoothstep(0.78 - running * 0.25, 0.86 - running * 0.25,
 		tl2(wpos.xz * 0.21 + vec2(9.9, 21.3)));
-	float hot = clamp(max(river, pool) + nearshore, 0.0, 1.0);
+	// (a lone cell, a narrow flow glows all through: lava must read as
+	// lava, never as a dark patch of floor; a wide field's middle crusts)
+	// (by the lava's share of the cells about it, unblended: the ground's
+	// blend holds each cell's own kind whole at its middle)
+	vec2 cd = vec2(1.0) / FIELD;
+	vec2 cuv = (wpos.xz + 0.5) / FIELD;
+	float share = (texture(ground_tex, cuv).g * 4.0
+		+ (texture(ground_tex, cuv + vec2(cd.x, 0.0)).g + texture(ground_tex, cuv - vec2(cd.x, 0.0)).g
+		+ texture(ground_tex, cuv + vec2(0.0, cd.y)).g + texture(ground_tex, cuv - vec2(0.0, cd.y)).g) * 2.0
+		+ texture(ground_tex, cuv + cd).g + texture(ground_tex, cuv - cd).g
+		+ texture(ground_tex, cuv + vec2(cd.x, -cd.y)).g
+		+ texture(ground_tex, cuv + vec2(-cd.x, cd.y)).g) / 16.0;
+	float narrow = 1.0 - smoothstep(0.7, 0.92, share + (tl2(wpos.xz * 0.8 + vec2(2.9, 6.1)) - 0.5) * 0.12);
+	// (a narrow flow molten down its middle, a vein, its banks crusted: a
+	// maze's channels of lava glowed whole, one orange frame; a field's
+	// shores hot)
+	float vein = 1.0 - smoothstep(0.1, 0.3, land + (tl2(wpos.xz * 1.4 + vec2(5.5, 8.8)) - 0.5) * 0.14);
+	float hot = clamp(max(max(river, pool), narrow * vein) + nearshore * (1.0 - narrow), 0.0, 1.0);
 	crack *= mix(0.06, 1.0, hot);
 	// (the cooled crust black-brown: the flow's photograph is a red rock)
 	rock = mix(crust.rgb * mix(0.7, 1.3, fine), rock, 0.25 + 0.75 * hot);

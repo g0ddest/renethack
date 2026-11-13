@@ -2796,9 +2796,9 @@ fn terrain_base(
             );
             liquid_bed(look, around, ctx, 0.12, true);
             // the air shimmers over it, and it lights its banks: every
-            // third cell of a lake, every cell of a narrow flow
-            let banks = around.liquid.iter().filter(|l| !**l).count();
-            if (ctx.x + 2 * ctx.y).rem_euclid(3) == 0 || banks >= 2 {
+            // third cell (every cell of a narrow flow, a Gehennom maze's
+            // channels lit their field and its paths one bright orange)
+            if (ctx.x + 2 * ctx.y).rem_euclid(3) == 0 {
                 look.ground_tile(
                     plane(1.0, 1.6),
                     Paint::Liquid(Liquid::Haze),
