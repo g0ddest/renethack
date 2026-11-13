@@ -12169,9 +12169,15 @@ mod tests {
                         .fold(0.0, f32::max);
                     if !dressed.masonry {
                         // on the floor and in its cell: flat in it, a sunk
-                        // stone ankle high at most
+                        // stone ankle high at most (a split table's half
+                        // propped against a wall north of it a little more)
                         floor += 1;
-                        assert!(top <= 0.07, "{c},{r}: {s:?}");
+                        let wreck = matches!(
+                            s.paint,
+                            Paint::Pbr(_, dressing::WRECK_SHADE | dressing::WRECK_CHAR, Role::Prop)
+                        );
+                        let most = if wreck { dressing::WRECK_TOP } else { 0.07 };
+                        assert!(top <= most, "{c},{r}: {s:?}");
                         assert!(s.pos.x.abs().max(s.pos.z.abs()) < 0.5, "{c},{r}: {s:?}");
                         continue;
                     }

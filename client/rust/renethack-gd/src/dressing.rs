@@ -921,12 +921,88 @@ fn wreck(look: &mut Look, around: &Around, ctx: &Ctx, kind: Wreck) {
     };
     match kind {
         Wreck::Table => {
-            // the top in two halves, apart and askew
-            lie(look, bevel(0.38, 0.04, 0.78), -0.14, 0.0, 0.02, 410);
-            lie(look, bevel(0.34, 0.04, 0.72), 0.2, 0.05, 0.02, 411);
-            leg(look, -0.02, 0.32, 0.5, 412);
-            leg(look, 0.32, -0.3, 0.36, 413);
-            leg(look, -0.32, -0.32, 0.26, 414);
+            // the top split down its length: one half flat, its broken
+            // edge charred, the other propped up on a leg against the
+            // wall behind it (where a wall stands north: nothing behind
+            // it to hide), else lying tipped; splinters at the break, the
+            // other legs snapped off about it (flat pale planks, it read
+            // as fresh boards laid out)
+            let char = Paint::Pbr(m, WRECK_CHAR, Role::Prop);
+            let north = around.sides[0] == Side::Wall;
+            let place =
+                |x: f32, z: f32| at((ox + x).clamp(-0.4, 0.4), 0.0, (oz + z).clamp(-0.4, 0.4));
+            // (the flat half askew, its charred edge along its inner side)
+            let a = place(-0.17, 0.03);
+            let turn_a = -11.0f32;
+            let (sa, ca) = turn_a.to_radians().sin_cos();
+            look.turned(
+                bevel(0.34, 0.06, 0.74),
+                wood,
+                a + at(0.0, 0.03, 0.0),
+                at(0.0, turn_a, 0.0),
+            );
+            look.turned(
+                bevel(0.035, 0.064, 0.72),
+                char,
+                a + at(0.17 * ca, 0.032, -0.17 * sa),
+                at(0.0, turn_a, 0.0),
+            );
+            // the other propped up, or lying tipped, turned away
+            let b = place(0.2, if north { 0.04 } else { 0.06 });
+            let (tilt, roll, turn_b) = if north {
+                (WRECK_PROP, 0.0f32, 0.0)
+            } else {
+                (4.0, 9.0f32, 17.0f32)
+            };
+            let rise = 0.35 * tilt.to_radians().sin() + 0.15 * roll.to_radians().sin();
+            let (sb, cb) = turn_b.to_radians().sin_cos();
+            look.turned(
+                bevel(0.3, 0.06, 0.7),
+                wood,
+                b + at(0.0, 0.03 + rise, 0.0),
+                at(tilt, turn_b, roll),
+            );
+            look.turned(
+                bevel(0.035, 0.064, 0.68),
+                char,
+                b + at(-0.15 * cb, 0.032 + rise, 0.15 * sb),
+                at(tilt, turn_b, roll),
+            );
+            if north {
+                // the leg it rests on, still standing under its far end
+                let h = 2.0 * rise;
+                look.solid(bevel(0.05, h, 0.05), wood, b + at(0.0, h / 2.0, -0.3));
+            }
+            // splinters jutting from the flat half's broken edge
+            for k in 0..4u32 {
+                let salt = 444 + k * 3;
+                let along = -0.3 + 0.2 * k as f32 + (ctx.noise(salt) - 0.5) * 0.08;
+                let out = 0.2 + ctx.noise(salt + 1) * 0.04;
+                let p = a + at(out * ca + along * sa, 0.035, -out * sa + along * ca);
+                let len = 0.09 + ctx.noise(salt + 2) * 0.07;
+                look.turned(
+                    bevel(len, 0.02, 0.016),
+                    char,
+                    p,
+                    at(0.0, turn_a + (ctx.noise(salt) - 0.5) * 50.0, 0.0),
+                );
+            }
+            for k in 0..6u32 {
+                let salt = 415 + k * 3;
+                let len = 0.12 + ctx.noise(salt) * 0.1;
+                let p = place(
+                    0.01 + (ctx.noise(salt + 1) - 0.5) * 0.14,
+                    (ctx.noise(salt + 2) - 0.5) * 0.6,
+                );
+                look.turned(
+                    bevel(0.022, 0.018, len),
+                    wood,
+                    p + at(0.0, 0.01, 0.0),
+                    at(0.0, yaw(salt), 0.0),
+                );
+            }
+            leg(look, -0.06, 0.34, 0.46, 412);
+            leg(look, 0.3, -0.34, 0.3, 413);
         }
         Wreck::Stool => {
             // its seat flat, two legs still in it lying out, one off
@@ -952,8 +1028,14 @@ fn wreck(look: &mut Look, around: &Around, ctx: &Ctx, kind: Wreck) {
     }
 }
 
-/// Broken furniture's wood, old and dark.
-const WRECK_SHADE: u8 = 62;
+/// Broken furniture's wood, old and dark, its breaks charred, and how far
+/// a split table's half is propped up against a wall (degrees), and so
+/// how high it reaches at most (metres).
+pub(super) const WRECK_SHADE: u8 = 26;
+pub(super) const WRECK_CHAR: u8 = 12;
+const WRECK_PROP: f32 = 15.0;
+#[cfg(test)]
+pub(super) const WRECK_TOP: f32 = 0.36;
 
 /// How often a wall's foot has stones fallen at it (of the cells that may;
 /// how often a cell by a wall has old bones is the branch's, `Dress`; the
@@ -1327,12 +1409,21 @@ pub(super) fn plan(
             if cell_noise(x0, y0, 401) >= 1.0 / WRECK_ONE_IN {
                 continue;
             }
-            let rim = (x0..=x1)
-                .flat_map(|x| [(x, y0), (x, y1)])
-                .chain((y0 + 1..y1).flat_map(|y| [(x0, y), (x1, y)]));
-            let at = rim
-                .filter(|&(x, y)| bare(x, y) && !out.contains_key(&(x, y)))
-                .min_by(|a, b| cell_noise(a.0, a.1, 402).total_cmp(&cell_noise(b.0, b.1, 402)));
+            // (by its north wall where it can: what is propped against it
+            // hides nothing behind, and the camera sees it whole)
+            let free = |&(x, y): &(i32, i32)| bare(x, y) && !out.contains_key(&(x, y));
+            let pick = |cells: Vec<(i32, i32)>| {
+                cells
+                    .into_iter()
+                    .filter(free)
+                    .min_by(|a, b| cell_noise(a.0, a.1, 402).total_cmp(&cell_noise(b.0, b.1, 402)))
+            };
+            let north: Vec<(i32, i32)> = (x0..=x1).map(|x| (x, y0)).collect();
+            let rest: Vec<(i32, i32)> = (x0..=x1)
+                .map(|x| (x, y1))
+                .chain((y0 + 1..y1).flat_map(|y| [(x0, y), (x1, y)]))
+                .collect();
+            let at = pick(north).or_else(|| pick(rest));
             if let Some(at) = at {
                 let kind = match (cell_noise(x0, y0, 403) * 3.0) as u32 {
                     0 => Wreck::Table,
