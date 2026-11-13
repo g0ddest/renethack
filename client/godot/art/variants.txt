@@ -71,6 +71,7 @@ overlay shader:res://shaders/xray_contour.gdshader|800001017/3|fade
 overlay shader:res://shaders/xray_contour.gdshader|80000101f/3
 overlay shader:res://shaders/xray_contour.gdshader|800001c0f/3+inst
 overlay shader:res://shaders/xray_contour.gdshader|800001c17/3+inst
+overlay shader:res://shaders/xray_contour.gdshader|800001c17/3+inst|fade
 overlay shader:res://shaders/xray_contour.gdshader|800001c1f/3+inst
 overlay shader:res://shaders/xray_contour.gdshader|800001c3f/3+inst
 overlay shader:res://shaders/xray_contour.gdshader|80000fc7f/3+inst
@@ -81,6 +82,7 @@ overlay shader:res://shaders/xray_mask.gdshader|800001017/3|fade
 overlay shader:res://shaders/xray_mask.gdshader|80000101f/3
 overlay shader:res://shaders/xray_mask.gdshader|800001c0f/3+inst
 overlay shader:res://shaders/xray_mask.gdshader|800001c17/3+inst
+overlay shader:res://shaders/xray_mask.gdshader|800001c17/3+inst|fade
 overlay shader:res://shaders/xray_mask.gdshader|800001c1f/3+inst
 overlay shader:res://shaders/xray_mask.gdshader|800001c3f/3+inst
 overlay shader:res://shaders/xray_mask.gdshader|80000fc7f/3+inst
