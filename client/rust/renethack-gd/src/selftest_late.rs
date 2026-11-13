@@ -234,6 +234,40 @@ pub(super) const PILOT: &[(&str, Rows)] = &[
             ),
         ],
     ),
+    // the dragons by colour, from the black one's body
+    (
+        "dragons-all",
+        &[
+            (3, &["gray dragon", "gold dragon", "silver dragon"]),
+            (3, &["red dragon", "white dragon", "orange dragon"]),
+            (3, &["blue dragon", "green dragon", "yellow dragon"]),
+        ],
+    ),
+    (
+        "dragons-baby",
+        &[
+            (
+                2,
+                &[
+                    "baby gray dragon",
+                    "baby gold dragon",
+                    "baby silver dragon",
+                    "baby red dragon",
+                    "baby white dragon",
+                ],
+            ),
+            (
+                2,
+                &[
+                    "baby orange dragon",
+                    "baby blue dragon",
+                    "baby green dragon",
+                    "baby yellow dragon",
+                    "baby black dragon",
+                ],
+            ),
+        ],
+    ),
     // the fire and frost giants' helms, close
     ("helms", &[(2, &["frost giant", "fire giant"])]),
     // the generated dog, weighted from the husky's skeleton

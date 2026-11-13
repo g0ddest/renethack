@@ -201,7 +201,7 @@ wear our kits were re-rigged to our skeleton and clips.
 
 | Where | What |
 |---|---|
-| `owner/dragon_black.glb` | A black dragon, wings spread (31k triangles) |
+| `owner/dragon_black.glb`, `dragon_gray.jpg`, `dragon_gold.jpg`, `dragon_silver.jpg`, `dragon_red.jpg`, `dragon_white.jpg`, `dragon_orange.jpg`, `dragon_blue.jpg`, `dragon_green.jpg`, `dragon_yellow.jpg` | A black dragon, wings spread, its scales recoloured for every other colour and for the babies (31k triangles) |
 | `owner/lich2.glb` | A robed lich, its robe dyed in each rank's colour (31k triangles) |
 | `owner/demon.glb` | A horned demon, the balrog and the pit fiend (31k triangles) |
 | `owner/devil.glb`, `devil_ice.jpg`, `devil_bone.jpg` | A lean devil: horned, barbed, ice and bone (31k triangles) |
