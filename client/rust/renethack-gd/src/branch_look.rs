@@ -720,9 +720,13 @@ fn plane_look(plane: Plane) -> BranchLook {
             ambient: rgb(0.6, 0.58, 0.72),
             ambient_energy: 0.3,
             // (its pale marble under a doubled fill and the hero's full
-            // pool blew out to white, p99 235: lit, it is cold stone)
-            fill_scale: 1.1,
-            hero_light: 0.7,
+            // pool blew out to white, p99 235; in a small lit room of its
+            // temple, two torches on the wall over the hero, the fill and
+            // the pool together blew it again, p99 240: lit, it is cold
+            // stone, its veins seen)
+            fill_scale: 0.6,
+            hero_light: 0.4,
+            torch_energy: 0.7,
             fog: rgb(0.7, 0.66, 0.9),
             fog_density: 0.003,
             // (the air's own glow low: it painted the temple's dark
