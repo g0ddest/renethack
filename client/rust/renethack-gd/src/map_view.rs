@@ -848,6 +848,8 @@ const MIST_OPACITY: f32 = 0.16;
 /// most on a level.
 const LAVA_LIGHT: Color = Color::from_rgb(1.0, 0.42, 0.12);
 const LAVA_ENERGY: f32 = 1.5;
+/// A lava cell's own lamp over its banks (`Lamp::Lava`).
+const LAVA_LAMP_ENERGY: f32 = 2.6;
 const LAVA_RANGE: f32 = 3.5;
 const LAVA_SPACING: f32 = 3.5;
 const LAVA_LIGHTS: usize = 40;
@@ -9456,7 +9458,7 @@ impl MapView {
             }
             Lamp::Lava => {
                 light.set_color(Color::from_rgb(1.0, 0.4, 0.12));
-                light.set_param(Param::ENERGY, 2.6);
+                light.set_param(Param::ENERGY, LAVA_LAMP_ENERGY);
                 light.set_param(Param::RANGE, 3.6);
                 light.set_param(Param::VOLUMETRIC_FOG_ENERGY, 2.0);
             }

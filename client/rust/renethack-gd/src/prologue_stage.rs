@@ -85,6 +85,10 @@ const AMULET_TALL: f32 = 1.25;
 const LAVA_LIGHT: Color = Color::from_rgb(1.0, 0.42, 0.14);
 const STONE_LIGHT: Color = Color::from_rgb(1.0, 0.08, 0.04);
 const STONE_BEAT: f32 = 2.4;
+/// How high over the lava its own lights hang in the Amulet's cavity, and
+/// how bright they are there.
+const LAVA_LOW: f32 = 0.12;
+const LAVA_DIM: f32 = 0.45;
 /// The haze the light pours through while the prologue plays (the air's
 /// own: none, the scenes' haze where it shows), and how brightly the light
 /// pouring down lights it.
@@ -215,6 +219,10 @@ const AMULET: Figure = Figure {
         // old gold, darkened; the stone's glow beating
         ("tint", U::V3(0.5, 0.42, 0.3)),
         ("rough", U::F(0.1)),
+        // (a thin hot edge: the lava's light from below on its rings)
+        ("rim_color", U::V3(1.0, 0.42, 0.12)),
+        ("rim_energy", U::F(0.9)),
+        ("rim_power", U::F(4.0)),
         ("breath_secs", U::F(STONE_BEAT)),
         // (a dark garnet, its light deep in it)
         ("glow_color", U::V3(0.85, 0.02, 0.03)),
@@ -536,17 +544,35 @@ impl MapView {
                 }
             }
             Beat::Amulet => {
+                // a cavity of Gehennom: its lava's light low over it, smoke
+                // drifting in the dark above, embers rising
                 stage.amulet = Some(self.stage_amulet(&mut stage.root, mid, AMULET_TALL));
                 self.dome(&mut stage.root, mid);
-                // the lava's heat glowing in the air over it
-                let heat = Color::from_rgb(0.5, 0.13, 0.03);
+                let heat = Color::from_rgb(0.3, 0.07, 0.015);
                 haze(
                     &mut stage.root,
-                    mid + v(0.0, 1.0, 0.0),
-                    v(14.0, 2.6, 9.0),
-                    0.03,
+                    mid + v(0.0, 0.5, 0.0),
+                    v(13.0, 1.2, 8.0),
+                    0.02,
                     Some(heat),
                 );
+                let above = Smoke {
+                    density: 0.35,
+                    least: 0.0,
+                    albedo: Color::from_rgb(0.12, 0.1, 0.09),
+                    emission: Color::from_rgb(0.03, 0.008, 0.002),
+                    climb: 0.25,
+                };
+                let turn = Basis::IDENTITY;
+                let size = v(16.0, 5.0, 9.0);
+                if let Some(m) =
+                    self.smoke(&mut stage.root, mid + v(0.0, 4.0, -2.0), turn, size, above)
+                {
+                    stage.smoke.push((m, above.density));
+                }
+                let mut embers = self.rising_embers(v(3.5, 0.2, 2.5), 60, 0.04);
+                embers.set_position(mid + v(0.0, 0.2, 0.6));
+                stage.root.add_child(&embers);
             }
             Beat::God => {
                 let altar = v(MID.0 as f32, 0.0, MID.1 as f32 - 2.0);
@@ -1033,6 +1059,26 @@ impl MapView {
                 node.set_position(Vector3::new(p.x, -SINK_DEPTH * k * k, p.z));
             }
         }
+        // the lava's own lights low over it in the Amulet's cavity: its rocks
+        // lit at their feet, dark above (the game's are higher; its next
+        // level lays them again)
+        if beat == Beat::Amulet {
+            for l in &mut self.lava_lights {
+                let p = l.get_position();
+                if p.y > LAVA_LOW {
+                    l.set_position(Vector3::new(p.x, LAVA_LOW, p.z));
+                    l.set_param(Param::ENERGY, super::LAVA_ENERGY * LAVA_DIM);
+                }
+            }
+            // (and its cells' lamps over its banks, which lit its rocks
+            // all one orange)
+            for n in self.cells.values_mut() {
+                if let Some(l) = n.lamp.as_mut().filter(|l| l.kind == super::Lamp::Lava) {
+                    l.light
+                        .set_param(Param::ENERGY, super::LAVA_LAMP_ENERGY * LAVA_DIM);
+                }
+            }
+        }
         let hero = self.hero_stands().map(|(p, _)| p);
         let Some(stage) = self.stage.as_mut() else {
             return;
@@ -1186,19 +1232,35 @@ impl MapView {
         // the level's ambient or its light from above; the game's back as
         // it was when it is over
         let dark = beat.is_some_and(dark_set);
-        if dark == self.moon.is_visible() {
-            self.moon.set_visible(!dark);
-            self.back.set_visible(!dark);
-            let ambient = if self.showcase {
-                super::GALLERY_AMBIENT
-            } else {
-                look.ambient_energy
-            };
-            self.env.set_ambient_light_energy(if dark {
-                ambient * DARK_AMBIENT
-            } else {
-                ambient
-            });
+        let ambient = if self.showcase {
+            super::GALLERY_AMBIENT
+        } else {
+            look.ambient_energy
+        };
+        if dark {
+            // (every time: a beat in another branch sets the branch's
+            // ambient again as its level comes)
+            self.moon.set_visible(false);
+            self.back.set_visible(false);
+            self.env.set_ambient_light_energy(ambient * DARK_AMBIENT);
+        } else if !self.moon.is_visible() {
+            self.moon.set_visible(true);
+            self.back.set_visible(true);
+            self.env.set_ambient_light_energy(ambient);
+            // (the lava's lights as the game has them: the Amulet's cavity
+            // dims them)
+            for l in &mut self.lava_lights {
+                l.set_param(Param::ENERGY, super::LAVA_ENERGY);
+            }
+            let lamps = self
+                .cells
+                .values_mut()
+                .filter_map(|n| n.lamp.as_mut())
+                .chain(self.spare_lamps.iter_mut())
+                .filter(|l| l.kind == super::Lamp::Lava);
+            for l in lamps {
+                l.light.set_param(Param::ENERGY, super::LAVA_LAMP_ENERGY);
+            }
         }
         // (and as the game's thins with the distance the hero is followed
         // from, what its glow gave made up by the exposure: never in the
@@ -1315,7 +1377,7 @@ fn quad_mesh(size: f32) -> Gd<QuadMesh> {
 /// A beat whose set only its own lights light (a shaft, fires): the rest
 /// falls to black.
 fn dark_set(beat: Beat) -> bool {
-    matches!(beat, Beat::Rebellion)
+    matches!(beat, Beat::Rebellion | Beat::Amulet)
 }
 
 /// `t` eased in and out (0..1).
@@ -1442,10 +1504,12 @@ fn level(beat: Beat, hero: &PrologueHero, cat: &Catalog) -> World {
             for y in my - 4..=my + 4 {
                 for x in mx - 6..=mx + 6 {
                     let (dx, dy) = ((x - mx) as f32 / 4.5, (y - my) as f32 / 2.8);
+                    // (its rock unlit: a lit floor's fill lights lit the rocks
+                    // all one orange)
                     let sym = if dx * dx + dy * dy <= 1.0 {
                         "S_lava"
                     } else {
-                        "S_room"
+                        "S_darkroom"
                     };
                     put(map, x, y, sym, None);
                 }
