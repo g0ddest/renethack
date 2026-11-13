@@ -86,7 +86,7 @@ pub use fall::{FallKind, Fell};
 pub use hero_look::{Effects, Posture, Shown};
 pub use hero_pose::{Held, HelplessPhase, STATE_CLIPS};
 pub use opening::Opening;
-pub use prologue_stage::{PrologueHero, STAIRS as PROLOGUE_STAIRS};
+pub use prologue_stage::{MOUTH as PROLOGUE_MOUTH, PrologueHero};
 
 /// Low enough to see creatures from the side, high enough to see the floor
 /// between walls: the pitch at the default distance; closer in the camera
@@ -8308,12 +8308,24 @@ impl MapView {
     /// How far the feet at `feet` are under what they stand on (self-tests:
     /// the prologue's descent): the highest top of the level's surfaces
     /// under them (a floor, a tread, a rim) less than `KNEE` over them;
-    /// None when they are on or over it, or over nothing (a shaft, the
-    /// dark).
+    /// off the level's cells, the prologue's own stairs' tread, else the
+    /// bedrock where it has no hole; None when they are on or over it, or
+    /// over nothing (a shaft, the dark).
     pub fn sunk_into(&self, feet: Vector3) -> Option<f32> {
         const KNEE: f32 = 0.6;
         let cell = (feet.x.round() as i32, feet.z.round() as i32);
-        let look = &self.cells.get(&cell)?.look;
+        let Some(nodes) = self.cells.get(&cell) else {
+            let on_flight = self.prologue_beat() == Some(crate::prologue::Beat::Descent)
+                && (feet.x - prologue_stage::START.0 as f32).abs() <= 1.0;
+            let top = prologue_stage::flight_top(feet.z)
+                .filter(|_| on_flight)
+                .or_else(|| {
+                    (self.bedrock.is_visible() && !self.holes.contains(&cell))
+                        .then(|| self.bedrock_y())
+                });
+            return top.map(|t| t - feet.y).filter(|&under| under > 0.0);
+        };
+        let look = &nodes.look;
         let local = feet - Vector3::new(cell.0 as f32, 0.0, cell.1 as f32);
         let mut top = (!look.sunk).then_some(look.ground);
         for s in &look.solids {

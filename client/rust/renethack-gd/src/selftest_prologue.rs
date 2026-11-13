@@ -9,7 +9,7 @@
 //! the profile kept with its text, not a later game's.
 
 use godot::global::Key as GKey;
-use godot::prelude::godot_print;
+use godot::prelude::{Vector3, godot_print};
 
 use super::{Step, command, fail_on_error_screen, quit, screen, smoke_choice};
 use crate::game::{GameState, RenethackGame};
@@ -122,6 +122,11 @@ fn feet_on_ground(g: &RenethackGame) -> Result<(), String> {
     Ok(())
 }
 
+/// Where the prologue's hero's feet are.
+fn hero_feet(g: &RenethackGame) -> Option<Vector3> {
+    g.ui.as_ref()?.map.hero_stands().map(|(p, _)| p)
+}
+
 /// The game up after the prologue: its map and HUD, the black gone, its
 /// first command waiting.
 fn in_game(g: &RenethackGame) -> Result<bool, String> {
@@ -166,25 +171,21 @@ pub(super) fn prologue() -> Vec<Step> {
         Step::Wait("the hero on the stairs down, her feet on them", |g| {
             fail_on_error_screen(g)?;
             feet_on_ground(g)?;
-            let on_stairs =
-                g.ui.as_ref()
-                    .and_then(|ui| ui.map.hero_stands())
-                    .is_some_and(|(p, _)| {
-                        (p.x - crate::map_view::PROLOGUE_STAIRS.0 as f32).abs() < 0.2
-                            && (p.z - crate::map_view::PROLOGUE_STAIRS.1 as f32).abs() < 0.2
-                    });
+            let on_stairs = hero_feet(g)
+                .is_some_and(|p| p.z > crate::map_view::PROLOGUE_MOUTH + 0.5 && p.y < -0.2);
             Ok(on_stairs || g.prologue.is_none())
         }),
         Step::ShotIf("prologue-down", |g| Ok(g.prologue.is_some())),
-        Step::Wait("going down them, a tread at a time", |g| {
+        Step::Wait("going down them, a tread at a time, into the dark", |g| {
             fail_on_error_screen(g)?;
             feet_on_ground(g)?;
-            Ok(g.prologue
-                .as_ref()
-                .is_none_or(|p| p.run.descent().is_some_and(|d| d > 2.9)))
+            Ok(g.prologue.is_none() || hero_feet(g).is_some_and(|p| p.y < -2.6))
         }),
         Step::ShotIf("prologue-deeper", |g| Ok(g.prologue.is_some())),
-        Step::Wait("down the stairs, the game up out of black", in_game),
+        Step::Wait("down the stairs, the game up out of black", |g| {
+            feet_on_ground(g)?;
+            in_game(g)
+        }),
         Step::Shot("prologue-game"),
         Step::Wait(
             "the profile has seen it, and keeps it to replay with its hero",

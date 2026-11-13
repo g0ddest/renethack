@@ -137,9 +137,12 @@ pub const FADE_IN: f64 = 0.9;
 pub const FADE_OUT: f64 = 0.8;
 const WORDS_AT: f64 = 0.6;
 const WORDS_CHARS: f64 = 34.0;
-/// After the last words the hero goes down the stairs for this long, and
-/// the game comes up out of black over this long.
-pub const DESCENT_SECS: f64 = 3.0;
+/// The last beat: the hero sets off this far into it, as its words are
+/// read, down the stairs, and it lasts at least this long, till she is
+/// gone into the dark below them; then the game comes up out of black
+/// over this long.
+pub const WALK_AT: f64 = 0.9;
+pub const DESCENT_SECS: f64 = 11.2;
 pub const GAME_FADE: f64 = 1.0;
 /// A voiced beat lasts this long after its narration ends.
 const VOICE_TAIL: f64 = 0.6;
@@ -246,13 +249,13 @@ impl Run {
     }
 
     /// How long the beat is, from black to black: read (or read aloud),
-    /// then (the last) the descent.
+    /// and (the last) the hero's way down the stairs into the dark.
     pub fn length(&self) -> f64 {
         let read = reading_secs(self.text())
             .max(WORDS_AT + self.text().chars().count() as f64 / WORDS_CHARS + 1.0)
             .max(self.voice.map_or(0.0, |v| v + VOICE_TAIL));
         match self.beat {
-            Beat::Descent => read + DESCENT_SECS,
+            Beat::Descent => read.max(DESCENT_SECS),
             _ => read,
         }
     }
@@ -279,14 +282,10 @@ impl Run {
         1.0 - self.shade().min(1.0)
     }
 
-    /// Seconds into the descent (the last beat, after its words), None
-    /// before it.
+    /// Seconds into the hero's walk down (the last beat's, from
+    /// `WALK_AT`), None before it.
     pub fn descent(&self) -> Option<f64> {
-        if self.beat != Beat::Descent {
-            return None;
-        }
-        let start = self.length() - DESCENT_SECS;
-        (self.t >= start).then_some(self.t - start)
+        (self.beat == Beat::Descent && self.t >= WALK_AT).then_some(self.t - WALK_AT)
     }
 
     /// A key, a button or a click: the beat's words at once if they are
@@ -521,12 +520,17 @@ mod tests {
     }
 
     #[test]
-    fn the_last_beat_goes_down_the_stairs_after_its_words() {
+    fn the_last_beat_goes_down_the_stairs_as_its_words_are_read() {
         let mut run = Run::new(beats(&valkyrie()).unwrap());
         run_until(&mut run, |r| r.beat() == Beat::Descent);
         assert_eq!(run.descent(), None);
         run_until(&mut run, |r| r.descent().is_some());
-        assert!(run.all_shown());
+        assert!(!run.all_shown(), "she sets off as the words come");
+        // and goes on down after them, till the beat is out
+        run_until(&mut run, Run::all_shown);
+        assert!(run.descent().is_some() && run.shade() == 0.0);
+        run_until(&mut run, |r| r.shade() > 0.0);
+        assert!(run.secs() >= DESCENT_SECS, "{}", run.secs());
         let events = run_until(&mut run, Run::is_done);
         assert_eq!(events, vec![Event::Done]);
     }

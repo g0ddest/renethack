@@ -15,7 +15,8 @@
 //! - the god: their altar in a vaulted shrine, light pouring down on it,
 //!   braziers either side;
 //! - the hero: the title's chamber, the hero in their kit;
-//! - the descent: the hero walking to the stairs down, under a vault.
+//! - the descent: the hero walking down an open flight of stone steps
+//!   under an arch, torches along it, into the dark below.
 //!
 //! A beat's set is built a few pieces a frame while the beat before is
 //! read (`prepare_prologue`), and the rehearsal draws one of each under
@@ -185,8 +186,8 @@ const CANDLES: &str = "res://art/cc0/polyhaven/models/brass_candleholders/brass_
 const BOULDER: &str = "res://art/cc0/polyhaven/models/boulder_01/boulder_01.gltf";
 const BOOK: &str = "res://art/cc0/quaternius/props/Book_5.gltf";
 const SCROLL: &str = "res://art/cc0/quaternius/props/Scroll_1.gltf";
-pub(super) const KIT: [&str; 9] = [
-    VAULT, BARREL, PILLAR, WALL, ARCH, CANDLES, BOULDER, BOOK, SCROLL,
+pub(super) const KIT: [&str; 10] = [
+    VAULT, BARREL, PILLAR, WALL, ARCH, CANDLES, BOULDER, BOOK, SCROLL, FLIGHT,
 ];
 /// The gods of the rebellion: Marduk the god-king, and Moloch twice his
 /// height, outlined by the fires behind him, his furnace's light on his
@@ -328,34 +329,62 @@ const MOLOCH_HEART: (f32, f32, f32) = (0.10, 0.29, 0.24);
 const AMULET_STONE: (f32, f32, f32) = (0.0, -0.38, 0.12);
 /// What the prologue's figures are, loaded ahead in the background.
 pub(super) const FIGURES: [&str; 4] = [MARDUK.glb, MOLOCH.glb, AMULET.glb, STATUE.glb];
-/// The descent: the cells the hero walks on towards the stairs (south: the
-/// map's stairs down go down southwards, their top step at their north),
-/// a step every this many seconds; the stairs.
-const WALK: [(i32, i32); 2] = [(40, 11), (40, 12)];
-pub const STAIRS: (i32, i32) = (40, 13);
-const STEP_SECS: f64 = 0.62;
-/// From this far into the descent the hero walks on by herself, down the
-/// stairs' treads into the dark of their shaft as the beat goes to black:
-/// this fast, this far (to their lowest tread: past it the level's floor
-/// lies over the way down, and her head would come up through it).
-const DOWN_AT: f64 = 1.2;
-const DOWN_SPEED: f32 = 0.9;
-const DOWN_RUN: f32 = 1.3;
-/// The stairs down as the map draws them (map_view, Terrain::StairsDown),
-/// from their middle: the near rim's far edge and its top, the shaft's
-/// near wall's far face (what she steps over onto the treads), the first
-/// tread's near edge and top, each tread this deep and this much lower.
-const RIM_FROM: f32 = -0.5;
-const RIM_TOP: f32 = 0.1;
-const LIP_TO: f32 = -0.32;
-const TREADS_FROM: f32 = -0.37;
-const TREAD_TOP: f32 = -0.08;
-const TREAD_DEEP: f32 = 0.18;
-const TREAD_DROP: f32 = 0.14;
-const NOSING: f32 = 0.02;
-/// The descent's set was laid out going north; it stands turned half round
-/// about this point (x, z) now that she goes south.
-const DESCENT_TURN: (f32, f32) = (40.0, 9.5);
+/// The descent: the hero sets off from this cell, south down a short hall
+/// to the mouth of its stairs under an arch (this far south), then down
+/// them, an open flight of stone steps of the set's own (the map's stairs
+/// down are a well in the floor, a cell wide: not a staircase), a tread
+/// every this many seconds, into the dark below; at this pace on the
+/// floor, each drop to the next tread over this share of its step.
+pub const START: (i32, i32) = (40, 6);
+pub const MOUTH: f32 = 8.5;
+const FLAT_SPEED: f32 = 1.1;
+const STAIR_STEP: f32 = 0.55;
+const STEP_DROP: f32 = 0.45;
+/// The flight: the kit's stairs, two of them one under the other, each
+/// this long and this deep, and their treads as the model has them from
+/// its top (the tread's top, from z, to z: it rises to its -z); the walls
+/// either side (their middles this far off its own), and the torches on
+/// them (over which tread, on which side: -1 the left), this bright.
+const FLIGHT: &str = "res://art/cc0/sigilsvault/dungeon/pieces/stairs_small_01.glb";
+const FLIGHTS: usize = 2;
+const FLIGHT_LONG: f32 = 4.0;
+const FLIGHT_DROP: f32 = 3.0;
+const FLIGHT_TREADS: [(f32, f32, f32); 10] = [
+    (3.0, -2.0, -1.551),
+    (2.709, -1.551, -1.163),
+    (2.418, -1.163, -0.775),
+    (2.128, -0.775, -0.388),
+    (1.837, -0.388, 0.0),
+    (1.5, 0.0, 0.449),
+    (1.209, 0.449, 0.837),
+    (0.918, 0.837, 1.225),
+    (0.628, 1.225, 1.612),
+    (0.337, 1.612, 2.0),
+];
+const TREADS: usize = FLIGHT_TREADS.len() * FLIGHTS;
+const FLIGHT_WALL: f32 = 1.25;
+const FLIGHT_TORCHES: [(usize, f32); 2] = [(5, -1.0), (9, 1.0)];
+const FLIGHT_TORCH: f32 = 2.1;
+const FLIGHT_TORCH_RANGE: f32 = 4.5;
+/// The cold light from deep below at the stairs' foot (the game's stairs
+/// down have it too): she goes down into it, dark against it, and is
+/// gone; this bright, reaching this far.
+const FOOT_LIGHT: f32 = 1.6;
+const FOOT_RANGE: f32 = 4.0;
+/// The descent's camera this high over the hall's floor, coming after her
+/// at this share of her pace as far as the arch.
+const CAMERA_OVER: f32 = 2.3;
+const CAMERA_FOLLOWS: f32 = 0.6;
+/// The hero's own lights (map_view `HERO_STUDIO`) leave her as she goes
+/// down: all of them till she is this far under the hall's floor, none
+/// past this.
+const DARK_FROM: f32 = 0.6;
+const DARK_TO: f32 = 3.4;
+/// The descent's hall was laid out going north; it stands turned half
+/// round about this point (x, z) now that she goes south (all of it north
+/// enough that its stairs end before the level's last row: the bedrock
+/// past it has no holes).
+const DESCENT_TURN: (f32, f32) = (40.0, 7.0);
 
 /// A piece of a beat's set: a scene of the kit at `at`, turned `yaw`
 /// degrees about the vertical, `scale` times its own size.
@@ -471,8 +500,6 @@ pub(super) struct Stage {
     /// pieces.
     gods_due: Vec<God>,
     todo: Vec<Piece>,
-    /// The descent: the cell the hero stands on now.
-    walked: usize,
 }
 
 /// A god to stand on a stage: where, turned how far, how tall.
@@ -498,7 +525,6 @@ impl Stage {
             amulet: None,
             gods_due: Vec::new(),
             todo: Vec::new(),
-            walked: 0,
         }
     }
 
@@ -746,11 +772,28 @@ impl MapView {
                 }
             }
             Beat::Descent => {
-                // fires either side of the way down
+                // fires either side of the hall, torches down the stairs
                 for (k, x) in [38.8, 41.2].into_iter().enumerate() {
                     let at = turned(piece(VAULT, (x, 0.0, 8.6), 0.0, 1.0)).at;
                     self.stage_brazier(&mut stage, at, k as f64 * 1.9);
                 }
+                for (k, (tread_k, side)) in FLIGHT_TORCHES.into_iter().enumerate() {
+                    let (top, z0, z1) = tread(tread_k);
+                    let face = v(
+                        START.0 as f32 + side * (FLIGHT_WALL - 0.25),
+                        top,
+                        (z0 + z1) / 2.0,
+                    );
+                    self.stage_torch(&mut stage, face, v(-side, 0.0, 0.0), 0.8 + k as f64 * 2.3);
+                }
+                let (top, _, end) = tread(TREADS - 1);
+                let mut foot = light(
+                    &mut stage.root,
+                    super::STAIR_DOWN_LIGHT,
+                    v(START.0 as f32, top + 0.6, end - 0.6),
+                    FOOT_RANGE,
+                );
+                foot.set_param(Param::ENERGY, FOOT_LIGHT);
             }
             Beat::Hero => {}
         }
@@ -1457,40 +1500,19 @@ impl MapView {
         let t = secs as f32;
         let rise = smooth((t / 2.5).min(1.0));
         let mid = Vector3::new(MID.0 as f32, 0.0, MID.1 as f32);
-        // the hero walks on, a cell a step
-        if let Some(d) = descent {
-            let due = ((d / STEP_SECS) as usize + 1).min(WALK.len());
-            let walked = self.stage.as_ref().map_or(0, |s| s.walked);
-            if due > walked {
-                self.walk_stage_hero(walked, due);
-                if let Some(s) = self.stage.as_mut() {
-                    s.walked = due;
-                }
+        // the hero down the hall and down the stairs, her feet on each
+        // tread, into the dark below, her own lights leaving her
+        if beat == Beat::Descent {
+            if let Some(d) = descent {
+                self.walk_hero_down(d as f32);
             }
+            self.open_flight();
         }
-        // on by herself down the stairs, her feet on each tread, into the
-        // dark of their shaft (walking: her gait played; at its foot, still)
-        if let Some(d) = descent.filter(|&d| d > DOWN_AT) {
-            let from = WALK[WALK.len() - 1];
-            let run = DOWN_SPEED * (d - DOWN_AT) as f32;
-            let z = from.1 as f32 + run.min(DOWN_RUN);
-            let feet = Vector3::new(STAIRS.0 as f32, tread_under(z - STAIRS.1 as f32), z);
-            if let Some(m) = self.hero_model() {
-                let mut node = m.node.clone();
-                node.set_position(feet);
-                let clips = self.art.clips(m, false);
-                let clip = if run < DOWN_RUN {
-                    clips.gait
-                } else {
-                    clips.idle
-                };
-                if let (Some(mut player), Some(clip)) = (clips.player, clip)
-                    && player.get_current_animation().to_string() != clip
-                {
-                    player.play_ex().name(clip.as_str()).done();
-                }
-            }
-        }
+        let depth = match beat {
+            Beat::Descent => self.hero_stands().map_or(0.0, |(p, _)| -p.y),
+            _ => 0.0,
+        };
+        self.hero_dark(1.0 - smooth(((depth - DARK_FROM) / (DARK_TO - DARK_FROM)).clamp(0.0, 1.0)));
         // the lava's own lights low over it in the Amulet's cavity: its rocks
         // lit at their feet, dark above (the game's are higher; its next
         // level lays them again)
@@ -1596,7 +1618,7 @@ impl MapView {
             self.sounds
                 .push(crate::audio::Sound::new("prologue.lava").at(at));
         }
-        let (eye, aim) = camera(beat, t, descent.map(|d| d as f32), mid, hero, amulet_at);
+        let (eye, aim) = camera(beat, t, mid, hero, amulet_at);
         self.stage_camera = Some((eye, aim));
         let close = matches!(beat, Beat::Book | Beat::Amulet);
         self.focus(close.then(|| eye.distance_to(aim)));
@@ -1790,29 +1812,162 @@ impl MapView {
         }
     }
 
-    /// The descent's hero steps on, from the cell `from` of `WALK` to
-    /// `to`: the level's hero printed there (the map walks the model).
-    fn walk_stage_hero(&mut self, from: usize, to: usize) {
-        let Some(title) = self.title.as_mut() else {
+    /// The descent's hero `d` seconds into her walk down: where her feet
+    /// are, facing down the way, her gait played (on the stairs at a
+    /// tread a stride, its clip slowed to it) and at the foot, still.
+    fn walk_hero_down(&mut self, d: f32) {
+        let (feet, stride) = walk_down(d);
+        let Some(m) = self.hero_model() else {
             return;
         };
-        let (world, catalog) = title.parts();
-        let floor = cmap(catalog, "S_room");
-        let Some(hero) = WALK
-            .get(from.saturating_sub(1).min(WALK.len() - 1))
-            .and_then(|&(x, y)| world.map.cell(x, y))
-            .and_then(|c| c.glyph.clone())
-            .filter(|g| g.flags & mg::HERO != 0)
-        else {
+        let mut node = m.node.clone();
+        node.set_position(feet);
+        node.set_rotation(Vector3::ZERO);
+        let clips = self.art.clips(m, false);
+        let clip = match stride {
+            Stride::Still => clips.idle,
+            _ => clips.gait,
+        };
+        let (Some(mut player), Some(clip)) = (clips.player, clip) else {
             return;
         };
-        let start = WALK[from.saturating_sub(1).min(WALK.len() - 1)];
-        let end = WALK[(to - 1).min(WALK.len() - 1)];
-        if let Some(f) = floor.as_ref() {
-            world.map.print(start.0, start.1, f, None);
+        if player.get_current_animation().to_string() != clip {
+            player.play_ex().name(clip.as_str()).done();
         }
-        world.map.print(end.0, end.1, &hero, floor.as_ref());
+        // (two strides a cycle: one a tread)
+        let speed = match (stride, player.get_animation(clip.as_str())) {
+            (Stride::Stairs, Some(a)) if a.get_length() > 0.0 => a.get_length() / 2.0 / STAIR_STEP,
+            _ => 1.0,
+        };
+        if (player.get_speed_scale() - speed).abs() > 1e-3 {
+            player.set_speed_scale(speed);
+        }
     }
+
+    /// The bedrock under the level opened over the descent's stairs (the
+    /// level has no cells there: its rock would lie across them).
+    fn open_flight(&mut self) {
+        let x = START.0;
+        let (_, _, end) = tread(TREADS - 1);
+        let cells: Vec<(i32, i32)> = (x - 1..=x + 1)
+            .flat_map(|cx| {
+                ((MOUTH + 0.5).floor() as i32..=end.ceil() as i32).map(move |cz| (cx, cz))
+            })
+            .collect();
+        if cells.iter().any(|c| !self.holes.contains(c)) {
+            self.holes.extend(cells);
+            self.bedrock_dirty = true;
+        }
+    }
+
+    /// The hero's own key and fills at `k` of their light (the dark below
+    /// the descent's stairs takes her: 1 is the game's).
+    fn hero_dark(&mut self, k: f32) {
+        for (i, (_, _, energy)) in super::HERO_STUDIO.iter().enumerate() {
+            if let Some(mut l) = self
+                .hero_studio
+                .get_child(i as i32)
+                .and_then(|n| n.try_cast::<godot::classes::DirectionalLight3D>().ok())
+                && (l.get_param(Param::ENERGY) - energy * k).abs() > 1e-4
+            {
+                l.set_param(Param::ENERGY, energy * k);
+            }
+        }
+    }
+
+    /// A torch on a wall of the descent's stairs: the game's own (its
+    /// sconce, flame, embers), its foot at `face` on the wall, burning out
+    /// over `out`, flickering at its own `phase`.
+    fn stage_torch(&mut self, stage: &mut Stage, face: Vector3, out: Vector3, phase: f64) {
+        let mut t = self.new_torch();
+        t.node.reparent(&stage.root);
+        t.light.reparent(&stage.root);
+        let yaw = out.x.atan2(out.z);
+        let basis = Basis::from_euler(EulerOrder::YXZ, Vector3::new(0.0, yaw, 0.0));
+        t.node
+            .set_transform(Transform3D::new(basis, face + Vector3::new(0.0, 1.45, 0.0)));
+        let reach = super::SIDE_REACH;
+        if let Some(sconce) = t.sconce.as_mut() {
+            let k = super::SCONCE_SCALE;
+            sconce.set_scale(Vector3::new(k, k, k * reach));
+        }
+        t.flame.set_position(Vector3::new(0.0, 0.46, 0.3 * reach));
+        t.halo.set_position(Vector3::new(0.0, 0.62, 0.32 * reach));
+        t.embers.set_position(Vector3::new(0.0, 0.58, 0.3 * reach));
+        t.flame
+            .set_instance_shader_parameter("phase", &(phase as f32).to_variant());
+        // (out over the treads more than the game's: they, not the wall
+        // beside it, are what it lights)
+        let at = face + out * 0.55 + Vector3::new(0.0, 1.8, 0.0);
+        t.light.set_position(at);
+        t.light.set_param(Param::ENERGY, FLIGHT_TORCH);
+        t.light.set_param(Param::RANGE, FLIGHT_TORCH_RANGE);
+        t.light.set_visible(true);
+        stage.fires.push((t.light, FLIGHT_TORCH, phase));
+    }
+}
+
+/// How the descent's hero goes: on the hall's floor, down the stairs, or
+/// still at their foot.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Stride {
+    Floor,
+    Stairs,
+    Still,
+}
+
+/// Tread `k` of the descent's stairs (0 the top, level with the hall's
+/// floor): its top, and from and to how far south.
+fn tread(k: usize) -> (f32, f32, f32) {
+    let (n, j) = (k / FLIGHT_TREADS.len(), k % FLIGHT_TREADS.len());
+    let (top, from, to) = FLIGHT_TREADS[j];
+    let mid = MOUTH + FLIGHT_LONG * (0.5 + n as f32);
+    (top - FLIGHT_DROP * (n + 1) as f32, mid + from, mid + to)
+}
+
+/// The top of the descent's tread `z` south (None off the stairs).
+pub fn flight_top(z: f32) -> Option<f32> {
+    (0..TREADS)
+        .map(tread)
+        .find(|&(_, from, to)| (from..to).contains(&z))
+        .map(|(top, _, _)| top)
+}
+
+/// Where the descent's hero's feet are `d` seconds into her walk, and how
+/// she goes: down the hall to the stairs' top tread, then a tread a
+/// stride, dropping to each over the first `STEP_DROP` of it (her feet on
+/// the tread behind till then, never under the one beneath), then still
+/// on the last.
+fn walk_down(d: f32) -> (Vector3, Stride) {
+    let x = START.0 as f32;
+    let from = START.1 as f32;
+    let (_, _, top_to) = tread(0);
+    let floor = (top_to - from) / FLAT_SPEED;
+    if d < floor {
+        return (
+            Vector3::new(x, 0.0, from + FLAT_SPEED * d.max(0.0)),
+            Stride::Floor,
+        );
+    }
+    let s = (d - floor) / STAIR_STEP;
+    let k = 1 + s as usize;
+    if k >= TREADS {
+        let (top, _, to) = tread(TREADS - 1);
+        return (Vector3::new(x, top, to - 0.05), Stride::Still);
+    }
+    let u = s.fract();
+    let (top, z0, mut z1) = tread(k);
+    if k == TREADS - 1 {
+        // (on the last she stops short of its edge)
+        z1 -= 0.05;
+    }
+    let (above, _, _) = tread(k - 1);
+    let drop = smooth((u / STEP_DROP).min(1.0));
+    let z = z0 + u * (z1 - z0);
+    (
+        Vector3::new(x, top + (above - top) * (1.0 - drop), z),
+        Stride::Stairs,
+    )
 }
 
 /// The lava's answer `t` seconds into the beat: the flare flaring and
@@ -2094,7 +2249,6 @@ fn smooth(t: f32) -> f32 {
 fn camera(
     beat: Beat,
     t: f32,
-    descent: Option<f32>,
     mid: Vector3,
     hero: Option<Vector3>,
     amulet: Option<Vector3>,
@@ -2148,15 +2302,18 @@ fn camera(
             ) * d;
             (aim + off, aim)
         }
-        // behind the hero as they go to the stairs, then down into them
-        // (she goes south: the camera north of her, over the floor as she
-        // goes down, looking down after her)
+        // behind and over her shoulder, looking down the stairs before
+        // her (from high: they go down steeper than a look from lower
+        // would see them past their top), following her slower than she
+        // goes, as far as their mouth, so that she draws away into the
+        // dark
         Beat::Descent => {
-            let hero = hero.unwrap_or(v(40.0, 0.0, 11.0));
-            let base = v(hero.x, 0.0, hero.z);
-            let down = descent.map_or(0.0, |d| smooth((d - DOWN_AT as f32) / 1.6));
-            let aim = base + v(0.0, 0.9 - 1.1 * down, 1.6);
-            let eye = base + v(0.0, 2.4 - 0.7 * down, -3.4 + 1.2 * down);
+            let hero = hero.unwrap_or(v(START.0 as f32, 0.0, START.1 as f32));
+            let along = (hero.z - START.1 as f32).max(0.0);
+            // (never into the arch: it stops before it)
+            let z = (START.1 as f32 - 2.0 + CAMERA_FOLLOWS * along).min(MOUTH - 1.1);
+            let eye = v(START.0 as f32 + 0.45, CAMERA_OVER, z);
+            let aim = v(START.0 as f32, hero.y + 0.5, hero.z + 1.4);
             (eye, aim)
         }
     }
@@ -2230,19 +2387,18 @@ fn level(beat: Beat, hero: &PrologueHero, cat: &Catalog) -> World {
         }
         Beat::Hero => {}
         Beat::Descent => {
-            // a short hall to the stairs down (its walls the set's), the
-            // hero at its foot
+            // a short hall to the stairs' mouth (its walls and its stairs
+            // the set's), the hero at its foot
             hall(
                 map,
                 cat,
-                (mx - 1, WALK[0].1 - 3),
-                (mx + 1, STAIRS.1),
+                (mx - 1, START.1 - 3),
+                (mx + 1, (MOUTH - 0.5) as i32),
                 dark_set(beat),
             );
-            put(map, STAIRS.0, STAIRS.1, "S_dnstair", None);
             if let Some(g) = hero_glyph(cat, &hero.role, hero.female) {
                 let floor = cmap(cat, "S_room");
-                map.print(WALK[0].0, WALK[0].1, &g, floor.as_ref());
+                map.print(START.0, START.1, &g, floor.as_ref());
             }
         }
     }
@@ -2403,12 +2559,12 @@ fn set(beat: Beat) -> Vec<Piece> {
         }
         Beat::Hero => {}
         Beat::Descent => {
-            // a vaulted way to the stairs down, an arch over them (laid out
-            // going north, turned half round)
-            let stairs = 19.0 - STAIRS.1 as f32;
+            // a vaulted way to the stairs down, an arch over their mouth
+            // (laid out going north, turned half round)
+            let arch = 2.0 * DESCENT_TURN.1 - (MOUTH + 0.1);
             let mut way = vec![
-                piece(ARCH, (38.0, 0.0, stairs - 0.6), 0.0, 1.0),
-                piece(WALL, (38.0, 3.0, stairs - 0.6), 0.0, 1.0),
+                piece(ARCH, (38.0, 0.0, arch), 0.0, 1.0),
+                piece(WALL, (38.0, 3.0, arch), 0.0, 1.0),
             ];
             for z in [9.4, 13.4] {
                 way.push(piece(WALL, (38.0, 0.0, z), 90.0, 1.0));
@@ -2418,6 +2574,26 @@ fn set(beat: Beat) -> Vec<Piece> {
                 way.push(piece(BARREL, (40.0, 3.0, z), 0.0, 2.0));
             }
             s.extend(way.into_iter().map(turned));
+            // beyond the arch the stairs going down away south, two
+            // flights one under the other, walled either side (a wall
+            // runs on the more along the more it goes on: -90 degrees)
+            let x = START.0 as f32;
+            for n in 0..FLIGHTS {
+                let drop = FLIGHT_DROP * (n + 1) as f32;
+                let mid = MOUTH + FLIGHT_LONG * (0.5 + n as f32);
+                s.push(piece(FLIGHT, (x, -drop, mid), 0.0, 1.0));
+                let from = MOUTH + 0.1 + FLIGHT_LONG * n as f32;
+                for k in 0..=n + 1 {
+                    let y = -FLIGHT_DROP * k as f32;
+                    s.push(piece(WALL, (x - FLIGHT_WALL, y, from), -90.0, 1.0));
+                    s.push(piece(
+                        WALL,
+                        (x + FLIGHT_WALL, y, from + FLIGHT_LONG),
+                        90.0,
+                        1.0,
+                    ));
+                }
+            }
         }
     }
     s
@@ -2430,20 +2606,6 @@ fn turned(p: Piece) -> Piece {
         at: Vector3::new(2.0 * cx - p.at.x, p.at.y, 2.0 * cz - p.at.z),
         yaw: p.yaw + 180.0,
         ..p
-    }
-}
-
-/// The height of what the hero stands on `lz` south of the stairs' middle,
-/// down them and on below (the floor north of them, their near rim, each
-/// tread, and on down at their slope under the far rim).
-fn tread_under(lz: f32) -> f32 {
-    if lz < RIM_FROM {
-        0.0
-    } else if lz < LIP_TO {
-        RIM_TOP
-    } else {
-        // (each step down past the nosing that overhangs the tread below)
-        TREAD_TOP - TREAD_DROP * ((lz - TREADS_FROM - NOSING) / TREAD_DEEP).floor()
     }
 }
 
@@ -2734,4 +2896,107 @@ fn page_texture(seed: u32, initial: bool) -> Option<Gd<ImageTexture>> {
     let mut image = Image::create_from_data(W as i32, H as i32, false, Format::RGB8, &data)?;
     image.generate_mipmaps();
     ImageTexture::create_from_image(&image)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The kit's stairs' vertices, as (y, z), from its GLB.
+    fn flight_points() -> Vec<(f32, f32)> {
+        let path = FLIGHT.replace(
+            "res://",
+            concat!(env!("CARGO_MANIFEST_DIR"), "/../../godot/"),
+        );
+        let b = std::fs::read(&path).unwrap_or_else(|e| panic!("{path}: {e}"));
+        let word = |at: usize| u32::from_le_bytes(b[at..at + 4].try_into().unwrap()) as usize;
+        let json_len = word(12);
+        let g: serde_json::Value = serde_json::from_slice(&b[20..20 + json_len]).unwrap();
+        let bin = &b[20 + json_len + 8..];
+        let prim = &g["meshes"][0]["primitives"][0];
+        let acc = &g["accessors"][prim["attributes"]["POSITION"].as_u64().unwrap() as usize];
+        let view = &g["bufferViews"][acc["bufferView"].as_u64().unwrap() as usize];
+        let at = view["byteOffset"].as_u64().unwrap_or(0) as usize
+            + acc["byteOffset"].as_u64().unwrap_or(0) as usize;
+        let stride = view["byteStride"].as_u64().unwrap_or(12) as usize;
+        let f = |o: usize| f32::from_le_bytes(bin[o..o + 4].try_into().unwrap());
+        (0..acc["count"].as_u64().unwrap() as usize)
+            .map(|i| (f(at + i * stride + 4), f(at + i * stride + 8)))
+            .collect()
+    }
+
+    #[test]
+    fn the_flight_s_treads_are_the_model_s() {
+        let points = flight_points();
+        let has = |y: f32, z: f32| {
+            points
+                .iter()
+                .any(|&(py, pz)| (py - y).abs() < 0.005 && (pz - z).abs() < 0.005)
+        };
+        for (top, from, to) in FLIGHT_TREADS {
+            assert!(
+                has(top, from) && has(top, to),
+                "no tread at {top} from {from} to {to}"
+            );
+        }
+        // and the model is as deep and as long as the flights are laid
+        let (low, high) = points
+            .iter()
+            .fold((f32::MAX, f32::MIN), |(l, h), &(y, _)| (l.min(y), h.max(y)));
+        assert_eq!((low, high), (0.0, FLIGHT_DROP));
+        let (near, far) = points
+            .iter()
+            .fold((f32::MAX, f32::MIN), |(l, h), &(_, z)| (l.min(z), h.max(z)));
+        assert!((far - near - FLIGHT_LONG).abs() < 1e-3);
+    }
+
+    #[test]
+    fn the_hero_walks_down_on_each_tread_never_under_it() {
+        // the top tread level with the hall, each lower than the last,
+        // the flights meeting, all over the level's rows (past its last
+        // the bedrock has no holes: it would lie across the stairs)
+        assert_eq!(tread(0).0, 0.0);
+        assert!(tread(TREADS - 1).2 < nh_world::ROWNO as f32 - 1.0);
+        for k in 1..TREADS {
+            let (a, b) = (tread(k - 1), tread(k));
+            assert!(b.0 < a.0 && (b.1 - a.2).abs() < 1e-4, "{k}: {a:?} {b:?}");
+        }
+        let mut last = Vector3::new(0.0, 0.0, 0.0);
+        let mut d = 0.0;
+        let mut strides = Vec::new();
+        while d < 30.0 {
+            let (feet, stride) = walk_down(d);
+            if let Some(top) = flight_top(feet.z) {
+                assert!(
+                    feet.y >= top - 1e-4,
+                    "{d}: feet {feet:?} under the tread {top}"
+                );
+                assert!(
+                    feet.y - top <= 0.35,
+                    "{d}: feet {feet:?} far over the tread {top}"
+                );
+            } else if stride != Stride::Still {
+                assert!(feet.z < MOUTH && feet.y == 0.0, "{d}: {feet:?}");
+            }
+            assert!(d == 0.0 || feet.z >= last.z - 1e-4, "she never goes back");
+            if strides.last() != Some(&stride) {
+                strides.push(stride);
+            }
+            last = feet;
+            d += 1.0 / 60.0;
+        }
+        assert_eq!(strides, [Stride::Floor, Stride::Stairs, Stride::Still]);
+        assert!(last.y < -5.0, "down the whole flight: {last:?}");
+        // she reaches the top tread's edge as the narrator bids her go
+        // (about 3 to 4 s into the beat), and is deep in the dark by the
+        // beat's end
+        let first = (0..)
+            .map(|i| i as f32 / 60.0)
+            .find(|&d| walk_down(d).0.y < 0.0)
+            .unwrap();
+        let at = first + crate::prologue::WALK_AT as f32;
+        assert!((3.0..4.2).contains(&at), "the first step down at {at} s");
+        let end = (crate::prologue::DESCENT_SECS - crate::prologue::WALK_AT) as f32;
+        assert!(walk_down(end).0.y < -3.4, "{:?}", walk_down(end));
+    }
 }
