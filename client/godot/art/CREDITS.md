@@ -213,6 +213,9 @@ wear our kits were re-rigged to our skeleton and clips.
 | `owner/gnome.glb`, `gnome_brown.jpg`, `gnome_blue.jpg`, `gnome_magenta.jpg`, `gnome_wizard.jpg` | A hooded gnome, in his rank's colours (21k triangles) |
 | `owner/valkyrie.glb` | The owner's woman warrior, the female Valkyrie: cloth wraps, a long split coat (41k triangles) |
 | `owner/dog.glb` | A wiry grey hound: the little dog, the dog and the large dog, its weights taken from Quaternius' husky so that the husky's clips play on it (12k triangles) |
+| `owner/cat.glb` | A grey tabby: the kitten, the housecat and the large cat, its weights taken from Quaternius' husky (12k triangles) |
+| `owner/wolf.glb` | A grey wolf: the wolf and the jackal, its weights taken from Quaternius' wolf (12k triangles) |
+| `owner/horse.glb` | A dark bay horse: the pony, the horse and the warhorse, its weights taken from Quaternius' horse (15k triangles) |
 
 ## Fonts
 

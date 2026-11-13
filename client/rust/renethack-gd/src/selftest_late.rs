@@ -270,6 +270,16 @@ pub(super) const PILOT: &[(&str, Rows)] = &[
     ),
     // the fire and frost giants' helms, close
     ("helms", &[(2, &["frost giant", "fire giant"])]),
+    // the generated cat, wolf and horse, weighted from Quaternius' husky,
+    // wolf and horse
+    (
+        "quads-gen",
+        &[
+            (3, &["kitten", "housecat", "large cat"]),
+            (3, &["jackal", "wolf", "warg"]),
+            (4, &["pony", "horse", "warhorse"]),
+        ],
+    ),
     // the generated dog, weighted from the husky's skeleton
     (
         "dogs-gen",
