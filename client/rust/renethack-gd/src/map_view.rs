@@ -343,6 +343,11 @@ const SURFACE_Y: f32 = -0.015;
 /// Scratches of an engraving on the floor.
 const ENGRAVING: Color = Color::from_rgb(0.05, 0.04, 0.035);
 const HERO_RING: Color = Color::from_rgba(1.0, 0.83, 0.54, 0.2);
+/// How much the hero's ring glows (a mark's is `MARK_GLOW`). In the dark
+/// its glow is all that is seen of it (its colour's alpha only tints the
+/// lit ground under it): at 0.5 it was the brightest thing at her feet at
+/// 11 m, brighter than she is; a little less still finds her there.
+const HERO_RING_GLOW: f32 = 0.35;
 /// The hero's ring across, and the share of it its circle is. Round a
 /// polymorphed hero whose body meets the floor wider than a human's (by
 /// its lowest `FORM_FOOTING` of its height) it grows to ring the narrower
@@ -356,11 +361,9 @@ const FORM_RING_MOST: f32 = 2.2;
 /// Cells of water seen on a level of a branch that turns to a swamp
 /// (Gehennom: Juiblex's) that make it one; a moat round a tower is fewer.
 const SWAMP_WATER: usize = 40;
-/// How deep the ring reaches, up and down from where the hero stands; on
-/// a cell they stand raised on (the steps of a stair) down to the floor
-/// and as far over, so that it lies on every step under them.
+/// How deep the ring reaches, up and down from where the hero stands (on
+/// a stepped cell it lies flat at the feet instead: `set_mark_flat`).
 const RING_DEPTH: f32 = 0.24;
-const RAISED: f32 = 0.15;
 /// The core's cursor (getpos, travel): the theme's gold.
 const CURSOR: Color = Color::from_rgba(1.0, 0.82, 0.42, 0.85);
 /// The way an order would walk: pale gold dots exploring, red in a fight.
@@ -372,6 +375,8 @@ const PET_RING: Color = Color::from_rgba(0.37, 0.84, 0.75, 0.32);
 /// Under a monster the pointer is on (not the hero's or a pet), and its
 /// outline.
 const HOSTILE_RING: Color = Color::from_rgba(0.88, 0.29, 0.23, 0.6);
+/// The frame on the cell under the pointer.
+const HOVER_FRAME: Color = Color::from_rgba(1.0, 0.88, 0.62, 0.2);
 /// The outline of a pet or an object under the pointer.
 const HOVER_OUTLINE: Color = Color::from_rgba(0.95, 0.86, 0.62, 0.9);
 /// The hero seen through what hides them.
@@ -589,10 +594,15 @@ const FLAME: Color = Color::from_rgb(1.0, 0.45, 0.12);
 /// from the depths of down stairs.
 const STAIR_UP_LIGHT: Color = Color::from_rgb(1.0, 0.72, 0.46);
 const STAIR_DOWN_LIGHT: Color = Color::from_rgb(0.5, 0.6, 0.9);
+/// How much a mark (`marker`) glows.
+const MARK_GLOW: f32 = 0.5;
 /// A mark's sheet (`marker`): how far under the cell's plane it lies
 /// (metres), and how much more opaque than the decal it is.
 const MARK_UNDER: f32 = 0.03;
 const MARK_SHEET_ALPHA: f32 = 3.0;
+/// A flat mark's sheet on a stepped cell (`set_mark_flat`): how far over
+/// the feet's ground it lies.
+const MARK_OVER: f32 = 0.012;
 /// How low the deep lies, its water cells and the ground round the level
 /// (metres): under the marks' sheets.
 const DEEP_BEDROCK: f32 = -0.3;
@@ -1083,6 +1093,11 @@ struct Look {
     seen: Seen,
     /// A ring on the ground (a pet's).
     ring: Option<Color>,
+    /// Its ground under a ring is stepped or raised (stairs, an altar, a
+    /// throne, a fountain's rim...): a ring or a frame there lies flat at
+    /// the feet (`set_mark_flat`), never projected on the steps below (it
+    /// showed as two rings, one on each band).
+    stepped: bool,
     lamp: Option<Lamp>,
     /// An explosion shows here: (what of, the glyph's colour, whether this
     /// is its middle).
@@ -1684,6 +1699,20 @@ fn terrain_look(look: &mut Look, t: Terrain, sym: &str, g: &Glyph, near: &Near, 
     let around = Around::of(near, ctx.catalog);
     let cut = is_open(near.cells[0], ctx.catalog);
     terrain_base(look, t, sym, g, cut, &around, ctx);
+    look.stepped = matches!(
+        t,
+        Terrain::StairsUp
+            | Terrain::StairsDown
+            | Terrain::LadderUp
+            | Terrain::LadderDown
+            | Terrain::Altar
+            | Terrain::Throne
+            | Terrain::Fountain
+            | Terrain::Sink
+            | Terrain::Grave
+            | Terrain::DrawbridgeUp
+            | Terrain::DrawbridgeDown
+    );
     look.kind = ground_of(t);
     ground_layers(look, ground_of(t), near, ctx);
     if engraved(sym) {
@@ -4460,7 +4489,7 @@ fn marker(root: &mut Gd<Node3D>, texture: &Gd<godot::classes::Texture2D>, size: 
     d.set_texture(DecalTexture::ALBEDO, texture);
     d.set_texture(DecalTexture::EMISSION, texture);
     d.set_albedo_mix(0.25);
-    d.set_emission_energy(0.5);
+    d.set_emission_energy(MARK_GLOW);
     d.set_cull_mask(TERRAIN_LAYER);
     d.set_upper_fade(0.3);
     d.set_lower_fade(0.3);
@@ -4510,6 +4539,33 @@ fn mark_color(d: &mut Gd<Decal>, c: Color) {
     d.set_modulate(c);
     if let Some((_, mut m)) = mark_sheet(d) {
         m.set_albedo(c.with_alpha((c.a * MARK_SHEET_ALPHA).min(1.0)));
+    }
+}
+
+/// A ring or a frame on a stepped cell (`Look::stepped`) lies flat at
+/// the feet: the decal shows nothing and its sheet lies a hair over the
+/// ground the feet stand on, its glow added to what is under it as the decal's is (seen
+/// over every step under it as one ring, as bright in the dark as on a
+/// floor); else the decal on the ground and the sheet under the cell's
+/// plane (where there is no ground: the Planes).
+fn set_mark_flat(d: &mut Gd<Decal>, c: Color, flat: bool) {
+    use godot::classes::base_material_3d::BlendMode;
+    if let Some((mut sheet, mut m)) = mark_sheet(d) {
+        if flat {
+            // (black too: a decal's glow takes no alpha)
+            d.set_modulate(Color::from_rgba(0.0, 0.0, 0.0, 0.0));
+            // (a decal glows in linear light; a material's colour is sRGB)
+            let glow = d.get_emission_energy();
+            let lin = c.srgb_to_linear();
+            let added = Color::from_rgb(lin.r * glow, lin.g * glow, lin.b * glow);
+            m.set_blend_mode(BlendMode::ADD);
+            m.set_albedo(added.linear_to_srgb());
+            sheet.set_position(Vector3::new(0.0, MARK_OVER, 0.0));
+        } else {
+            m.set_blend_mode(BlendMode::MIX);
+            mark_color(d, c);
+            sheet.set_position(Vector3::new(0.0, -MARK_UNDER, 0.0));
+        }
     }
 }
 
@@ -4799,7 +4855,7 @@ impl MapView {
 
         let ring_tex = crate::vfx::ring_texture();
         let mut hover = marker(&mut root, &crate::vfx::frame_texture(), 1.0);
-        mark_color(&mut hover, Color::from_rgba(1.0, 0.88, 0.62, 0.2));
+        mark_color(&mut hover, HOVER_FRAME);
         let mut cursor = marker(&mut root, &crate::vfx::frame_texture(), 1.05);
         mark_color(&mut cursor, CURSOR);
 
@@ -4810,6 +4866,7 @@ impl MapView {
         rider_view.add_child(&Node3D::new_alloc());
         root.add_child(&rider_view);
         let mut hero_ring = marker(&mut root, &ring_tex, HERO_RING_SIZE);
+        hero_ring.set_emission_energy(HERO_RING_GLOW);
         mark_color(&mut hero_ring, HERO_RING);
         let mut hostile_ring = marker(&mut root, &ring_tex, 1.05);
         mark_color(&mut hostile_ring, HOSTILE_RING);
@@ -5456,6 +5513,8 @@ impl MapView {
                     None => Vector3::new(x as f32, ground, y as f32),
                 };
                 self.hero_ring.set_position(p);
+                let stepped = self.cells.get(&(x, y)).is_some_and(|n| n.look.stepped);
+                set_mark_flat(&mut self.hero_ring, HERO_RING, stepped);
                 self.hero_ring.set_visible(true);
                 // the walls and rock between the eye and the hero thin out
                 RenderingServer::singleton()
@@ -5553,8 +5612,10 @@ impl MapView {
         match world.cursor.filter(shown) {
             Some((x, y)) => {
                 let ground = self.ground(x, y);
+                let stepped = self.cells.get(&(x, y)).is_some_and(|n| n.look.stepped);
                 self.cursor
                     .set_position(Vector3::new(x as f32, ground, y as f32));
+                set_mark_flat(&mut self.cursor, CURSOR, stepped);
                 self.cursor.set_visible(true);
             }
             None => self.cursor.set_visible(false),
@@ -6774,8 +6835,8 @@ impl MapView {
     }
 
     /// The hero's ring round their form: a polymorphed hero's model is
-    /// measured where it meets the floor, once a model; as deep as the
-    /// hero stands high (`ground`: `RING_DEPTH`).
+    /// measured where it meets the floor, once a model (`ground`: where
+    /// they stand, its size measured again there).
     fn size_hero_ring(&mut self, form: bool, ground: f32) {
         let node = self
             .hero_model()
@@ -6796,12 +6857,7 @@ impl MapView {
             }
             None => HERO_RING_SIZE,
         };
-        let depth = if ground > RAISED {
-            2.0 * ground + RING_DEPTH
-        } else {
-            RING_DEPTH
-        };
-        mark_size(&mut self.hero_ring, Vector3::new(size, depth, size));
+        mark_size(&mut self.hero_ring, Vector3::new(size, RING_DEPTH, size));
     }
 
     /// The hero seen through what hides them from the camera: a wall, a
@@ -7215,10 +7271,13 @@ impl MapView {
         };
         let ground = self.ground(x, y);
         let p = Vector3::new(x as f32, ground, y as f32);
-        self.hover.set_position(p);
-        self.hover.set_visible(true);
         let hostile = self.cells.get(&(x, y)).is_some_and(|n| n.look.hostile);
+        let stepped = self.cells.get(&(x, y)).is_some_and(|n| n.look.stepped);
+        self.hover.set_position(p);
+        set_mark_flat(&mut self.hover, HOVER_FRAME, stepped);
+        self.hover.set_visible(true);
         self.hostile_ring.set_position(p);
+        set_mark_flat(&mut self.hostile_ring, HOSTILE_RING, stepped);
         self.hostile_ring.set_visible(hostile);
     }
 
@@ -9221,12 +9280,12 @@ impl MapView {
         }
         match (look.ring, nodes.ring.as_mut()) {
             (Some(c), Some(d)) => {
-                mark_color(d, c);
+                set_mark_flat(d, c, look.stepped);
                 d.set_position(origin + at(0.0, look.ground, 0.0));
             }
             (Some(c), None) => {
                 let mut d = marker(&mut self.root, &self.ring_tex, 0.95);
-                mark_color(&mut d, c);
+                set_mark_flat(&mut d, c, look.stepped);
                 d.set_position(origin + at(0.0, look.ground, 0.0));
                 d.set_visible(true);
                 nodes.ring = Some(d);

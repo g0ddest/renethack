@@ -816,6 +816,55 @@ pub fn lay_out_rooms(world: &mut World, cat: &Catalog) -> Result<(i32, i32), Str
     Ok((ox + W / 2, 3 + H / 2 - 1))
 }
 
+/// The features a ring may lie on unevenly, for pictures (the
+/// `ring-steps` scene): a room (lit, or `dark`) with stairs up, stairs
+/// down, an altar and a lowered drawbridge over a moat's cell, in a row
+/// three cells apart; the hero on the feature `at` (0 to 3), a little dog
+/// on the next one, a jackal two cells south of her on an altar of its
+/// own (on stairs down when she is on the altar: an up stair's arch
+/// would stand between her and the camera). Where the jackal stands.
+pub fn lay_out_ring_steps(
+    world: &mut World,
+    cat: &Catalog,
+    at: usize,
+    dark: bool,
+) -> Result<(i32, i32), String> {
+    const FEATURES: [&str; 4] = ["S_upstair", "S_dnstair", "S_altar", "S_vodbridge"];
+    let map = &mut world.map;
+    map.clear();
+    let lit = cmap(cat, if dark { "S_darkroom" } else { "S_room" })?;
+    let pool = cmap(cat, "S_pool")?;
+    let (cx, cy) = (40, 10);
+    for y in cy - 3..=cy + 3 {
+        for x in cx - 7..=cx + 7 {
+            map.print(x, y, &lit, None);
+        }
+    }
+    let cells: Vec<(i32, i32)> = (0..4).map(|i| (cx - 5 + 3 * i, cy)).collect();
+    for (i, (&sym, &(x, y))) in FEATURES.iter().zip(&cells).enumerate() {
+        // (the drawbridge over a moat: water north and south of it)
+        if i == 3 {
+            map.print(x, y - 1, &pool, None);
+            map.print(x, y + 1, &pool, None);
+        }
+        map.print(x, y, &cmap(cat, sym)?, None);
+    }
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    let here = cells[at % 4];
+    let feature = cmap(cat, FEATURES[at % 4])?;
+    map.print(here.0, here.1, &hero, Some(&feature));
+    let next = cells[(at + 1) % 4];
+    let dog = monster(cat, "little dog", mg::PET, GlyphKind::Mon)?;
+    let under = cmap(cat, FEATURES[(at + 1) % 4])?;
+    map.print(next.0, next.1, &dog, Some(&under));
+    let foe = (here.0, here.1 + 2);
+    let jackal = monster(cat, "jackal", 0, GlyphKind::Mon)?;
+    let under = cmap(cat, FEATURES[if at % 4 == 2 { 1 } else { 2 }])?;
+    map.print(foe.0, foe.1, &jackal, Some(&under));
+    world.view_center = Some(here);
+    Ok(foe)
+}
+
 /// As `lay_out_rows`, on a floor of `floor` (a dark one: "S_darkroom").
 pub fn lay_out_rows_on(
     world: &mut World,

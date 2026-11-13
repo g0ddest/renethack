@@ -932,6 +932,76 @@ pub(super) fn lava_edge() -> Vec<Step> {
     steps
 }
 
+/// The hero's and a pet's rings on stepped and raised cells (the owner:
+/// on a stair the hero stood in two rings), for pictures before and after
+/// (not part of `make test-client`): the hero on stairs up, stairs down,
+/// an altar and a lowered drawbridge in a lit room (`ring-steps-up`,
+/// `-down`, `-altar`, `-bridge`), a little dog on the next one and the
+/// pointer on a jackal on the one after, each at 7 m and close (2.8 m:
+/// `-close`); then on stairs up and down in a dark
+/// room at the game's distance and at 7 m (`ring-steps-dark-up`, `-down`,
+/// and `-near`).
+pub(super) fn ring_steps() -> Vec<Step> {
+    const SHOTS: [(&str, &str, f32, f32); 6] = [
+        ("ring-steps-up", "ring-steps-up-close", 7.0, 2.8),
+        ("ring-steps-down", "ring-steps-down-close", 7.0, 2.8),
+        ("ring-steps-altar", "ring-steps-altar-close", 7.0, 2.8),
+        ("ring-steps-bridge", "ring-steps-bridge-close", 7.0, 2.8),
+        ("ring-steps-dark-up", "ring-steps-dark-up-near", 11.0, 7.0),
+        (
+            "ring-steps-dark-down",
+            "ring-steps-dark-down-near",
+            11.0,
+            7.0,
+        ),
+    ];
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+    static DISTANCES: std::sync::Mutex<(f32, f32)> = std::sync::Mutex::new((7.0, 2.8));
+    static FOE: std::sync::Mutex<Option<(i32, i32)>> = std::sync::Mutex::new(None);
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    for (shot, close, _, _) in SHOTS {
+        steps.extend([
+            Step::Call("the hero on the next feature", |g| {
+                let cat = g.catalog.clone().ok_or("no catalog")?;
+                let i = NEXT.fetch_add(1, Ordering::Relaxed);
+                let (_, _, far_d, near_d) = SHOTS[i.min(SHOTS.len() - 1)];
+                *DISTANCES.lock().unwrap_or_else(|e| e.into_inner()) = (far_d, near_d);
+                let foe = crate::gallery::lay_out_ring_steps(&mut g.world, &cat, i % 4, i >= 4)?;
+                *FOE.lock().unwrap_or_else(|e| e.into_inner()) = Some(foe);
+                Ok(())
+            }),
+            Step::Wait("the room drawn", |g| {
+                let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                Ok(drawn == Some(g.world.map.generation()))
+            }),
+            Step::Call("the pointer on the jackal", |g| {
+                let foe = *FOE.lock().unwrap_or_else(|e| e.into_inner());
+                if let Some(ui) = g.ui.as_mut() {
+                    ui.map.set_hover(foe);
+                }
+                Ok(())
+            }),
+            Step::Call("far", |g| {
+                let (d, _) = *DISTANCES.lock().unwrap_or_else(|e| e.into_inner());
+                far(g, d)
+            }),
+            Step::Wait("the camera on her", drawn_here),
+            Step::Shot(shot),
+            Step::Call("near", |g| {
+                let (_, d) = *DISTANCES.lock().unwrap_or_else(|e| e.into_inner());
+                far(g, d)
+            }),
+            Step::Wait("the camera near", drawn_here),
+            Step::Shot(close),
+        ]);
+    }
+    steps.extend(quit());
+    steps
+}
+
 /// Rooms of a used dungeon (the art loop's fifth critique, #7: chains,
 /// cobwebs, broken furniture), for pictures before and after (not part of
 /// `make test-client`): four lit rooms, at the game's distance
