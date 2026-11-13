@@ -527,4 +527,208 @@ mod tests {
             .sum();
         assert!((40.0..=62.0).contains(&secs), "{secs}");
     }
+
+    /// A role: its code, its rank at level 1 for a man and a woman, its gods,
+    /// alignments and genders.
+    type Role = (
+        &'static str,
+        &'static str,
+        &'static str,
+        [&'static str; 3],
+        &'static [i32],
+        &'static [bool],
+    );
+
+    /// The roles as NetHack 5.0 has them (role.c): code, their rank at
+    /// level 1 (a man's, a woman's), their gods (lawful, neutral, chaotic;
+    /// a goddess marked with `_`, as role.c marks her: none for a Priest,
+    /// who serves a pantheon of another role's), the alignments and
+    /// genders they may have.
+    const ROLES: [Role; 13] = [
+        (
+            "Arc",
+            "Digger",
+            "Digger",
+            ["Quetzalcoatl", "Camaxtli", "Huhetotl"],
+            &[1, 0],
+            &[false, true],
+        ),
+        (
+            "Bar",
+            "Plunderer",
+            "Plunderess",
+            ["Mitra", "Crom", "Set"],
+            &[0, -1],
+            &[false, true],
+        ),
+        (
+            "Cav",
+            "Troglodyte",
+            "Troglodyte",
+            ["Anu", "_Ishtar", "Anshar"],
+            &[1, 0],
+            &[false, true],
+        ),
+        (
+            "Hea",
+            "Rhizotomist",
+            "Rhizotomist",
+            ["_Athena", "Hermes", "Poseidon"],
+            &[0],
+            &[false, true],
+        ),
+        (
+            "Kni",
+            "Gallant",
+            "Gallant",
+            ["Lugh", "_Brigit", "Manannan Mac Lir"],
+            &[1],
+            &[false, true],
+        ),
+        (
+            "Mon",
+            "Candidate",
+            "Candidate",
+            ["Shan Lai Ching", "Chih Sung-tzu", "Huan Ti"],
+            &[1, 0, -1],
+            &[false, true],
+        ),
+        (
+            "Pri",
+            "Aspirant",
+            "Aspirant",
+            ["", "", ""],
+            &[1, 0, -1],
+            &[false, true],
+        ),
+        (
+            "Rog",
+            "Footpad",
+            "Footpad",
+            ["Issek", "Mog", "Kos"],
+            &[-1],
+            &[false, true],
+        ),
+        (
+            "Ran",
+            "Tenderfoot",
+            "Tenderfoot",
+            ["Mercury", "_Venus", "Mars"],
+            &[0, -1],
+            &[false, true],
+        ),
+        (
+            "Sam",
+            "Hatamoto",
+            "Hatamoto",
+            ["_Amaterasu Omikami", "Raijin", "Susanowo"],
+            &[1],
+            &[false, true],
+        ),
+        (
+            "Tou",
+            "Rambler",
+            "Rambler",
+            ["Blind Io", "_The Lady", "Offler"],
+            &[0],
+            &[false, true],
+        ),
+        (
+            "Val",
+            "Stripling",
+            "Stripling",
+            ["Tyr", "Odin", "Loki"],
+            &[1, 0],
+            &[true],
+        ),
+        (
+            "Wiz",
+            "Evoker",
+            "Evoker",
+            ["Ptah", "Thoth", "Anhur"],
+            &[0, -1],
+            &[false, true],
+        ),
+    ];
+
+    /// The legacy text as the engine writes it (quest.lua's `legacy`, its
+    /// %d the god, %G god or goddess, %r the hero's rank), its lines.
+    fn legacy_lines(god: &str, rank: &str) -> Vec<String> {
+        let (name, title) = match god.strip_prefix('_') {
+            Some(n) => (n, "goddess"),
+            None => (god, "god"),
+        };
+        format!(
+            "It is written in the Book of {name}:\n\n    After the Creation, the cruel god Moloch rebelled\n    against the authority of Marduk the Creator.\n    Moloch stole from Marduk the most powerful of all\n    the artifacts of the gods, the Amulet of Yendor,\n    and he hid it in the dark cavities of Gehennom, the\n    Under World, where he now lurks, and bides his time.\n\nYour {title} {name} seeks to possess the Amulet, and with it\nto gain deserved ascendance over the other gods.\n\nYou, a newly trained {rank}, have been heralded\nfrom birth as the instrument of {name}.  You are destined\nto recover the Amulet for your deity, or die in the\nattempt.  Your hour of destiny has come.  For the sake\nof us all:  Go bravely with {name}!"
+        )
+        .split('\n')
+        .map(str::to_string)
+        .collect()
+    }
+
+    /// VO_DUMP=<file> cargo test -p renethack-gd --lib vo_texts_dump:
+    /// every beat's text for every role, gender and alignment (a Priest's
+    /// for every other role's pantheon), in English and in Russian (through
+    /// the game's own translator), as the prologue cuts it, written to
+    /// <file> as JSON for the narration's recording. Without VO_DUMP it
+    /// does nothing.
+    #[test]
+    fn vo_texts_dump() {
+        let Some(out) = std::env::var_os("VO_DUMP") else {
+            return;
+        };
+        use crate::i18n::{self, EngineText, Lang};
+        let t = crate::engine_text::EngineTranslator::new();
+        let start = std::time::Instant::now();
+        while t
+            .translate(Lang::Ru, crate::i18n::EngineKind::Name, "newt")
+            .is_none()
+        {
+            assert!(
+                start.elapsed() < std::time::Duration::from_secs(120),
+                "no translator"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        i18n::set_engine_text(Some(Box::new(t)));
+        let mut rows = Vec::new();
+        for lang in [Lang::En, Lang::Ru] {
+            i18n::set_lang(lang);
+            for &(code, rank_m, rank_f, gods, aligns, genders) in &ROLES {
+                for &female in genders {
+                    i18n::set_hero_female(female);
+                    for &align in aligns {
+                        // a Priest serves another role's pantheon
+                        let pantheons: Vec<[&str; 3]> = if code == "Pri" {
+                            ROLES.iter().filter(|r| r.0 != "Pri").map(|r| r.3).collect()
+                        } else {
+                            vec![gods]
+                        };
+                        for pantheon in pantheons {
+                            let god = pantheon[(1 - align) as usize];
+                            let rank = if female { rank_f } else { rank_m };
+                            let english = legacy_lines(god, rank);
+                            let refs: Vec<&str> = english.iter().map(String::as_str).collect();
+                            let shown =
+                                i18n::engine_window(&refs).unwrap_or_else(|| english.clone());
+                            let beats = beats(&shown).unwrap_or_else(|| {
+                                panic!("{code} {female} {align} {god}: not cut: {shown:?}")
+                            });
+                            rows.push(serde_json::json!({
+                                "lang": if lang == Lang::Ru { "ru" } else { "en" },
+                                "role": code,
+                                "gender": if female { "female" } else { "male" },
+                                "align": align,
+                                "god": god.trim_start_matches('_'),
+                                "beats": beats,
+                            }));
+                        }
+                    }
+                }
+            }
+        }
+        i18n::set_lang(Lang::En);
+        i18n::set_engine_text(None);
+        std::fs::write(&out, serde_json::to_string_pretty(&rows).unwrap()).unwrap();
+    }
 }
