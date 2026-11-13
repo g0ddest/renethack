@@ -58,6 +58,8 @@ SCENES = {
     "magic": ("magic", [], 300),
     "item-use": ("item-use", [], 300),
     "states": ("states", [], 400),
+    # thirty creatures of many kinds round the hero; RENETHACK_CROWD="9
+    # peaceful red dragon" makes those instead (one body's cost)
     "crowd": ("crowd", [], 400),
     # soaks whose random play reaches the Gnomish Mines (seeds 3 and 4)
     # and Dlvl 7 (seed 5)

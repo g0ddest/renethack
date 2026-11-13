@@ -2,7 +2,9 @@
 //! crowded room. About thirty peaceful creatures of many kinds are made
 //! round the hero: animals, humanoids in their kit, procedural bodies, a
 //! vortex, a cloud and an elemental. The hero then waits forty turns among
-//! them as they move. `deep`: the deep dungeon. The hero is teleported to
+//! them as they move; `RENETHACK_CROWD="9 peaceful red dragon;3 peaceful
+//! dog"` makes these instead, for a timing of one kind (a body's cost, its
+//! cheaper mesh before and after). `deep`: the deep dungeon. The hero is teleported to
 //! Medusa's island, the castle, the levels of Gehennom, Vlad's Tower and
 //! the Planes of Air and Water, and at each the creatures of the classes
 //! found there are made and the hero waits among them a while: what the
@@ -40,6 +42,20 @@ const CROWD: [&str; 17] = [
     "2 peaceful wolf",
     "1 peaceful pony",
 ];
+
+/// The crowd to make: `CROWD`, or RENETHACK_CROWD's entries (`;` between
+/// them, each as `^G` takes it).
+fn crowd_kinds() -> Vec<&'static str> {
+    match std::env::var("RENETHACK_CROWD") {
+        Ok(list) => list
+            .split(';')
+            .map(str::trim)
+            .filter(|w| !w.is_empty())
+            .map(|w| &*Box::leak(w.to_string().into_boxed_str()))
+            .collect(),
+        Err(_) => CROWD.to_vec(),
+    }
+}
 
 /// Turns the hero waits among them.
 const TURNS: u32 = 40;
@@ -95,7 +111,7 @@ pub(super) fn crowd() -> Vec<Step> {
         fail_on_error_screen(g)?;
         Ok(g.world.map.hero().is_some())
     }));
-    for what in CROWD {
+    for what in crowd_kinds() {
         steps.extend(genesis(what));
     }
     steps.extend([
