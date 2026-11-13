@@ -740,6 +740,8 @@ void fragment() {
 	// under the level stays in its dark
 	emission += albedo * relief * seen * overview * memory * 1.5 * own_light;
 	float near = 1.0;
+	// (how far the ground under the level beside lava takes no light)
+	float void_unlit = 0.0;
 	if (void_fade > 0.0) {
 		near = mix(1.0, fow.a, void_fade);
 		// (beside lava known it takes next to no light, its albedo's own
@@ -747,22 +749,29 @@ void fragment() {
 		// square along the known cells, brighter than the dark the
 		// field's edge fades into)
 		// (lava within about three cells: the ground known fades into
-		// the dark well before the light about it does)
-		vec2 gd = vec2(2.5) / FIELD;
+		// the dark well before the light about it does; sampled on two
+		// rings turned by a slow noise, never along the cells: on fixed
+		// offsets the bilinear field's kinks drew a straight-edged black
+		// notch by a floor's edge)
 		vec2 guv = (wpos.xz + 0.5) / FIELD;
+		float turn = tn2(wpos.xz * 0.37 + vec2(3.3, 9.1)) * 6.2832;
 		float lava_by = texture(ground_tex, guv).g;
 		for (int i = 0; i < 8; i++) {
-			float a = float(i) * 0.7854;
-			vec2 o = vec2(cos(a), sin(a));
-			lava_by += texture(ground_tex, guv + o * gd * 0.45).g * 0.5
-				+ texture(ground_tex, guv + o * gd).g;
+			float a = float(i) * 0.7854 + turn;
+			vec2 o = vec2(cos(a), sin(a)) / FIELD;
+			lava_by += texture(ground_tex, guv + o * 1.2).g * 0.6
+				+ texture(ground_tex, guv + o * 2.4).g * 0.4;
 		}
-		lava_by /= 4.0;
-		// (its edge wandering, never along the cells)
-		lava_by += (tn2(wpos.xz * 0.5 + vec2(13.7, 41.9)) - 0.5) * 0.25;
-		float unlit = smoothstep(0.05, 0.45, lava_by) * (1.0 - overview);
-		color *= near * (1.0 - 0.9 * unlit);
-		emission *= near * near * (1.0 - 0.9 * unlit);
+		lava_by /= 5.0;
+		// (its edge wandering on two scales)
+		lava_by += (tn2(wpos.xz * 0.5 + vec2(13.7, 41.9)) - 0.5) * 0.3
+			+ (tn2(wpos.xz * 1.6 + vec2(7.1, 2.3)) - 0.5) * 0.15;
+		// (wholly, as the faded edges of the floor and the lava beside it
+		// are: a part lit at all stood between them as a block cut along
+		// the cells)
+		void_unlit = smoothstep(0.0, 0.5, lava_by) * (1.0 - overview);
+		color *= near * (1.0 - void_unlit);
+		emission *= near * near * (1.0 - void_unlit);
 		// over a chasm (Gehennom) what lies far from anything known is
 		// its smouldering depths, never black: smoke drifting over a red
 		// glow, the same everywhere (it shows nothing of the map); near
@@ -810,9 +819,10 @@ void fragment() {
 	ALBEDO = color;
 	ROUGHNESS = rough;
 	// rock's tops and ledges mirror nothing at all
-	// (faded ice keeps no glints over the dark beyond it)
-	SPECULAR = (chunks > 0.0 ? specular * (1.0 - up) : specular) * (1.0 - rim_near)
-		* (edge_kind == 4.0 ? 1.0 - edge_fade : 1.0);
+	// (faded ground keeps no sheen over the dark beyond it: lit by a lava
+	// light, the faded edge of a floor stood brighter than the dark)
+	SPECULAR = (chunks > 0.0 ? specular * (1.0 - up) : specular) * (1.0 - rim_near) * (1.0 - void_unlit)
+		* (1.0 - edge_fade);
 	METALLIC = metallic * orm.b;
 	// what metal mirrors (map_view's metal sky) falls on no stone, wet
 	// floor or ice (the dark is tuned without it): only on the metal the

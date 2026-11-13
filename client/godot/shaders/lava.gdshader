@@ -173,8 +173,13 @@ void fragment() {
 	if (empty > 0.001) {
 		vec2 middle = floor(wpos.xz + 0.5);
 		float core = 1.0 - smoothstep(0.15, 0.4, length(wpos.xz - middle));
+		// (the line always inside the cell, wandering in from its edge: a
+		// lava cell ends at its own edge, so wherever the noise would
+		// carry the line out past it the field ended straight along the
+		// cells, square blocks against the unknown)
 		fray = mix(empty, wide, 0.6) + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.45
-			+ (tl2(wpos.xz * 0.42 + vec2(5.3, 17.9)) - 0.5) * 0.3 - core;
+			+ (tl2(wpos.xz * 0.42 + vec2(5.3, 17.9)) - 0.5) * 0.3 - core
+			+ 0.5 * smoothstep(0.22, 0.48, empty);
 	}
 	vec2 flow = vec2(t * 0.015, t * 0.008);
 	float plates = texture(noise_tex, wpos.xz * 0.45 + flow).r;
@@ -278,6 +283,13 @@ void fragment() {
 	// map_surface draws them), so the field's edge there runs through
 	// the cells: a dark crust stopped at each cell's edge against what lay
 	// beyond stepped along them
+	// and at its very edge toward the unknown it is as dark as the ground
+	// under the level there, whatever its fray: a field's edge cell lit at
+	// all met that dark along the cells' straight edge
+	float rim_dark = smoothstep(0.3, 0.5, empty + (tl2(wpos.xz * 2.3 + vec2(1.9, 6.7)) - 0.5) * 0.08);
+	ALBEDO *= 1.0 - rim_dark;
+	EMISSION *= 1.0 - rim_dark;
+	SPECULAR *= 1.0 - rim_dark;
 	if (cooled > 0.0) {
 		vec3 beyond = vec3(0.0);
 		if (branch_chasm.a > 0.0) {
@@ -292,5 +304,9 @@ void fragment() {
 		float gone = smoothstep(0.37, 0.5, fray);
 		ALBEDO *= 1.0 - gone;
 		EMISSION = mix(EMISSION, beyond, gone);
+		// (nor any sheen there: the lava's lights shone on its gone part,
+		// a block lighter than the dark beside it, cut along the cells)
+		SPECULAR *= 1.0 - gone;
+		ROUGHNESS = mix(ROUGHNESS, 1.0, gone);
 	}
 }
