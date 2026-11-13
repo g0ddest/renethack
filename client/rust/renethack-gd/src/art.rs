@@ -234,7 +234,7 @@ enum Edge {
     /// (hundredths of `OUTLINE_STRENGTH`)
     Outline(u8),
     /// A thing on the floor's dark-gold rim (hundredths of
-    /// `WARE_EDGE_STRENGTH`).
+    /// `WARE_EDGE_STRENGTH`; its glint by it, `ware_sweep`).
     Ware(u8),
 }
 /// A thing on the floor reads by a dark-gold rim on itself (the edge
@@ -243,10 +243,34 @@ enum Edge {
 /// brightest thing in a dark frame. Its colour, how strong it is on what
 /// a player stoops for (`Sheen::Full`) and on the rest (`Sheen::Faint`,
 /// hundredths of it), and from how far off facing the eye it begins.
-const WARE_EDGE: Color = Color::from_rgb(0.62, 0.43, 0.16);
-const WARE_EDGE_STRENGTH: f32 = 0.55;
-const WARE_EDGE_FAINT: u8 = 60;
-const WARE_EDGE_FROM: f32 = 0.35;
+const WARE_EDGE: Color = Color::from_rgb(0.72, 0.52, 0.24);
+const WARE_EDGE_STRENGTH: f32 = 0.6;
+const WARE_EDGE_FAINT: u8 = 100;
+const WARE_EDGE_FROM: f32 = 0.22;
+/// What a player stoops for reads at 11 m on a dim floor (on Mines 9 a ring
+/// was a faint dark hoop, a wand a dark stick): a stronger edge on it
+/// (hundredths), the strongest on a small one (a ring, an amulet, a gem, a
+/// wand: at most this long, metres), and a glint travelling over it every
+/// couple of seconds (creature_edge.gdshader's `sweep`), both stronger as
+/// far off as the game's far camera (`far`). Still no halo.
+const WARE_SMALL: f32 = 0.34;
+const WARE_EDGE_FULL: u8 = 115;
+const WARE_EDGE_SMALL: u8 = 150;
+const WARE_SWEEP: f32 = 1.2;
+const WARE_SWEEP_SMALL: f32 = 1.8;
+const WARE_FAR: f32 = 0.7;
+
+/// The glint travelling over a thing on the floor with this share of the
+/// edge (none on a heavy thing's).
+fn ware_sweep(share: u8) -> f32 {
+    if share >= WARE_EDGE_SMALL {
+        WARE_SWEEP_SMALL
+    } else if share >= WARE_EDGE_FULL {
+        WARE_SWEEP
+    } else {
+        0.0
+    }
+}
 /// A thing on the floor's own colour, this share of its material's (lit
 /// as a creature is, a pale ration came out cream at luma 230 on a floor
 /// of 67), and the lights' rim on it (a creature's `RIM`).
@@ -2028,8 +2052,13 @@ impl Art {
             let outline = self.manifest.model_at(look.art.model).1.outline;
             let edge = if let Pose::Ware(sheen @ (Sheen::Full | Sheen::Faint)) = look.pose {
                 // (a pile of gold reads by its own glints and pool)
+                let small = m.inner.as_ref().is_some_and(|inner| {
+                    let [w, l] = aabb_reach(&m.node, inner);
+                    w.max(l) <= WARE_SMALL
+                });
                 Edge::Ware(match sheen {
-                    Sheen::Full => 100,
+                    Sheen::Full if small => WARE_EDGE_SMALL,
+                    Sheen::Full => WARE_EDGE_FULL,
                     _ => WARE_EDGE_FAINT,
                 })
             } else if outline > 0.0 {
@@ -2248,7 +2277,12 @@ impl Art {
             .entry(share)
             .or_insert_with(|| {
                 let k = ware_edge_strength(share);
-                edge_material(lit, k, WARE_EDGE_FROM, Some(WARE_EDGE))
+                let pass = edge_material(lit, k, WARE_EDGE_FROM, Some(WARE_EDGE))?;
+                if let Ok(mut m) = pass.clone().try_cast::<ShaderMaterial>() {
+                    m.set_shader_parameter("sweep", &ware_sweep(share).to_variant());
+                    m.set_shader_parameter("far", &WARE_FAR.to_variant());
+                }
+                Some(pass)
             })
             .clone()
     }

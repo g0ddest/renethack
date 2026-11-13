@@ -85,12 +85,19 @@ void fragment() {
 	ends = mix(ends, 1.0, soft);
 	float edge = 1.0 - abs(dot(NORMAL, VIEW));
 	float puff = (1.0 - edge) * (1.0 - edge);
-	float mist = (0.4 + 0.6 * (1.0 - edge)) * smoothstep(0.3, 0.72, n);
+	// a mist: as thick through each puff as near its middle, fading to
+	// nothing only at its silhouette (a rim or a thick middle on each puff
+	// read as a bubble or a cotton ball), in drifting patches, the thick
+	// ones paler billows, so that its shape reads on a dark floor with no
+	// bright heart
+	float billow = smoothstep(0.5, 0.75, n) * murk;
+	float mist = smoothstep(0.0, 0.55, 1.0 - edge) * (0.45 + 0.55 * smoothstep(0.3, 0.72, n));
 	float body = mix(0.3 + 0.7 * edge * edge, mix(puff, mist, murk), soft);
 	// (its soot as thick as its flame, not thin as the gaps between bands)
 	float gaps = mix(0.25, 0.65, soot);
 	float a = density * ends * body * mix(gaps, 1.0, band) * (0.5 + n) * (1.0 + 0.5 * inner);
 	vec3 col = color.rgb * mix(0.7, 1.25, n * band);
+	col = mix(col, col * 1.35 + vec3(0.03), billow);
 	float burn = 1.0 - soot * (1.0 - band);
 	ALBEDO = mix(SOOT, col, burn);
 	EMISSION = col * glow * (0.6 + 0.8 * band) * burn;

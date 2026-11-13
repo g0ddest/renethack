@@ -89,10 +89,17 @@ const EMBER_HDR: f32 = 1.8;
 /// seen through, no thick heart: a pale cream-pink cotton ball was the
 /// brightest thing in a dark frame. Its colour, how thick it is, and a
 /// faint light of its own, the blood in it (unlit, so dark a mist on a
-/// dark floor was not there at all).
+/// dark floor was not there at all; with it alone, at 11 m a dark red
+/// smudge).
 const FOG_MIST: Color = Color::from_rgb(0.3, 0.14, 0.13);
 const FOG_DENSITY: f32 = 0.85;
 const FOG_GLOW: f32 = 0.3;
+/// How fast its patches move through it (the shader's billows at its
+/// puffs' edges give it its outline on the floor).
+const FOG_SPEED: f32 = 0.32;
+/// A steam vortex: how dense, and the little light its vapour catches.
+const STEAM_DENSITY: f32 = 0.9;
+const STEAM_GLOW: f32 = 0.1;
 /// An energy vortex: magic's deep blue and its own light (the creature's
 /// bright blue, paled, at 2.2 burned a white-violet funnel brighter than
 /// anything about it), and the rope of it up its middle.
@@ -525,16 +532,18 @@ impl Kit<'_> {
                 ..wind(tint, 0.0, 3.0, 0.5)
             },
             Weather::Ice => wind(pale(0.15), 0.12, 3.0, 0.5),
+            // (thin and pale it was all but gone on a dark floor: denser,
+            // a grey-blue vapour with a breath of light)
             Weather::Steam => Wind {
-                density: 0.5,
-                ..wind(pale(0.55), 0.0, 2.0, 0.35)
+                density: STEAM_DENSITY,
+                ..wind(pale(0.4), STEAM_GLOW, 2.0, 0.35)
             },
             Weather::Fog => Wind {
                 density: FOG_DENSITY,
                 soft: true,
                 spin: 0.1,
                 murk: true,
-                ..wind(FOG_MIST, FOG_GLOW, 0.0, 0.2)
+                ..wind(FOG_MIST, FOG_GLOW, 0.0, FOG_SPEED)
             },
             Weather::Air | Weather::Flame => wind(pale(0.2), 0.0, 3.0, 0.6),
         };
