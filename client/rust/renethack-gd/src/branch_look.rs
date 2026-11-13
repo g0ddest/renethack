@@ -279,6 +279,14 @@ pub struct BranchLook {
     pub sanctum: bool,
     /// Mist lies low over its water (the Castle's moat).
     pub mist: bool,
+    /// A cold mist lies low over its floors (the Valley of the Dead).
+    pub floor_mist: bool,
+    /// What the ground under the level smoulders with far from anything
+    /// known where it is a chasm (map_view's `CHASM` when None).
+    pub chasm: Option<Color>,
+    /// How much ash and dirt a used room's floor shows (map_surface
+    /// `debris`, where the branch has it: 1 as made).
+    pub ash: f32,
     /// Light falls from high above in shafts over its lit floor, seen in
     /// its haze (the Big Room: a vast hall).
     pub shafts: bool,
@@ -298,6 +306,9 @@ const NEUTRAL: Grade = Grade {
 
 const MAIN: BranchLook = BranchLook {
     molten: 0.35,
+    floor_mist: false,
+    chasm: None,
+    ash: 1.0,
     door: None,
     lanterns: false,
     candles: false,
@@ -826,12 +837,26 @@ pub fn look_of_level(branch: Branch, level: Option<&LevelNotice>) -> BranchLook 
     let rgb = Color::from_rgb;
     match level.lair.as_deref() {
         // the Valley of the Dead: a graveyard's grey mist over a fire
-        // banked low
+        // banked low; a cold low mist over its floors, its depths a cold
+        // smoke, not the fire; the dead's bones by every wall, its floors
+        // in ash (its lair is told from the arrival on: NetHack names the
+        // Valley as the hero comes into it, so its cells are its own from
+        // the first)
         Some("valley") => BranchLook {
             fog: rgb(0.44, 0.46, 0.42),
             fog_density: 0.008,
             haze: 1.3,
-            cracks: 0.5,
+            // (its fire banked low: the red veins in its floors were all
+            // the arrival showed of it)
+            cracks: 0.12,
+            floor_mist: true,
+            chasm: Some(Color::from_rgba(0.0075, 0.0085, 0.0095, 0.6)),
+            ash: 1.3,
+            dress: Dress {
+                bones: 0.45,
+                wreck: false,
+                ..look.dress
+            },
             ambient: rgb(0.32, 0.34, 0.36),
             grade: Grade {
                 saturation: 0.85,
@@ -990,7 +1015,7 @@ impl BranchLook {
             self.windows,
             self.door,
             self.bands,
-            self.lanterns,
+            (self.lanterns, self.floor_mist),
         )
     }
 
@@ -1084,13 +1109,15 @@ mod tests {
 
     #[test]
     fn a_lair_and_a_swamp_change_the_air_not_the_cells() {
+        // (all but the Valley's, told from the arrival on: its cells its
+        // own from the first)
         let g = Branch::Gehennom;
         let plain = look_of_level(g, Some(&notice("Gehennom", 27, None)));
-        for lair in ["valley", "sanctum"] {
-            let l = look_of_level(g, Some(&notice("Gehennom", 27, Some(lair))));
-            assert_ne!(l, plain, "{lair}");
-            assert!(l.cells() == plain.cells(), "{lair}");
-        }
+        let sanctum = look_of_level(g, Some(&notice("Gehennom", 27, Some("sanctum"))));
+        assert_ne!(sanctum, plain);
+        assert!(sanctum.cells() == plain.cells());
+        let valley = look_of_level(g, Some(&notice("Gehennom", 27, Some("valley"))));
+        assert!(valley.floor_mist && valley.dress.bones > plain.dress.bones);
         let s = swamp(plain);
         assert!(s.cells() == plain.cells());
         assert!(s.cracks == 0.0 && !s.embers && s.underglow.is_none());

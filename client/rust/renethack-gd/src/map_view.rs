@@ -847,6 +847,11 @@ const MIST_PUFFS: u32 = 2;
 const MIST_LIT: Color = Color::from_rgb(0.5, 0.54, 0.62);
 const MIST_SHADE: Color = Color::from_rgb(0.22, 0.25, 0.32);
 const MIST_OPACITY: f32 = 0.16;
+/// The Valley's cold mist over its floors (`Liquid::GraveMist`): its lit
+/// colour and how see-through, a puff or two to a cell.
+const GRAVE_MIST_LIT: Color = Color::from_rgb(0.3, 0.33, 0.36);
+const GRAVE_MIST_OPACITY: f32 = 0.13;
+const GRAVE_MIST_PUFFS: u32 = 2;
 /// Lava's light (`place_lava_lights`): its colour, energy and reach (3 to
 /// 4 cells), one every so many cells over a big pool, and how many at
 /// most on a level.
@@ -958,10 +963,13 @@ enum Liquid {
     Membrane,
     /// Mist lying low over water (the Castle's moat).
     Mist,
+    /// A cold mist lying low over a graveyard's floors (the Valley's),
+    /// dimmer than the moat's.
+    GraveMist,
 }
 
 impl Liquid {
-    pub const ALL: [Liquid; 10] = [
+    pub const ALL: [Liquid; 11] = [
         Liquid::Water,
         Liquid::Basin,
         Liquid::Lava,
@@ -972,6 +980,7 @@ impl Liquid {
         Liquid::Deep,
         Liquid::Membrane,
         Liquid::Mist,
+        Liquid::GraveMist,
     ];
 }
 
@@ -2314,6 +2323,7 @@ fn terrain_base(
         Terrain::Floor | Terrain::DarkFloor => {
             look.ground_tile(tile, ground(lit_shade), Vector3::ZERO);
             look.lit = t == Terrain::Floor;
+            grave_mist(look, ctx);
             if ctx.branch.under == Under::Stars {
                 astral_floor(look, around, ctx);
             } else {
@@ -2328,6 +2338,7 @@ fn terrain_base(
                 Vector3::ZERO,
             );
             look.lit = lit;
+            grave_mist(look, ctx);
             // stones fallen from the rock along the trench's sides, and
             // kicked to its edges where it opens on a room's floor
             rubble(look, around, bedrock, ctx, Side::Solid, 0.55);
@@ -3032,6 +3043,30 @@ fn terrain_base(
 /// its sides where nothing is beside it (the edge of what is known, or of
 /// the plane) a gilded lip, and gold inlaid between its slabs of two by
 /// two cells.
+/// A graveyard's cold mist lying low over a floor (the Valley's, the
+/// branch's `floor_mist`), in puffs that overlap their neighbours': see-
+/// through, it hides nothing.
+fn grave_mist(look: &mut Look, ctx: &Ctx) {
+    if !ctx.branch.floor_mist {
+        return;
+    }
+    for k in 0..GRAVE_MIST_PUFFS {
+        let salt = 470 + k * 4;
+        let size = 1.3 + ctx.noise(salt) * 0.7;
+        let pos = at(
+            (ctx.noise(salt + 1) - 0.5) * 0.8,
+            0.05 + k as f32 * 0.12 + ctx.noise(salt + 2) * 0.08,
+            (ctx.noise(salt + 3) - 0.5) * 0.8,
+        );
+        look.sheet(
+            plane(size, size),
+            Paint::Liquid(Liquid::GraveMist),
+            pos,
+            Vector3::ZERO,
+        );
+    }
+}
+
 /// Under whatever stands on an Astral Plane's cell: its floor's slab and
 /// the temple's foundations under it, deeper and darker course by course
 /// (`ASTRAL_COURSES`).
@@ -5761,7 +5796,8 @@ impl MapView {
         self.branch_look = l;
         // (a room's floor grimed and stained where the branch's are used)
         self.surfaces
-            .set_debris(if l.dress.debris { 1.0 } else { 0.0 });
+            .set_debris(if l.dress.debris { l.ash } else { 0.0 });
+
         // (how much of a lava field runs molten, by the branch)
         if let Some(Ok(mut m)) = self
             .liquids
@@ -5851,7 +5887,7 @@ impl MapView {
             _ => None,
         });
         let chasm = if l.under == Under::Chasm {
-            CHASM
+            l.chasm.unwrap_or(CHASM)
         } else {
             Color::from_rgba(0.0, 0.0, 0.0, 0.0)
         };
@@ -7249,7 +7285,7 @@ impl MapView {
             Liquid::Haze => "res://shaders/heat_haze.gdshader",
             Liquid::Unseen => "res://shaders/unseen.gdshader",
             Liquid::Bubble => "res://shaders/bubble.gdshader",
-            Liquid::Cloud | Liquid::Mist => "res://shaders/cloud.gdshader",
+            Liquid::Cloud | Liquid::Mist | Liquid::GraveMist => "res://shaders/cloud.gdshader",
             Liquid::Deep => "res://shaders/deep.gdshader",
             Liquid::Membrane => "res://shaders/membrane.gdshader",
         };
@@ -7278,6 +7314,11 @@ impl MapView {
                 }
                 if l == Liquid::Membrane {
                     m.set_shader_parameter("tall", &MEMBRANE_TALL.to_variant());
+                }
+                if l == Liquid::GraveMist {
+                    m.set_shader_parameter("lit", &GRAVE_MIST_LIT.to_variant());
+                    m.set_shader_parameter("shade", &MIST_SHADE.to_variant());
+                    m.set_shader_parameter("opacity", &GRAVE_MIST_OPACITY.to_variant());
                 }
                 if l == Liquid::Mist {
                     m.set_shader_parameter("lit", &MIST_LIT.to_variant());
@@ -7316,7 +7357,7 @@ impl MapView {
                     Liquid::Unseen => Color::from_rgba(0.7, 0.72, 0.8, 0.3),
                     Liquid::Bubble => Color::from_rgba(0.4, 0.65, 0.8, 0.35),
                     Liquid::Cloud => Color::from_rgba(0.9, 0.93, 1.0, 0.7),
-                    Liquid::Mist => Color::from_rgba(0.5, 0.54, 0.62, 0.2),
+                    Liquid::Mist | Liquid::GraveMist => Color::from_rgba(0.5, 0.54, 0.62, 0.2),
                     Liquid::Deep => Color::from_rgb(0.01, 0.05, 0.1),
                     Liquid::Membrane => Color::from_rgba(0.7, 0.85, 1.0, 0.25),
                 };
