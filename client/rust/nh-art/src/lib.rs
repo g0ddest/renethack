@@ -348,6 +348,12 @@ pub struct ModelSpec {
     /// instead of the outfit's sleeves (hide those).
     #[serde(default)]
     pub bare_arms: Option<String>,
+    /// Where this body holds things, by slot, where its build differs
+    /// from the kits' the held slots are set for (a generated hero's
+    /// shorter upper arm raises a shield before her face): instead of the
+    /// held rules' own slot.
+    #[serde(default)]
+    pub held: BTreeMap<String, SlotSpec>,
     /// With `bare_arms`, the chest bare too (hide the outfit's body).
     #[serde(default)]
     pub bare_chest: bool,
@@ -1566,6 +1572,7 @@ impl ArtManifest {
             extras: Vec::new(),
             neck: Vec::new(),
             bare_arms: None,
+            held: BTreeMap::new(),
             bare_chest: false,
             bare_legs: false,
             feet: None,
@@ -2062,6 +2069,26 @@ mod tests {
         assert_ne!(model("goblin"), model("kobold"));
         assert_ne!(model("troll"), model("kobold"));
         assert_ne!(model("bugbear"), model("hobgoblin"));
+    }
+
+    /// A body's own held slot (`ModelSpec::held`) is where it holds that
+    /// slot's things; any other slot, and any other body, the held rules'.
+    #[test]
+    fn held_slot_of_a_body() {
+        let art = manifest();
+        let plain = art.held_slot("arm_l").unwrap().clone();
+        let (i, spec) = (0..art.models.len())
+            .map(|i| (i, art.model_at(i).1))
+            .find(|(_, s)| s.held.contains_key("arm_l"))
+            .expect("a body with its own shield arm");
+        let own = art.held_slot_of(i, "arm_l").unwrap();
+        assert_eq!(own, &spec.held["arm_l"]);
+        assert_ne!(own, &plain);
+        assert_eq!(art.held_slot_of(i, "hand_r"), art.held_slot("hand_r"));
+        let other = (0..art.models.len())
+            .find(|&j| art.model_at(j).1.held.is_empty())
+            .unwrap();
+        assert_eq!(art.held_slot_of(other, "arm_l"), Some(&plain));
     }
 
     /// A generated body (the owner's, under `owner/`): what our kits

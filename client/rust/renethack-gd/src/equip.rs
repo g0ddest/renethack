@@ -280,7 +280,7 @@ impl Art {
         }
         if worn.upright > 0.0 {
             worn.upright -= delta;
-            let slot = self.manifest.held_slot("hand_r");
+            let slot = self.manifest.held_slot_of(m.key.model, "hand_r");
             let held = worn.held.iter_mut().find(|(s, _)| *s == "hand_r");
             if let (Some(slot), Some((_, node))) = (slot, held)
                 && node.is_instance_valid()
@@ -310,7 +310,7 @@ impl Art {
                 let_go(node);
             }
             if let Some(h) = want
-                && let Some(node) = self.hold(&mut worn, slot, h, HELD_NODE)
+                && let Some(node) = self.hold(&mut worn, m.key.model, slot, h, HELD_NODE)
             {
                 worn.held.push((slot, node));
             }
@@ -662,7 +662,7 @@ impl Art {
             let_go(node);
             show_slot(&mut worn, hand, true);
         }
-        let node = self.hold(&mut worn, hand, h, USE_NODE);
+        let node = self.hold(&mut worn, m.key.model, hand, h, USE_NODE);
         let shown = node.is_some();
         if let Some(node) = node {
             let v = |a: [f32; 3]| Vector3::new(a[0], a[1], a[2]);
@@ -692,7 +692,7 @@ impl Art {
 
     /// The node that follows a slot's bone (where a spell leaves the hand).
     pub fn slot_anchor(&mut self, m: &mut Model, slot: &str) -> Option<Gd<Node3D>> {
-        let bone = self.manifest.held_slot(slot)?.bone.clone();
+        let bone = self.manifest.held_slot_of(m.key.model, slot)?.bone.clone();
         let mut worn = m.worn.take()?;
         let b = self.bone(&mut worn, &bone);
         m.worn = Some(worn);
@@ -727,8 +727,16 @@ impl Art {
 
     /// A held model on its slot's bone: slot grip, the model's grip and
     /// size, its light when lit.
-    fn hold(&mut self, worn: &mut Worn, slot: &str, h: HeldArt, name: &str) -> Option<Gd<Node3D>> {
-        let slot_spec = self.manifest.held_slot(slot)?.clone();
+    /// `h` held at `slot` as the model of index `model` holds it there.
+    fn hold(
+        &mut self,
+        worn: &mut Worn,
+        model: usize,
+        slot: &str,
+        h: HeldArt,
+        name: &str,
+    ) -> Option<Gd<Node3D>> {
+        let slot_spec = self.manifest.held_slot_of(model, slot)?.clone();
         let spec = self.manifest.held_at(h.held).1.clone();
         let mut bone = self.bone(worn, &slot_spec.bone)?;
         let model = self.held_model(h)?;

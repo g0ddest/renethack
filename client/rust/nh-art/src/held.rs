@@ -402,6 +402,16 @@ impl ArtManifest {
         self.held.slots.get(slot)
     }
 
+    /// A slot as `model` holds things there: its own (`ModelSpec::held`),
+    /// else the held rules'.
+    pub fn held_slot_of(&self, model: usize, slot: &str) -> Option<&SlotSpec> {
+        self.model_at(model)
+            .1
+            .held
+            .get(slot)
+            .or_else(|| self.held_slot(slot))
+    }
+
     fn held_named(&self, name: &str, tile: &ObjectTile, level: Level) -> Option<HeldArt> {
         let i = self.held_index(name)?;
         let spec = &self.held_models[i].1;
