@@ -728,6 +728,46 @@ pub fn lay_out_ground_edges(
     Ok((cx, cy))
 }
 
+/// What lies on a dim floor about the hero, for pictures (the `dim-floor`
+/// scene): a dark room's floor within its walls, the hero in it, a dagger
+/// lying two cells west of her, a known bear trap two east, a black
+/// pudding three north and a raven by the room's west wall.
+pub fn lay_out_dim_floor(world: &mut World, cat: &Catalog) -> Result<(i32, i32), String> {
+    let map = &mut world.map;
+    map.clear();
+    let dark = cmap(cat, "S_darkroom")?;
+    let (cx, cy) = (40, 10);
+    let (west, east, top, bottom) = (cx - 7, cx + 7, cy - 5, cy + 3);
+    for y in top..=bottom {
+        for x in west..=east {
+            let (n, s, w, e) = (y == top, y == bottom, x == west, x == east);
+            let sym = match (n, s, w, e) {
+                (true, _, true, _) => Some("S_tlcorn"),
+                (true, _, _, true) => Some("S_trcorn"),
+                (_, true, true, _) => Some("S_blcorn"),
+                (_, true, _, true) => Some("S_brcorn"),
+                (true, ..) | (_, true, ..) => Some("S_hwall"),
+                (_, _, true, _) | (_, _, _, true) => Some("S_vwall"),
+                _ => None,
+            };
+            match sym {
+                Some(sym) => map.print(x, y, &cmap(cat, sym)?, None),
+                None => map.print(x, y, &dark, None),
+            }
+        }
+    }
+    map.print(cx - 2, cy, &object(cat, ")", "dagger", false)?, Some(&dark));
+    map.print(cx + 2, cy, &cmap(cat, "S_bear_trap")?, Some(&dark));
+    let pudding = monster(cat, "black pudding", 0, GlyphKind::Mon)?;
+    map.print(cx, cy - 3, &pudding, Some(&dark));
+    let raven = monster(cat, "raven", 0, GlyphKind::Mon)?;
+    map.print(west + 1, cy - 1, &raven, Some(&dark));
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(cx, cy, &hero, Some(&dark));
+    world.view_center = Some((cx, cy));
+    Ok((cx, cy))
+}
+
 /// As `lay_out_rows`, on a floor of `floor` (a dark one: "S_darkroom").
 pub fn lay_out_rows_on(
     world: &mut World,

@@ -70,6 +70,9 @@ pub struct Surfaces {
     textures: HashMap<String, Option<Gd<Texture2D>>>,
     materials: HashMap<Key, Gd<Material>>,
     top: Option<usize>,
+    /// How much a floor shows of a room long used (map_surface `debris`:
+    /// grime at its walls' feet, stains), by the branch (`set_debris`).
+    debris: f32,
 }
 
 impl Surfaces {
@@ -97,6 +100,7 @@ impl Surfaces {
             detail: None,
             textures: HashMap::new(),
             materials: HashMap::new(),
+            debris: 0.0,
             top: manifest.material("bedrock"),
         };
         let detail = manifest
@@ -130,6 +134,22 @@ impl Surfaces {
     }
 
     /// The tiling noise the map's shaders read.
+    /// A floor's grime and stains of a room long used, by the branch
+    /// (`Dress::debris`): on every floor made and every one to be.
+    pub fn set_debris(&mut self, debris: f32) {
+        if debris == self.debris {
+            return;
+        }
+        self.debris = debris;
+        for ((_, _, role), m) in &self.materials {
+            if *role == Role::Floor
+                && let Ok(mut m) = m.clone().try_cast::<ShaderMaterial>()
+            {
+                m.set_shader_parameter("debris", &debris.to_variant());
+            }
+        }
+    }
+
     pub fn noise(&self) -> Gd<Texture2D> {
         self.noise.clone()
     }
@@ -293,6 +313,7 @@ impl Surfaces {
             Role::Floor => {
                 set(&mut mat, "grime", 1.0);
                 set(&mut mat, "wet", 0.8);
+                set(&mut mat, "debris", self.debris);
             }
             Role::Wall | Role::Door => {
                 set(

@@ -932,6 +932,37 @@ pub(super) fn lava_edge() -> Vec<Step> {
     steps
 }
 
+/// What lies on a dim floor about the hero (815373c7's gloom reaches the
+/// darkest floor): a dagger, a known trap, a black pudding and a raven in
+/// a dark room, for pictures before and after (not part of `make
+/// test-client`): at the game's distance (`dim-floor`) and close
+/// (`-close`).
+pub(super) fn dim_floor() -> Vec<Step> {
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    steps.extend([
+        Step::Call("lay out the room", |g| {
+            let cat = g.catalog.clone().ok_or("no catalog")?;
+            crate::gallery::lay_out_dim_floor(&mut g.world, &cat)?;
+            Ok(())
+        }),
+        Step::Wait("the room drawn", |g| {
+            let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+            Ok(drawn == Some(g.world.map.generation()))
+        }),
+        Step::Call("the game's distance", |g| far(g, 11.0)),
+        Step::Wait("the camera on it", drawn_here),
+        Step::Shot("dim-floor"),
+        Step::Call("closer", |g| far(g, 7.0)),
+        Step::Wait("the camera closer", drawn_here),
+        Step::Shot("dim-floor-close"),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
 /// The ground's edges against what is not known (the art loop's
 /// iteration 3: the Plane of Fire's rectangular bays, the banded repeat
 /// of a big lava field, ice cut square on arrival at Gehennom 31), for

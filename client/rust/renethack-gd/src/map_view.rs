@@ -5713,6 +5713,9 @@ impl MapView {
             self.level_look
         };
         self.branch_look = l;
+        // (a room's floor grimed and stained where the branch's are used)
+        self.surfaces
+            .set_debris(if l.dress.debris { 1.0 } else { 0.0 });
         // (how much of a lava field runs molten, by the branch)
         if let Some(Ok(mut m)) = self
             .liquids

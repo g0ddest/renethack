@@ -835,17 +835,19 @@ fn corner_rubble(look: &mut Look, around: &Around, ctx: &Ctx) -> bool {
     };
     let (cx, cz) = (SIDES[b].0, SIDES[a].1);
     let rock = Paint::Pbr(rock, SHADE_RUBBLE, Role::Trim);
-    let n = 6 + (ctx.noise(152) * 2.99) as u32;
+    // (heavy: a heap and its chips scattered out over the cell)
+    let n = 10 + (ctx.noise(152) * 3.99) as u32;
     for k in 0..n {
         let salt = 160 + k * 4;
         let size = match k {
-            0 | 1 => 3,
-            2 => 2,
+            0..=2 => 3,
+            3 | 4 => 2,
+            k if k >= 9 => 0,
             _ => (ctx.noise(salt) * 2.99) as usize,
         };
         // (the wall-foot stones' sizes, and one bigger)
-        let r = [0.04, 0.065, 0.09, 0.12][size];
-        let spread = 0.06 + 0.06 * k as f32;
+        let r = [0.03, 0.065, 0.09, 0.12][size];
+        let spread = 0.05 + 0.045 * k as f32;
         let x = cx * (0.43 - r * 0.7 - ctx.noise(salt + 1) * spread);
         let z = cz * (0.43 - r * 0.7 - ctx.noise(salt + 2) * spread);
         let rot = at(ctx.noise(salt + 3) * 90.0, ctx.noise(salt) * 360.0, 0.0);
@@ -855,10 +857,10 @@ fn corner_rubble(look: &mut Look, around: &Around, ctx: &Ctx) -> bool {
     true
 }
 
-/// How often a wall's foot has stones fallen at it, a cell by a wall old
-/// bones (of the cells that may; the floor's stains are its shader's).
-const FALLEN: f32 = 0.2;
-const BONES: f32 = 0.08;
+/// How often a wall's foot has stones fallen at it (of the cells that may;
+/// how often a cell by a wall has old bones is the branch's, `Dress`; the
+/// floor's grime and stains are its shader's).
+const FALLEN: f32 = 0.4;
 /// Bone, old and dirty: dull, never white (a pale thing on the floor reads
 /// as something to pick up).
 pub(super) const BONE: Color = Color::from_rgb(0.3, 0.27, 0.22);
@@ -875,12 +877,14 @@ fn wall_rubble(look: &mut Look, around: &Around, ctx: &Ctx) {
             continue;
         }
         let middle = (ctx.noise(325 + i as u32) - 0.5) * 0.4;
-        let n = 3 + (ctx.noise(329 + i as u32) * 2.99) as u32;
+        let n = 4 + (ctx.noise(329 + i as u32) * 3.99) as u32;
         for k in 0..n {
             let salt = 340 + i as u32 * 20 + k * 3;
-            let r = [0.03, 0.04, 0.055][(ctx.noise(salt) * 2.99) as usize];
-            let along = middle + (ctx.noise(salt + 1) - 0.5) * 0.5;
-            let off = 0.43 - r * 0.7 - ctx.noise(salt + 2) * 0.08;
+            let r = [0.03, 0.045, 0.065][(ctx.noise(salt) * 2.99) as usize];
+            let along = middle + (ctx.noise(salt + 1) - 0.5) * 0.6;
+            // (most at the foot, a few chips scattered further out)
+            let out = if k + 2 > n { 0.3 } else { 0.08 };
+            let off = 0.43 - r * 0.7 - ctx.noise(salt + 2) * out;
             let pos = if dx == 0.0 {
                 at(along, -r * 0.45, dz * off)
             } else {
@@ -900,7 +904,7 @@ fn bones(look: &mut Look, around: &Around, ctx: &Ctx) {
         .enumerate()
         .find(|&(i, _)| around.sides[i] == Side::Wall)
         .map(|(_, &s)| s)
-        .filter(|_| ctx.noise(311) < BONES)
+        .filter(|_| ctx.noise(311) < ctx.branch.dress.bones)
     else {
         return;
     };

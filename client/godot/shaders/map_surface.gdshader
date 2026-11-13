@@ -57,6 +57,9 @@ uniform float macro = 1.0;
 uniform float wet = 0.0;
 // darker at the foot of walls (floors)
 uniform float grime = 0.0;
+// a room long used (the branch's: surface.rs `set_debris`): dirt and soot
+// at its walls' feet, ash in Gehennom, and stains near its walls
+uniform float debris = 0.0;
 // opens between the eye and the hero, all but its top line
 uniform float occlude = 0.0;
 uniform float solid_top = 2.0;
@@ -616,14 +619,35 @@ void fragment() {
 	if (grime > 0.0) {
 		// (a band about the room's edge, the darker the nearer the wall:
 		// fainter, a small room's floor read as one flat slab)
-		float g = smoothstep(0.06, 0.5, texture(fow_tex, cell / FIELD).b) * grime;
+		float wallb = texture(fow_tex, cell / FIELD).b;
+		float g = smoothstep(0.06, 0.5, wallb) * grime;
 		albedo *= 1.0 - 0.45 * g * g;
 		rough = min(rough + 0.1 * g, 1.0);
-		// and old stains worn into it here and there: ragged dark blots of
-		// no shape (round dark ones read as holes to step round)
-		float st = smoothstep(0.68, 0.76, tn2(wpos.xz * 0.38 + vec2(37.1, 13.9)))
-			* smoothstep(0.35, 0.6, tn2(wpos.xz * 1.6 + vec2(5.3, 29.7)));
-		albedo *= 1.0 - 0.4 * st * grime;
+		if (debris > 0.0) {
+			// dirt and soot along every wall's foot, a third of a cell
+			// out from its plinth, ragged; over Gehennom's black stone
+			// pale ash (soot would not show on it)
+			float band = smoothstep(0.06, 0.3, wallb + (tn2(wpos.xz * 3.1 + vec2(9.1, 4.4)) - 0.5) * 0.14)
+				* mix(0.5, 1.0, smoothstep(0.3, 0.6, tn2(wpos.xz * 2.2 + vec2(3.3, 17.1))));
+			if (branch_cracks > 0.0) {
+				vec3 ash = vec3(0.21, 0.2, 0.19) * mix(0.75, 1.15, tn2(wpos.xz * 4.7 + 2.0));
+				albedo = mix(albedo, max(albedo, ash), band * 0.8 * debris);
+			} else {
+				albedo *= 1.0 - 0.75 * band * debris;
+			}
+			rough = min(rough + 0.2 * band, 1.0);
+			// and old stains worn into it, near its walls and doorways
+			// where feet went: ragged dark blots of no shape, never alone
+			// in the middle (round dark ones read as holes to step round)
+			float near = max(max(texture(fow_tex, (cell + vec2(1.0, 0.0)) / FIELD).b,
+				texture(fow_tex, (cell - vec2(1.0, 0.0)) / FIELD).b),
+				max(texture(fow_tex, (cell + vec2(0.0, 1.0)) / FIELD).b,
+				texture(fow_tex, (cell - vec2(0.0, 1.0)) / FIELD).b));
+			float st = smoothstep(0.55, 0.66, tn2(wpos.xz * 0.24 + vec2(37.1, 13.9)))
+				* smoothstep(0.3, 0.58, tn2(wpos.xz * 1.3 + vec2(5.3, 29.7)))
+				* smoothstep(0.15, 0.6, near);
+			albedo *= 1.0 - 0.62 * st * debris;
+		}
 	}
 	vec3 lava = vec3(0.0);
 	if ((grime > 0.0 || fissures > 0.0) && branch_cracks > 0.0) {

@@ -128,8 +128,10 @@ pub struct Dress {
     /// Rubble heaped and sunk in a room's corners.
     pub corners: bool,
     /// What lies about a room long used: stones fallen at its walls' feet,
-    /// old bones sunk in the dirt by a wall.
+    /// old bones sunk in the dirt by a wall (`bones`: how often a cell by
+    /// a wall has them), its floor grimed and stained (map_surface).
     pub debris: bool,
+    pub bones: f32,
     /// Rock grown into a cave's walls.
     pub formations: bool,
     /// A worn rug laid in a small room's middle (one too small for a band
@@ -169,6 +171,7 @@ impl Dress {
         embers: false,
         corners: false,
         debris: false,
+        bones: 0.0,
         formations: false,
         rug: None,
     };
@@ -347,6 +350,8 @@ const MAIN: BranchLook = BranchLook {
         embers: false,
         corners: true,
         debris: true,
+        // (rare high up: more below, `look_of_level`)
+        bones: MAIN_BONES,
         formations: false,
         rug: Some(("rug_red", "rug_ochre")),
     },
@@ -483,6 +488,8 @@ pub fn look_of(branch: Branch) -> BranchLook {
                 embers: true,
                 corners: true,
                 debris: true,
+                // (common: the dead's own place)
+                bones: 0.22,
                 // heavy and plain, its braziers smouldering (lighting
                 // nothing); no inlay (its floors are its fire's)
                 piers: true,
@@ -710,6 +717,12 @@ fn plane_look(plane: Plane) -> BranchLook {
     }
 }
 
+/// How often a room's cell by a wall has old bones in the Dungeons: above
+/// Dlvl `DEEP_BONES_FROM`, and below it.
+const MAIN_BONES: f32 = 0.04;
+const DEEP_BONES: f32 = 0.1;
+const DEEP_BONES_FROM: i32 = 10;
+
 /// The fire under Gehennom's floors, by default.
 const FIRE: Color = Color::from_rgb(1.0, 0.28, 0.05);
 
@@ -779,6 +792,15 @@ fn fire_of(dungeon: &str, depth: i32) -> usize {
 pub fn look_of_level(branch: Branch, level: Option<&LevelNotice>) -> BranchLook {
     let look = look_of(branch);
     if branch == Branch::Main {
+        // bones lie more often in the rooms of the deeper Dungeons
+        let deep = level.is_some_and(|l| l.depth > DEEP_BONES_FROM);
+        let look = BranchLook {
+            dress: Dress {
+                bones: if deep { DEEP_BONES } else { MAIN_BONES },
+                ..look.dress
+            },
+            ..look
+        };
         return main_lair(look, level.and_then(|l| l.lair.as_deref()));
     }
     let Some(level) = level.filter(|_| branch == Branch::Gehennom) else {

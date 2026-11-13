@@ -5297,6 +5297,7 @@ impl SelfTest {
             "drawbridge" => world_looks::drawbridge(),
             "lava-edge" => world_looks::lava_edge(),
             "ground-edges" => world_looks::ground_edges(),
+            "dim-floor" => world_looks::dim_floor(),
             "far" => world_looks::far_view(),
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),
