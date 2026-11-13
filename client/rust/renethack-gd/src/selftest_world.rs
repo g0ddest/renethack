@@ -1149,6 +1149,18 @@ pub(super) fn dark_creatures() -> Vec<Step> {
             let floor =
                 std::env::var("RENETHACK_DARK_FLOOR").unwrap_or_else(|_| "S_darkroom".into());
             crate::gallery::lay_out_rows_on(&mut g.world, &cat, rows, &floor)?;
+            // RENETHACK_LOD_THRESHOLD=0: every mesh drawn whole, whatever
+            // its distance (the imported LODs off, to compare)
+            if let Some(t) = std::env::var("RENETHACK_LOD_THRESHOLD")
+                .ok()
+                .and_then(|v| v.parse::<f32>().ok())
+                && let Some(tree) = godot::classes::Engine::singleton()
+                    .get_main_loop()
+                    .and_then(|l| l.try_cast::<godot::classes::SceneTree>().ok())
+                && let Some(mut root) = tree.get_root()
+            {
+                root.set_mesh_lod_threshold(t);
+            }
             Ok(())
         }),
         Step::Wait("the rows drawn", |g| {
@@ -1158,9 +1170,11 @@ pub(super) fn dark_creatures() -> Vec<Step> {
         Step::Call("the game's distance", |g| far(g, 11.0)),
         Step::Wait("the camera on them", drawn_here),
         Step::Shot("dark-creatures"),
+        Step::Call("what the frame drew", frame_drew),
         Step::Call("closer", |g| far(g, 7.0)),
         Step::Wait("the camera closer", drawn_here),
         Step::Shot("dark-creatures-close"),
+        Step::Call("what the frame drew", frame_drew),
     ]);
     // RENETHACK_DARK_NEAR=3: one more, that close (`dark-creatures-near`)
     if std::env::var("RENETHACK_DARK_NEAR").is_ok() {
@@ -1179,6 +1193,22 @@ pub(super) fn dark_creatures() -> Vec<Step> {
     steps.push(Step::Call("back", |g| far(g, 11.0)));
     steps.extend(quit());
     steps
+}
+
+/// RENETHACK_DARK_PRIMS=1: what the frame just shot drew (its primitives:
+/// a mesh's LOD at that distance).
+fn frame_drew(_: &mut RenethackGame) -> Result<(), String> {
+    if std::env::var("RENETHACK_DARK_PRIMS").is_ok() {
+        use godot::classes::rendering_server::RenderingInfo as I;
+        let rs = godot::classes::RenderingServer::singleton();
+        godot_print!(
+            "selftest: frame: {} primitives, {} draw calls, {} objects",
+            rs.get_rendering_info(I::TOTAL_PRIMITIVES_IN_FRAME),
+            rs.get_rendering_info(I::TOTAL_DRAW_CALLS_IN_FRAME),
+            rs.get_rendering_info(I::TOTAL_OBJECTS_IN_FRAME)
+        );
+    }
+    Ok(())
 }
 
 /// Creatures told apart by their colour (the art loop's iteration 3: away

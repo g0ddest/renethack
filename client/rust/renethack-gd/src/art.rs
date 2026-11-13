@@ -2519,6 +2519,9 @@ impl Art {
             (None, Some(scene)) => {
                 let inner = scene.instantiate_as::<Node3D>();
                 bind_skins(&inner);
+                if let Some(far) = &spec.far {
+                    far_mesh(&inner, far);
+                }
                 if spec.smooth {
                     self.smooth(&inner);
                 }
@@ -3389,6 +3392,9 @@ impl Art {
             (None, Some(scene)) => {
                 let inner = scene.instantiate_as::<Node3D>();
                 bind_skins(&inner);
+                if let Some(far) = &spec.far {
+                    far_mesh(&inner, far);
+                }
                 let shade = rgb(spec.shade_rgb());
                 self.dress(&inner, &look, shade);
                 Some(inner)
@@ -3676,6 +3682,44 @@ fn boots_of(inner: &Gd<Node3D>) -> Vec<(Gd<MeshInstance3D>, String)> {
             Some((n.try_cast::<MeshInstance3D>().ok()?, end.to_string()))
         })
         .collect()
+}
+
+/// A far mesh's bounds: its full mesh's, grown each way by half this share
+/// of their diagonal (the idle's reach beyond the rest pose).
+const FAR_BOUNDS: f32 = 0.3;
+
+/// A body with a far mesh (`FarMesh`): its full mesh drawn nearer than
+/// `far.from`, the far one from there on, one or the other, never both.
+/// Both are given the full mesh's bounds, fixed (grown by `FAR_BOUNDS`):
+/// the distance Godot measures is to their middle, which a skinned mesh's
+/// own bounds move with every breath, so a body standing on the line
+/// flickered between the two. (No margin: with fading off, Godot's margin
+/// is a hysteresis that starts hidden, and a body put down within it showed
+/// neither mesh; fading on draws them see-through.)
+fn far_mesh(inner: &Gd<Node3D>, far: &nh_art::FarMesh) {
+    let meshes: Vec<Gd<MeshInstance3D>> = inner
+        .find_children_ex("*")
+        .type_("MeshInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+        .filter_map(|n| n.try_cast::<MeshInstance3D>().ok())
+        .collect();
+    let full = meshes
+        .iter()
+        .filter(|m| m.get_name().to_string() != far.node)
+        .filter_map(|m| m.get_mesh().map(|mesh| mesh.get_aabb()))
+        .reduce(|a, b| a.merge(b));
+    for mut mi in meshes {
+        if let Some(aabb) = full {
+            mi.set_custom_aabb(aabb.grow(aabb.size.length() * FAR_BOUNDS * 0.5));
+        }
+        if mi.get_name().to_string() == far.node {
+            mi.set_visibility_range_begin(far.from);
+        } else {
+            mi.set_visibility_range_end(far.from);
+        }
+    }
 }
 
 fn bind_skins(inner: &Gd<Node3D>) {

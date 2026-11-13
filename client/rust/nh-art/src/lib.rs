@@ -197,6 +197,16 @@ pub const READABLE: f32 = 0.45;
 const TINIEST: f32 = 0.18;
 const LIFTED_BELOW: f32 = 0.58;
 
+/// A body's far mesh: its node in the scene (a mesh on the same skin as
+/// the full one, fewer triangles) and the camera's distance in metres from
+/// which it is drawn in place of the full one.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FarMesh {
+    pub node: String,
+    pub from: f32,
+}
+
 /// A model: a scene under `client/godot/art` or a procedural body.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -348,6 +358,10 @@ pub struct ModelSpec {
     /// instead of the outfit's sleeves (hide those).
     #[serde(default)]
     pub bare_arms: Option<String>,
+    /// A far mesh beside the full one in the scene (a simplified copy on
+    /// the same skin): drawn instead of it from `from` metres off.
+    #[serde(default)]
+    pub far: Option<FarMesh>,
     /// The hue of an outlined body's edge (its outline and the inner rim
     /// on its head and shoulders), in place of the cold one: a coloured
     /// dragon's colour carries into the dark round its outline.
@@ -1584,6 +1598,7 @@ impl ArtManifest {
             neck: Vec::new(),
             bare_arms: None,
             held: BTreeMap::new(),
+            far: None,
             edge_color: None,
             shield_down: false,
             bare_chest: false,
@@ -2103,6 +2118,29 @@ mod tests {
             .find(|&j| art.model_at(j).1.held.is_empty())
             .unwrap();
         assert_eq!(art.held_slot_of(other, "back"), Some(&plain));
+    }
+
+    /// The dragons (one body of 31k triangles, all colours and ages) draw a
+    /// far mesh of half as many from the game's distance, the full one at
+    /// 7 m and closer; a baby, about half an adult's size, from about half
+    /// as far.
+    #[test]
+    fn dragons_draw_a_far_mesh_from_afar() {
+        let art = manifest();
+        let dragons: Vec<_> = (0..art.models.len())
+            .map(|i| art.model_at(i))
+            .filter(|(n, _)| n.starts_with("dragon_owner_"))
+            .collect();
+        assert_eq!(dragons.len(), 20);
+        for (name, spec) in dragons {
+            let far = spec.far.as_ref().expect(name);
+            assert_eq!(far.node, "output_far", "{name}");
+            let from = 9.0 * spec.size_factor / 1.15;
+            assert!((far.from - from).abs() < 0.5, "{name}: {}", far.from);
+            if !name.contains("baby") {
+                assert!((7.5..10.5).contains(&far.from), "{name}: {}", far.from);
+            }
+        }
     }
 
     /// Each coloured dragon's edge (outline and inner rim) is in a hue of
