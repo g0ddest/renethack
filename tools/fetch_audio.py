@@ -829,7 +829,24 @@ def write_credits(recipe):
         text += "\n## Mixes\n\n| File | What | Made from |\n|---|---|---|\n"
         text += "".join(f"| `{m['out']}` | {m['what']} | {m['made_from']} |\n"
                         for m in recipe["mixes"])
-    return text
+    return text + CREDITS_GENERATED
+
+
+# the prologue's narration (`vo/`), not fetched: made for the game and kept
+# in the repository as it is
+CREDITS_GENERATED = """
+## Generated for this project
+
+The narration under `vo/` was read for this game by ElevenLabs'
+text-to-speech (its multilingual v2 model, a voice designed for this game)
+on its owner's account, from the prologue's own words, then its trailing
+silence trimmed and re-encoded as mono Ogg Vorbis; nothing else was
+changed.
+
+| Where | What |
+|---|---|
+| `vo/en/` | The prologue read aloud in English |
+"""
 
 
 # ---- main -------------------------------------------------------------------

@@ -141,6 +141,12 @@ const WORDS_CHARS: f64 = 34.0;
 /// the game comes up out of black over this long.
 pub const DESCENT_SECS: f64 = 3.0;
 pub const GAME_FADE: f64 = 1.0;
+/// A voiced beat lasts this long after its narration ends.
+const VOICE_TAIL: f64 = 0.6;
+/// A beat's narration starts with its words, and within this long of the
+/// beat or not at all (its clips still loading).
+pub const VOICE_AT: f64 = WORDS_AT;
+pub const VOICE_LATE: f64 = WORDS_AT + 0.6;
 /// A skip goes to black this quickly.
 const SKIP_FADE: f64 = 0.5;
 /// Seconds into a beat when the next one's stage is built ahead: its
@@ -170,6 +176,8 @@ pub struct Run {
     leaving: Option<(f64, bool)>,
     started: bool,
     done: bool,
+    /// When the beat's narration ends, seconds into it (None: unvoiced).
+    voice: Option<f64>,
 }
 
 impl Run {
@@ -182,7 +190,15 @@ impl Run {
             leaving: None,
             started: false,
             done: false,
+            voice: None,
         }
+    }
+
+    /// The beat's narration starts now and speaks `secs`: the beat lasts
+    /// till it is over and a breath after (`VOICE_TAIL`), if its words are
+    /// read sooner.
+    pub fn set_voice(&mut self, secs: f64) {
+        self.voice = Some(self.t + secs);
     }
 
     pub fn beat(&self) -> Beat {
@@ -229,11 +245,12 @@ impl Run {
         self.shown_chars() >= self.text().chars().count()
     }
 
-    /// How long the beat is, from black to black: read, then (the last)
-    /// the descent.
-    fn length(&self) -> f64 {
+    /// How long the beat is, from black to black: read (or read aloud),
+    /// then (the last) the descent.
+    pub fn length(&self) -> f64 {
         let read = reading_secs(self.text())
-            .max(WORDS_AT + self.text().chars().count() as f64 / WORDS_CHARS + 1.0);
+            .max(WORDS_AT + self.text().chars().count() as f64 / WORDS_CHARS + 1.0)
+            .max(self.voice.map_or(0.0, |v| v + VOICE_TAIL));
         match self.beat {
             Beat::Descent => read + DESCENT_SECS,
             _ => read,
@@ -324,6 +341,7 @@ impl Run {
                 self.t = 0.0;
                 self.hurried = false;
                 self.leaving = None;
+                self.voice = None;
                 Some(Event::Beat(next))
             }
             None => {
@@ -514,6 +532,40 @@ mod tests {
     }
 
     #[test]
+    fn a_voiced_beat_lasts_till_the_voice_is_over_and_the_next_is_its_own() {
+        let mut run = Run::new(beats(&valkyrie()).unwrap());
+        run.tick(0.0);
+        run_until(&mut run, |r| r.secs() >= VOICE_AT);
+        let from = run.secs();
+        let long = 20.0;
+        assert!(
+            run.length() < from + long,
+            "a voice longer than the reading"
+        );
+        run.set_voice(long);
+        let events = run_until(&mut run, |r| r.beat() != Beat::Book);
+        assert_eq!(events, vec![Event::Beat(Beat::Rebellion)]);
+        assert_eq!(run.voice, None, "the next beat unvoiced till it speaks");
+        // the Book went on till its voice was over, a breath, and black
+        let mut book = Run::new(beats(&valkyrie()).unwrap());
+        book.tick(0.0);
+        run_until(&mut book, |r| r.secs() >= VOICE_AT);
+        book.set_voice(long);
+        run_until(&mut book, |r| r.shade() > 0.0 && r.secs() > FADE_IN);
+        let gone = book.secs();
+        assert!(
+            (from + long + VOICE_TAIL..from + long + VOICE_TAIL + 0.05).contains(&gone),
+            "the fade-out began at {gone}"
+        );
+        // a short voice leaves the reading's length as it was
+        let mut short = Run::new(beats(&valkyrie()).unwrap());
+        short.tick(0.0);
+        let read = short.length();
+        short.set_voice(0.5);
+        assert_eq!(short.length(), read);
+    }
+
+    #[test]
     fn a_text_laid_out_otherwise_has_no_beats() {
         assert!(beats(&["It is written in the Book of Tyr:".to_string()]).is_none());
     }
@@ -666,6 +718,56 @@ mod tests {
         .collect()
     }
 
+    /// Every telling of the legacy text: each role's genders and
+    /// alignments (a Priest's under every other role's pantheon), as
+    /// (code, a woman, alignment, god, rank).
+    fn tellings() -> Vec<(&'static str, bool, i32, &'static str, &'static str)> {
+        let mut out = Vec::new();
+        for &(code, rank_m, rank_f, gods, aligns, genders) in &ROLES {
+            for &female in genders {
+                for &align in aligns {
+                    // a Priest serves another role's pantheon
+                    let pantheons: Vec<[&str; 3]> = if code == "Pri" {
+                        ROLES.iter().filter(|r| r.0 != "Pri").map(|r| r.3).collect()
+                    } else {
+                        vec![gods]
+                    };
+                    for pantheon in pantheons {
+                        let god = pantheon[(1 - align) as usize];
+                        let rank = if female { rank_f } else { rank_m };
+                        out.push((code, female, align, god, rank));
+                    }
+                }
+            }
+        }
+        out
+    }
+
+    /// Every English beat of every telling has its voice in the project
+    /// (its own clip, or the Hero beat's two), so that a text changed
+    /// here or in the engine does not go silent unnoticed.
+    #[test]
+    fn every_english_beat_of_every_hero_is_read_aloud() {
+        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../godot/audio/vo");
+        let exists = |p: &str| std::path::Path::new(&format!("{dir}/{p}")).is_file();
+        let mut silent = std::collections::BTreeSet::new();
+        let all = tellings();
+        assert!(all.len() > 100, "{} tellings", all.len());
+        for (code, female, align, god, rank) in all {
+            let beats = beats(&legacy_lines(god, rank)).expect("beats");
+            for text in beats {
+                if crate::narration::clips_for("en", &text, exists).is_empty() {
+                    silent.insert(format!("{code} {female} {align}: {text}"));
+                }
+            }
+        }
+        assert!(
+            silent.is_empty(),
+            "{} English beats with no clip (record them by the dump's keys): {silent:#?}",
+            silent.len()
+        );
+    }
+
     /// VO_DUMP=<file> cargo test -p renethack-gd --lib vo_texts_dump:
     /// every beat's text for every role, gender and alignment (a Priest's
     /// for every other role's pantheon), in English and in Russian (through
@@ -694,37 +796,21 @@ mod tests {
         let mut rows = Vec::new();
         for lang in [Lang::En, Lang::Ru] {
             i18n::set_lang(lang);
-            for &(code, rank_m, rank_f, gods, aligns, genders) in &ROLES {
-                for &female in genders {
-                    i18n::set_hero_female(female);
-                    for &align in aligns {
-                        // a Priest serves another role's pantheon
-                        let pantheons: Vec<[&str; 3]> = if code == "Pri" {
-                            ROLES.iter().filter(|r| r.0 != "Pri").map(|r| r.3).collect()
-                        } else {
-                            vec![gods]
-                        };
-                        for pantheon in pantheons {
-                            let god = pantheon[(1 - align) as usize];
-                            let rank = if female { rank_f } else { rank_m };
-                            let english = legacy_lines(god, rank);
-                            let refs: Vec<&str> = english.iter().map(String::as_str).collect();
-                            let shown =
-                                i18n::engine_window(&refs).unwrap_or_else(|| english.clone());
-                            let beats = beats(&shown).unwrap_or_else(|| {
-                                panic!("{code} {female} {align} {god}: not cut: {shown:?}")
-                            });
-                            rows.push(serde_json::json!({
-                                "lang": if lang == Lang::Ru { "ru" } else { "en" },
-                                "role": code,
-                                "gender": if female { "female" } else { "male" },
-                                "align": align,
-                                "god": god.trim_start_matches('_'),
-                                "beats": beats,
-                            }));
-                        }
-                    }
-                }
+            for (code, female, align, god, rank) in tellings() {
+                i18n::set_hero_female(female);
+                let english = legacy_lines(god, rank);
+                let refs: Vec<&str> = english.iter().map(String::as_str).collect();
+                let shown = i18n::engine_window(&refs).unwrap_or_else(|| english.clone());
+                let beats = beats(&shown)
+                    .unwrap_or_else(|| panic!("{code} {female} {align} {god}: not cut: {shown:?}"));
+                rows.push(serde_json::json!({
+                    "lang": if lang == Lang::Ru { "ru" } else { "en" },
+                    "role": code,
+                    "gender": if female { "female" } else { "male" },
+                    "align": align,
+                    "god": god.trim_start_matches('_'),
+                    "beats": beats,
+                }));
             }
         }
         i18n::set_lang(Lang::En);

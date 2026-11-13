@@ -1203,6 +1203,7 @@ mod tests {
                     ..crate::Gameplay::default()
                 },
                 prologue: crate::PrologueWhen::EveryGame,
+                narration_off: true,
                 order_speed: Some(crate::OrderSpeed::Fast),
                 walk_to_stairs: true,
                 command_wheel: true,

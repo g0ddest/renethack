@@ -850,6 +850,7 @@ fn old_profile() -> Profile {
                 ..nh_world::Gameplay::default()
             },
             prologue: nh_world::PrologueWhen::default(),
+            narration_off: true,
             order_speed: Some(nh_world::OrderSpeed::Fast),
             walk_to_stairs: true,
             command_wheel: true,

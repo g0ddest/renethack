@@ -429,6 +429,10 @@ const PROSE: &[(&str, &str)] = &[
     ("Public domain", "credits-md-public-domain"),
     ("Creative Commons Attribution", "credits-md-cc-by"),
     ("Mixes", "credits-md-mixes"),
+    (
+        "The narration listed under “Generated for this project”",
+        "credits-md-generated-voice",
+    ),
     ("The help's sources", "credits-md-help"),
     ("The in-game help", "credits-md-help-about"),
     ("English", "credits-md-english"),

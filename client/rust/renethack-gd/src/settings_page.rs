@@ -106,6 +106,7 @@ impl Section {
                 Field::Language,
                 Field::ReduceEffects,
                 Field::Prologue,
+                Field::Narration,
                 Field::Hints,
             ],
             Section::Gameplay => &GAMEPLAY,
@@ -161,6 +162,8 @@ pub enum Field {
     ReduceEffects,
     /// When the prologue plays before a new game.
     Prologue,
+    /// The prologue's words read aloud.
+    Narration,
     /// The first-steps guide's hint cards and quest page.
     Hints,
     /// A NetHack option: a new game's at the title, the game's over it.
@@ -200,6 +203,7 @@ impl Field {
             Field::Language => tr!("settings-language"),
             Field::ReduceEffects => tr!("settings-reduce-effects"),
             Field::Prologue => tr!("settings-prologue"),
+            Field::Narration => tr!("settings-narration"),
             Field::Hints => tr!("settings-hints"),
             Field::Game(o) => match o {
                 GameOption::Autopickup => tr!("settings-autopickup"),
@@ -264,6 +268,7 @@ impl Field {
             Field::Language => tr!("settings-language-about"),
             Field::ReduceEffects => tr!("settings-reduce-effects-about"),
             Field::Prologue => tr!("settings-prologue-about"),
+            Field::Narration => tr!("settings-narration-about"),
             Field::Hints => tr!("settings-hints-about"),
             Field::Game(o) => {
                 let what = match o {
@@ -493,6 +498,8 @@ pub fn value_text(field: Field, v: &View) -> String {
             PrologueWhen::EveryGame => tr!("settings-prologue-every"),
             PrologueWhen::Never => tr!("settings-prologue-never"),
         },
+        Field::Narration if v.settings.narration_off => tr!("settings-off"),
+        Field::Narration => tr!("settings-on"),
         Field::Hints if v.settings.hints_off => tr!("settings-off"),
         Field::Hints => tr!("settings-on"),
         // the game has not told them yet
@@ -640,6 +647,10 @@ pub fn step(field: Field, v: &View, dir: i32, wrap: bool) -> Option<Change> {
         }
         Field::Prologue => {
             s.prologue = step_through(&PrologueWhen::ALL, s.prologue, dir, wrap);
+        }
+        // On first, then Off
+        Field::Narration => {
+            s.narration_off = step_through(&[false, true], s.narration_off, dir, wrap);
         }
         // On first, then Off: → turns the hints off
         Field::Hints => {

@@ -44,6 +44,9 @@ pub struct Settings {
     /// game.
     #[serde(default, skip_serializing_if = "PrologueWhen::is_default")]
     pub prologue: PrologueWhen,
+    /// The prologue's words read without its narrator's voice.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub narration_off: bool,
     /// How fast the client's own orders step (a walk, a held key, a rest):
     /// the player's choice, else the keys profile's (`order_speed_for`).
     #[serde(default, skip_serializing_if = "Option::is_none")]

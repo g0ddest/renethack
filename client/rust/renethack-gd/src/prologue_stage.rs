@@ -86,6 +86,10 @@ const SKY_TOP: Color = Color::from_rgb(0.012, 0.004, 0.003);
 const AMULET_FROM: f32 = 3.6;
 const AMULET_TO: f32 = -1.3;
 const AMULET_TALL: f32 = 1.25;
+/// It sinks over this long: its disc touches the lava at about 8.2 s and
+/// its chain is under at 11.1 s, the narrator's "and he hid it in the
+/// dark cavities of Gehennom" (8.2 to 11.0 s into the beat).
+const AMULET_SINK: f32 = 13.5;
 const LAVA_LIGHT: Color = Color::from_rgb(1.0, 0.42, 0.14);
 const STONE_LIGHT: Color = Color::from_rgb(1.0, 0.08, 0.04);
 const STONE_BEAT: f32 = 2.4;
@@ -1546,7 +1550,7 @@ impl MapView {
             // it sinks slowly, swaying on its chain (its back is plain: it
             // never turns it to us), and is gone under the lava; the lava's
             // light on it the stronger the nearer, its stone beating
-            let k = smooth((t / 13.0).min(1.0));
+            let k = smooth((t / AMULET_SINK).min(1.0));
             let y = AMULET_FROM + (AMULET_TO - AMULET_FROM) * k;
             let at = mid + Vector3::new(0.0, y, 0.0);
             a.node.set_position(at);
@@ -2125,7 +2129,8 @@ fn camera(
             let aim = mid + v(0.0, 2.0 + 0.3 * k, -2.0);
             (mid + v(0.0, 1.9 + 0.3 * k, 6.2 - 0.7 * k), aim)
         }
-        // round the hero, close
+        // round the hero, close (as long as her two sentences are read
+        // aloud)
         Beat::Hero => {
             let hero = hero.unwrap_or(v(
                 crate::title_scene::HERO.0 as f32,
@@ -2133,7 +2138,7 @@ fn camera(
                 crate::title_scene::HERO.1 as f32,
             ));
             let aim = hero + v(0.0, 1.05, 0.0);
-            let yaw = (-24.0 + 48.0 * smooth(t / 16.0)).to_radians();
+            let yaw = (-24.0 + 48.0 * smooth(t / 20.0)).to_radians();
             let pitch = 12f32.to_radians();
             let d = 3.4;
             let off = v(

@@ -137,3 +137,15 @@ for which cue.
 | `ccby/mix/amb_water.ogg` | The Plane of Water: flowing water, a watery drone | Water flowing sound (erxer1, CC BY 3.0); Designed Drone SFX Pack: Aqua (Leonardo Calvo (thesoundrack), CC BY 4.0) |
 | `ccby/mix/amb_astral.ogg` | The Astral Plane: singing clouds, far bells, a shrine | Designed Drone SFX Pack: Cloudy Sings (Leonardo Calvo (thesoundrack), CC BY 4.0); Designed Drone SFX Pack: Distant Bells (Leonardo Calvo (thesoundrack), CC BY 4.0); Dark Shrine Loop (a remix of yd's Shrine) (Iwan Gabovitch (qubodup), CC0) |
 | `ccby/mix/amb_title.ogg` | The title: fires crackling in a dark hall | Fireplace Sound loop (PagDev, CC0); Fire Loop (Iwan Gabovitch (qubodup), CC BY 3.0); Loopable Dungeon Ambience (JaggedStone, CC0) |
+
+## Generated for this project
+
+The narration under `vo/` was read for this game by ElevenLabs'
+text-to-speech (its multilingual v2 model, a voice designed for this game)
+on its owner's account, from the prologue's own words, then its trailing
+silence trimmed and re-encoded as mono Ogg Vorbis; nothing else was
+changed.
+
+| Where | What |
+|---|---|
+| `vo/en/` | The prologue read aloud in English |

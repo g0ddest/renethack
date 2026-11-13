@@ -82,6 +82,10 @@ const FIGHT_DUCK: f32 = 0.5;
 const DUCK_DOWN: f32 = 0.15;
 const DUCK_UP: f32 = 1.2;
 const DUCK_HOLD: f64 = 0.3;
+/// The music under the narration (a gain), and the breath between two
+/// clips of one beat (seconds).
+const NARRATION_DUCK: f32 = 0.3;
+const NARRATION_GAP: f64 = 0.35;
 
 /// A feature's loop fades in and out over this, and is as loud as at
 /// its side within this many metres.
@@ -672,6 +676,12 @@ pub struct Audio {
     emitters: Vec<Emitter>,
     /// The music is held down under a jingle until then.
     jingle_until: f64,
+    /// The prologue's narrator: the clips still to speak, when the next
+    /// may start, and the music held down under it till then.
+    narrator: Gd<AudioStreamPlayer>,
+    to_speak: VecDeque<Gd<AudioStream>>,
+    speak_at: f64,
+    narrate_until: f64,
     /// The sound's own time this frame (starting sounds, the waiting ones,
     /// the ears), and that of the last frames (files loading ahead aside).
     cost: Duration,
@@ -709,6 +719,9 @@ impl Audio {
                 Voice::new(Player::Flat(p))
             })
             .collect();
+        let mut narrator = AudioStreamPlayer::new_alloc();
+        narrator.set_name("Narrator");
+        root.add_child(&narrator);
         let ambience = Loop::new(&mut root, "Ambience", AMBIENCE_FADE);
         let music = Loop::new(&mut root, "Music", MUSIC_FADE);
         let emitters = (0..crate::hearing::EMIT_MAX)
@@ -740,6 +753,10 @@ impl Audio {
             music,
             emitters,
             jingle_until: f64::NEG_INFINITY,
+            narrator,
+            to_speak: VecDeque::new(),
+            speak_at: f64::NEG_INFINITY,
+            narrate_until: f64::NEG_INFINITY,
             cost: Duration::ZERO,
             costs: VecDeque::new(),
         }
@@ -747,6 +764,34 @@ impl Audio {
 
     pub fn manifest(&self) -> &Manifest {
         &self.manifest
+    }
+
+    /// The prologue's narrator speaks `clips` one after another (a breath
+    /// between), whatever it was saying stopped; the music goes down under
+    /// it. How long it speaks.
+    pub fn narrate(&mut self, clips: Vec<Gd<AudioStream>>) -> f64 {
+        self.hush();
+        let n = clips.len();
+        let secs = clips.iter().map(|c| c.get_length()).sum::<f64>()
+            + NARRATION_GAP * n.saturating_sub(1) as f64;
+        self.to_speak = clips.into();
+        self.speak_at = self.clock;
+        self.narrate_until = self.clock + secs + DUCK_HOLD;
+        secs
+    }
+
+    /// The narrator falls silent.
+    pub fn hush(&mut self) {
+        self.to_speak.clear();
+        if self.narrator.is_playing() {
+            self.narrator.stop();
+        }
+        self.narrate_until = self.narrate_until.min(self.clock);
+    }
+
+    /// The narrator is speaking (its clips' time not over; self-tests).
+    pub fn narrating(&self) -> bool {
+        self.clock < self.narrate_until
     }
 
     /// Play `sound`, now or after its delay.
@@ -914,9 +959,21 @@ impl Audio {
             e.update(delta as f32, &mut self.picker);
         }
         let now = self.clock;
-        // the mixer: the music under a jingle, the ambience under a fight's
+        // the narrator's next clip, after a breath
+        if now >= self.speak_at
+            && !self.narrator.is_playing()
+            && let Some(clip) = self.to_speak.pop_front()
+        {
+            self.speak_at = now + clip.get_length() + NARRATION_GAP;
+            self.narrator.set_stream(&clip);
+            self.narrator.play();
+        }
+        // the mixer: the music under a jingle or the narrator, the ambience
+        // under a fight's
         self.music.duck_to = if now < self.jingle_until {
             JINGLE_DUCK
+        } else if now < self.narrate_until {
+            NARRATION_DUCK
         } else {
             1.0
         };

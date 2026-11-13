@@ -286,6 +286,28 @@ pub(super) fn prologue_replay() -> Vec<Step> {
         }),
         Step::Push(UiEvent::ReplayPrologue),
         Step::Wait("the Book, over the title", |g| shown(g, Beat::Book)),
+        Step::Wait(
+            "the narrator reads the Book's words (a Valkyrie of Tyr's are recorded)",
+            |g| {
+                let p = g.prologue.as_ref().ok_or("the prologue ended")?;
+                if p.narration.as_ref().is_none_or(|n| !n.voiced(0)) {
+                    return Err("no clip for the Book's words".into());
+                }
+                if !g.ui.as_ref().is_some_and(|ui| ui.audio.narrating()) {
+                    return Ok(false);
+                }
+                // and the beat waits for the voice: the clip and a breath
+                // are longer than the words' reading
+                let read = crate::prologue::reading_secs(p.run.text());
+                if p.run.length() <= read {
+                    return Err(format!(
+                        "the voiced Book lasts {:.1} s, no longer than its reading ({read:.1} s)",
+                        p.run.length()
+                    ));
+                }
+                Ok(true)
+            },
+        ),
         Step::Call("told for the hero kept with it, not the last game's", |g| {
             let h = g.prologue_hero();
             if !(h.role == "Val" && h.female && h.align == 1) {

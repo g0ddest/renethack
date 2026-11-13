@@ -98,6 +98,10 @@ pub(crate) struct PrologueShown {
     /// with its text (a new game's is the status's).
     pub(crate) align: i32,
     replay: bool,
+    /// Its narration (none in a language without a voice, or turned off),
+    /// and whether the beat's voice is still to start.
+    pub(crate) narration: Option<crate::narration::Narration>,
+    voice_due: bool,
 }
 
 /// Arguments after `--` on the Godot command line.
@@ -5670,6 +5674,7 @@ impl RenethackGame {
             });
             self.legacy_hero_of = Some(self.session_serial);
         }
+        let narration = self.narration_of(&texts);
         self.prologue = Some(PrologueShown {
             run: crate::prologue::Run::new(texts),
             english,
@@ -5677,6 +5682,8 @@ impl RenethackGame {
             female,
             align,
             replay,
+            narration,
+            voice_due: false,
         });
         self.prologue_fade = None;
         if replay {
@@ -5687,6 +5694,20 @@ impl RenethackGame {
         let ui = self.ui_mut();
         ui.prologue.set_visible(true);
         true
+    }
+
+    /// The narration of `texts` in the language played (none turned off,
+    /// none in the pseudo-language).
+    fn narration_of(&self, texts: &[String; 6]) -> Option<crate::narration::Narration> {
+        if self.settings.narration_off {
+            return None;
+        }
+        let lang = match i18n::lang() {
+            i18n::Lang::En => Some("en"),
+            i18n::Lang::Ru => Some("ru"),
+            i18n::Lang::Pseudo => None,
+        };
+        crate::narration::Narration::new(texts, lang)
     }
 
     /// Whom the prologue is told for now: the engine's word on the hero
@@ -5764,6 +5785,24 @@ impl RenethackGame {
                         p.run.set_texts(texts);
                     }
                 }
+                // the narrator: this beat's voice due (the clips asked again
+                // if its words were said again)
+                let said_again = self.prologue.as_ref().and_then(|p| {
+                    let asked = p.narration.as_ref().map(|n| n.texts());
+                    (asked.is_some() && asked != Some(p.run.texts())).then(|| p.run.texts().clone())
+                });
+                if let Some(texts) = said_again {
+                    let narration = self.narration_of(&texts);
+                    if let Some(p) = self.prologue.as_mut() {
+                        p.narration = narration;
+                    }
+                }
+                if let Some(p) = self.prologue.as_mut() {
+                    p.voice_due = p.narration.is_some();
+                }
+                if let Some(ui) = self.ui.as_mut() {
+                    ui.audio.hush();
+                }
                 if let (Some(ui), Some(cat)) = (self.ui.as_mut(), catalog.as_deref()) {
                     ui.map.show_prologue(Some(beat), &hero, cat);
                 }
@@ -5774,6 +5813,7 @@ impl RenethackGame {
             }
             None => {}
         }
+        self.start_voice();
         let Some(p) = self.prologue.as_ref() else {
             return false;
         };
@@ -5791,12 +5831,50 @@ impl RenethackGame {
         false
     }
 
+    /// The beat's narration starts with its words once its clips are
+    /// loaded (not loaded by `VOICE_LATE`, the beat is read in silence);
+    /// the beat then lasts as long as the voice.
+    fn start_voice(&mut self) {
+        let Some(p) = self
+            .prologue
+            .as_mut()
+            .filter(|p| p.voice_due && p.run.secs() >= crate::prologue::VOICE_AT)
+        else {
+            return;
+        };
+        let beat = p.run.beat().index();
+        let clips = p.narration.as_ref().and_then(|n| n.ready(beat));
+        match clips {
+            Some(clips) => {
+                p.voice_due = false;
+                if !clips.is_empty()
+                    && let Some(ui) = self.ui.as_mut()
+                {
+                    let secs = ui.audio.narrate(clips);
+                    p.run.set_voice(secs);
+                    godot_print!(
+                        "renethack: prologue: the {} beat read aloud at {:.1} s for {secs:.1} s, \
+                         the beat {:.1} s",
+                        p.run.beat().name(),
+                        p.run.secs(),
+                        p.run.length()
+                    );
+                }
+            }
+            None if p.run.secs() > crate::prologue::VOICE_LATE => p.voice_due = false,
+            None => {}
+        }
+    }
+
     /// The prologue over (played out or skipped): the game it hid (or the
     /// title it was replayed over) comes up out of its black.
     fn end_prologue(&mut self) {
         let Some(p) = self.prologue.take() else {
             return;
         };
+        if let Some(ui) = self.ui.as_mut() {
+            ui.audio.hush();
+        }
         let hero = crate::map_view::PrologueHero::default();
         let catalog = self.catalog.clone();
         if let (Some(ui), Some(cat)) = (self.ui.as_mut(), catalog.as_deref()) {
