@@ -27,18 +27,22 @@
 
 use std::time::{Duration, Instant};
 
-use godot::classes::base_material_3d::{Flags, ShadingMode, TextureParam};
+use godot::classes::base_material_3d::{
+    BlendMode, CullMode, Flags, ShadingMode, TextureParam, Transparency,
+};
 use godot::classes::fast_noise_lite::NoiseType;
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::image::Format;
 use godot::classes::light_3d::Param;
 use godot::classes::particle_process_material::{EmissionShape, Parameter};
 use godot::classes::rendering_server::FogVolumeShape;
+use godot::classes::ribbon_trail_mesh::Shape as RibbonShape;
 use godot::classes::{
     CameraAttributesPractical, FastNoiseLite, FogMaterial, FogVolume, GpuParticles3D, Gradient,
     GradientTexture1D, GradientTexture2D, Image, ImageTexture, Material, Mesh, MeshInstance3D,
-    Node3D, NoiseTexture3D, OmniLight3D, PackedScene, ParticleProcessMaterial, QuadMesh, Resource,
-    Shader, ShaderMaterial, SphereMesh, SpotLight3D, StandardMaterial3D, Texture2D, Texture3D,
+    Node3D, NoiseTexture3D, OmniLight3D, PackedScene, ParticleProcessMaterial, PlaneMesh, QuadMesh,
+    Resource, RibbonTrailMesh, Shader, ShaderMaterial, SphereMesh, SpotLight3D, StandardMaterial3D,
+    Texture2D, Texture3D,
 };
 use godot::prelude::*;
 use nh_protocol::{Catalog, Glyph, GlyphKind, LevelNotice, mg};
@@ -80,15 +84,37 @@ const SKY_TOP: Color = Color::from_rgb(0.012, 0.004, 0.003);
 /// life), the lava's light on it from below, its stone's red light, and a
 /// beat of the stone's glow every so many seconds.
 const AMULET_FROM: f32 = 3.6;
-const AMULET_TO: f32 = -0.7;
+const AMULET_TO: f32 = -1.3;
 const AMULET_TALL: f32 = 1.25;
 const LAVA_LIGHT: Color = Color::from_rgb(1.0, 0.42, 0.14);
 const STONE_LIGHT: Color = Color::from_rgb(1.0, 0.08, 0.04);
 const STONE_BEAT: f32 = 2.4;
+/// The lava's answer as the Amulet goes in: the surface's height, the
+/// Amulet's disc's foot below its stone and its chain's top above it (in
+/// its model's units), the molten colour, the flare's reach and brightness
+/// and how long it dies over, the ring's spread and life, how long the spot
+/// takes to cool once the Amulet is under, and how long the garnet's red
+/// shows through as it goes.
+const LAVA_TOP: f32 = 0.0;
+const DISC_BELOW: f32 = 0.57;
+const CHAIN_ABOVE: f32 = 1.33;
+const MOLTEN: Color = Color::from_rgb(1.0, 0.36, 0.07);
+const FLARE_REACH: f32 = 5.5;
+const FLARE: f32 = 3.2;
+const FLARE_SECS: f32 = 1.4;
+const RING_REACH: f32 = 3.2;
+const RING_SECS: f32 = 1.4;
+const COOL_SECS: f32 = 1.8;
+/// The molten spot's width and its brightest, and the ring's brightest
+/// (deep orange, never cream: brighter burns to white).
+const SPOT_WIDE: f32 = 2.2;
+const SPOT_GLOW: f32 = 1.1;
+const RING_GLOW: f32 = 1.3;
+const GARNET_SECS: f32 = 0.6;
 /// How high over the lava its own lights hang in the Amulet's cavity, and
 /// how bright they are there.
 const LAVA_LOW: f32 = 0.12;
-const LAVA_DIM: f32 = 0.45;
+const LAVA_DIM: f32 = 0.35;
 /// The haze the light pours through while the prologue plays (the air's
 /// own: none, the scenes' haze where it shows), and how brightly the light
 /// pouring down lights it.
@@ -98,6 +124,9 @@ const BEAM_HAZE: f32 = 8.0;
 /// the god's statue: before its cowl it lit the black within).
 const SHAFT_DENSITY: f32 = 0.25;
 const GOD_SHAFT: f32 = 0.08;
+/// The god's shaft's haze: from the light to above the statue's hood, and
+/// from under its cowl down (shares of the way down).
+const COWL_GAP: &[(f32, f32)] = &[(0.0, 0.62), (0.86, 1.0)];
 /// How brightly the braziers on the stage light the haze (the light
 /// pouring down shows the brighter).
 const FIRE_HAZE: f32 = 0.4;
@@ -235,7 +264,7 @@ const AMULET: Figure = Figure {
             U::V3(AMULET_STONE.0, AMULET_STONE.1, AMULET_STONE.2),
         ),
         ("heart_radius", U::F(0.09)),
-        ("heart_energy", U::F(2.0)),
+        ("heart_energy", U::F(2.6)),
         ("glow_pulse", U::F(0.7)),
     ],
 };
@@ -346,6 +375,24 @@ pub(super) struct Amulet {
     mat: Option<Gd<ShaderMaterial>>,
     lava: Gd<OmniLight3D>,
     stone: Gd<OmniLight3D>,
+    /// How tall it is drawn (its chain's top and its disc's foot from it).
+    tall: f32,
+    splash: Splash,
+}
+
+/// The lava's answer as the Amulet goes in: where it goes in, and when it
+/// first touched and when it was gone under (seconds into the beat); the
+/// warm flare, a ring of molten light spreading out, the molten spot that
+/// glows where it went in and cools, the surface bulging and closing over
+/// it, and the droplets, embers and smoke it throws up.
+struct Splash {
+    at: Vector3,
+    touched: Option<f32>,
+    under: Option<f32>,
+    flare: Gd<OmniLight3D>,
+    ring: (Gd<MeshInstance3D>, Gd<StandardMaterial3D>),
+    spot: (Gd<MeshInstance3D>, Gd<StandardMaterial3D>),
+    bursts: Vec<Gd<GpuParticles3D>>,
 }
 
 /// A beat's scene as drawn: what stands beside its level, and what moves.
@@ -614,8 +661,9 @@ impl MapView {
                 stage.gods_due = vec![God::Statue(statue, 0.0, STATUE_TALL)];
                 let down = statue + v(0.0, 2.4, 1.0);
                 let from = statue + v(0.0, 9.0, -0.8);
+                // (no haze before its cowl: the black within shows)
                 stage.beams.push((
-                    beam(&mut stage.root, down, from, HOLY, 13.0, GOD_SHAFT),
+                    beam(&mut stage.root, down, from, HOLY, 13.0, GOD_SHAFT, COWL_GAP),
                     7.0,
                 ));
                 let mut l = light(&mut stage.root, HOLY, altar + v(0.0, 2.2, 0.6), 5.0);
@@ -783,6 +831,7 @@ impl MapView {
                 MARDUK_LIGHT,
                 11.0,
                 SHAFT_DENSITY,
+                &[(0.0, 1.0)],
             ),
             4.0,
         ));
@@ -1076,12 +1125,204 @@ impl MapView {
         stone.set_param(Param::SPECULAR, 0.0);
         let mut lava = light(root, LAVA_LIGHT, high, 3.0);
         lava.set_param(Param::ENERGY, 0.0);
+        let splash = self.splash(root, Vector3::new(at.x, LAVA_TOP, at.z));
         Amulet {
             node,
             mat,
             lava,
             stone,
+            tall,
+            splash,
         }
+    }
+
+    /// The lava's answer at `at` (on its surface), waiting for the Amulet.
+    fn splash(&mut self, root: &mut Gd<Node3D>, at: Vector3) -> Splash {
+        let v = Vector3::new;
+        let mut flare = light(root, LAVA_LIGHT, at + v(0.0, 0.45, 0.25), FLARE_REACH);
+        flare.set_param(Param::ENERGY, 0.0);
+        let glow = |tex: &Gd<Texture2D>| {
+            let mut m = StandardMaterial3D::new_gd();
+            m.set_shading_mode(ShadingMode::UNSHADED);
+            m.set_transparency(Transparency::ALPHA);
+            m.set_blend_mode(BlendMode::ADD);
+            m.set_cull_mode(CullMode::DISABLED);
+            m.set_flag(Flags::DISABLE_FOG, true);
+            m.set_texture(TextureParam::ALBEDO, tex);
+            m.set_albedo(Color::BLACK);
+            // (over the lava, itself drawn among the see-through: else it
+            // may be drawn after, over the glow)
+            m.set_render_priority(2);
+            m
+        };
+        let flat = |root: &mut Gd<Node3D>, mat: &Gd<StandardMaterial3D>, at: Vector3| {
+            let mut plane = PlaneMesh::new_gd();
+            plane.set_size(Vector2::new(1.0, 1.0));
+            let mut mi = MeshInstance3D::new_alloc();
+            mi.set_mesh(&plane);
+            mi.set_material_override(mat);
+            mi.set_position(at);
+            mi.set_visible(false);
+            no_shadow(&mut mi);
+            root.add_child(&mi);
+            mi
+        };
+        // (kept: a material freed with the rehearsal's warm-up takes its
+        // shader with it, and the next made compiles it again)
+        let ring_mat = self
+            .kept("splash ring", || Some(glow(&crate::vfx::ring_texture())))
+            .unwrap_or_else(|| glow(&crate::vfx::ring_texture()));
+        let ring = flat(root, &ring_mat, at + v(0.0, 0.05, 0.0));
+        let cracks = self.kept("lava cracks", || {
+            crack_texture().map(|t| t.upcast::<Texture2D>())
+        });
+        let cracks = cracks.unwrap_or_else(crate::vfx::soft_texture);
+        let spot_mat = self
+            .kept("splash spot", || Some(glow(&cracks)))
+            .unwrap_or_else(|| glow(&cracks));
+        let spot = flat(root, &spot_mat, at + v(0.0, 0.06, 0.0));
+        let mut bursts = vec![self.droplets(), self.ember_burst(), self.smoke_puff()];
+        for b in &mut bursts {
+            b.set_position(at + v(0.0, 0.05, 0.0));
+            root.add_child(&*b);
+        }
+        Splash {
+            at,
+            touched: None,
+            under: None,
+            flare,
+            ring: (ring, ring_mat),
+            spot: (spot, spot_mat),
+            bursts,
+        }
+    }
+
+    /// Heavy droplets of molten rock thrown up, falling back in arcs, short
+    /// trails behind them (once, when it goes off).
+    fn droplets(&mut self) -> Gd<GpuParticles3D> {
+        let mut m = ParticleProcessMaterial::new_gd();
+        m.set_emission_shape(EmissionShape::SPHERE);
+        m.set_emission_sphere_radius(0.15);
+        m.set_direction(Vector3::UP);
+        m.set_spread(38.0);
+        m.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 2.0);
+        m.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 3.4);
+        m.set_gravity(Vector3::new(0.0, -9.8, 0.0));
+        m.set_param_min(Parameter::SCALE, 0.7);
+        m.set_param_max(Parameter::SCALE, 1.3);
+        m.set_color_ramp(&crate::vfx::ramp(Color::from_rgb(1.0, 0.3, 0.05), 1.1));
+        let mut p = GpuParticles3D::new_alloc();
+        p.set_process_material(&m);
+        p.set_amount(16);
+        p.set_lifetime(1.0);
+        p.set_one_shot(true);
+        p.set_explosiveness_ratio(0.9);
+        p.set_emitting(false);
+        p.set_trail_enabled(true);
+        p.set_trail_lifetime(0.14);
+        let mut trail = RibbonTrailMesh::new_gd();
+        trail.set_shape(RibbonShape::CROSS);
+        trail.set_size(0.05);
+        trail.set_sections(4);
+        p.set_draw_pass_mesh(0, &trail);
+        let trail_mat = || {
+            let mut mat = StandardMaterial3D::new_gd();
+            mat.set_shading_mode(ShadingMode::UNSHADED);
+            mat.set_transparency(Transparency::ALPHA);
+            mat.set_blend_mode(BlendMode::ADD);
+            mat.set_cull_mode(CullMode::DISABLED);
+            mat.set_flag(Flags::ALBEDO_FROM_VERTEX_COLOR, true);
+            mat.set_flag(Flags::PARTICLE_TRAILS_MODE, true);
+            mat.set_flag(Flags::DISABLE_FOG, true);
+            mat
+        };
+        let mat = self
+            .kept("splash trail", || Some(trail_mat()))
+            .unwrap_or_else(trail_mat);
+        p.set_material_override(&mat);
+        p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        p.set_visibility_aabb(Aabb::new(
+            Vector3::new(-2.0, -1.0, -2.0),
+            Vector3::new(4.0, 3.0, 4.0),
+        ));
+        p
+    }
+
+    /// A burst of embers rising (once).
+    fn ember_burst(&mut self) -> Gd<GpuParticles3D> {
+        let mut m = ParticleProcessMaterial::new_gd();
+        m.set_emission_shape(EmissionShape::SPHERE);
+        m.set_emission_sphere_radius(0.3);
+        m.set_direction(Vector3::UP);
+        m.set_spread(35.0);
+        m.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 0.9);
+        m.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 2.2);
+        m.set_gravity(Vector3::new(0.0, 0.1, 0.0));
+        m.set_param_min(Parameter::SCALE, 0.65);
+        m.set_param_max(Parameter::SCALE, 1.35);
+        m.set_turbulence_enabled(true);
+        m.set_turbulence_noise_strength(0.5);
+        m.set_turbulence_noise_scale(1.5);
+        m.set_color_ramp(&crate::vfx::ramp(Color::from_rgb(1.0, 0.42, 0.12), 4.0));
+        let mut p = GpuParticles3D::new_alloc();
+        p.set_process_material(&m);
+        p.set_amount(50);
+        p.set_lifetime(2.2);
+        p.set_one_shot(true);
+        p.set_explosiveness_ratio(0.85);
+        p.set_randomness_ratio(0.5);
+        p.set_emitting(false);
+        p.set_draw_pass_mesh(0, &quad_mesh(0.045));
+        p.set_material_override(&crate::vfx::particle_material(
+            &crate::vfx::soft_texture(),
+            true,
+            false,
+            None,
+        ));
+        p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        p.set_visibility_aabb(Aabb::new(
+            Vector3::new(-2.0, -0.5, -2.0),
+            Vector3::new(4.0, 6.0, 4.0),
+        ));
+        p
+    }
+
+    /// A puff of dark smoke rising (once).
+    fn smoke_puff(&mut self) -> Gd<GpuParticles3D> {
+        let mut m = ParticleProcessMaterial::new_gd();
+        m.set_emission_shape(EmissionShape::SPHERE);
+        m.set_emission_sphere_radius(0.3);
+        m.set_direction(Vector3::UP);
+        m.set_spread(25.0);
+        m.set_param_min(Parameter::INITIAL_LINEAR_VELOCITY, 0.35);
+        m.set_param_max(Parameter::INITIAL_LINEAR_VELOCITY, 0.8);
+        m.set_gravity(Vector3::new(0.0, 0.12, 0.0));
+        m.set_param_min(Parameter::SCALE, 0.7);
+        m.set_param_max(Parameter::SCALE, 1.5);
+        m.set_turbulence_enabled(true);
+        m.set_turbulence_noise_strength(0.35);
+        m.set_turbulence_noise_scale(2.0);
+        m.set_color_ramp(&fading(Color::from_rgba(0.07, 0.045, 0.035, 0.7)));
+        let mut p = GpuParticles3D::new_alloc();
+        p.set_process_material(&m);
+        p.set_amount(14);
+        p.set_lifetime(2.6);
+        p.set_one_shot(true);
+        p.set_explosiveness_ratio(0.8);
+        p.set_emitting(false);
+        p.set_draw_pass_mesh(0, &quad_mesh(0.8));
+        p.set_material_override(&crate::vfx::particle_material(
+            &crate::vfx::soft_texture(),
+            false,
+            true,
+            None,
+        ));
+        p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+        p.set_visibility_aabb(Aabb::new(
+            Vector3::new(-2.0, -0.5, -2.0),
+            Vector3::new(4.0, 6.0, 4.0),
+        ));
+        p
     }
 
     /// The scene `secs` into its beat (`descent`: seconds into the last
@@ -1167,6 +1408,7 @@ impl MapView {
             m.set_shader_parameter("density", &(*density * rise).to_variant());
         }
         let mut amulet_at = None;
+        let mut touched_at = None;
         if let Some(a) = stage.amulet.as_mut() {
             // it sinks slowly, swaying on its chain (its back is plain: it
             // never turns it to us), and is gone under the lava; the lava's
@@ -1193,7 +1435,29 @@ impl MapView {
                 m.set_shader_parameter("clock", &t.to_variant());
                 m.set_shader_parameter("rise", &rise.to_variant());
             }
+            // the lava answers: when its disc's foot first touches it, and
+            // as its chain's top goes under
+            let k = a.tall / 1.9;
+            let sp = &mut a.splash;
+            if sp.touched.is_none() && at.y - DISC_BELOW * k <= LAVA_TOP {
+                sp.touched = Some(t);
+                for b in &mut sp.bursts {
+                    b.restart();
+                }
+                sp.ring.0.set_visible(true);
+                sp.spot.0.set_visible(true);
+                touched_at = Some(sp.at);
+            }
+            if sp.under.is_none() && sp.touched.is_some() && at.y + CHAIN_ABOVE * k <= LAVA_TOP {
+                sp.under = Some(t);
+            }
+            answer(sp, t);
             amulet_at = Some(at);
+        }
+        if let Some(at) = touched_at {
+            // (a placeholder: a lava splash's hiss, deep)
+            self.sounds
+                .push(crate::audio::Sound::new("prologue.lava").at(at));
         }
         let (eye, aim) = camera(beat, t, descent.map(|d| d as f32), mid, hero, amulet_at);
         self.stage_camera = Some((eye, aim));
@@ -1258,6 +1522,16 @@ impl MapView {
         if let Some(a) = stage.amulet.as_mut() {
             a.lava.set_param(Param::ENERGY, 2.0);
             a.stone.set_param(Param::ENERGY, 1.0);
+            // the lava's answer drawn once: its droplets' trails, its embers
+            // and smoke, its glowing ring and cracks
+            let sp = &mut a.splash;
+            sp.touched = Some(0.0);
+            for b in &mut sp.bursts {
+                b.restart();
+            }
+            sp.ring.0.set_visible(true);
+            sp.spot.0.set_visible(true);
+            answer(sp, 0.3);
         }
         let mut book = self.book_model();
         book.set_position(mid + v(0.0, 0.0, 1.0));
@@ -1403,6 +1677,101 @@ impl MapView {
         }
         world.map.print(end.0, end.1, &hero, floor.as_ref());
     }
+}
+
+/// The lava's answer `t` seconds into the beat: the flare flaring and
+/// dying, the ring spreading and fading, the spot hot where it went in
+/// (the garnet's red in it a moment as it goes under) and cooling after,
+/// the surface bulging over it and closing.
+fn answer(sp: &mut Splash, t: f32) {
+    let Some(touched) = sp.touched else {
+        return;
+    };
+    let s = t - touched;
+    let flare = smooth(s / 0.12) * (1.0 - smooth((s - 0.12) / FLARE_SECS));
+    sp.flare.set_param(Param::ENERGY, FLARE * flare);
+    let r = (s / RING_SECS).clamp(0.0, 1.0);
+    let (ring, ring_mat) = &mut sp.ring;
+    if r < 1.0 {
+        let wide = 0.4 + RING_REACH * (1.0 - (1.0 - r) * (1.0 - r));
+        ring.set_scale(Vector3::new(wide, 1.0, wide));
+        let fade = (1.0 - r) * (1.0 - r) * RING_GLOW;
+        ring_mat.set_albedo(Color::from_rgb(
+            MOLTEN.r * fade,
+            MOLTEN.g * fade,
+            MOLTEN.b * fade,
+        ));
+    } else if ring.is_visible() {
+        ring.set_visible(false);
+    }
+    // hot from the touch till it is under, then cooling back to crust
+    let cooled = sp.under.map_or(0.0, |u| smooth((t - u - 0.3) / COOL_SECS));
+    let heat = smooth(s / 0.15) * (1.0 - cooled) * (0.75 + 0.25 * (1.0 - smooth(s / 0.6)));
+    let garnet = sp.under.map_or(0.0, |u| {
+        let g = (t - u) / GARNET_SECS;
+        if (0.0..1.0).contains(&g) {
+            (g * std::f32::consts::PI).sin()
+        } else {
+            0.0
+        }
+    });
+    let hot = Color::from_rgb(
+        MOLTEN.r * (1.0 - garnet) + 0.9 * garnet,
+        MOLTEN.g * (1.0 - garnet) + 0.04 * garnet,
+        MOLTEN.b * (1.0 - garnet) + 0.04 * garnet,
+    );
+    let (spot, spot_mat) = &mut sp.spot;
+    // (closing in on where it went under as it cools)
+    let wide = SPOT_WIDE * (1.0 - 0.45 * cooled);
+    spot.set_scale(Vector3::new(wide, 1.0, wide));
+    let k = heat * SPOT_GLOW;
+    spot_mat.set_albedo(Color::from_rgb(hot.r * k, hot.g * k, hot.b * k));
+    if heat <= 0.001 && cooled >= 1.0 {
+        spot.set_visible(false);
+    }
+}
+
+/// The crust cracked about where the Amulet goes in: glowing seams between
+/// plates, thicker and hotter towards the middle, a molten core.
+fn crack_texture() -> Option<Gd<ImageTexture>> {
+    const N: usize = 128;
+    // the plates' middles, scattered (a fixed seed: the same cracks each time)
+    let mut state = 0x9E37_79B9u32;
+    let mut rand = move || {
+        state ^= state << 13;
+        state ^= state >> 17;
+        state ^= state << 5;
+        (state % 10_000) as f32 / 10_000.0
+    };
+    let seeds: Vec<(f32, f32)> = (0..26).map(|_| (rand(), rand())).collect();
+    let mut px = vec![0u8; N * N * 4];
+    for y in 0..N {
+        for x in 0..N {
+            let (u, v) = ((x as f32 + 0.5) / N as f32, (y as f32 + 0.5) / N as f32);
+            let r = ((u - 0.5).powi(2) + (v - 0.5).powi(2)).sqrt() * 2.0;
+            let (mut d1, mut d2) = (f32::MAX, f32::MAX);
+            for &(sx, sy) in &seeds {
+                let d = ((u - sx).powi(2) + (v - sy).powi(2)).sqrt();
+                if d < d1 {
+                    d2 = d1;
+                    d1 = d;
+                } else if d < d2 {
+                    d2 = d;
+                }
+            }
+            let seam = 1.0 - smooth((d2 - d1) / (0.035 + 0.045 * (1.0 - r)));
+            let reach = (1.0 - r).clamp(0.0, 1.0).powf(1.4);
+            let core = 1.0 - smooth(r / 0.32);
+            let k = (seam * reach).max(core * 0.9).clamp(0.0, 1.0);
+            let c = (k * 255.0) as u8;
+            let i = (y * N + x) * 4;
+            px[i..i + 4].copy_from_slice(&[c, c, c, 255]);
+        }
+    }
+    let data = PackedByteArray::from(px);
+    let mut image = Image::create_from_data(N as i32, N as i32, false, Format::RGBA8, &data)?;
+    image.generate_mipmaps();
+    ImageTexture::create_from_image(&image)
 }
 
 /// How far into a breath of `period` seconds `t` is: 0 out, 1 in (as
@@ -1784,7 +2153,8 @@ fn stand_piece(root: &mut Gd<Node3D>, scene: &Gd<PackedScene>, p: Piece) {
 
 /// Light pouring down on `at` from `from`, `angle` degrees from its
 /// middle to its edge: a spot light, and a column of haze along it (`haze`
-/// thick) that shows its shaft. Dark till the beat lights it.
+/// thick, in the `spans` of the way down it fills) that shows its shaft.
+/// Dark till the beat lights it.
 fn beam(
     root: &mut Gd<Node3D>,
     at: Vector3,
@@ -1792,6 +2162,7 @@ fn beam(
     color: Color,
     angle: f32,
     haze: f32,
+    spans: &[(f32, f32)],
 ) -> Gd<SpotLight3D> {
     let mut l = SpotLight3D::new_alloc();
     l.set_color(color);
@@ -1813,23 +2184,27 @@ fn beam(
     let y = back.cross(x);
     l.set_transform(Transform3D::new(Basis::from_cols(x, y, back), from));
     root.add_child(&l);
-    // the column, its y along the light, as wide as the light at its foot
-    let long = from.distance_to(at);
-    let wide = 2.0 * long * angle.to_radians().tan();
+    // the column in its spans (shares of the way down), its y along the
+    // light, each as wide as the light at its foot
     let mut mat = FogMaterial::new_gd();
     mat.set_density(haze);
     mat.set_albedo(Color::from_rgb(0.85, 0.82, 0.78));
     mat.set_edge_fade(0.7);
-    let mut shaft = FogVolume::new_alloc();
-    shaft.set_shape(FogVolumeShape::CYLINDER);
-    shaft.set_size(Vector3::new(wide, long, wide));
-    shaft.set_material(&mat);
-    let (sx, sz) = (y, x);
-    shaft.set_transform(Transform3D::new(
-        Basis::from_cols(sx, back, sz),
-        (from + at) / 2.0,
-    ));
-    root.add_child(&shaft);
+    let way = at - from;
+    for &(a, b) in spans {
+        let long = way.length() * (b - a);
+        let wide = 2.0 * way.length() * b * angle.to_radians().tan();
+        let mut shaft = FogVolume::new_alloc();
+        shaft.set_shape(FogVolumeShape::CYLINDER);
+        shaft.set_size(Vector3::new(wide, long, wide));
+        shaft.set_material(&mat);
+        let (sx, sz) = (y, x);
+        shaft.set_transform(Transform3D::new(
+            Basis::from_cols(sx, back, sz),
+            from + way * ((a + b) / 2.0),
+        ));
+        root.add_child(&shaft);
+    }
     l
 }
 

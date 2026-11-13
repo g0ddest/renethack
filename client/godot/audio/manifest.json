@@ -211,6 +211,7 @@
     "emit.lava": {"files": ["ccby/lamoot/lava/LavaLoop.ogg"], "bus": "Ambience", "volume": -4, "loop": true},
     "emit.water": {"files": ["ccby/kurt/stream/stream1.ogg", "ccby/kurt/stream/stream4.ogg"], "bus": "Ambience", "volume": -6, "loop": true},
     "emit.fountain": {"files": ["ccby/erxer1/water/water_0.ogg"], "bus": "Ambience", "volume": -3, "loop": true},
+    "prologue.lava": {"files": ["ccby/qubodup/lava/lava.wav"], "volume": -3, "pitch": [0.7, 0.76]},
     "music.title": {"files": ["cc0/kauffman/prologue_theme.ogg"], "bus": "Music", "volume": -2, "loop": true},
     "music.explore": {"files": ["ccby/ofdn/in_darkness.ogg", "ccby/davidkbd/crypt_of_shadows.ogg", "ccby/davidkbd/well_of_despair.ogg"], "bus": "Music", "volume": -2, "loop": true},
     "music.explore.gehennom": {"files": ["cc0/kauffman/kokopellis_graveyard.ogg", "ccby/ofdn/obscurium.ogg"], "bus": "Music", "volume": -2, "loop": true},
