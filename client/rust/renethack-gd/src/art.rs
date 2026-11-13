@@ -5591,8 +5591,28 @@ fn simulate_skirt(m: &Model) {
     let mut sim = SpringBoneSimulator3D::new_alloc();
     sim.set_name("SkirtSim");
     sim.set_setting_count(chains.len() as i32);
+    // the model's own node the centre of the swing: the map carrying the
+    // hero from cell to cell (and turning her) does not drag the hem
+    // behind her, only her own body's motion in a clip swings it
+    // (the path from the simulator, a child of the skeleton: ".." is the
+    // skeleton, "../.." its parent)
+    let mut up = 2;
+    let mut at = skeleton.get_parent();
+    while let Some(n) = at {
+        if n == inner.clone().upcast::<Node>() {
+            break;
+        }
+        up += 1;
+        at = n.get_parent();
+    }
+    let centre = NodePath::from(vec![".."; up].join("/").as_str());
     for (i, c) in chains.iter().enumerate() {
         let i = i as i32;
+        sim.set_center_from(
+            i,
+            godot::classes::spring_bone_simulator_3d::CenterFrom::NODE,
+        );
+        sim.set_center_node(i, &centre);
         sim.set_root_bone_name(i, &format!("skirt_{c}_0"));
         sim.set_end_bone_name(i, &format!("skirt_{c}_2"));
         sim.set_extend_end_bone(i, true);

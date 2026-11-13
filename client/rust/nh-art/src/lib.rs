@@ -2997,7 +2997,8 @@ mod tests {
         assert_eq!(held_name(&art, g.back), Some("dagger"));
         assert_eq!(g.hand_l, None, "an unlit lamp stays in the pack");
         assert_eq!(g.idle.as_deref(), Some("ual2/Idle_Shield"));
-        assert_eq!(g.attack.as_deref(), Some("Sword_Attack"));
+        // the spear's head leads (the sword's slash led with its butt)
+        assert_eq!(g.attack.as_deref(), Some("proc/pole"));
         assert!(!g.lit());
         // the lamp lit: in the left hand, and the idle holds it up
         let mut lit = items.clone();
