@@ -72,6 +72,7 @@ mod selftest;
 mod settings_page;
 mod sheet;
 mod sheet_view;
+mod shield_hand;
 mod skills;
 mod skills_view;
 #[cfg(debug_assertions)]

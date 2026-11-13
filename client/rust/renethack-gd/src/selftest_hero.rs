@@ -788,6 +788,54 @@ fn kit_blow(g: &mut RenethackGame) -> Result<(), String> {
     kit_turn(g, 70.0)
 }
 
+/// The poses RENETHACK_KIT_POSES holds the hero in: at rest, mid-stride,
+/// mid-blow, on guard (the kits' shield raised) and struck.
+const KIT_POSES: [&str; 5] = ["rest", "walk", "blow", "guard", "hit"];
+/// The views of each pose: its name, the hero's turn and the camera's
+/// distance (the game's own angle, 7 m off, turned three-quarters on).
+const KIT_VIEWS: [(&str, f32, f32); 4] = [
+    ("front", 0.0, 2.8),
+    ("left", 270.0, 2.8),
+    ("right", 90.0, 2.8),
+    ("game", 30.0, 7.0),
+];
+/// The pose and view under way (pose * views + view).
+static POSE_AT: AtomicUsize = AtomicUsize::new(0);
+
+/// The hero held in `KIT_POSES`' pose and turned to `KIT_VIEWS`' view now
+/// (`POSE_AT`): its clip at that moment, paused.
+fn kit_pose(g: &mut RenethackGame) -> Result<(), String> {
+    let i = POSE_AT.load(Ordering::Relaxed);
+    let (pose, (_, yaw, metres)) = (
+        KIT_POSES[i / KIT_VIEWS.len()],
+        KIT_VIEWS[i % KIT_VIEWS.len()],
+    );
+    let map = map_view(g)?;
+    let (idle, attack) = map.hero_fight_clips();
+    let m = map.hero_model().ok_or("no hero model")?;
+    let anims = &kit_art()?.model_at(m.model_index()).1.anims;
+    let (clip, at) = match pose {
+        "rest" => (idle, 0.5),
+        "walk" => (anims.walk.clone(), 0.3),
+        "blow" => {
+            let at = attack.as_deref().map_or(0.24, blow_at);
+            (attack, at)
+        }
+        "guard" => (Some("ual2/Idle_Shield".to_string()), 0.5),
+        _ => (anims.hit.clone(), 0.2),
+    };
+    let clip = clip.ok_or_else(|| format!("no clip for the {pose}"))?;
+    let mut p = m.player().cloned().ok_or("no animation player")?;
+    if !p.has_animation(clip.as_str()) {
+        return Err(format!("no clip {clip} for the {pose}"));
+    }
+    p.play_ex().name(clip.as_str()).custom_blend(0.0).done();
+    p.seek_ex(at).update(true).done();
+    p.pause();
+    kit_turn(g, yaw)?;
+    kit_distance(g, metres)
+}
+
 /// RENETHACK_KITS_LOOK=1: `kits` and `two-hands` only look (the pictures
 /// of an older art).
 fn only_look() -> bool {
@@ -972,7 +1020,8 @@ fn kit_distance(g: &mut RenethackGame, metres: f32) -> Result<(), String> {
 /// RENETHACK_KITS_LOOK=1: pictures only; RENETHACK_KIT_FAR=1: each also
 /// 7 m off, as a player sees them close in play; RENETHACK_KIT_PLAY=1: each
 /// also 7 m and 11 m off in the room they start in; RENETHACK_KIT_BACK=1:
-/// each also from behind; RENETHACK_KIT_SIDES=1: from either side.
+/// each also from behind; RENETHACK_KIT_SIDES=1: from either side;
+/// RENETHACK_KIT_POSES=1: in each pose from each view (`KIT_POSES`).
 pub(super) fn kits() -> Vec<Step> {
     let mut steps = vec![Step::Call("seed 1, the first hero", |g| {
         g.seed = Some(1);
@@ -1064,6 +1113,66 @@ pub(super) fn kits() -> Vec<Step> {
                 Step::Shot(shot),
                 Step::Call("facing the camera again", |g| kit_turn(g, 0.0)),
                 Step::Wait("a frame", |_| Ok(true)),
+            ]);
+        }
+        // RENETHACK_KIT_POSES=1: held in each pose (`KIT_POSES`) and seen
+        // from each view (`KIT_VIEWS`), `<rest>-pose-<pose>-<view>`: the
+        // off arm and what it holds against the hand (where the hand is on
+        // the screen, logged)
+        if std::env::var_os("RENETHACK_KIT_POSES").is_some() {
+            steps.push(Step::Call("the poses", |_| {
+                POSE_AT.store(0, Ordering::Relaxed);
+                Ok(())
+            }));
+            for (p, pose) in KIT_POSES.iter().enumerate() {
+                for (v, (view, _, _)) in KIT_VIEWS.iter().enumerate() {
+                    let shot: &'static str = format!("{rest}-pose-{pose}-{view}").leak();
+                    if p + v > 0 {
+                        steps.push(Step::Call("the next pose or view", |_| {
+                            POSE_AT.fetch_add(1, Ordering::Relaxed);
+                            Ok(())
+                        }));
+                    }
+                    steps.extend([
+                        Step::Call("held in the pose, turned to the view", kit_pose),
+                        Step::Wait("the camera there", camera_settled),
+                        Step::Wait("a frame", |_| Ok(true)),
+                        Step::Call("where the off hand is on the screen", |g| {
+                            let map = map_view(g)?;
+                            let m = map.hero_model().ok_or("no hero model")?;
+                            let at =
+                                crate::art::bone_at(&m.node, "hand_l").ok_or("no left hand")?;
+                            let p = map.on_screen(at).ok_or("off the screen")?;
+                            let i = POSE_AT.load(Ordering::Relaxed);
+                            let (pose, view) = (
+                                KIT_POSES[i / KIT_VIEWS.len()],
+                                KIT_VIEWS[i % KIT_VIEWS.len()].0,
+                            );
+                            let (role, gender) = kit_hero(KIT_AT.load(Ordering::Relaxed));
+                            godot_print!(
+                                "selftest: kit: pose {role}-{} {pose} {view}: the left hand at {:.0},{:.0}",
+                                &gender[..1],
+                                p.x,
+                                p.y
+                            );
+                            Ok(())
+                        }),
+                        Step::Shot(shot),
+                    ]);
+                }
+            }
+            steps.extend([
+                Step::Call("at rest, facing the camera, close", |g| {
+                    let map = map_view(g)?;
+                    let (idle, _) = map.hero_fight_clips();
+                    let m = map.hero_model().ok_or("no hero model")?;
+                    if let (Some(mut p), Some(idle)) = (m.player().cloned(), idle) {
+                        p.play_ex().name(idle.as_str()).done();
+                    }
+                    kit_turn(g, 0.0)?;
+                    kit_distance(g, 2.8)
+                }),
+                Step::Wait("the camera close again", camera_settled),
             ]);
         }
         // RENETHACK_KIT_PLAY=1: as in play, the HUD out, at 7 m and at the

@@ -27,6 +27,7 @@ use super::{
 };
 use crate::meshes::sphere;
 use crate::off_hand::{GuardClips, OffHand};
+use crate::shield_hand::ShieldHand;
 
 /// Seconds the left hand takes to go to a two-handed weapon's haft, or
 /// leave it.
@@ -37,6 +38,8 @@ pub const HELD_NODE: &str = "Held";
 pub const USE_NODE: &str = "InUse";
 /// The off hand's solver under the skeleton.
 pub const OFF_HAND: &str = "OffHand";
+/// The shield hand's modifier on a skeleton (`ShieldHand`).
+pub const SHIELD_HAND: &str = "ShieldHand";
 pub const LAMP_LIGHT: &str = "LampLight";
 /// Visual layers of held things: the map's and the hero's rim light's.
 const HELD_LAYERS: u32 = 1 | 1 << 1;
@@ -319,6 +322,33 @@ impl Art {
             show_slot(&mut worn, hand, false);
         }
         self.show_parts(&mut worn, &gear.worn);
+        // a body without finger bones closes its shield hand behind the
+        // boss: its wrist straight, the hand drawn in (`shield_fist`)
+        if let Some(fist) = self.manifest.model_at(m.key.model).1.shield_fist
+            && let Some(mut skeleton) = worn.skeleton.clone()
+        {
+            let own = skeleton
+                .get_node_or_null(SHIELD_HAND)
+                .and_then(|n| n.try_cast::<ShieldHand>().ok());
+            let held = gear.arm_l.is_some();
+            let hand = match own {
+                Some(hand) => Some(hand),
+                None if held => {
+                    let hand = ShieldHand::new_alloc();
+                    let mut modifier: Gd<SkeletonModifier3D> = hand.clone().upcast();
+                    modifier.set_name(SHIELD_HAND);
+                    skeleton.add_child(&modifier);
+                    Some(hand)
+                }
+                None => None,
+            };
+            if let Some(mut hand) = hand {
+                hand.bind_mut()
+                    .set_fist(Vector3::new(fist[0], fist[1], fist[2]));
+                let mut modifier: Gd<SkeletonModifier3D> = hand.upcast();
+                modifier.set_active(held);
+            }
+        }
         if let Some(skeleton) = worn.skeleton.clone() {
             self.wear(&mut worn.dressed, &skeleton, gear, m.key.model);
         }

@@ -373,6 +373,12 @@ pub struct ModelSpec {
     /// and on the doll. Blows and blocks raise it as ever.
     #[serde(default)]
     pub shield_down: bool,
+    /// With a shield on its arm, its shield hand (`hand_l`) held straight
+    /// on the wrist and scaled so in the bone's own frame: a body without
+    /// finger bones draws its open hand in to a fist's length behind the
+    /// boss, its fingers no longer hanging past the rim.
+    #[serde(default)]
+    pub shield_fist: Option<[f32; 3]>,
     /// Where this body holds things, by slot, where its build differs
     /// from the kits' the held slots are set for (a generated hero's
     /// shorter upper arm raises a shield before her face): instead of the
@@ -1601,6 +1607,7 @@ impl ArtManifest {
             far: None,
             edge_color: None,
             shield_down: false,
+            shield_fist: None,
             bare_chest: false,
             bare_legs: false,
             feet: None,
@@ -3086,6 +3093,11 @@ mod tests {
         let kit = art.model_index("role_valkyrie_m").unwrap();
         assert_eq!(art.rest_idle(generated, &g).as_deref(), Some("Idle"));
         assert_eq!(art.rest_idle(kit, &g), g.idle);
+        // and with no finger bones, her shield sits over her drawn-in fist
+        // (her own slot), where a kit's rigid fist takes the common one
+        assert!(art.model_at(generated).1.shield_fist.is_some());
+        assert_ne!(art.held_slot_of(generated, "arm_l"), art.held_slot("arm_l"));
+        assert_eq!(art.held_slot_of(kit, "arm_l"), art.held_slot("arm_l"));
         // the spear's head leads (the sword's slash led with its butt)
         assert_eq!(g.attack.as_deref(), Some("proc/pole"));
         assert!(!g.lit());
