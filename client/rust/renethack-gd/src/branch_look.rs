@@ -709,6 +709,9 @@ fn plane_look(plane: Plane) -> BranchLook {
             hero_light: 0.7,
             fog: rgb(0.7, 0.66, 0.9),
             fog_density: 0.003,
+            // (the air's own glow low: it painted the temple's dark
+            // foundations a flat grey-blue against the black about them)
+            haze: 0.2,
             darkness: rgb(0.012, 0.01, 0.035),
             dust: 0.0,
             under: Under::Stars,

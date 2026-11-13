@@ -9,6 +9,13 @@ uniform vec3 night : source_color = vec3(0.012, 0.01, 0.035);
 uniform vec3 rose : source_color = vec3(0.42, 0.16, 0.38);
 uniform vec3 blue : source_color = vec3(0.12, 0.2, 0.5);
 uniform vec3 star : source_color = vec3(1.0, 0.96, 0.9);
+// what is known of the level (map_view's fog of war, A: near something
+// known): behind it on the screen and about it the heavens are veiled in
+// the dark, so the temple's edges fall away into it, never a slab cut out
+// against the stars
+uniform sampler2D fow_tex : filter_linear, repeat_disable;
+uniform bool has_fow = false;
+const vec2 FIELD = vec2(80.0, 21.0);
 
 varying vec3 wpos;
 
@@ -66,5 +73,20 @@ void fragment() {
 	col += star * stars(s * 0.6, 0.06, 0.09, TIME);
 	col += star * stars(s * 1.3 + 17.0, 0.05, 0.12, TIME * 0.7) * 0.7;
 	col += star * stars(s * 2.6 + 41.0, 0.06, 0.16, 0.0) * 0.45;
+	if (has_fow) {
+		// where the eye's ray through this point crossed the level's plane
+		vec3 eye = CAMERA_POSITION_WORLD;
+		vec3 at = mix(eye, wpos, eye.y / max(eye.y - wpos.y, 1e-3));
+		vec2 uv = (at.xz + 0.5) / FIELD;
+		vec2 d = vec2(1.6) / FIELD;
+		float near = texture(fow_tex, uv).a * 2.0;
+		for (int i = 0; i < 6; i++) {
+			float a = float(i) * 1.0472;
+			near += texture(fow_tex, uv + vec2(cos(a), sin(a)) * d).a;
+		}
+		near /= 8.0;
+		float veil = smoothstep(0.03, 0.42, near + (fbm(at.xz * 0.35) - 0.5) * 0.15);
+		col = mix(col, night * 0.25, veil);
+	}
 	ALBEDO = col;
 }
