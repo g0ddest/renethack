@@ -8246,6 +8246,41 @@ impl MapView {
         Some((feet, tall))
     }
 
+    /// How far the feet at `feet` are under what they stand on (self-tests:
+    /// the prologue's descent): the highest top of the level's surfaces
+    /// under them (a floor, a tread, a rim) less than `KNEE` over them;
+    /// None when they are on or over it, or over nothing (a shaft, the
+    /// dark).
+    pub fn sunk_into(&self, feet: Vector3) -> Option<f32> {
+        const KNEE: f32 = 0.6;
+        let cell = (feet.x.round() as i32, feet.z.round() as i32);
+        let look = &self.cells.get(&cell)?.look;
+        let local = feet - Vector3::new(cell.0 as f32, 0.0, cell.1 as f32);
+        let mut top = (!look.sunk).then_some(look.ground);
+        for s in &look.solids {
+            if s.rot != Vector3::ZERO {
+                continue;
+            }
+            let (w, h, d) = match s.mesh {
+                crate::meshes::MeshKey::Box(w, h, d)
+                | crate::meshes::MeshKey::Bevel(w, h, d, _) => (
+                    crate::meshes::metres(w),
+                    crate::meshes::metres(h),
+                    crate::meshes::metres(d),
+                ),
+                _ => continue,
+            };
+            let t = s.pos.y + h / 2.0;
+            if (local.x - s.pos.x).abs() <= w / 2.0
+                && (local.z - s.pos.z).abs() <= d / 2.0
+                && t < feet.y + KNEE
+            {
+                top = Some(top.map_or(t, |o: f32| o.max(t)));
+            }
+        }
+        top.map(|t| t - feet.y).filter(|&under| under > 0.0)
+    }
+
     /// The hero's model (the doll shows it; self-tests look at its gear):
     /// on a steed, the rider's.
     pub fn hero_model(&self) -> Option<&Model> {

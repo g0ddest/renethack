@@ -99,6 +99,29 @@ fn words(g: &mut RenethackGame) -> Result<(), String> {
     Ok(())
 }
 
+/// During the descent the hero's feet are never under what they stand on
+/// (the floor, a tread of the stairs) by more than a few centimetres: she
+/// walks down the stairs, she does not sink through them.
+fn feet_on_ground(g: &RenethackGame) -> Result<(), String> {
+    const SUNK: f32 = 0.05;
+    let in_descent = g
+        .prologue
+        .as_ref()
+        .is_some_and(|p| p.run.beat() == Beat::Descent);
+    let Some(ui) = g.ui.as_ref().filter(|_| in_descent) else {
+        return Ok(());
+    };
+    if let Some((feet, _)) = ui.map.hero_stands()
+        && let Some(under) = ui.map.sunk_into(feet)
+        && under > SUNK
+    {
+        return Err(format!(
+            "in the descent the hero's feet are {under:.2} m under what she stands on, at {feet:?}"
+        ));
+    }
+    Ok(())
+}
+
 /// The game up after the prologue: its map and HUD, the black gone, its
 /// first command waiting.
 fn in_game(g: &RenethackGame) -> Result<bool, String> {
@@ -140,8 +163,9 @@ pub(super) fn prologue() -> Vec<Step> {
         }
     }
     steps.extend([
-        Step::Wait("the hero on the stairs down", |g| {
+        Step::Wait("the hero on the stairs down, her feet on them", |g| {
             fail_on_error_screen(g)?;
+            feet_on_ground(g)?;
             let on_stairs =
                 g.ui.as_ref()
                     .and_then(|ui| ui.map.hero_stands())
@@ -152,8 +176,9 @@ pub(super) fn prologue() -> Vec<Step> {
             Ok(on_stairs || g.prologue.is_none())
         }),
         Step::ShotIf("prologue-down", |g| Ok(g.prologue.is_some())),
-        Step::Wait("going down them", |g| {
+        Step::Wait("going down them, a tread at a time", |g| {
             fail_on_error_screen(g)?;
+            feet_on_ground(g)?;
             Ok(g.prologue
                 .as_ref()
                 .is_none_or(|p| p.run.descent().is_some_and(|d| d > 2.9)))

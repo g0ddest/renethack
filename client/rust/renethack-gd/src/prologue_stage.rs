@@ -324,15 +324,34 @@ const MOLOCH_HEART: (f32, f32, f32) = (0.10, 0.29, 0.24);
 const AMULET_STONE: (f32, f32, f32) = (0.0, -0.38, 0.12);
 /// What the prologue's figures are, loaded ahead in the background.
 pub(super) const FIGURES: [&str; 4] = [MARDUK.glb, MOLOCH.glb, AMULET.glb, STATUE.glb];
-/// The descent: the cells the hero walks to the stairs on, a step every
-/// this many seconds.
-const WALK: [(i32, i32); 4] = [(40, 10), (40, 9), (40, 8), (40, 7)];
-pub const STAIRS: (i32, i32) = (40, 6);
+/// The descent: the cells the hero walks on towards the stairs (south: the
+/// map's stairs down go down southwards, their top step at their north),
+/// a step every this many seconds; the stairs.
+const WALK: [(i32, i32); 2] = [(40, 11), (40, 12)];
+pub const STAIRS: (i32, i32) = (40, 13);
 const STEP_SECS: f64 = 0.62;
-/// On the stairs from this far into the descent, the hero goes down them,
-/// this deep by its end.
-const SINK_AT: f64 = 2.3;
-const SINK_DEPTH: f32 = 1.5;
+/// From this far into the descent the hero walks on by herself, down the
+/// stairs' treads into the dark of their shaft as the beat goes to black:
+/// this fast, this far (to their lowest tread: past it the level's floor
+/// lies over the way down, and her head would come up through it).
+const DOWN_AT: f64 = 1.2;
+const DOWN_SPEED: f32 = 0.9;
+const DOWN_RUN: f32 = 1.3;
+/// The stairs down as the map draws them (map_view, Terrain::StairsDown),
+/// from their middle: the near rim's far edge and its top, the shaft's
+/// near wall's far face (what she steps over onto the treads), the first
+/// tread's near edge and top, each tread this deep and this much lower.
+const RIM_FROM: f32 = -0.5;
+const RIM_TOP: f32 = 0.1;
+const LIP_TO: f32 = -0.32;
+const TREADS_FROM: f32 = -0.37;
+const TREAD_TOP: f32 = -0.08;
+const TREAD_DEEP: f32 = 0.18;
+const TREAD_DROP: f32 = 0.14;
+const NOSING: f32 = 0.02;
+/// The descent's set was laid out going north; it stands turned half round
+/// about this point (x, z) now that she goes south.
+const DESCENT_TURN: (f32, f32) = (40.0, 9.5);
 
 /// A piece of a beat's set: a scene of the kit at `at`, turned `yaw`
 /// degrees about the vertical, `scale` times its own size.
@@ -725,7 +744,8 @@ impl MapView {
             Beat::Descent => {
                 // fires either side of the way down
                 for (k, x) in [38.8, 41.2].into_iter().enumerate() {
-                    self.stage_brazier(&mut stage, v(x, 0.0, 8.6), k as f64 * 1.9);
+                    let at = turned(piece(VAULT, (x, 0.0, 8.6), 0.0, 1.0)).at;
+                    self.stage_brazier(&mut stage, at, k as f64 * 1.9);
                 }
             }
             Beat::Hero => {}
@@ -1444,12 +1464,27 @@ impl MapView {
                 }
             }
         }
-        // down the stairs, out of sight
-        if let Some(d) = descent.filter(|&d| d > SINK_AT) {
-            let k = smooth(((d - SINK_AT) / 1.3) as f32);
-            if let Some(mut node) = self.hero_model().map(|m| m.node.clone()) {
-                let p = node.get_position();
-                node.set_position(Vector3::new(p.x, -SINK_DEPTH * k * k, p.z));
+        // on by herself down the stairs, her feet on each tread, into the
+        // dark of their shaft (walking: her gait played; at its foot, still)
+        if let Some(d) = descent.filter(|&d| d > DOWN_AT) {
+            let from = WALK[WALK.len() - 1];
+            let run = DOWN_SPEED * (d - DOWN_AT) as f32;
+            let z = from.1 as f32 + run.min(DOWN_RUN);
+            let feet = Vector3::new(STAIRS.0 as f32, tread_under(z - STAIRS.1 as f32), z);
+            if let Some(m) = self.hero_model() {
+                let mut node = m.node.clone();
+                node.set_position(feet);
+                let clips = self.art.clips(m, false);
+                let clip = if run < DOWN_RUN {
+                    clips.gait
+                } else {
+                    clips.idle
+                };
+                if let (Some(mut player), Some(clip)) = (clips.player, clip)
+                    && player.get_current_animation().to_string() != clip
+                {
+                    player.play_ex().name(clip.as_str()).done();
+                }
             }
         }
         // the lava's own lights low over it in the Amulet's cavity: its rocks
@@ -1769,8 +1804,6 @@ impl MapView {
         };
         let start = WALK[from.saturating_sub(1).min(WALK.len() - 1)];
         let end = WALK[(to - 1).min(WALK.len() - 1)];
-        // the last step onto the stairs
-        let end = if to >= WALK.len() { STAIRS } else { end };
         if let Some(f) = floor.as_ref() {
             world.map.print(start.0, start.1, f, None);
         }
@@ -2111,11 +2144,14 @@ fn camera(
             (aim + off, aim)
         }
         // behind the hero as they go to the stairs, then down into them
+        // (she goes south: the camera north of her, over the floor as she
+        // goes down, looking down after her)
         Beat::Descent => {
-            let hero = hero.unwrap_or(v(40.0, 0.0, 10.0));
-            let down = descent.map_or(0.0, |d| smooth((d - 1.6) / 1.4));
-            let aim = hero + v(0.0, 0.9 - 0.9 * down, -1.6);
-            let eye = hero + v(0.0, 2.4 - 0.8 * down, 3.4 - 1.4 * down);
+            let hero = hero.unwrap_or(v(40.0, 0.0, 11.0));
+            let base = v(hero.x, 0.0, hero.z);
+            let down = descent.map_or(0.0, |d| smooth((d - DOWN_AT as f32) / 1.6));
+            let aim = base + v(0.0, 0.9 - 1.1 * down, 1.6);
+            let eye = base + v(0.0, 2.4 - 0.7 * down, -3.4 + 1.2 * down);
             (eye, aim)
         }
     }
@@ -2194,8 +2230,8 @@ fn level(beat: Beat, hero: &PrologueHero, cat: &Catalog) -> World {
             hall(
                 map,
                 cat,
-                (mx - 1, STAIRS.1),
-                (mx + 1, WALK[0].1 + 3),
+                (mx - 1, WALK[0].1 - 3),
+                (mx + 1, STAIRS.1),
                 dark_set(beat),
             );
             put(map, STAIRS.0, STAIRS.1, "S_dnstair", None);
@@ -2362,19 +2398,48 @@ fn set(beat: Beat) -> Vec<Piece> {
         }
         Beat::Hero => {}
         Beat::Descent => {
-            // a vaulted way to the stairs down, an arch over them
-            s.push(piece(ARCH, (38.0, 0.0, STAIRS.1 as f32 - 0.6), 0.0, 1.0));
-            s.push(piece(WALL, (38.0, 3.0, STAIRS.1 as f32 - 0.6), 0.0, 1.0));
+            // a vaulted way to the stairs down, an arch over them (laid out
+            // going north, turned half round)
+            let stairs = 19.0 - STAIRS.1 as f32;
+            let mut way = vec![
+                piece(ARCH, (38.0, 0.0, stairs - 0.6), 0.0, 1.0),
+                piece(WALL, (38.0, 3.0, stairs - 0.6), 0.0, 1.0),
+            ];
             for z in [9.4, 13.4] {
-                s.push(piece(WALL, (38.0, 0.0, z), 90.0, 1.0));
-                s.push(piece(WALL, (42.0, 0.0, z - 4.0), -90.0, 1.0));
+                way.push(piece(WALL, (38.0, 0.0, z), 90.0, 1.0));
+                way.push(piece(WALL, (42.0, 0.0, z - 4.0), -90.0, 1.0));
             }
             for z in [7.4, 11.4] {
-                s.push(piece(BARREL, (40.0, 3.0, z), 0.0, 2.0));
+                way.push(piece(BARREL, (40.0, 3.0, z), 0.0, 2.0));
             }
+            s.extend(way.into_iter().map(turned));
         }
     }
     s
+}
+
+/// A piece turned half round about the descent's turning point.
+fn turned(p: Piece) -> Piece {
+    let (cx, cz) = DESCENT_TURN;
+    Piece {
+        at: Vector3::new(2.0 * cx - p.at.x, p.at.y, 2.0 * cz - p.at.z),
+        yaw: p.yaw + 180.0,
+        ..p
+    }
+}
+
+/// The height of what the hero stands on `lz` south of the stairs' middle,
+/// down them and on below (the floor north of them, their near rim, each
+/// tread, and on down at their slope under the far rim).
+fn tread_under(lz: f32) -> f32 {
+    if lz < RIM_FROM {
+        0.0
+    } else if lz < LIP_TO {
+        RIM_TOP
+    } else {
+        // (each step down past the nosing that overhangs the tread below)
+        TREAD_TOP - TREAD_DROP * ((lz - TREADS_FROM - NOSING) / TREAD_DEEP).floor()
+    }
 }
 
 /// A piece of a set stood on the stage.
