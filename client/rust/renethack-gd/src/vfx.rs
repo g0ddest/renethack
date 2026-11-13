@@ -655,15 +655,17 @@ impl Recipe {
                 hdr: 1.7,
                 ..base
             },
+            // (on the body struck: at 3.5 and 0.6 m a white star whited
+            // out a cream coat)
             Recipe::Flash => Params {
                 amount: 2,
                 life: 0.14,
                 speed: (0.0, 0.05),
                 spread: 180.0,
-                size: (0.45, 0.6),
+                size: (0.32, 0.45),
                 radius: 0.0,
                 damping: 0.0,
-                hdr: 3.5,
+                hdr: 1.9,
                 ..base
             },
             Recipe::Bloom => Params {
@@ -1028,11 +1030,13 @@ fn look_of(kind: VfxKind) -> (Recipe, Color, Option<(Color, f32, f32)>) {
         VfxKind::Impact(c) => (Recipe::Sparks, c, Some((c, 9.0, 0.35))),
         VfxKind::Sparkle => {
             let c = rgb(1.0, 0.95, 0.8);
-            (Recipe::Glints, c, Some((c, 1.6, 0.35)))
+            let (energy, secs) = SPARKLE_LIGHT;
+            (Recipe::Glints, c, Some((rgb(1.0, 0.7, 0.4), energy, secs)))
         }
         VfxKind::Sparks => {
             let c = rgb(1.0, 0.6, 0.22);
-            (Recipe::Sparks, c, Some((c, 6.0, 0.2)))
+            let (energy, secs) = BLOW_LIGHT;
+            (Recipe::Sparks, c, Some((c, energy, secs)))
         }
         VfxKind::Blood(c) => (Recipe::Droplets, c, None),
         VfxKind::Shock(c) => (Recipe::Ring, c, Some((c, 2.0, 0.2))),
@@ -1212,6 +1216,14 @@ const FORCE_DUST_LIGHT: (f32, f32) = (1.6, 1.1);
 const LARGE_GLOW: f32 = 1.25;
 const LARGE_LIGHT_UP: (f32, f32) = (2.5, 1.5);
 const LARGE_LIGHT: (f32, f32) = (0.6, 0.45);
+/// A blow's light where it lands (`VfxKind::Sparks`) and the glints'
+/// on the body it struck (`Sparkle`): small, dim and short, its energy
+/// and seconds, and how far either reaches (metres). The blow reads on
+/// the body (map_view's flash, the sparks); at 6 over 2.5 m, with a cream
+/// glint's 1.6 for 0.35 s after it, it lit the walls round a fight cream.
+const BLOW_LIGHT: (f32, f32) = (0.6, 0.12);
+const SPARKLE_LIGHT: (f32, f32) = (0.35, 0.2);
+const SMALL_LIGHT_REACH: f32 = 1.1;
 /// The height of a body an effect on it (`Vfx::on_body`) is made for,
 /// metres: a taller one's is as many times larger.
 const BODY_TALL: f32 = 1.75;
@@ -2035,7 +2047,12 @@ impl Vfx {
             _ => {}
         }
         if let Some((c, energy, secs)) = light {
-            let range = 2.5 * k.sqrt();
+            // (a blow's and a glint's on the body alone)
+            let reach = match kind {
+                VfxKind::Sparks | VfxKind::Sparkle => SMALL_LIGHT_REACH,
+                _ => 2.5,
+            };
+            let range = reach * k.sqrt();
             // on a body, at its chest
             let up = if recipe.ring().is_some() {
                 BODY_TALL * 0.55 * k
