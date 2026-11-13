@@ -742,8 +742,27 @@ void fragment() {
 	float near = 1.0;
 	if (void_fade > 0.0) {
 		near = mix(1.0, fow.a, void_fade);
-		color *= near;
-		emission *= near * near;
+		// (beside lava known it takes next to no light, its albedo's own
+		// glow neither: lit, it stood by a field as flat red blocks cut
+		// square along the known cells, brighter than the dark the
+		// field's edge fades into)
+		// (lava within about three cells: the ground known fades into
+		// the dark well before the light about it does)
+		vec2 gd = vec2(2.5) / FIELD;
+		vec2 guv = (wpos.xz + 0.5) / FIELD;
+		float lava_by = texture(ground_tex, guv).g;
+		for (int i = 0; i < 8; i++) {
+			float a = float(i) * 0.7854;
+			vec2 o = vec2(cos(a), sin(a));
+			lava_by += texture(ground_tex, guv + o * gd * 0.45).g * 0.5
+				+ texture(ground_tex, guv + o * gd).g;
+		}
+		lava_by /= 4.0;
+		// (its edge wandering, never along the cells)
+		lava_by += (tn2(wpos.xz * 0.5 + vec2(13.7, 41.9)) - 0.5) * 0.25;
+		float unlit = smoothstep(0.05, 0.45, lava_by) * (1.0 - overview);
+		color *= near * (1.0 - 0.9 * unlit);
+		emission *= near * near * (1.0 - 0.9 * unlit);
 		// over a chasm (Gehennom) what lies far from anything known is
 		// its smouldering depths, never black: smoke drifting over a red
 		// glow, the same everywhere (it shows nothing of the map); near

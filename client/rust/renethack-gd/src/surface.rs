@@ -265,8 +265,9 @@ impl Surfaces {
         if kind != Ground::None {
             set(&mut mat, "edge_kind", kind.code());
         }
-        // (a cave's rock rounds off by the open ground it reads there)
-        if kind != Ground::None || role == Role::Cave {
+        // (a cave's rock rounds off by the open ground it reads there; the
+        // ground under the level darkens by lava known beside it)
+        if kind != Ground::None || matches!(role, Role::Cave | Role::Void) {
             mat.set_shader_parameter("ground_tex", &self.ground.to_variant());
         }
         // (the fire's cracks, in floors and the ground below, keep clear

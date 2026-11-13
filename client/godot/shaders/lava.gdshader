@@ -136,16 +136,18 @@ void fragment() {
 	// leads there, its shore
 	vec4 field = ground_blur(wpos.xz);
 	float shore = 0.0;
-	// how near a shore it lies, over a cell or so (it runs hot there)
-	float nearshore = 0.0;
-	if (max(max(field.r, field.b), field.a) > 0.0) {
+	// how near a shore it lies, over a cell or so (it runs hot there): by
+	// the blurred ground itself, smooth (by the shore's lead it stepped on
+	// where the blur's reach began, a square block of glow)
+	float rival = max(max(field.r, field.b), field.a);
+	float nearshore = smoothstep(0.04, 0.45, rival + (tl2(wpos.xz * 1.1 + vec2(7.7, 3.1)) - 0.5) * 0.1);
+	if (rival > 0.0) {
 		vec4 v = ground_lead(wpos.xz, field);
 		float k = ground_kind(v);
 		if (k > 0.0 && k != 3.0) {
 			discard;
 		}
 		shore = 1.0 - smoothstep(0.0, 0.3, v.g - max(max(v.r, v.b), v.a));
-		nearshore = 1.0 - smoothstep(0.25, 1.1, v.g - max(max(v.r, v.b), v.a));
 	}
 	// where nothing is drawn beside it (past what the hero has seen) its
 	// edge frays as a floor's does, wandering over a couple of metres and
@@ -167,15 +169,6 @@ void fragment() {
 		float core = 1.0 - smoothstep(0.15, 0.4, length(wpos.xz - middle));
 		fray = mix(empty, wide, 0.6) + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.45
 			+ (tl2(wpos.xz * 0.42 + vec2(5.3, 17.9)) - 0.5) * 0.3 - core;
-	}
-	// and its glow dies back from there by a slow wandering line, from
-	// the very edge to a cell and a half in (that lava crusted over, still
-	// there): it ran out along the cells in straight runs and square bays
-	float ebb = 0.0;
-	if (wide > 0.001) {
-		float wander = (tl2(wpos.xz * 0.55 + vec2(31.7, 4.9)) - 0.5) * 0.5
-			+ (tl2(wpos.xz * 0.21 + vec2(2.3, 19.1)) - 0.5) * 0.5;
-		ebb = smoothstep(0.12, 0.35, wide + wander);
 	}
 	vec2 flow = vec2(t * 0.015, t * 0.008);
 	float plates = texture(noise_tex, wpos.xz * 0.45 + flow).r;
@@ -223,18 +216,17 @@ void fragment() {
 	float rim = smoothstep(0.75, 0.97, shore);
 	glow = molten.rgb * max(crack, rim * 0.8) * seethe;
 
-	// toward what nothing is known of its crust closes over it, a thin
-	// line of glow where it does, and past that it lies cooled black (a
-	// hole there showed the ground under the level lit, a square of it)
-	crack *= 1.0 - ebb;
-	glow = molten.rgb * max(crack, rim * 0.8) * seethe;
+	// toward what nothing is known of its crust closes over it and past
+	// that it lies cooled black (a hole there showed the ground under the
+	// level lit, a square of it); no line of glow where it closes (along
+	// the cells it drew the field's blocks in bright lines)
+	// (a crust dying back over a cell and a half from every cell nothing
+	// is drawn on cut a maze's field into crust blocks and glow blocks)
 	float cooled = 0.0;
 	if (empty > 0.001) {
-		// (where its glow has ebbed already, no line: it ran straight)
-		float line = smoothstep(0.27, 0.33, fray) * (1.0 - smoothstep(0.33, 0.39, fray)) * (1.0 - ebb);
 		cooled = smoothstep(0.33, 0.39, fray);
-		crack *= 1.0 - smoothstep(0.05, 0.3, fray);
-		glow = molten.rgb * max(max(crack, rim * 0.8), line * 0.45) * seethe * (1.0 - cooled);
+		crack *= 1.0 - smoothstep(-0.05, 0.3, fray);
+		glow = molten.rgb * max(crack, rim * 0.8) * seethe * (1.0 - cooled);
 		rock *= mix(1.0 - 0.5 * smoothstep(0.1, 0.33, fray), 0.06, cooled);
 	}
 	float seen = texture(fow_tex, uv).r;
@@ -242,11 +234,13 @@ void fragment() {
 	// wandering line, not along the cells (a big field half seen stepped,
 	// its lava dimmed cell by cell); never more than about half a cell
 	// either way of the cells' own edge, so each cell still reads plainly
-	// as in view or remembered
+	// as in view or remembered, and softly: a field mostly crust, its
+	// remembered glow dimmed as far as before read as crust blocks among
+	// the glow in view (a maze's line of sight is rectangles)
 	if (seen > 0.001 && seen < 0.999) {
 		float s = seen + (tl2(wpos.xz * 1.7 + vec2(41.3, 17.9)) - 0.5) * 0.4
-			+ (tl2(wpos.xz * 0.42 + vec2(9.7, 33.1)) - 0.5) * 0.2;
-		seen = smoothstep(0.35, 0.65, s);
+			+ (tl2(wpos.xz * 0.42 + vec2(9.7, 33.1)) - 0.5) * 0.3;
+		seen = smoothstep(0.25, 0.75, s);
 	}
 	ALBEDO = mix(rock, molten.rgb * 0.3, crack);
 	ROUGHNESS = mix(0.9, 0.4, crack);
@@ -254,7 +248,7 @@ void fragment() {
 	SPECULAR = mix(0.08, 0.5, max(crack, hot));
 	// nor does it mirror the metal sky (map_view's): it shines by its fire
 	RADIANCE = vec4(0.0, 0.0, 0.0, 1.0);
-	EMISSION = (glow * energy + rock * 0.15 * heat) * mix(0.35, 1.0, seen);
+	EMISSION = (glow * energy + rock * 0.15 * heat) * mix(0.62, 1.0, seen);
 	// and its crust cooled toward the unknown fades, past its line, into
 	// what the ground under the level shows where nothing is known
 	// (Gehennom's smouldering chasm, elsewhere the smoky dark: as
