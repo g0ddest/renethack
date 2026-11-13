@@ -95,6 +95,8 @@ const SHAFT_DENSITY: f32 = 0.25;
 /// How brightly the braziers on the stage light the haze (the light
 /// pouring down shows the brighter).
 const FIRE_HAZE: f32 = 0.4;
+/// A dark set keeps this share of the level's ambient light.
+const DARK_AMBIENT: f32 = 0.0;
 /// How far the sky over Gehennom is.
 const SKY: f32 = 40.0;
 /// The close beats' depth of field (the Book, the Amulet): what lies this
@@ -125,12 +127,22 @@ pub(super) const KIT: [&str; 9] = [
 /// chains.
 const MARDUK_TALL: f32 = 3.2;
 const MOLOCH_TALL: f32 = 6.4;
-const MOLOCH_RIM: Color = Color::from_rgb(1.0, 0.36, 0.12);
+/// Moloch stands this high on the dark behind Marduk (his feet in the fog).
+const MOLOCH_UP: f32 = 0.35;
+const MOLOCH_RIM: Color = Color::from_rgb(0.95, 0.3, 0.1);
+/// The shaft Marduk stands in, a paler, cooler light than the god's (his
+/// gold its warmth against Moloch's red), and the warm light before him,
+/// on his face and chest.
+const MARDUK_LIGHT: Color = Color::from_rgb(0.92, 0.92, 0.88);
+const WITHIN: Color = Color::from_rgb(1.0, 0.84, 0.58);
 const FURNACE: Color = Color::from_rgb(1.0, 0.45, 0.16);
 /// The smoke the fires behind Moloch light, how it smoulders, and how
 /// brightly the embers' glow low in his black fog lights it.
 const SMOULDER: Color = Color::from_rgb(0.28, 0.06, 0.02);
 const UNDER_HAZE: f32 = 3.0;
+/// How brightly the fire behind Moloch lights the smoke about him (more
+/// veiled him in red).
+const BEHIND_HAZE: f32 = 1.4;
 /// The smoke's shader (`prologue_smoke.gdshader`).
 const SMOKE_SHADER: &str = "res://shaders/prologue_smoke.gdshader";
 /// The figures' looks (`prologue_figure.gdshader`): the generated models,
@@ -142,8 +154,14 @@ const MARDUK: Figure = Figure {
     maps: "res://art/owner/prologue/marduk",
     glow: false,
     uniforms: &[
-        // ivory and gold, dulled under the grade; a light from within him
+        // ivory, and dull gold on the crown, the bands and the rod; a light
+        // from within him
         ("tint", U::V3(0.95, 0.88, 0.74)),
+        // (less of a mirror: a gold that mirrors a dark hall is black)
+        ("gold_tint", U::V3(1.0, 0.7, 0.3)),
+        ("gold", U::F(1.0)),
+        ("metal", U::F(0.6)),
+        ("inside", U::F(0.5)),
         ("rough", U::F(0.05)),
         ("breath_secs", U::F(MARDUK_BREATH)),
         ("breath_depth", U::F(0.006)),
@@ -152,9 +170,9 @@ const MARDUK: Figure = Figure {
         ("sway", U::F(0.012)),
         ("sway_secs", U::F(7.0)),
         ("hang", U::V2(0.04, 0.6)),
-        ("radiance", U::F(0.14)),
+        ("radiance", U::F(0.26)),
         ("rim_color", U::V3(1.0, 0.82, 0.55)),
-        ("rim_energy", U::F(1.0)),
+        ("rim_energy", U::F(1.2)),
         ("rim_power", U::F(3.0)),
     ],
 };
@@ -173,6 +191,7 @@ const MOLOCH: Figure = Figure {
         ("sway_secs", U::F(6.0)),
         ("hang", U::V2(0.15, 0.75)),
         ("behind", U::F(1.0)),
+        ("inside", U::F(0.3)),
         ("glow_color", U::V3(1.0, 0.3, 0.06)),
         ("glow_energy", U::F(1.0)),
         ("glow_pulse", U::F(0.5)),
@@ -501,7 +520,7 @@ impl MapView {
                 // twice his height, in his black fog and his smoke
                 // (stood in this order)
                 stage.gods_due = vec![
-                    God::Moloch(v(42.6, 0.0, 6.8), -30.0, MOLOCH_TALL),
+                    God::Moloch(v(42.6, MOLOCH_UP, 6.1), -30.0, MOLOCH_TALL),
                     God::Marduk(v(37.6, 0.0, 10.2), 50.0, MARDUK_TALL),
                 ];
                 haze(
@@ -681,11 +700,13 @@ impl MapView {
         if let Some((_, mat, _)) = self.stand_figure(&mut stage.root, &MARDUK, at, yaw, tall) {
             stage.gods.push(mat);
         }
-        let from = at + v(-1.5, 8.0, -2.5) * k;
+        // the shaft down on his crown and shoulders from behind him
+        let down = at + v(0.0, 1.4, 0.0) * k;
+        let from = at + v(-1.2, 8.5, -1.9) * k;
         stage
             .beams
-            .push((beam(&mut stage.root, at, from, HOLY, 9.0), 4.5));
-        let mut l = light(&mut stage.root, HOLY, at + v(0.8, 2.4, 1.6) * k, 5.0 * k);
+            .push((beam(&mut stage.root, down, from, MARDUK_LIGHT, 11.0), 4.0));
+        let mut l = light(&mut stage.root, WITHIN, at + v(0.6, 2.9, 1.4) * k, 4.0 * k);
         l.set_param(Param::ENERGY, 0.0);
         l.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
         stage.candle = Some(l);
@@ -715,17 +736,41 @@ impl MapView {
             let heart = node.get_transform() * v(hx, hy, hz + 0.25);
             let mut f = light(&mut stage.root, FURNACE, heart, 3.2 * k);
             f.set_param(Param::ENERGY, 0.0);
+            f.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.2);
             stage.furnace = Some(f);
         }
-        // the fires behind him, either side, above his shoulders
-        for (x, phase) in [(-1.7, 0.7), (1.9, 2.3)] {
-            let rim = light(
+        // a fire before him, low and to his left, his body shaped by it
+        // from below (the set is dark: nothing else lights it)
+        // (no glow in the air between him and the eye: it veiled him red)
+        let mut before = light(
+            &mut stage.root,
+            FURNACE,
+            at + turn * v(1.6, 1.2, 2.6) * k,
+            7.0 * k,
+        );
+        before.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
+        stage.fires.push((before, 1.8, 3.1));
+        // the fires behind him: low, behind his legs, a red-brown glow on
+        // the wall and in the smoke he rises from; and high, a dim edge on
+        // his horns and shoulders
+        let low = light(
+            &mut stage.root,
+            MOLOCH_RIM,
+            at + turn * v(0.0, 0.9, -1.9) * k,
+            6.5 * k,
+        );
+        let mut low = low;
+        low.set_param(Param::VOLUMETRIC_FOG_ENERGY, BEHIND_HAZE);
+        stage.fires.push((low, 2.2, 0.7));
+        for (x, phase) in [(-1.6, 2.3), (1.6, 4.1)] {
+            let mut high = light(
                 &mut stage.root,
                 MOLOCH_RIM,
-                at + turn * v(x, 4.8, -1.8) * k,
-                5.5 * k,
+                at + turn * v(x, 6.2, -1.6) * k,
+                3.2 * k,
             );
-            stage.fires.push((rim, 2.0, phase));
+            high.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.3);
+            stage.fires.push((high, 0.9, phase));
         }
         // the smoke about and behind him they light, smouldering, rising
         let back = Smoke {
@@ -735,13 +780,13 @@ impl MapView {
             emission: SMOULDER,
             climb: 0.35,
         };
-        let at_back = at + turn * v(0.0, 3.8, -1.2) * k;
+        let at_back = at + turn * v(0.0, 3.8, -1.9) * k;
         let size = v(11.0, 9.0, 3.6) * k;
         if let Some(m) = self.smoke(&mut stage.root, at_back, turn, size, back) {
             stage.smoke.push((m, back.density));
         }
-        // the black fog over his legs, rising slowly, the embers' glow low
-        // in it
+        // the black fog to his knees, rising slowly, the embers' glow low
+        // in it; wisps of it rising past his waist
         let dark_at = at + turn * v(0.0, 1.0, 0.9) * k;
         let black = Smoke {
             density: FOG_DENSITY,
@@ -753,6 +798,22 @@ impl MapView {
         let size = v(8.0, 3.4, 5.5) * k;
         if let Some(m) = self.smoke(&mut stage.root, dark_at, turn, size, black) {
             stage.smoke.push((m, black.density));
+        }
+        let wisps = Smoke {
+            density: 0.4,
+            least: 0.0,
+            climb: 0.3,
+            ..black
+        };
+        let size = v(6.0, 4.0, 2.6) * k;
+        if let Some(m) = self.smoke(
+            &mut stage.root,
+            at + turn * v(0.0, 3.4, -0.2) * k,
+            turn,
+            size,
+            wisps,
+        ) {
+            stage.smoke.push((m, wisps.density));
         }
         let mut under = light(
             &mut stage.root,
@@ -979,7 +1040,7 @@ impl MapView {
         if let Some(c) = stage.candle.as_mut() {
             let energy = match beat {
                 Beat::Book => 1.7 * flicker(secs * 1.3),
-                Beat::Rebellion => 1.5 * rise,
+                Beat::Rebellion => 2.2 * rise,
                 _ => 2.6 * rise,
             };
             c.set_param(Param::ENERGY, energy);
@@ -1121,6 +1182,24 @@ impl MapView {
         };
         self.env.set_volumetric_fog_density(density);
         self.env.set_volumetric_fog_emission_energy(glow);
+        // a dark set: lit only by its own lights (a shaft, fires), none of
+        // the level's ambient or its light from above; the game's back as
+        // it was when it is over
+        let dark = beat.is_some_and(dark_set);
+        if dark == self.moon.is_visible() {
+            self.moon.set_visible(!dark);
+            self.back.set_visible(!dark);
+            let ambient = if self.showcase {
+                super::GALLERY_AMBIENT
+            } else {
+                look.ambient_energy
+            };
+            self.env.set_ambient_light_energy(if dark {
+                ambient * DARK_AMBIENT
+            } else {
+                ambient
+            });
+        }
         // (and as the game's thins with the distance the hero is followed
         // from, what its glow gave made up by the exposure: never in the
         // overview's clear air)
@@ -1231,6 +1310,12 @@ fn quad_mesh(size: f32) -> Gd<QuadMesh> {
     let mut q = QuadMesh::new_gd();
     q.set_size(Vector2::new(size, size));
     q
+}
+
+/// A beat whose set only its own lights light (a shaft, fires): the rest
+/// falls to black.
+fn dark_set(beat: Beat) -> bool {
+    matches!(beat, Beat::Rebellion)
 }
 
 /// `t` eased in and out (0..1).
@@ -1346,9 +1431,10 @@ fn level(beat: Beat, hero: &PrologueHero, cat: &Catalog) -> World {
             put(map, mx, my, "S_altar", Some(altar));
         }
         Beat::Rebellion => {
-            // the floor of a temple (its walls the set's), lit, its altar
-            // before the arch at the far end
-            hall(map, cat, (31, 5), (49, 16));
+            // the floor of a temple (its walls the set's), dark (a lit
+            // hall's fill lights lit its vault evenly grey), its altar before
+            // the arch at the far end
+            hall(map, cat, (31, 5), (49, 16), dark_set(beat));
             put(map, mx, 6, "S_altar", Some(1));
         }
         Beat::Amulet => {
@@ -1368,14 +1454,20 @@ fn level(beat: Beat, hero: &PrologueHero, cat: &Catalog) -> World {
         Beat::God => {
             // a shrine's floor (its walls the set's), the god's altar in
             // its light
-            hall(map, cat, (mx - 3, my - 3), (mx + 3, my + 4));
+            hall(map, cat, (mx - 3, my - 3), (mx + 3, my + 4), dark_set(beat));
             put(map, mx, my - 2, "S_altar", Some(altar));
         }
         Beat::Hero => {}
         Beat::Descent => {
             // a short hall to the stairs down (its walls the set's), the
             // hero at its foot
-            hall(map, cat, (mx - 1, STAIRS.1), (mx + 1, WALK[0].1 + 3));
+            hall(
+                map,
+                cat,
+                (mx - 1, STAIRS.1),
+                (mx + 1, WALK[0].1 + 3),
+                dark_set(beat),
+            );
             put(map, STAIRS.0, STAIRS.1, "S_dnstair", None);
             if let Some(g) = hero_glyph(cat, &hero.role, hero.female) {
                 let floor = cmap(cat, "S_room");
@@ -1389,9 +1481,10 @@ fn level(beat: Beat, hero: &PrologueHero, cat: &Catalog) -> World {
     world
 }
 
-/// A lit floor from `a` to `b`, without walls.
-fn hall(map: &mut nh_world::MapState, cat: &Catalog, a: (i32, i32), b: (i32, i32)) {
-    if let Some(g) = cmap(cat, "S_room") {
+/// A floor from `a` to `b`, without walls: lit (the map lights it, its
+/// fill lights over it), or `dark` (only the set's own lights light it).
+fn hall(map: &mut nh_world::MapState, cat: &Catalog, a: (i32, i32), b: (i32, i32), dark: bool) {
+    if let Some(g) = cmap(cat, if dark { "S_darkroom" } else { "S_room" }) {
         for y in a.1..=b.1 {
             for x in a.0..=b.0 {
                 map.print(x, y, &g, None);

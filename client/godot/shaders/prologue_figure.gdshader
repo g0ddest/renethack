@@ -14,9 +14,14 @@ uniform sampler2D orm_map : hint_default_white, filter_linear_mipmap_anisotropic
 uniform sampler2D normal_map : hint_normal, filter_linear_mipmap_anisotropic;
 uniform sampler2D glow_map : hint_default_black, filter_linear_mipmap;
 
-// the maps as the grade wants them: the albedo times `tint`, the metal's
-// share times `metal`, rougher by `rough`
+// the maps as the grade wants them: the albedo times `tint` (what is metal
+// times `gold_tint` instead, as much as `gold`), the metal's share times
+// `metal`, rougher by `rough`; a thin shell's inside (a cape's, a robe's)
+// in its own shade, `inside` times as light
 uniform vec3 tint = vec3(1.0);
+uniform vec3 gold_tint = vec3(1.0);
+uniform float gold = 0.0;
+uniform float inside = 1.0;
 uniform float metal = 1.0;
 uniform float rough = 0.0;
 uniform float bumps = 1.0;
@@ -100,7 +105,8 @@ void fragment() {
 	float g = texture(glow_map, UV).r;
 	// (the tint is the gold's, the cloth's: what glows keeps its own colour)
 	vec3 albedo = texture(albedo_map, UV).rgb;
-	ALBEDO = mix(albedo * tint, albedo * glow_dark, g);
+	vec3 tinted = albedo * mix(tint, gold_tint, gold * smoothstep(0.45, 0.85, orm.b));
+	ALBEDO = mix(tinted, albedo * glow_dark, g) * (FRONT_FACING ? 1.0 : inside);
 	ROUGHNESS = mix(clamp(orm.g + rough, 0.0, 1.0), 1.0, g);
 	METALLIC = clamp(orm.b * metal, 0.0, 1.0) * (1.0 - g);
 	SPECULAR = 0.5 * (1.0 - g);
