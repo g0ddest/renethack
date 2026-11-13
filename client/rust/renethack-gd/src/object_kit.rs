@@ -899,6 +899,35 @@ impl Kit<'_> {
                 let stone = self.gem_mat();
                 self.cut_stone(root, &stone, [0.0, -0.05, 0.47], 0.08);
             }
+            "winged_band" => {
+                // a frost giant's: a broad band of the helm's rimed steel
+                // round the brow and a wing of white feathers at each
+                // temple, his hair over it: no dome to read from above as
+                // a dark bowl
+                let band = self.skin.clone();
+                self.part(
+                    root,
+                    torus(0.4, 0.47),
+                    &band,
+                    [0.0, 0.02, 0.0],
+                    [-6.0, 0.0, 0.0],
+                    [1.0, 1.6, 1.12],
+                );
+                let quill = self.mat(Color::from_rgb(0.9, 0.88, 0.84), Finish::Matte);
+                let wing = MeshKey::Organic(Organic::Gear(GearPart::Wing));
+                for side in [-1.0f32, 1.0] {
+                    let at = [side * 0.43, 0.1, -0.02];
+                    self.part(
+                        root,
+                        wing,
+                        &quill,
+                        at,
+                        [0.0, -side * 28.0, -side * 16.0],
+                        ONE,
+                    );
+                    self.part(root, sphere(0.07), &band, at, FLAT, [0.6, 1.0, 1.0]);
+                }
+            }
             "crown" => {
                 // a lord's: a broad band of metal the colour of the look
                 // (gold, iron, bone) and a ring of tall points, leaning out,

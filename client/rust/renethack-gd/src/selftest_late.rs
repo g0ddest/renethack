@@ -234,6 +234,8 @@ pub(super) const PILOT: &[(&str, Rows)] = &[
             ),
         ],
     ),
+    // the fire and frost giants' helms, close
+    ("helms", &[(2, &["frost giant", "fire giant"])]),
     // the generated dog, weighted from the husky's skeleton
     (
         "dogs-gen",

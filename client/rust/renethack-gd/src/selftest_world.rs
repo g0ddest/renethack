@@ -1091,8 +1091,22 @@ pub(super) fn dark_creatures() -> Vec<Step> {
         Step::Call("closer", |g| far(g, 7.0)),
         Step::Wait("the camera closer", drawn_here),
         Step::Shot("dark-creatures-close"),
-        Step::Call("back", |g| far(g, 11.0)),
     ]);
+    // RENETHACK_DARK_NEAR=3: one more, that close (`dark-creatures-near`)
+    if std::env::var("RENETHACK_DARK_NEAR").is_ok() {
+        steps.extend([
+            Step::Call("near", |g| {
+                let d = std::env::var("RENETHACK_DARK_NEAR")
+                    .ok()
+                    .and_then(|v| v.parse().ok())
+                    .unwrap_or(3.0);
+                far(g, d)
+            }),
+            Step::Wait("the camera near", drawn_here),
+            Step::Shot("dark-creatures-near"),
+        ]);
+    }
+    steps.push(Step::Call("back", |g| far(g, 11.0)));
     steps.extend(quit());
     steps
 }
