@@ -80,6 +80,12 @@ SCENES = {
     # Gehennom: the Valley, Juiblex's swamp, Orcus Town, the Wizard's
     # mazes and a level of each fire deeper
     "gehennom": ("gehennom", [], 900),
+    # lava on arrival, in debug mode: Orcus' town, the Wizard's tower and
+    # the Plane of Fire, its one great field (the flow sampled twice)
+    "lava": ("lava", [], 600),
+    # the ground's edges against the unknown: a big lava field half seen
+    # with a floor's bay, and Gehennom 31's arrival ice, at 11 m and 7 m
+    "ground-edges": ("ground-edges", [], 300),
     # a creature hidden behind the hero (its x-ray contour): for the
     # census, not timed
     "through": ("through", [], 300),
@@ -94,11 +100,14 @@ SCENES = {
     # the Oracle, the Big Room, the Castle and the Plane of Earth, each
     # its own look (holy light, clouds, lamps): for the census, not timed
     "places": ("places", [], 600),
+    # the creatures a game meets most, one by one at the game's distance
+    # (the generated bodies among them): for the census, not timed
+    "bestiary": ("bestiary", [], 900),
     # every creature and thing a batch at a time: with --census, what the
     # game can draw (not a timing)
     "variants": ("variants", [], 1800),
 }
-CENSUS_ONLY = ("through", "outfits", "late-monsters", "command-wheel", "spells", "places")
+CENSUS_ONLY = ("through", "outfits", "late-monsters", "command-wheel", "spells", "places", "bestiary")
 DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants", *CENSUS_ONLY)]
 
 
