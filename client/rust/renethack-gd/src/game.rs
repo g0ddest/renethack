@@ -1105,6 +1105,9 @@ impl INode for RenethackGame {
             .map(|s| s.to_string())
             .collect();
         let args = parse_args(&raw);
+        // a debug library from a checkout: current or stale, said once
+        #[cfg(debug_assertions)]
+        crate::freshness::at_start();
         self.base().get_tree().set_auto_accept_quit(false);
         pad_ui_actions();
         // the interface's language before anything shows words
@@ -1292,6 +1295,12 @@ impl INode for RenethackGame {
         self.set_tick(args.tick.or(soak.then_some(SOAK_TICK_MS)));
         if args.selftest.is_some() {
             self.selftest = SelfTest::new(&args);
+        }
+        // a game on a stale debug library says so over everything (a
+        // self-test fails at its first step instead)
+        #[cfg(debug_assertions)]
+        if self.selftest.is_none() {
+            self.show_stale_line();
         }
         if let Err(e) = paths.check() {
             self.show_failure(
@@ -5963,6 +5972,33 @@ impl RenethackGame {
                 .is_some_and(|ui| ui.screens.credits_in_game());
             self.build_credits(in_game, selected);
         }
+    }
+
+    /// A debug library from a checkout older than its sources, or an import
+    /// older than the art, says so in red over everything for the whole
+    /// session (freshness.rs): what is on the screen is not the checkout's
+    /// game. English only: no player sees it.
+    #[cfg(debug_assertions)]
+    fn show_stale_line(&mut self) {
+        let Some(why) = crate::freshness::at_start().and_then(crate::freshness::Freshness::reason)
+        else {
+            return;
+        };
+        let mut layer = CanvasLayer::new_alloc();
+        layer.set_name("StaleLayer");
+        // over the start-up veil (100)
+        layer.set_layer(101);
+        let mut line = godot::classes::Label::new_alloc();
+        line.set_text(&format!("STALE BUILD: {why}"));
+        line.set_autowrap_mode(godot::classes::text_server::AutowrapMode::WORD_SMART);
+        line.add_theme_color_override("font_color", Color::from_rgb(0.95, 0.2, 0.15));
+        line.add_theme_color_override("font_outline_color", Color::from_rgb(0.0, 0.0, 0.0));
+        line.add_theme_constant_override("outline_size", 4);
+        line.add_theme_font_size_override("font_size", 18);
+        line.set_mouse_filter(godot::classes::control::MouseFilter::IGNORE);
+        crate::theme::place(&line, [0.0, 0.0, 1.0, 0.0], [16.0, 10.0, -16.0, 60.0]);
+        layer.add_child(&line);
+        self.base_mut().add_child(&layer);
     }
 
     fn show_title(&mut self, notice: Option<String>) {

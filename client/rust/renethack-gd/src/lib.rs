@@ -28,6 +28,9 @@ mod end_view;
 mod engine_text;
 mod engulf;
 mod frame_log;
+// a debug library run from a checkout says whether it is current
+#[cfg(debug_assertions)]
+mod freshness;
 mod gallery;
 mod game;
 mod game_menu;
@@ -70,6 +73,8 @@ mod sheet;
 mod sheet_view;
 mod skills;
 mod skills_view;
+#[cfg(debug_assertions)]
+mod source_stamp;
 mod spell_bake;
 mod spells;
 mod spells_view;

@@ -5399,6 +5399,19 @@ impl SelfTest {
             "bar" => bar(),
             _ => Vec::new(),
         };
+        // a library or an import older than its sources fails at once: a
+        // pass would vouch for a game that is not the checkout's
+        // (freshness.rs; RENETHACK_ALLOW_STALE=1 runs it all the same)
+        #[cfg(debug_assertions)]
+        let steps: Vec<Step> = if steps.is_empty() {
+            steps
+        } else {
+            std::iter::once(Step::Call("the library and the import current", |_| {
+                crate::freshness::verdict()
+            }))
+            .chain(steps)
+            .collect()
+        };
         Some(SelfTest {
             name: name.to_string(),
             shots: args.screenshots.clone(),
