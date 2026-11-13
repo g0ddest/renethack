@@ -234,6 +234,14 @@ pub(super) const PILOT: &[(&str, Rows)] = &[
             ),
         ],
     ),
+    // the generated dog, weighted from the husky's skeleton
+    (
+        "dogs-gen",
+        &[
+            (3, &["little dog", "dog", "large dog"]),
+            (3, &["jackal", "wolf", "warg"]),
+        ],
+    ),
     (
         "kinds-c",
         &[(

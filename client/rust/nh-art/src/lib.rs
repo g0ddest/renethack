@@ -2239,6 +2239,10 @@ mod tests {
         // (the brightest thing in a lit room, over the hero)
         for who in ["little dog", "dog", "large dog"] {
             let spec = art.model_at(art.monster(find(who), 0).model).1;
+            // (a generated dog's coat is its own painting, a worn grey)
+            if generated(spec) {
+                continue;
+            }
             let coat = spec
                 .recolor
                 .get("@Material")
@@ -2265,14 +2269,15 @@ mod tests {
                 assert_eq!(spec.head.as_deref(), Some("lich"), "{who}");
             }
             assert!(spec.rim.is_some(), "{who} has no rim");
-            let robe = spec
-                .recolor
-                .get("_Body")
-                .and_then(|c| hex(c.trim_start_matches('=')));
-            assert!(
-                generated(spec) || robe.is_some_and(robed),
-                "{who}: {robe:?}"
-            );
+            // (a generated body's robe takes its rank's dye)
+            let robe = if generated(spec) {
+                spec.dye.as_deref().and_then(hex)
+            } else {
+                spec.recolor
+                    .get("_Body")
+                    .and_then(|c| hex(c.trim_start_matches('=')))
+            };
+            assert!(robe.is_some_and(robed), "{who}: {robe:?}");
             assert!(!seen.contains(&name), "{who} looks as another");
             seen.push(name);
         }
