@@ -94,8 +94,10 @@ const LAVA_DIM: f32 = 0.45;
 /// pouring down lights it.
 const PROLOGUE_AIR: f32 = 0.0;
 const BEAM_HAZE: f32 = 8.0;
-/// How thick the column of haze down the light's way is.
+/// How thick the column of haze down the light's way is (thinner over
+/// the god's statue: before its cowl it lit the black within).
 const SHAFT_DENSITY: f32 = 0.25;
+const GOD_SHAFT: f32 = 0.08;
 /// How brightly the braziers on the stage light the haze (the light
 /// pouring down shows the brighter).
 const FIRE_HAZE: f32 = 0.4;
@@ -237,6 +239,27 @@ const AMULET: Figure = Figure {
         ("glow_pulse", U::F(0.7)),
     ],
 };
+/// The god of the God beat: a nameless hooded colossus of weathered stone
+/// on a plinth, its cowl black within under any light (no face is seen,
+/// so it stands for every god); the hero's god's alignment a faint cast on
+/// its stone (`ALIGN_STONE`).
+const STATUE: Figure = Figure {
+    key: "statue",
+    glb: "res://art/owner/prologue/statue.glb",
+    maps: "res://art/owner/prologue/statue",
+    glow: false,
+    uniforms: &[
+        ("rough", U::F(0.05)),
+        ("inside", U::F(0.6)),
+        ("hollow", U::V3(0.0, 0.66, 0.1)),
+        ("hollow_size", U::V3(0.13, 0.18, 0.17)),
+    ],
+};
+/// How tall the god's statue stands, plinth and all, and where.
+const STATUE_TALL: f32 = 4.6;
+/// The god's stone by their alignment (chaotic, neutral, lawful): red-black,
+/// grey-green, a dull gold.
+const ALIGN_STONE: [(f32, f32, f32); 3] = [(0.9, 0.62, 0.58), (0.82, 0.92, 0.84), (1.0, 0.9, 0.7)];
 /// A breath of each god every so many seconds; Moloch's furnace (in his
 /// model's own space), and where the Amulet's stone is in its.
 const MARDUK_BREATH: f32 = 5.5;
@@ -244,7 +267,7 @@ const MOLOCH_BREATH: f32 = 4.0;
 const MOLOCH_HEART: (f32, f32, f32) = (0.10, 0.29, 0.24);
 const AMULET_STONE: (f32, f32, f32) = (0.0, -0.38, 0.12);
 /// What the prologue's figures are, loaded ahead in the background.
-pub(super) const FIGURES: [&str; 3] = [MARDUK.glb, MOLOCH.glb, AMULET.glb];
+pub(super) const FIGURES: [&str; 4] = [MARDUK.glb, MOLOCH.glb, AMULET.glb, STATUE.glb];
 /// The descent: the cells the hero walks to the stairs on, a step every
 /// this many seconds.
 const WALK: [(i32, i32); 4] = [(40, 10), (40, 9), (40, 8), (40, 7)];
@@ -336,6 +359,8 @@ pub(super) struct Stage {
     fires: Vec<(Gd<OmniLight3D>, f32, f64)>,
     /// The gods' materials (their clock and their life coming up).
     gods: Vec<Gd<ShaderMaterial>>,
+    /// The god's statue's material (its stone tinted by the hero's god).
+    statue: Option<Gd<ShaderMaterial>>,
     /// Moloch's furnace's light: it breathes with him.
     furnace: Option<Gd<OmniLight3D>>,
     /// Smoke rising, and how thick it grows.
@@ -355,6 +380,7 @@ pub(super) struct Stage {
 enum God {
     Marduk(Vector3, f32, f32),
     Moloch(Vector3, f32, f32),
+    Statue(Vector3, f32, f32),
 }
 
 impl Stage {
@@ -366,6 +392,7 @@ impl Stage {
             beams: Vec::new(),
             fires: Vec::new(),
             gods: Vec::new(),
+            statue: None,
             furnace: None,
             smoke: Vec::new(),
             amulet: None,
@@ -434,6 +461,10 @@ impl MapView {
         };
         self.build_pieces(&mut stage, None);
         stage.root.set_visible(true);
+        if let Some(m) = stage.statue.as_mut() {
+            let (r, g, b) = ALIGN_STONE[(hero.align.signum() + 1) as usize];
+            m.set_shader_parameter("tint", &Vector3::new(r, g, b).to_variant());
+        }
         self.stage = Some(stage);
         self.stage_camera = None;
         self.keep_prologue_air();
@@ -575,11 +606,18 @@ impl MapView {
                 stage.root.add_child(&embers);
             }
             Beat::God => {
-                let altar = v(MID.0 as f32, 0.0, MID.1 as f32 - 2.0);
-                let from = altar + v(0.0, 6.0, 1.2);
-                stage
-                    .beams
-                    .push((beam(&mut stage.root, altar, from, HOLY, 7.0), 7.0));
+                // the god's colossus behind its altar, dwarfing it, in the
+                // light pouring down on its hood and shoulders; the altar
+                // in the foot of the same light
+                let altar = v(MID.0 as f32, 0.0, MID.1 as f32 - 1.0);
+                let statue = v(MID.0 as f32, 0.0, MID.1 as f32 - 2.5);
+                stage.gods_due = vec![God::Statue(statue, 0.0, STATUE_TALL)];
+                let down = statue + v(0.0, 2.4, 1.0);
+                let from = statue + v(0.0, 9.0, -0.8);
+                stage.beams.push((
+                    beam(&mut stage.root, down, from, HOLY, 13.0, GOD_SHAFT),
+                    7.0,
+                ));
                 let mut l = light(&mut stage.root, HOLY, altar + v(0.0, 2.2, 0.6), 5.0);
                 l.set_param(Param::ENERGY, 0.0);
                 l.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
@@ -588,7 +626,7 @@ impl MapView {
                     &mut stage.root,
                     mid + v(0.0, 1.5, -0.4),
                     v(6.0, 3.2, 5.0),
-                    0.045,
+                    0.025,
                     None,
                 );
                 let mut high = light(&mut stage.root, CANDLE, mid + v(0.0, 4.6, -0.5), 6.0);
@@ -600,7 +638,7 @@ impl MapView {
                     0.04,
                     Color::from_rgba(0.95, 0.9, 0.78, 0.55),
                 );
-                dust.set_position(altar + v(0.0, 2.4, 0.6));
+                dust.set_position(statue + v(0.0, 2.6, 0.9));
                 stage.root.add_child(&dust);
                 for (k, x) in [38.4, 41.6].into_iter().enumerate() {
                     self.stage_brazier(&mut stage, v(x, 0.0, 8.4), k as f64 * 1.7);
@@ -625,6 +663,14 @@ impl MapView {
             match god {
                 God::Marduk(at, yaw, tall) => self.stand_marduk(stage, at, yaw, tall),
                 God::Moloch(at, yaw, tall) => self.stand_moloch(stage, at, yaw, tall),
+                God::Statue(at, yaw, tall) => {
+                    if let Some((_, mat, _)) =
+                        self.stand_figure(&mut stage.root, &STATUE, at, yaw, tall)
+                    {
+                        stage.gods.push(mat.clone());
+                        stage.statue = Some(mat);
+                    }
+                }
             }
             if budget.is_some_and(|b| began.elapsed() >= b) {
                 return;
@@ -729,9 +775,17 @@ impl MapView {
         // the shaft down on his crown and shoulders from behind him
         let down = at + v(0.0, 1.4, 0.0) * k;
         let from = at + v(-1.2, 8.5, -1.9) * k;
-        stage
-            .beams
-            .push((beam(&mut stage.root, down, from, MARDUK_LIGHT, 11.0), 4.0));
+        stage.beams.push((
+            beam(
+                &mut stage.root,
+                down,
+                from,
+                MARDUK_LIGHT,
+                11.0,
+                SHAFT_DENSITY,
+            ),
+            4.0,
+        ));
         let mut l = light(&mut stage.root, WITHIN, at + v(0.6, 2.9, 1.4) * k, 4.0 * k);
         l.set_param(Param::ENERGY, 0.0);
         l.set_param(Param::VOLUMETRIC_FOG_ENERGY, 0.0);
@@ -1189,6 +1243,8 @@ impl MapView {
         self.stand_marduk(&mut stage, mid + v(-2.0, 0.0, 0.5), 30.0, 1.2);
         self.stand_moloch(&mut stage, mid + v(2.0, 0.0, 0.5), -30.0, 1.4);
         stage.amulet = Some(self.stage_amulet(&mut stage.root, mid, 0.6));
+        // (the god's statue too: each figure's mesh is drawn once)
+        let _ = self.stand_figure(&mut stage.root, &STATUE, mid + v(-4.0, 0.0, 0.5), 0.0, 1.0);
         for (b, most) in &mut stage.beams {
             b.set_param(Param::ENERGY, *most);
         }
@@ -1377,7 +1433,7 @@ fn quad_mesh(size: f32) -> Gd<QuadMesh> {
 /// A beat whose set only its own lights light (a shaft, fires): the rest
 /// falls to black.
 fn dark_set(beat: Beat) -> bool {
-    matches!(beat, Beat::Rebellion | Beat::Amulet)
+    matches!(beat, Beat::Rebellion | Beat::Amulet | Beat::God)
 }
 
 /// `t` eased in and out (0..1).
@@ -1421,10 +1477,11 @@ fn camera(
             (v(mid.x + 0.6, aim.y.max(0.2) + 1.5, mid.z + 2.9), aim)
         }
         // up from the floor of the shrine to the altar in its light
+        // up from the floor of the shrine to the colossus over its altar
         Beat::God => {
             let k = smooth(t / 10.0);
-            let aim = mid + v(0.0, 1.0 + 0.6 * k, -2.0);
-            (mid + v(0.0, 0.9 + 1.5 * k, 4.2 - 0.8 * k), aim)
+            let aim = mid + v(0.0, 2.0 + 0.3 * k, -2.0);
+            (mid + v(0.0, 1.9 + 0.3 * k, 6.2 - 0.7 * k), aim)
         }
         // round the hero, close
         Beat::Hero => {
@@ -1519,7 +1576,7 @@ fn level(beat: Beat, hero: &PrologueHero, cat: &Catalog) -> World {
             // a shrine's floor (its walls the set's), the god's altar in
             // its light
             hall(map, cat, (mx - 3, my - 3), (mx + 3, my + 4), dark_set(beat));
-            put(map, mx, my - 2, "S_altar", Some(altar));
+            put(map, mx, my - 1, "S_altar", Some(altar));
         }
         Beat::Hero => {}
         Beat::Descent => {
@@ -1726,14 +1783,15 @@ fn stand_piece(root: &mut Gd<Node3D>, scene: &Gd<PackedScene>, p: Piece) {
 }
 
 /// Light pouring down on `at` from `from`, `angle` degrees from its
-/// middle to its edge: a spot light, and a column of haze along it that
-/// shows its shaft. Dark till the beat lights it.
+/// middle to its edge: a spot light, and a column of haze along it (`haze`
+/// thick) that shows its shaft. Dark till the beat lights it.
 fn beam(
     root: &mut Gd<Node3D>,
     at: Vector3,
     from: Vector3,
     color: Color,
     angle: f32,
+    haze: f32,
 ) -> Gd<SpotLight3D> {
     let mut l = SpotLight3D::new_alloc();
     l.set_color(color);
@@ -1759,7 +1817,7 @@ fn beam(
     let long = from.distance_to(at);
     let wide = 2.0 * long * angle.to_radians().tan();
     let mut mat = FogMaterial::new_gd();
-    mat.set_density(SHAFT_DENSITY);
+    mat.set_density(haze);
     mat.set_albedo(Color::from_rgb(0.85, 0.82, 0.78));
     mat.set_edge_fade(0.7);
     let mut shaft = FogVolume::new_alloc();

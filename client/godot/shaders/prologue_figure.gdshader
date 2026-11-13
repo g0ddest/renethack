@@ -70,7 +70,13 @@ uniform vec3 rim_color = vec3(1.0, 0.85, 0.6);
 uniform float rim_energy = 0.0;
 uniform float rim_power = 3.0;
 
+// a hollow that stays black under any light (a cowl's): its middle and its
+// half-extents in the model's space (none: 0)
+uniform vec3 hollow = vec3(0.0);
+uniform vec3 hollow_size = vec3(0.0);
+
 varying float near_heart;
+varying float in_hollow;
 
 const float TAU_ = 6.28318530718;
 
@@ -95,6 +101,9 @@ void vertex() {
 	float t = TAU_ * clock / max(sway_secs, 0.1);
 	VERTEX.x += sway * w * (sin(t + rest.y * 6.0) + 0.35 * sin(2.3 * t + rest.z * 9.0));
 	VERTEX.z += sway * 0.5 * w * sin(0.7 * t + rest.x * 8.0 + 1.1);
+	in_hollow = hollow_size.x > 0.0
+		? 1.0 - smoothstep(0.75, 1.0, length((rest - hollow) / hollow_size))
+		: 0.0;
 	near_heart = heart_radius > 0.0
 		? 1.0 - smoothstep(0.4 * heart_radius, heart_radius, distance(rest, heart))
 		: 0.0;
@@ -117,4 +126,8 @@ void fragment() {
 		+ heart_energy * near_heart * (0.3 + 0.7 * pulse));
 	float edge = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), rim_power);
 	EMISSION = (glow_color * heat + ALBEDO * radiance + rim_color * edge * rim_energy) * rise;
+	// (the hollow takes no light and gives none)
+	ALBEDO *= 1.0 - in_hollow;
+	SPECULAR *= 1.0 - in_hollow;
+	EMISSION *= 1.0 - in_hollow;
 }

@@ -191,6 +191,7 @@ texels where a figure glows (`*_glow.jpg`); nothing else was changed.
 | `owner/prologue/marduk.glb` | Marduk the Creator: a god-king in a tiered horned crown, ivory and gold robes, a rod and a ring of rule (62k triangles) |
 | `owner/prologue/moloch.glb` | Moloch: a bull-headed dark god, a furnace in his chest, chains, a torn cape (62k triangles) |
 | `owner/prologue/amulet.glb` | The Amulet of Yendor: tarnished gold, rings of glyphs, a red stone in claws, a short chain (30k triangles) |
+| `owner/prologue/statue.glb` | A nameless god: a towering hooded colossus of weathered basalt on a plinth, its cowl black within, hands on a staff (40k triangles) |
 
 The bestiary's and the heroes' generated bodies were made the same way and
 rigged by Meshy (the black dragon on bones of our own). Their maps were cut
