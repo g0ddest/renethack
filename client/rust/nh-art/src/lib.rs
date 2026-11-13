@@ -348,6 +348,11 @@ pub struct ModelSpec {
     /// instead of the outfit's sleeves (hide those).
     #[serde(default)]
     pub bare_arms: Option<String>,
+    /// The hue of an outlined body's edge (its outline and the inner rim
+    /// on its head and shoulders), in place of the cold one: a coloured
+    /// dragon's colour carries into the dark round its outline.
+    #[serde(default)]
+    pub edge_color: Option<String>,
     /// At rest with a shield, this body lets it down at its side (as every
     /// hero does behind the creation form), not raised before it: the
     /// generated Valkyrie's shield, raised, hid her face in the portrait
@@ -1579,6 +1584,7 @@ impl ArtManifest {
             neck: Vec::new(),
             bare_arms: None,
             held: BTreeMap::new(),
+            edge_color: None,
             shield_down: false,
             bare_chest: false,
             bare_legs: false,
@@ -2096,6 +2102,32 @@ mod tests {
             .find(|&j| art.model_at(j).1.held.is_empty())
             .unwrap();
         assert_eq!(art.held_slot_of(other, "back"), Some(&plain));
+    }
+
+    /// Each coloured dragon's edge (outline and inner rim) is in a hue of
+    /// its own, not the cold one every outlined body had: the black keeps
+    /// the cold, the silver its steel (the cold, so none), the rest theirs.
+    #[test]
+    fn coloured_dragons_edge_in_their_own_hue() {
+        let art = manifest();
+        for age in ["", "baby_"] {
+            for c in ["black", "silver"] {
+                let i = art.model_index(&format!("dragon_owner_{age}{c}")).unwrap();
+                assert_eq!(art.model_at(i).1.edge_color, None, "{age}{c}");
+            }
+            let mut hues = Vec::new();
+            for c in [
+                "gray", "gold", "red", "white", "orange", "blue", "green", "yellow",
+            ] {
+                let i = art.model_index(&format!("dragon_owner_{age}{c}")).unwrap();
+                let hue = art.model_at(i).1.edge_color.as_deref();
+                assert!(hue.and_then(hex).is_some(), "{age}{c}: {hue:?}");
+                hues.push(hue);
+            }
+            hues.sort();
+            hues.dedup();
+            assert_eq!(hues.len(), 8, "{age}: one hue each");
+        }
     }
 
     /// A generated body (the owner's, under `owner/`): what our kits

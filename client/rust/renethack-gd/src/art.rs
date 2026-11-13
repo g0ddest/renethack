@@ -664,7 +664,7 @@ pub struct Art {
     /// colour an edge takes (`edge_colour`).
     dark_edges: HashMap<[u8; 3], Option<Gd<Material>>>,
     /// The outline of a detailed body (`OUTLINE_SHADER`).
-    outline_edge: HashMap<u8, Option<Gd<Material>>>,
+    outline_edge: HashMap<(u8, [u8; 3]), Option<Gd<Material>>>,
     /// A thing on the floor's rim, by its share (`Edge::Ware`).
     ware_edges: HashMap<u8, Option<Gd<Material>>>,
     /// A thing on the floor's glint (`GLINT_SHADER`), the same way, and
@@ -2039,7 +2039,13 @@ impl Art {
             } else {
                 Edge::Own
             };
-            self.rim(m, edge, look.tint);
+            // (an outlined body's edge in its own hue, if it has one)
+            let spec = self.manifest.model_at(look.art.model).1;
+            let tint = match (edge, spec.edge_color.as_deref().and_then(nh_art::hex)) {
+                (Edge::Outline(_), Some(c)) => rgb(c),
+                _ => look.tint,
+            };
+            self.rim(m, edge, tint);
         }
         // what is seen through or only sensed throws no shadow, nor takes
         // the light of the creatures seen; a thing on the floor glints
@@ -2274,19 +2280,25 @@ impl Art {
 
     /// A detailed body's outline (`ModelSpec::outline`), lit as the edges
     /// are (`set_edges_lit`).
-    fn outline_pass(&mut self, share: u8) -> Option<Gd<Material>> {
+    /// In `tint`'s own hue (`edge_colour`) if it has one, else the cold
+    /// light's.
+    fn outline_pass(&mut self, share: u8, tint: Color) -> Option<Gd<Material>> {
         let lit = self.edges_lit;
+        let hue = edge_colour(tint);
         self.outline_edge
-            .entry(share)
+            .entry((share, rgb8(hue)))
             .or_insert_with(|| {
                 let shader = godot::tools::try_load::<Shader>(OUTLINE_SHADER).ok()?;
                 let mut m = ShaderMaterial::new_gd();
                 m.set_shader(&shader);
                 let k = if lit { outline_strength(share) } else { 0.0 };
                 m.set_shader_parameter("strength", &k.to_variant());
+                if hue != EDGE_COLD {
+                    m.set_shader_parameter("color", &hue.to_variant());
+                }
                 // and after it, the inner rim on the head and shoulders
                 let rim = outline_strength(share) * OUTLINE_RIM;
-                if let Some(mut inner) = edge_material(lit, rim, OUTLINE_RIM_FROM, Some(EDGE_COLD))
+                if let Some(mut inner) = edge_material(lit, rim, OUTLINE_RIM_FROM, Some(hue))
                     .and_then(|m| m.try_cast::<ShaderMaterial>().ok())
                 {
                     inner.set_shader_parameter("top", &1.0f32.to_variant());
@@ -2327,7 +2339,7 @@ impl Art {
                 m.set_shader_parameter("strength", &k.to_variant());
             }
         }
-        for (&share, m) in &self.outline_edge {
+        for (&(share, _), m) in &self.outline_edge {
             if let Some(m) = m
                 && let Ok(mut m) = m.clone().try_cast::<ShaderMaterial>()
             {
@@ -2450,7 +2462,7 @@ impl Art {
                 let own = if black { tint } else { albedo };
                 if let Edge::Outline(share) = edge {
                     if m.get_next_pass().is_none()
-                        && let Some(pass) = self.outline_pass(share)
+                        && let Some(pass) = self.outline_pass(share, tint)
                     {
                         m.set_next_pass(&pass);
                     }
