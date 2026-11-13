@@ -2498,6 +2498,10 @@ impl Art {
                 let see_through = m.get_transparency();
                 let own = if black { tint } else { albedo };
                 if let Edge::Outline(share) = edge {
+                    // a generated body comes two-sided, though closed: its
+                    // back faces drawn for nothing cost a dragon in view
+                    // half its frame time (nine at 11 m: 5 ms)
+                    m.set_cull_mode(CullMode::BACK);
                     if m.get_next_pass().is_none()
                         && let Some(pass) = self.outline_pass(share, tint)
                     {

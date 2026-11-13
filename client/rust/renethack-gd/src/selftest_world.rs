@@ -1196,17 +1196,36 @@ pub(super) fn dark_creatures() -> Vec<Step> {
 }
 
 /// RENETHACK_DARK_PRIMS=1: what the frame just shot drew (its primitives:
-/// a mesh's LOD at that distance).
+/// a mesh's LOD at that distance), in all and for the camera and the
+/// shadows apart.
 fn frame_drew(_: &mut RenethackGame) -> Result<(), String> {
     if std::env::var("RENETHACK_DARK_PRIMS").is_ok() {
-        use godot::classes::rendering_server::RenderingInfo as I;
-        let rs = godot::classes::RenderingServer::singleton();
+        use godot::classes::rendering_server::{
+            RenderingInfo as I, ViewportRenderInfo as V, ViewportRenderInfoType as T,
+        };
+        let mut rs = godot::classes::RenderingServer::singleton();
         godot_print!(
             "selftest: frame: {} primitives, {} draw calls, {} objects",
             rs.get_rendering_info(I::TOTAL_PRIMITIVES_IN_FRAME),
             rs.get_rendering_info(I::TOTAL_DRAW_CALLS_IN_FRAME),
             rs.get_rendering_info(I::TOTAL_OBJECTS_IN_FRAME)
         );
+        // the camera's passes and the lights' shadow passes apart
+        if let Some(tree) = godot::classes::Engine::singleton()
+            .get_main_loop()
+            .and_then(|l| l.try_cast::<godot::classes::SceneTree>().ok())
+            && let Some(root) = tree.get_root()
+        {
+            let vp = root.get_viewport_rid();
+            for (name, t) in [("seen", T::VISIBLE), ("shadows", T::SHADOW)] {
+                godot_print!(
+                    "selftest: frame: {name}: {} primitives, {} draw calls, {} objects",
+                    rs.viewport_get_render_info(vp, t, V::PRIMITIVES_IN_FRAME),
+                    rs.viewport_get_render_info(vp, t, V::DRAW_CALLS_IN_FRAME),
+                    rs.viewport_get_render_info(vp, t, V::OBJECTS_IN_FRAME)
+                );
+            }
+        }
     }
     Ok(())
 }
