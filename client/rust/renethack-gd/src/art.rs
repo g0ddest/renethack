@@ -84,11 +84,12 @@ pub enum Pose {
     Ware(Sheen),
 }
 
-/// How much light a thing on the floor gives (`Art::shine`): none (a
-/// boulder: Sokoban's dozen boulders each sat in a loot spotlight), a
-/// faint pool (heavy things: arms, armour, tools, food; rocks and stones),
-/// the full pool and its glint (the small things worth stooping for), or
-/// a half pool and two small glints of its own (gold).
+/// How a thing on the floor is marked (`Art::shine`, `Edge::Ware`):
+/// nothing (a boulder: Sokoban's dozen boulders each sat in a loot
+/// spotlight), a faint dark-gold rim (heavy things: arms, armour, tools,
+/// food; rocks and stones), the full rim and a glint now and then (the
+/// small things worth stooping for), or a dim pool and two small glints
+/// of its own (gold).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Sheen {
     None,
@@ -232,6 +233,28 @@ enum Edge {
     Dark,
     /// (hundredths of `OUTLINE_STRENGTH`)
     Outline(u8),
+    /// A thing on the floor's dark-gold rim (hundredths of
+    /// `WARE_EDGE_STRENGTH`).
+    Ware(u8),
+}
+/// A thing on the floor reads by a dark-gold rim on itself (the edge
+/// pass, in the game's light), not by a pool of light round it: a warm
+/// pool and a near-white glint made a dropped dagger or a ration the
+/// brightest thing in a dark frame. Its colour, how strong it is on what
+/// a player stoops for (`Sheen::Full`) and on the rest (`Sheen::Faint`,
+/// hundredths of it), and from how far off facing the eye it begins.
+const WARE_EDGE: Color = Color::from_rgb(0.62, 0.43, 0.16);
+const WARE_EDGE_STRENGTH: f32 = 0.55;
+const WARE_EDGE_FAINT: u8 = 60;
+const WARE_EDGE_FROM: f32 = 0.35;
+/// A thing on the floor's own colour, this share of its material's (lit
+/// as a creature is, a pale ration came out cream at luma 230 on a floor
+/// of 67), and the lights' rim on it (a creature's `RIM`).
+const WARE_ALBEDO: f32 = 0.5;
+const WARE_RIM: f32 = 0.2;
+
+fn ware_edge_strength(share: u8) -> f32 {
+    WARE_EDGE_STRENGTH * f32::from(share) / 100.0
 }
 /// A living creature's contact shadow (`Art::ground`): how dark it is at
 /// its middle, and how much wider and longer than the body's own bounds
@@ -261,27 +284,28 @@ const WARE_HALF: f32 = 0.47;
 const WARE_READABLE: f32 = 0.2;
 const WARE_TINIEST: f32 = 0.03;
 const WARE_LIFTED_BELOW: f32 = 0.32;
-/// What lies on the floor glints (`glint.gdshader`) this high over it
-/// (metres), and lights the floor under it a little (`Art::shine`): the
-/// colour and how much wider than the thing that pool is.
+/// What a player stoops for glints now and then (`glint.gdshader`) this
+/// high over it (metres), a small dark-gold point on it (`Art::shine`):
+/// its colour and size across (metres). The shader's own near-white one,
+/// over a warm pool, read as a white blob.
 const GLINT_SHADER: &str = "res://shaders/glint.gdshader";
 const GLINT_Y: f32 = 0.16;
-const SHINE: Color = Color::from_rgba(1.0, 0.88, 0.62, 0.55);
-const SHINE_MORE: f32 = 0.35;
-/// How bright a small thing's pool is (the decal's emission energy).
-const SHINE_ENERGY: f32 = 0.9;
-/// A heavy thing's pool, this share of a small thing's (`Sheen::Faint`).
-const SHINE_FAINT: f32 = 0.35;
+const GLINT: Color = Color::from_rgb(0.7, 0.48, 0.18);
+const GLINT_SIZE: f32 = 0.2;
 /// Where a pile of gold catches the light: two small warm glints on its
 /// coins (shares of its reach across and along, and metres up), each
 /// flaring at its own moment (by where it lies). Gold is dark warm metal
-/// lit by what lights the floor: its pool this share of a small thing's
-/// (the full pool, three large glints and a glow of its own made a pile
-/// the brightest thing in a room, a white blob).
+/// lit by what lights the floor, over a dim warm pool of its own (the
+/// decal's colour, how much wider than the pile, and its emission
+/// energy): the full pool, three large glints and a glow of its own made
+/// a pile the brightest thing in a room, a white blob. Gold alone keeps a
+/// pool: anything else lies in the floor's own light.
 const COIN_GLINTS: [(f32, f32, f32); 2] = [(-0.24, -0.12, 0.09), (0.22, 0.2, 0.08)];
 const COIN_GLINT_SIZE: f32 = 0.18;
 const COIN_GLINT: Color = Color::from_rgb(1.0, 0.76, 0.4);
-const COIN_SHINE: f32 = 0.5;
+const COIN_POOL: Color = Color::from_rgba(1.0, 0.88, 0.62, 0.55);
+const COIN_POOL_MORE: f32 = 0.35;
+const COIN_POOL_ENERGY: f32 = 0.45;
 
 /// A thing on the floor's model, scale and turn (the bits of the floats).
 type WareKey = (usize, u32, [u32; 3]);
@@ -641,6 +665,8 @@ pub struct Art {
     dark_edges: HashMap<[u8; 3], Option<Gd<Material>>>,
     /// The outline of a detailed body (`OUTLINE_SHADER`).
     outline_edge: HashMap<u8, Option<Gd<Material>>>,
+    /// A thing on the floor's rim, by its share (`Edge::Ware`).
+    ware_edges: HashMap<u8, Option<Gd<Material>>>,
     /// A thing on the floor's glint (`GLINT_SHADER`), the same way, and
     /// gold's (warmer and smaller).
     glint: Option<Option<Gd<Material>>>,
@@ -769,6 +795,7 @@ impl Art {
             edges_lit: true,
             dark_edges: HashMap::new(),
             outline_edge: HashMap::new(),
+            ware_edges: HashMap::new(),
             glint: None,
             coin_glint: None,
             contact: None,
@@ -1999,7 +2026,13 @@ impl Art {
             // its maps: a raven's feathers, a pudding)
             // (a detailed body by its outline: `ModelSpec::outline`)
             let outline = self.manifest.model_at(look.art.model).1.outline;
-            let edge = if outline > 0.0 {
+            let edge = if let Pose::Ware(sheen @ (Sheen::Full | Sheen::Faint)) = look.pose {
+                // (a pile of gold reads by its own glints and pool)
+                Edge::Ware(match sheen {
+                    Sheen::Full => 100,
+                    _ => WARE_EDGE_FAINT,
+                })
+            } else if outline > 0.0 {
                 Edge::Outline((outline.min(2.0) * 100.0).round() as u8)
             } else if reads_black(look.tint) {
                 Edge::Dark
@@ -2009,8 +2042,8 @@ impl Art {
             self.rim(m, edge, look.tint);
         }
         // what is seen through or only sensed throws no shadow, nor takes
-        // the light of the creatures seen; a thing on the floor lights the
-        // floor under it instead, and glints
+        // the light of the creatures seen; a thing on the floor glints
+        // instead
         match look.pose {
             Pose::Ghost => {}
             Pose::Ware(sheen) => {
@@ -2024,47 +2057,40 @@ impl Art {
         }
     }
 
-    /// A thing on the floor's own light (B7's creatures had theirs): a soft
-    /// warm pool on the floor under it, a little wider than it, and a glint
-    /// over it now and then (`GLINT_SHADER`). Once per instance: it stays
-    /// with it in the pool.
+    /// What marks a thing on the floor besides its rim (`Edge::Ware`): a
+    /// small dark-gold glint over what a player stoops for now and then
+    /// (`GLINT_SHADER`); a pile of gold a dim warm pool and two glints of
+    /// its own. Once per instance: it stays with it in the pool.
     fn shine(&mut self, m: &Model, sheen: Sheen) {
         let Some(inner) = m.inner.as_ref() else {
             return;
         };
-        if sheen == Sheen::None || m.node.has_node("Shine") {
+        let coins = sheen == Sheen::Coins;
+        if !(coins || sheen == Sheen::Full) || m.node.has_node("Glint0") {
             return;
         }
         let [w, l] = aabb_reach(&m.node, inner);
-        let mut d = Decal::new_alloc();
-        d.set_name("Shine");
-        d.set_size(Vector3::new(
-            (w + SHINE_MORE).clamp(0.35, 1.0),
-            0.5,
-            (l + SHINE_MORE).clamp(0.35, 1.0),
-        ));
-        let tex = self
-            .contact
-            .get_or_insert_with(crate::vfx::contact_texture)
-            .clone();
-        d.set_texture(godot::classes::decal::DecalTexture::EMISSION, &tex);
-        // (a decal's alpha dims its albedo only, never its emission: a
-        // faint pool is a weaker light)
-        d.set_emission_energy(match sheen {
-            Sheen::Faint => SHINE_ENERGY * SHINE_FAINT,
-            Sheen::Coins => SHINE_ENERGY * COIN_SHINE,
-            _ => SHINE_ENERGY,
-        });
-        d.set_modulate(SHINE);
-        d.set_cull_mask(CONTACT_LAYERS);
-        d.set_upper_fade(0.3);
-        d.set_lower_fade(0.3);
-        d.set_normal_fade(0.5);
-        d.set_position(Vector3::new(0.0, 0.1, 0.0));
-        m.node.clone().add_child(&d);
-        let coins = sheen == Sheen::Coins;
-        if sheen != Sheen::Full && !coins {
-            return;
+        if coins {
+            let mut d = Decal::new_alloc();
+            d.set_name("Shine");
+            d.set_size(Vector3::new(
+                (w + COIN_POOL_MORE).clamp(0.35, 1.0),
+                0.5,
+                (l + COIN_POOL_MORE).clamp(0.35, 1.0),
+            ));
+            let tex = self
+                .contact
+                .get_or_insert_with(crate::vfx::contact_texture)
+                .clone();
+            d.set_texture(godot::classes::decal::DecalTexture::EMISSION, &tex);
+            d.set_emission_energy(COIN_POOL_ENERGY);
+            d.set_modulate(COIN_POOL);
+            d.set_cull_mask(CONTACT_LAYERS);
+            d.set_upper_fade(0.3);
+            d.set_lower_fade(0.3);
+            d.set_normal_fade(0.5);
+            d.set_position(Vector3::new(0.0, 0.1, 0.0));
+            m.node.clone().add_child(&d);
         }
         let slot = if coins {
             &mut self.coin_glint
@@ -2076,10 +2102,13 @@ impl Art {
                 let shader = godot::tools::try_load::<Shader>(GLINT_SHADER).ok()?;
                 let mut mat = ShaderMaterial::new_gd();
                 mat.set_shader(&shader);
-                if coins {
-                    mat.set_shader_parameter("color", &COIN_GLINT.to_variant());
-                    mat.set_shader_parameter("size", &COIN_GLINT_SIZE.to_variant());
-                }
+                let (color, size) = if coins {
+                    (COIN_GLINT, COIN_GLINT_SIZE)
+                } else {
+                    (GLINT, GLINT_SIZE)
+                };
+                mat.set_shader_parameter("color", &color.to_variant());
+                mat.set_shader_parameter("size", &size.to_variant());
                 Some(mat.upcast())
             })
             .clone();
@@ -2205,6 +2234,19 @@ impl Art {
             .clone()
     }
 
+    /// A thing on the floor's dark-gold rim (`Edge::Ware`), lit as the
+    /// edges are (`set_edges_lit`).
+    fn ware_edge_pass(&mut self, share: u8) -> Option<Gd<Material>> {
+        let lit = self.edges_lit;
+        self.ware_edges
+            .entry(share)
+            .or_insert_with(|| {
+                let k = ware_edge_strength(share);
+                edge_material(lit, k, WARE_EDGE_FROM, Some(WARE_EDGE))
+            })
+            .clone()
+    }
+
     /// The hero's edge pass: subtler, in the shader's own cold colour.
     fn hero_edge_pass(&mut self) -> Option<Gd<Material>> {
         let lit = self.edges_lit;
@@ -2274,6 +2316,14 @@ impl Art {
                 && let Ok(mut m) = m.clone().try_cast::<ShaderMaterial>()
             {
                 let k = if on { strength } else { 0.0 };
+                m.set_shader_parameter("strength", &k.to_variant());
+            }
+        }
+        for (&share, m) in &self.ware_edges {
+            if let Some(m) = m
+                && let Ok(mut m) = m.clone().try_cast::<ShaderMaterial>()
+            {
+                let k = if on { ware_edge_strength(share) } else { 0.0 };
                 m.set_shader_parameter("strength", &k.to_variant());
             }
         }
@@ -2401,6 +2451,23 @@ impl Art {
                 if let Edge::Outline(share) = edge {
                     if m.get_next_pass().is_none()
                         && let Some(pass) = self.outline_pass(share)
+                    {
+                        m.set_next_pass(&pass);
+                    }
+                } else if let Edge::Ware(share) = edge {
+                    // (lit as a creature is, a pale ration or a steel mace
+                    // head still burned to cream on a dim floor: dimmer, it
+                    // reads by its rim)
+                    let k = WARE_ALBEDO;
+                    m.set_albedo(Color::from_rgba(
+                        albedo.r * k,
+                        albedo.g * k,
+                        albedo.b * k,
+                        albedo.a,
+                    ));
+                    m.set_rim(WARE_RIM);
+                    if m.get_next_pass().is_none()
+                        && let Some(pass) = self.ware_edge_pass(share)
                     {
                         m.set_next_pass(&pass);
                     }
