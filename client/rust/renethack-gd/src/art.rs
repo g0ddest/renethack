@@ -203,6 +203,9 @@ const RIM_SPECULAR: f32 = 0.5;
 pub const CREATURE_LAYER: u32 = 1 << 6;
 /// The pass round a living creature's outline (`Art::rim`).
 const EDGE_SHADER: &str = "res://shaders/creature_edge.gdshader";
+/// How far a rank's colour is mixed into a generated body's cloth where
+/// its dye mask is white, unless its model says (`ModelSpec::dye_strength`).
+const DYE_STRENGTH: f32 = 0.55;
 /// A hero's two-sided material's back faces darkened (an open coat's
 /// inside, `Art::hero_edge_lined_pass`).
 const LINING_SHADER: &str = "res://shaders/lining.gdshader";
@@ -652,6 +655,10 @@ pub struct Art {
     /// Materials with another albedo, by the source material's id and the
     /// texture's path.
     repainted: HashMap<(i64, String), Option<Gd<Material>>>,
+    /// The materials dyed (`Art::dye`) by the one each was made from, the
+    /// colour and the mask; the colours' swatches.
+    dyed: HashMap<(i64, u32, String), Option<Gd<Material>>>,
+    dye_swatches: HashMap<u32, Gd<Texture2D>>,
     /// Sleeves cut free of their hands, by the source mesh's id.
     handless: HashMap<i64, Gd<ArrayMesh>>,
     /// An outfit's boots cut to shoes (`shoe`), by the boot's mesh.
@@ -769,6 +776,8 @@ impl Art {
             proc_clips: None,
             smoothed: HashMap::new(),
             repainted: HashMap::new(),
+            dyed: HashMap::new(),
+            dye_swatches: HashMap::new(),
             handless: HashMap::new(),
             shoes: HashMap::new(),
             heads: HashMap::new(),
@@ -1059,7 +1068,11 @@ impl Art {
         // a scene, and the albedo its model wears instead of its own
         let scene = |i: usize| {
             let spec = self.manifest.model_at(i).1;
-            spec.scene.iter().chain(&spec.albedo).map(|p| full(p))
+            spec.scene
+                .iter()
+                .chain(&spec.albedo)
+                .chain(&spec.dye_mask)
+                .map(|p| full(p))
         };
         let library = |n: &str| self.manifest.library(n).map(&full);
         let head = |kind: &str, region: Region| -> Vec<String> {
@@ -2433,6 +2446,10 @@ impl Art {
                 if let Some(albedo) = spec.albedo.as_deref() {
                     self.repaint(&inner, albedo);
                 }
+                if let (Some(dye), Some(mask)) = (spec.dye.as_deref(), spec.dye_mask.as_deref()) {
+                    let strength = spec.dye_strength.unwrap_or(DYE_STRENGTH);
+                    self.dye(&inner, dye, mask, strength);
+                }
                 let player = self.animate_scene(&inner, &spec);
                 match (spec.head.as_deref(), spec.second_head.as_deref()) {
                     // two heads lean apart on one neck
@@ -2690,6 +2707,78 @@ impl Art {
 
     /// A scene's meshes in their own materials with the albedo texture at
     /// `path` (each material copied once per texture).
+    /// A rank's colour pushed into a scene's cloth (`ModelSpec::dye`):
+    /// each surface's material copied (once per material, colour and
+    /// mask) with its detail layer on, the colour mixed `strength` of the
+    /// way into the albedo where the mask is white. The material stays a
+    /// standard one: its rim, edge and tints take it as before.
+    fn dye(&mut self, inner: &Gd<Node3D>, colour: &str, mask: &str, strength: f32) {
+        let (Some(c), Some(mask_tex)) = (nh_art::hex(colour), self.texture(mask)) else {
+            return;
+        };
+        let rgba = Color::from_rgba(c[0], c[1], c[2], strength.clamp(0.0, 1.0));
+        let key_colour = color_key(rgba);
+        let swatch = self
+            .dye_swatches
+            .entry(key_colour)
+            .or_insert_with(|| {
+                let mut image = godot::classes::Image::create_empty(
+                    4,
+                    4,
+                    false,
+                    godot::classes::image::Format::RGBA8,
+                )
+                .expect("a 4x4 image");
+                image.fill(rgba);
+                godot::classes::ImageTexture::create_from_image(&image)
+                    .expect("a texture of the swatch")
+                    .upcast::<Texture2D>()
+            })
+            .clone();
+        for node in inner
+            .find_children_ex("*")
+            .type_("MeshInstance3D")
+            .owned(false)
+            .done()
+            .iter_shared()
+        {
+            let Ok(mut mi) = node.try_cast::<MeshInstance3D>() else {
+                continue;
+            };
+            let n = mi.get_mesh().map_or(0, |m| m.get_surface_count());
+            for i in 0..n {
+                let Some(src) = mi.get_active_material(i) else {
+                    continue;
+                };
+                let key = (src.instance_id().to_i64(), key_colour, mask.to_string());
+                let dyed = match self.dyed.get(&key) {
+                    Some(m) => m.clone(),
+                    None => {
+                        let out = match src.duplicate_resource().try_cast::<BaseMaterial3D>() {
+                            Ok(mut m) => {
+                                m.set_feature(Feature::DETAIL, true);
+                                m.set_texture(TextureParam::DETAIL_MASK, &mask_tex);
+                                m.set_texture(TextureParam::DETAIL_ALBEDO, &swatch);
+                                m.set_detail_blend_mode(
+                                    godot::classes::base_material_3d::BlendMode::MIX,
+                                );
+                                let m = m.upcast::<Material>();
+                                self.keep_metal(&m, Some(&src));
+                                Some(m)
+                            }
+                            Err(_) => None,
+                        };
+                        self.dyed.insert(key, out.clone());
+                        out
+                    }
+                };
+                if let Some(m) = dyed {
+                    mi.set_surface_override_material(i, &m);
+                }
+            }
+        }
+    }
+
     fn repaint(&mut self, inner: &Gd<Node3D>, path: &str) {
         let Some(texture) = self.texture(path) else {
             return;

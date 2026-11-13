@@ -318,6 +318,16 @@ pub struct ModelSpec {
     /// over a body. Their relief, gloss and glow stay.
     #[serde(default)]
     pub albedo: Option<String>,
+    /// A rank's colour (`"#rrggbb"`) pushed into the scene's cloth where
+    /// `dye_mask` (relative to `client/godot/art`, a grey mask in the
+    /// albedo's UVs) is white, `dye_strength` of the way (the generated
+    /// Mines folk: their dark painted cloth read as one grey bulk at 11 m).
+    #[serde(default)]
+    pub dye: Option<String>,
+    #[serde(default)]
+    pub dye_mask: Option<String>,
+    #[serde(default)]
+    pub dye_strength: Option<f32>,
     /// The outfit's own painting without its colours (relative to
     /// `client/godot/art`: seams, stitches, folds, worn edges): what it
     /// dresses in a material that is not metal (`dress`), or dyes outright
@@ -1085,6 +1095,12 @@ impl ArtManifest {
             {
                 errors.push(format!("model {name}: no material {mm}"));
             }
+            // a dye needs its colour and its mask, both or neither
+            if m.dye.is_some() != m.dye_mask.is_some()
+                || m.dye.as_deref().is_some_and(|c| hex(c).is_none())
+            {
+                errors.push(format!("model {name}: a dye's colour and mask"));
+            }
             if let Some(h) = &m.head
                 && !matches!(h.as_str(), "male" | "female" | "bearded" | "hood")
                 && !raw.heads.contains_key(h)
@@ -1543,6 +1559,9 @@ impl ArtManifest {
             dress: BTreeMap::new(),
             armour: BTreeMap::new(),
             albedo: None,
+            dye: None,
+            dye_mask: None,
+            dye_strength: None,
             relief: None,
             extras: Vec::new(),
             neck: Vec::new(),
