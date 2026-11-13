@@ -29,14 +29,14 @@
 use std::time::{Duration, Instant};
 
 use godot::classes::base_material_3d::{
-    BlendMode, CullMode, Flags, ShadingMode, TextureParam, Transparency,
+    BillboardMode, BlendMode, CullMode, Flags, ShadingMode, TextureParam, Transparency,
 };
 use godot::classes::fast_noise_lite::NoiseType;
 use godot::classes::geometry_instance_3d::ShadowCastingSetting;
 use godot::classes::image::Format;
 use godot::classes::light_3d::Param;
 use godot::classes::multi_mesh::TransformFormat;
-use godot::classes::particle_process_material::{EmissionShape, Parameter};
+use godot::classes::particle_process_material::{EmissionShape, Parameter, ParticleFlags};
 use godot::classes::rendering_server::FogVolumeShape;
 use godot::classes::{
     CameraAttributesPractical, FastNoiseLite, FogMaterial, FogVolume, GpuParticles3D, Gradient,
@@ -138,6 +138,9 @@ const DROPLETS: i32 = 18;
 /// Each blob and the dimmer, smaller ones trailing it down its arc: their
 /// widths and glow, and the gap between them (seconds).
 const BLOB_GHOSTS: [(f32, f32); 3] = [(0.12, 2.6), (0.085, 1.5), (0.055, 0.8)];
+/// A blob is drawn this much longer along its flight than across it (a
+/// thrown lump, not a round light).
+const BLOB_LONG: f32 = 1.4;
 const GHOST_GAP: f32 = 0.035;
 const DROPLET_SEED: u32 = 7741;
 const SPOT_GLOW: f32 = 1.1;
@@ -1402,7 +1405,9 @@ impl MapView {
     /// weight, big and small (once, when it goes off), and their trails:
     /// smaller, dimmer blobs on one seed, each fired a moment after the
     /// one before, so that they follow it down its arc (ribbon trails read
-    /// as blades of grass). The head first, the ghosts after.
+    /// as blades of grass). The head first, the ghosts after. Each is drawn
+    /// along its flight, turned to the camera about it, a little longer
+    /// than wide, hot inside a dark cooling skin.
     fn droplets(&mut self) -> Vec<Gd<GpuParticles3D>> {
         let blob = self
             .kept("lava blob", || {
@@ -1410,10 +1415,8 @@ impl MapView {
             })
             .unwrap_or_else(crate::vfx::soft_texture);
         let mat = self
-            .kept("splash blob", || {
-                Some(crate::vfx::particle_material(&blob, false, false, None))
-            })
-            .unwrap_or_else(|| crate::vfx::particle_material(&blob, false, false, None));
+            .kept("splash blob", || Some(blob_material(&blob)))
+            .unwrap_or_else(|| blob_material(&blob));
         let mut out = Vec::new();
         for (k, (wide, glow)) in BLOB_GHOSTS.into_iter().enumerate() {
             let mut m = ParticleProcessMaterial::new_gd();
@@ -1427,6 +1430,7 @@ impl MapView {
             m.set_param_min(Parameter::SCALE, 0.45);
             m.set_param_max(Parameter::SCALE, 1.5);
             m.set_color_ramp(&crate::vfx::ramp(BLOB, glow));
+            m.set_particle_flag(ParticleFlags::ALIGN_Y_TO_VELOCITY, true);
             let mut p = GpuParticles3D::new_alloc();
             p.set_name(&format!("Droplets{k}"));
             p.set_process_material(&m);
@@ -1437,7 +1441,9 @@ impl MapView {
             p.set_use_fixed_seed(true);
             p.set_seed(DROPLET_SEED);
             p.set_emitting(false);
-            p.set_draw_pass_mesh(0, &quad_mesh(wide));
+            let mut quad = QuadMesh::new_gd();
+            quad.set_size(Vector2::new(wide, wide * BLOB_LONG));
+            p.set_draw_pass_mesh(0, &quad);
             p.set_material_override(&mat);
             p.set_cast_shadows_setting(ShadowCastingSetting::OFF);
             p.set_visibility_aabb(Aabb::new(
@@ -2194,9 +2200,11 @@ fn crack_texture() -> Option<Gd<ImageTexture>> {
     image_texture(N, px)
 }
 
-/// A molten blob: a round body with a hot core and a soft rim.
+/// A molten blob, drawn along its flight (its head up the texture): a
+/// body fuller at its head than at its tail, white-hot inside and
+/// darkening to a cooling skin at its edge, which is sharp.
 fn blob_texture() -> Option<Gd<ImageTexture>> {
-    const N: usize = 32;
+    const N: usize = 48;
     let mut px = vec![0u8; N * N * 4];
     for y in 0..N {
         for x in 0..N {
@@ -2204,15 +2212,35 @@ fn blob_texture() -> Option<Gd<ImageTexture>> {
                 (x as f32 + 0.5) / N as f32 - 0.5,
                 (y as f32 + 0.5) / N as f32 - 0.5,
             );
-            let d = (u * u + v * v).sqrt() * 2.0;
-            let body = 1.0 - smooth((d - 0.62) / 0.3);
-            let core = 0.6 + 0.4 * (1.0 - smooth(d / 0.7));
-            let c = (core * 255.0) as u8;
+            // (v < 0 is its head: narrower towards its tail)
+            let across = u / (1.0 - 0.18 * (v * 2.0).max(0.0));
+            let d = (across * across + v * v).sqrt() * 2.0;
+            let body = 1.0 - smooth((d - 0.8) / 0.14);
+            let hot = 1.0 - smooth(((d - 0.2) / 0.62).clamp(0.0, 1.0));
+            let c = ((BLOB_SKIN + (1.0 - BLOB_SKIN) * hot) * 255.0) as u8;
             let i = (y * N + x) * 4;
             px[i..i + 4].copy_from_slice(&[c, c, c, (body * 255.0) as u8]);
         }
     }
     image_texture(N, px)
+}
+
+/// How bright a blob's cooling skin is against its core.
+const BLOB_SKIN: f32 = 0.12;
+
+/// The blobs' material: drawn in their colour (not added: their dark skin
+/// shows on the lava), unlit, each turned to the camera about the line of
+/// its flight (its Y, which the particles align to their velocity).
+fn blob_material(tex: &Gd<Texture2D>) -> Gd<Material> {
+    let mut m = StandardMaterial3D::new_gd();
+    m.set_billboard_mode(BillboardMode::FIXED_Y);
+    m.set_flag(Flags::BILLBOARD_KEEP_SCALE, true);
+    m.set_flag(Flags::ALBEDO_FROM_VERTEX_COLOR, true);
+    m.set_texture(TextureParam::ALBEDO, tex);
+    m.set_transparency(Transparency::ALPHA);
+    m.set_shading_mode(ShadingMode::UNSHADED);
+    m.set_flag(Flags::DISABLE_FOG, true);
+    m.upcast()
 }
 
 /// A smooth noise round a circle (angle in radians), 0..1.
