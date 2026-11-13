@@ -176,7 +176,10 @@ fn lamp_offset(kind: Lamp) -> Vector3 {
         Lamp::Lava => at(0.0, 0.4, 0.0),
         Lamp::Down => at(0.0, -0.05, 0.3),
         Lamp::Holy => at(0.0, 2.4, 0.0),
-        Lamp::Gate(x, z) => at(f32::from(x) * 1.1, 1.9, f32::from(z) * 1.1),
+        // (close before the bridge's face, or low over the deck let down:
+        // its short reach never on the moat about it)
+        Lamp::Gate(0, 0) => at(0.0, 1.0, 0.0),
+        Lamp::Gate(x, z) => at(f32::from(x) * 0.55, 1.45, f32::from(z) * 0.55),
     }
 }
 
@@ -2040,10 +2043,12 @@ const DRAWBRIDGE_LEAN: f32 = 18.0;
 /// about them, faint at the game's distance).
 const BRIDGE_WOOD: &str = "planks";
 const SHADE_BRIDGE: u8 = 110;
-/// The gate's own light (`Lamp::Gate`): its colour, energy and reach.
+/// The gate's own light (`Lamp::Gate`): its colour, energy and reach, too
+/// short to reach the water (it warmed the moat beside the gate out of
+/// its cold: the `features` self-test's water read grey).
 const GATE_LIGHT: Color = Color::from_rgb(1.0, 0.68, 0.42);
-const GATE_ENERGY: f32 = 3.4;
-const GATE_RANGE: f32 = 3.5;
+const GATE_ENERGY: f32 = 2.2;
+const GATE_RANGE: f32 = 1.35;
 
 /// A drawbridge's planks (`BRIDGE_WOOD`), if the manifest has them.
 fn bridge_wood(ctx: &Ctx) -> Option<Paint> {
