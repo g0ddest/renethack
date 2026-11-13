@@ -965,7 +965,8 @@ fn kit_distance(g: &mut RenethackGame, metres: f32) -> Result<(), String> {
 /// `--screenshots`. RENETHACK_ROLES=knight,priest: only those;
 /// RENETHACK_KITS_LOOK=1: pictures only; RENETHACK_KIT_FAR=1: each also
 /// 7 m off, as a player sees them close in play; RENETHACK_KIT_PLAY=1: each
-/// also 7 m and 11 m off in the room they start in.
+/// also 7 m and 11 m off in the room they start in; RENETHACK_KIT_BACK=1:
+/// each also from behind.
 pub(super) fn kits() -> Vec<Step> {
     let mut steps = vec![Step::Call("seed 1, the first hero", |g| {
         g.seed = Some(1);
@@ -1034,6 +1035,19 @@ pub(super) fn kits() -> Vec<Step> {
             Step::Wait("a frame", |_| Ok(true)),
             Step::Shot(rest),
         ]);
+        // RENETHACK_KIT_BACK=1: also seen from behind (`<rest>-back`): what
+        // hangs on the back, against it
+        if std::env::var_os("RENETHACK_KIT_BACK").is_some() {
+            let back: &'static str = format!("{rest}-back").leak();
+            steps.extend([
+                Step::Call("turned away", |g| kit_turn(g, 180.0)),
+                Step::Wait("a frame", |_| Ok(true)),
+                Step::Wait("another frame", |_| Ok(true)),
+                Step::Shot(back),
+                Step::Call("facing the camera again", |g| kit_turn(g, 0.0)),
+                Step::Wait("a frame", |_| Ok(true)),
+            ]);
+        }
         // RENETHACK_KIT_PLAY=1: as in play, the HUD out, at 7 m and at the
         // game's 11 m (`<rest>-7m`, `<rest>-11m`): how the hero reads in
         // the room they start in (sheets of their look)

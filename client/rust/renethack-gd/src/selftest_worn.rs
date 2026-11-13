@@ -810,7 +810,98 @@ pub(super) fn worn_generated() -> Vec<Step> {
         Step::Wait("the camera 7 m off", camera_settled),
         Step::Wait("a frame", |_| Ok(true)),
         Step::Shot("worn-generated-7m"),
+        Step::Call("what she carries on her back touches it", stowed_on_body),
     ]);
     steps.extend(quit());
     steps
+}
+
+/// How far, at most, the middle and the root of a thing stowed on the back
+/// (a sheathed weapon, a quiver) may stand off the body (the skeleton's
+/// units): it lies on it, it does not hover beside the shoulder.
+const STOWED_GAP: f32 = 0.05;
+
+/// Each thing stowed on the hero's back (held on the chest's bone) lies
+/// against the body as it is posed now.
+fn stowed_on_body(g: &mut RenethackGame) -> Result<(), String> {
+    let map = map_view(g)?;
+    let m = map.hero_model().ok_or("no hero model")?;
+    let node: Gd<Node> = m.node.clone().upcast();
+    let skeleton = node
+        .find_children_ex("*")
+        .type_("Skeleton3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+        .find_map(|n| n.try_cast::<Skeleton3D>().ok())
+        .ok_or("no skeleton")?;
+    let body: Vec<Skinned> = skeleton
+        .get_children()
+        .iter_shared()
+        .filter_map(|n| n.try_cast::<MeshInstance3D>().ok())
+        .filter(|mi| mi.is_visible())
+        .filter_map(|mi| Skinned::of(&mi))
+        .collect();
+    if body.is_empty() {
+        return Err("no body mesh".into());
+    }
+    let to_skeleton = skeleton.get_global_transform().affine_inverse();
+    let mut stowed = 0;
+    for attach in skeleton
+        .get_children()
+        .iter_shared()
+        .filter_map(|n| n.try_cast::<godot::classes::BoneAttachment3D>().ok())
+        .filter(|b| b.get_bone_name() == "spine_03")
+    {
+        for held in attach
+            .get_children()
+            .iter_shared()
+            .filter(|n| n.get_name().to_string().starts_with(crate::art::HELD_NODE))
+            .filter_map(|n| n.try_cast::<Node3D>().ok())
+            .filter(|n| n.is_visible_in_tree())
+        {
+            let mut points = Vec::new();
+            for mi in held
+                .find_children_ex("*")
+                .type_("MeshInstance3D")
+                .owned(false)
+                .done()
+                .iter_shared()
+                .filter_map(|n| n.try_cast::<MeshInstance3D>().ok())
+            {
+                let Some(mesh) = mi.get_mesh() else { continue };
+                let to = to_skeleton * mi.get_global_transform();
+                for s in 0..mesh.get_surface_count() {
+                    let arrays = mesh.surface_get_arrays(s);
+                    let at: PackedVector3Array = arrays.at(ArrayType::VERTEX.ord() as usize).to();
+                    points.extend(at.as_slice().iter().map(|p| to * *p));
+                }
+            }
+            if points.is_empty() {
+                continue;
+            }
+            // its middle and its root (a weapon's hilt, where it hangs from)
+            // both lie on the body, not only its nearest corner
+            let mid = points.iter().fold(Vector3::ZERO, |a, p| a + *p) / points.len() as f32;
+            let root = to_skeleton * held.get_global_transform().origin;
+            let off = |p: Vector3| {
+                body.iter()
+                    .map(|b| b.distance(&b.posed(&skeleton), &[p], 0.6))
+                    .fold(f32::MAX, f32::min)
+            };
+            let gap = off(mid).max(off(root));
+            godot_print!("selftest: {} stands {gap:.3} off the body", held.get_name());
+            if gap > STOWED_GAP {
+                return Err(format!(
+                    "{} hovers {gap:.3} off the body (at most {STOWED_GAP})",
+                    held.get_name()
+                ));
+            }
+            stowed += 1;
+        }
+    }
+    if stowed == 0 {
+        return Err("nothing stowed on her back (her dagger)".into());
+    }
+    Ok(())
 }
