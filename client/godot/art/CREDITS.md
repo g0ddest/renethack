@@ -202,12 +202,12 @@ wear our kits were re-rigged to our skeleton and clips.
 | Where | What |
 |---|---|
 | `owner/dragon_black.glb` | A black dragon, wings spread (31k triangles) |
-| `owner/lich2.glb`, `lich2_brown.jpg`, `lich2_red.jpg` | A robed lich, in three colours (31k triangles) |
+| `owner/lich2.glb` | A robed lich, its robe dyed in each rank's colour (31k triangles) |
 | `owner/demon.glb` | A horned demon, the balrog and the pit fiend (31k triangles) |
 | `owner/devil.glb`, `devil_ice.jpg`, `devil_bone.jpg` | A lean devil: horned, barbed, ice and bone (31k triangles) |
 | `owner/flayer.glb` | A mind flayer (31k triangles) |
 | `owner/vampire.glb` | A caped vampire lord (31k triangles) |
-| `owner/troll.glb` | A troll (31k triangles) |
+| `owner/troll.glb` | A troll, its skin dyed in each kind's colour (31k triangles) |
 | `owner/giant.glb` | A hill giant with a skull belt and a fur mantle (31k triangles) |
 | `owner/dwarf.glb`, `dwarf_red.jpg`, `dwarf_blue.jpg`, `dwarf_magenta.jpg` | An armoured dwarf, in his rank's colours (21k triangles) |
 | `owner/gnome.glb`, `gnome_brown.jpg`, `gnome_blue.jpg`, `gnome_magenta.jpg`, `gnome_wizard.jpg` | A hooded gnome, in his rank's colours (21k triangles) |

@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://5aojw8avqxd4"
-path.s3tc="res://.godot/imported/lich2_red.jpg-d76b4d6cadbc534758d24c5f017b5e95.s3tc.ctex"
+uid="uid://bjprf26i13ii0"
+path.s3tc="res://.godot/imported/troll_dye.png-69292a1128a1fa507e693b34fa784d83.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://art/owner/lich2_red.jpg"
-dest_files=["res://.godot/imported/lich2_red.jpg-d76b4d6cadbc534758d24c5f017b5e95.s3tc.ctex"]
+source_file="res://art/owner/troll_dye.png"
+dest_files=["res://.godot/imported/troll_dye.png-69292a1128a1fa507e693b34fa784d83.s3tc.ctex"]
 
 [params]
 
