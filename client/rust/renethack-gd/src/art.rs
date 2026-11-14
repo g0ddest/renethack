@@ -293,6 +293,8 @@ fn ware_sweep(share: u8) -> f32 {
 /// of 67), and the lights' rim on it (a creature's `RIM`).
 const WARE_ALBEDO: f32 = 0.5;
 const WARE_RIM: f32 = 0.2;
+/// The specular a thing on the floor keeps at most.
+const WARE_SPECULAR: f32 = 0.15;
 
 fn ware_edge_strength(share: u8) -> f32 {
     WARE_EDGE_STRENGTH * f32::from(share) / 100.0
@@ -2552,6 +2554,9 @@ impl Art {
                         albedo.b * k,
                         albedo.a,
                     ));
+                    // (a white point on a dome drew the eye before the thing)
+                    let specular = m.get_specular().min(WARE_SPECULAR);
+                    m.set_specular(specular);
                     m.set_rim(WARE_RIM);
                     if m.get_next_pass().is_none()
                         && let Some(pass) = self.ware_edge_pass(share)

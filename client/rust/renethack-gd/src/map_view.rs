@@ -10104,9 +10104,12 @@ impl MapView {
                 continue;
             }
             // a creature on the cell (not the hero: their light rims them),
-            // and the thing on top of what lies there: lit as one
-            let creature = look.entity == Some(i)
-                && matches!(p.look.pose, Pose::Alive | Pose::Ghost | Pose::Ware(_));
+            // and the thing on top of what lies there, a pile's too: lit as
+            // one (a pile's top, lit as the floor is, took the hero's light
+            // whole, out of her light's cap: an orc's dropped helm on its
+            // corpse a cream dome at luma 254)
+            let creature = matches!(p.look.pose, Pose::Ware(_))
+                || look.entity == Some(i) && matches!(p.look.pose, Pose::Alive | Pose::Ghost);
             let mut m = match (before, reuse) {
                 (Some(b), Some(m)) if b.look == p.look => m,
                 (_, other) => {
