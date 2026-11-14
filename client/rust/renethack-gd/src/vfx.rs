@@ -385,6 +385,8 @@ enum Recipe {
     Soot,
     /// A small dusky puff (a spell gathering at the hand).
     Murk,
+    /// Specks drawn in to a point from round it (a spell gathering).
+    Gather,
     /// A ball of a colour, drawn over what is behind it: a blast's heart
     /// that keeps its hue (added light whitens what it lies on).
     Core,
@@ -936,6 +938,20 @@ impl Recipe {
                 lit: true,
                 ..base
             },
+            // born on a ball round the hand, pulled in to it
+            // (`process_material`'s radial pull), each speck
+            // brightening as it comes
+            Recipe::Gather => Params {
+                amount: 22,
+                life: 0.36,
+                speed: (0.0, 0.05),
+                spread: 180.0,
+                size: (0.025, 0.05),
+                radius: CAST_GATHER.0,
+                damping: 0.0,
+                hdr: 1.6,
+                ..base
+            },
             Recipe::Glow => Params {
                 amount: 18,
                 life: 1.4,
@@ -1291,11 +1307,22 @@ const BLAST_GLOW_SIZE: (f32, f32) = (3.4, 1.6);
 /// The haze at a frosty or magical blast's heart: its puffs this many
 /// times their size, in a ball as many times wider as its root.
 const BLAST_BODY: f32 = 1.8;
-/// A magical blast's heart: this many times its colour (over one it reads
-/// as a light at the game's distance, and still as its hue).
-const MAGIC_CORE: f32 = 1.5;
-/// A spell gathering at the hand: its murk this much of its colour.
+/// A magical blast: its glow this much of its colour; its heart a dark
+/// core, this much of it (a ball of its own colour, at one and a half
+/// times it, read as a violet orb, no weight); and the shock spreading
+/// from it, this many times a ring's size.
+const MAGIC_GLOW: f32 = 0.55;
+const MAGIC_CORE: f32 = 0.1;
+const MAGIC_SHOCK: f32 = 1.6;
+/// A spell gathering at the hand: its murk this much of its colour; the
+/// ball its specks are drawn in from (radius, metres) and how hard they
+/// are pulled (m/s²); and after how long (seconds) it is let go, a ring
+/// of its force (`CAST_RING`).
 const CAST_MURK: f32 = 0.4;
+const CAST_GATHER: (f32, f32) = (0.5, 7.0);
+const CAST_RELEASE: f32 = 0.34;
+/// The ring it is let go as, this much of its colour.
+const CAST_RING: f32 = 0.45;
 /// Pieces of a ray drawn by the map this lately (seconds) were the ray of
 /// the hero's own zap, shown before the hero's use is (`ray_lately`).
 const RAY_LATELY: f32 = 1.5;
@@ -1349,6 +1376,7 @@ fn particle_textures() -> HashMap<Recipe, Gd<Texture2D>> {
         Recipe::Twinkles,
         Recipe::Spread,
         Recipe::Swirl,
+        Recipe::Gather,
     ] {
         all.insert(r, speck.clone());
     }
@@ -1985,12 +2013,26 @@ impl Vfx {
                 self.emit_by(Recipe::Flare, bright, at, None, k * IMPACT_FLASH);
             }
             _ if recipe == Recipe::Sparks => self.emit_by(Recipe::Flash, bright, at, None, k),
-            // a spell gathering: a dusky puff of its colour, the hot
-            // points turning in it
+            // a spell gathering: a dusky puff of its colour, specks of it
+            // drawn in from round the hand and the hot points turning in
+            // it; then let go, a ring of its force spreading from the hand
+            // (motes alone had no weight)
             VfxKind::Cast(_) => {
                 let m = CAST_MURK;
                 let murk = Color::from_rgb(color.r * m, color.g * m, color.b * m);
                 self.emit_by(Recipe::Murk, murk, at, None, k);
+                self.emit_by(Recipe::Gather, bright, at, None, k);
+                // (its ring and light at the spell's own colour were a pale
+                // white ring round her)
+                let r = CAST_RING;
+                let ring = Color::from_rgb(color.r * r, color.g * r, color.b * r);
+                self.pending.push(Pending {
+                    kind: VfxKind::Shock(ring),
+                    at,
+                    left: CAST_RELEASE,
+                    tint: None,
+                    dir: None,
+                });
             }
             // a thing burning: embers off its flames
             VfxKind::Fire => self.emit_by(Recipe::Embers, color, at, None, k * 0.6),
@@ -2210,18 +2252,23 @@ impl Vfx {
                 self.emit(Recipe::Droplets, drops, mid, None);
             }
             Blast::Magical => {
-                // a ball of its light in a haze of its colour, sparks flung
-                // from it
+                // a haze of its colour with a dim glow in it, sparks flung
+                // from its heart
                 let c = vivid(color);
                 // dusky: its colour darkened, as smoke lit from within
                 let haze = Color::from_rgb(c.r * 0.42, c.g * 0.34, c.b * 0.5);
-                self.blast_body(c, Some(haze), mid, heart, size);
-                // at its heart a ball of its own colour (drawn over the
-                // haze: it keeps its hue) and sparks flung from it
+                // (its glow at its full colour read as violet orbs)
+                let g = MAGIC_GLOW;
+                let glow = Color::from_rgb(c.r * g, c.g * g, c.b * g);
+                self.blast_body(glow, Some(haze), mid, heart, size);
+                // at its heart a dark core (all but black in its hue, drawn
+                // over the haze), a shock of its force spreading from it,
+                // and sparks flung from it
                 if heart {
-                    let core =
-                        Color::from_rgb(c.r * MAGIC_CORE, c.g * MAGIC_CORE, c.b * MAGIC_CORE);
+                    let d = MAGIC_CORE;
+                    let core = Color::from_rgb(c.r * d, c.g * d, c.b * d);
                     self.emit(Recipe::Core, core, mid, None);
+                    self.emit_by(Recipe::Ring, c, mid, None, MAGIC_SHOCK);
                     self.emit(Recipe::Blast, color, mid, None);
                 }
                 if heart {
@@ -3228,6 +3275,12 @@ fn process_material(recipe: Recipe, p: &Params) -> Gd<ParticleProcessMaterial> {
     if recipe == Recipe::Swirl {
         m.set_param_min(Parameter::ORBIT_VELOCITY, 0.4);
         m.set_param_max(Parameter::ORBIT_VELOCITY, 0.8);
+    }
+    if recipe == Recipe::Gather {
+        // (a pull to the middle: from its ball's rim to it in its life)
+        m.set_param_min(Parameter::RADIAL_ACCEL, -CAST_GATHER.1);
+        m.set_param_max(Parameter::RADIAL_ACCEL, -CAST_GATHER.1 * 0.8);
+        m.set_emission_sphere_radius(CAST_GATHER.0);
     }
     if recipe == Recipe::Wisps {
         // each turning as it rises, from any start
