@@ -72,6 +72,13 @@ const GRID_H: f32 = ROWS as f32 * CELL + (ROWS - 1) as f32 * CELL_GAP;
 const CLUSTER_TOP: f32 = 188.0 + 8.0;
 /// The gap kept over what the panel keeps clear of (`keep_clear`).
 const CLEAR_GAP: f32 = 6.0;
+/// The panel's top at the highest: at the canvas's edge but for a gap; and
+/// when it rises over the states (`keep_clear`), low enough that the tip of
+/// its top row (its close button's) still goes above it, as everywhere
+/// else (at 1920x1080 with two states up its close button stood at y 46
+/// and its tip went under it).
+const PANEL_TOP: f32 = 8.0;
+const CLEAR_TOP: f32 = 44.0;
 /// Double-click threshold.
 const DOUBLE_SECS: f64 = 0.35;
 /// Pixels the mouse moves before a press becomes a drag.
@@ -3824,13 +3831,16 @@ impl InventoryPanel {
         let wide = ((view.x - 32.0) / WIDTH).min(1.0);
         let left = (view.x - WIDTH * wide) / 2.0;
         let mut foot = view.y - CLUSTER_TOP;
+        let mut top = PANEL_TOP;
         if let Some(r) = self.clear_of
             && r.position.x < left + WIDTH * wide
             && r.position.x + r.size.x > left
+            && r.position.y - CLEAR_GAP < foot
         {
-            foot = foot.min(r.position.y - CLEAR_GAP);
+            foot = r.position.y - CLEAR_GAP;
+            top = CLEAR_TOP;
         }
-        let room_h = foot - 8.0;
+        let room_h = foot - top;
         let s = wide.min(room_h / HEIGHT).max(0.1);
         let scale = Vector2::new(s, s);
         if self.frame.get_scale() != scale {
@@ -3846,7 +3856,7 @@ impl InventoryPanel {
         }
         let pos = Vector2::new(
             ((view.x - WIDTH * s) / 2.0).round(),
-            (foot - HEIGHT * s).max(8.0).round(),
+            (foot - HEIGHT * s).max(top).round(),
         );
         if self.frame.get_position() != pos {
             self.frame.set_position(pos);
