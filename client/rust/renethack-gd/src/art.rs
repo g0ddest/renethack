@@ -236,6 +236,12 @@ const OUTLINE_STRENGTH: f32 = 0.16;
 /// (of the outline's own share) and from how far off facing the eye.
 const OUTLINE_RIM: f32 = 1.4;
 const OUTLINE_RIM_FROM: f32 = 0.55;
+/// A body dyed in its rank's colour (`ModelSpec::dye`) shows that colour
+/// of itself in the dark, all over it, this faintly (its inner rim's
+/// `dark_floor`, in the game's light): with no torch near, the cold light
+/// and the haze drew a lich's brown robe and a demilich's red one as one
+/// dark robe (H 254 and 321 at V 0.11-0.13), a troll's brown skin grey.
+const DYE_FLOOR: f32 = 0.03;
 
 fn outline_strength(share: u8) -> f32 {
     OUTLINE_STRENGTH * f32::from(share) / 100.0
@@ -248,8 +254,9 @@ fn outline_strength(share: u8) -> f32 {
 enum Edge {
     Own,
     Dark,
-    /// (hundredths of `OUTLINE_STRENGTH`)
-    Outline(u8),
+    /// (hundredths of `OUTLINE_STRENGTH`; its rank's colour a floor in the
+    /// dark, `DYE_FLOOR`)
+    Outline(u8, bool),
     /// A thing on the floor's dark-gold rim (hundredths of
     /// `WARE_EDGE_STRENGTH`; its glint by it, `ware_sweep`; on metal cold,
     /// `STEEL_EDGE`).
@@ -729,7 +736,7 @@ pub struct Art {
     /// colour an edge takes (`edge_colour`).
     dark_edges: HashMap<[u8; 3], Option<Gd<Material>>>,
     /// The outline of a detailed body (`OUTLINE_SHADER`).
-    outline_edge: HashMap<(u8, [u8; 3]), Option<Gd<Material>>>,
+    outline_edge: HashMap<(u8, [u8; 3], bool), Option<Gd<Material>>>,
     /// A thing on the floor's rim, by its share (`Edge::Ware`) and whether
     /// it is metal (its edge and glint cold).
     ware_edges: HashMap<(u8, bool), Option<Gd<Material>>>,
@@ -2108,7 +2115,7 @@ impl Art {
                     _ => WARE_EDGE_FAINT,
                 })
             } else if outline > 0.0 {
-                Edge::Outline((outline.min(2.0) * 100.0).round() as u8)
+                Edge::Outline((outline.min(2.0) * 100.0).round() as u8, false)
             } else if reads_black(look.tint) {
                 Edge::Dark
             } else {
@@ -2120,8 +2127,13 @@ impl Art {
             // carries into the dark round it too)
             let hue = spec.edge_color.as_deref().or(spec.dye.as_deref());
             let tint = match (edge, hue.and_then(nh_art::hex)) {
-                (Edge::Outline(_), Some(c)) => rgb(c),
+                (Edge::Outline(..), Some(c)) => rgb(c),
                 _ => look.tint,
+            };
+            // (and a body dyed in it shows it of itself in the dark)
+            let edge = match edge {
+                Edge::Outline(share, _) => Edge::Outline(share, spec.dye.is_some()),
+                other => other,
             };
             self.rim(m, edge, tint);
         }
@@ -2384,11 +2396,11 @@ impl Art {
     /// are (`set_edges_lit`).
     /// In `tint`'s own hue (`edge_colour`) if it has one, else the cold
     /// light's.
-    fn outline_pass(&mut self, share: u8, tint: Color) -> Option<Gd<Material>> {
+    fn outline_pass(&mut self, share: u8, tint: Color, floor: bool) -> Option<Gd<Material>> {
         let lit = self.edges_lit;
         let hue = edge_colour(tint);
         self.outline_edge
-            .entry((share, rgb8(hue)))
+            .entry((share, rgb8(hue), floor))
             .or_insert_with(|| {
                 let shader = godot::tools::try_load::<Shader>(OUTLINE_SHADER).ok()?;
                 let mut m = ShaderMaterial::new_gd();
@@ -2404,6 +2416,8 @@ impl Art {
                     .and_then(|m| m.try_cast::<ShaderMaterial>().ok())
                 {
                     inner.set_shader_parameter("top", &1.0f32.to_variant());
+                    let k = if lit && floor { DYE_FLOOR } else { 0.0 };
+                    inner.set_shader_parameter("dark_floor", &k.to_variant());
                     m.set_next_pass(&inner);
                 }
                 Some(m.upcast())
@@ -2445,7 +2459,7 @@ impl Art {
                 m.set_shader_parameter("strength", &k.to_variant());
             }
         }
-        for (&(share, _), m) in &self.outline_edge {
+        for (&(share, _, floor), m) in &self.outline_edge {
             if let Some(m) = m
                 && let Ok(mut m) = m.clone().try_cast::<ShaderMaterial>()
             {
@@ -2456,6 +2470,8 @@ impl Art {
                     .and_then(|p| p.try_cast::<ShaderMaterial>().ok())
                 {
                     inner.set_shader_parameter("strength", &(k * OUTLINE_RIM).to_variant());
+                    let f = if on && floor { DYE_FLOOR } else { 0.0 };
+                    inner.set_shader_parameter("dark_floor", &f.to_variant());
                 }
             }
         }
@@ -2566,13 +2582,13 @@ impl Art {
                 let dark = black || reads_black(albedo);
                 let see_through = m.get_transparency();
                 let own = if black { tint } else { albedo };
-                if let Edge::Outline(share) = edge {
+                if let Edge::Outline(share, floor) = edge {
                     // a generated body comes two-sided, though closed: its
                     // back faces drawn for nothing cost a dragon in view
                     // half its frame time (nine at 11 m: 5 ms)
                     m.set_cull_mode(CullMode::BACK);
                     if m.get_next_pass().is_none()
-                        && let Some(pass) = self.outline_pass(share, tint)
+                        && let Some(pass) = self.outline_pass(share, tint, floor)
                     {
                         m.set_next_pass(&pass);
                     }

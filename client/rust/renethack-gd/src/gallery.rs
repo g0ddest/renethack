@@ -995,6 +995,86 @@ pub fn lay_out_colours(
     Ok((cx, cy))
 }
 
+/// The light a creature alone meets in a game (`lay_out_lit_one`): beside
+/// the hero on an unlit floor, under a torch of a lit room's north wall,
+/// or on an unlit floor with the hero far off.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum LitBy {
+    Hero,
+    Torch,
+    Dark,
+}
+
+/// Where `lay_out_lit_one` stands the creature and the hero by `by`, and
+/// the camera's centre.
+pub fn lit_one_cells(by: LitBy) -> ((i32, i32), (i32, i32), (i32, i32)) {
+    match by {
+        LitBy::Hero => ((41, 8), (40, 9), (40, 9)),
+        LitBy::Torch => ((41, 7), (40, 9), (40, 8)),
+        LitBy::Dark => ((41, 8), (65, 9), (40, 9)),
+    }
+}
+
+/// One creature alone in the light it meets in a game, for the value of
+/// its coat (the `pale-coats` pictures), or with no `name` the hero alone
+/// (which pixels are hers): by `LitBy::Hero` it stands on an unlit floor a
+/// cell north-east of her, its body over her pool; by `Torch` it stands in
+/// a lit room a cell aside of a torch of its north wall and out from it
+/// (the torches' pattern hangs one at (40, 5); right under it, the flame's
+/// bloom lay over a troll's head), the hero two cells south-west; by `Dark`
+/// where it stands by `Hero`, the hero twenty-five cells east, out of
+/// sight. The camera's centre: the hero's cell (by `Dark` the cell she has
+/// by `Hero`; by `Torch` a cell south of the torch, the frame's top cut
+/// off a troll's head from hers).
+pub fn lay_out_lit_one(
+    world: &mut World,
+    cat: &Catalog,
+    name: Option<&str>,
+    by: LitBy,
+) -> Result<(), String> {
+    let map = &mut world.map;
+    map.clear();
+    let lit = by == LitBy::Torch;
+    let floor = cmap(cat, if lit { "S_room" } else { "S_darkroom" })?;
+    let (at, hero, centre) = lit_one_cells(by);
+    // a room from x 35 to 47 and y 5 to 13 between its walls, or the same
+    // floor unlit with no walls, and a patch under a hero far off
+    let (west, east, top, bottom) = (35, 47, 5, 13);
+    for y in top..=bottom {
+        for x in west..=east {
+            let (n, s, w, e) = (y == top, y == bottom, x == west, x == east);
+            let sym = match (lit, n, s, w, e) {
+                (false, ..) | (true, false, false, false, false) => None,
+                (_, true, _, true, _) => Some("S_tlcorn"),
+                (_, true, _, _, true) => Some("S_trcorn"),
+                (_, _, true, true, _) => Some("S_blcorn"),
+                (_, _, true, _, true) => Some("S_brcorn"),
+                (_, true, ..) | (_, _, true, ..) => Some("S_hwall"),
+                _ => Some("S_vwall"),
+            };
+            match sym {
+                Some(sym) => map.print(x, y, &cmap(cat, sym)?, None),
+                None => map.print(x, y, &floor, None),
+            }
+        }
+    }
+    if hero.0 > east {
+        for y in hero.1 - 1..=hero.1 + 1 {
+            for x in hero.0 - 1..=hero.0 + 1 {
+                map.print(x, y, &floor, None);
+            }
+        }
+    }
+    if let Some(name) = name {
+        let g = monster(cat, name, 0, GlyphKind::Mon)?;
+        map.print(at.0, at.1, &g, Some(&floor));
+    }
+    let valkyrie = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(hero.0, hero.1, &valkyrie, Some(&floor));
+    world.view_center = Some(centre);
+    Ok(())
+}
+
 /// The whole map at once: rooms of lit and remembered floor between walls,
 /// corridors, doors, a few monsters and objects. The heaviest redraw a
 /// level can ask for (magic mapping, a return to an explored level).

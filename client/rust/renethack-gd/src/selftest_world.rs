@@ -1270,10 +1270,8 @@ pub(super) fn creature_colour() -> Vec<Step> {
             "creature-colour-torchnear-7-matte",
         ],
     ];
-    /// The next view to show (steps are plain functions), and when the
-    /// last change to the picture was asked for.
+    /// The next view to show (steps are plain functions).
     static NEXT: AtomicUsize = AtomicUsize::new(0);
-    static MOMENT: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
     fn next_view(g: &mut RenethackGame) -> Result<(), String> {
         let i = NEXT.fetch_add(1, Ordering::Relaxed);
         let (lit, hero) = SCENES[i / VIEWS.len() % SCENES.len()];
@@ -1322,22 +1320,6 @@ pub(super) fn creature_colour() -> Vec<Step> {
         }
         Ok(())
     }
-    fn matte(g: &mut RenethackGame, on: bool) -> Result<(), String> {
-        g.ui.as_mut().ok_or("no UI")?.map.set_matte(on);
-        Ok(())
-    }
-    fn moment() -> [Step; 2] {
-        [
-            Step::Call("a moment", |_| {
-                *MOMENT.lock().unwrap_or_else(|e| e.into_inner()) = Some(std::time::Instant::now());
-                Ok(())
-            }),
-            Step::Wait("the picture settled", |_| {
-                let since = *MOMENT.lock().unwrap_or_else(|e| e.into_inner());
-                Ok(since.is_some_and(|t| t.elapsed().as_secs_f32() > 0.6))
-            }),
-        ]
-    }
     let mut steps = start();
     steps.push(Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
@@ -1362,6 +1344,179 @@ pub(super) fn creature_colour() -> Vec<Step> {
             Step::Shot(alone),
             Step::Call("all drawn again", |g| matte(g, false)),
         ]);
+    }
+    steps.extend(quit());
+    steps
+}
+
+/// The creatures and the hero alone drawn (`on`), over a colour no
+/// creature is: which pixels of a picture are theirs.
+fn matte(g: &mut RenethackGame, on: bool) -> Result<(), String> {
+    g.ui.as_mut().ok_or("no UI")?.map.set_matte(on);
+    Ok(())
+}
+
+/// When the last change to a picture was asked for (`moment`).
+static MOMENT: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
+
+/// A moment for the picture to settle after a change (a fade, a body's
+/// first frames).
+fn moment() -> [Step; 2] {
+    [
+        Step::Call("a moment", |_| {
+            *MOMENT.lock().unwrap_or_else(|e| e.into_inner()) = Some(std::time::Instant::now());
+            Ok(())
+        }),
+        Step::Wait("the picture settled", |_| {
+            let since = *MOMENT.lock().unwrap_or_else(|e| e.into_inner());
+            Ok(since.is_some_and(|t| t.elapsed().as_secs_f32() > 0.6))
+        }),
+    ]
+}
+
+/// Pale coats in the game's light (the art loop's iteration 7: beside the
+/// hero the yellow, silver, orange and white dragons blew out to V 0.86 to
+/// 1.00, by a torch the ice troll and the Olog-hai to 0.95 and 0.97; with
+/// no torch the troll's and the lich's browns drifted cold), for pictures
+/// before and after (not part of `make test-client`): each body of `PALE`
+/// alone beside the hero (`pale-hero-<body>`), under a torch
+/// (`pale-torch-<body>`) and in the dark, the hero far off
+/// (`pale-dark-<body>`), at the game's distance (`gallery::lay_out_lit_one`),
+/// each once more with the creatures and the hero alone drawn (`-matte`:
+/// which pixels are its), after the hero alone in each light
+/// (`pale-<light>-alone-matte`: which of them are hers).
+/// RENETHACK_PALE=<body>,<body>: those bodies instead;
+/// RENETHACK_PALE_LIGHTS=<light>,<light> (hero, torch, dark): those lights.
+pub(super) fn pale_coats() -> Vec<Step> {
+    use crate::gallery::LitBy;
+    const PALE: &[&str] = &[
+        "yellow dragon",
+        "silver dragon",
+        "white dragon",
+        "orange dragon",
+        "gold dragon",
+        "gray dragon",
+        "red dragon",
+        "baby yellow dragon",
+        "baby silver dragon",
+        "baby white dragon",
+        "baby orange dragon",
+        "ice troll",
+        "Olog-hai",
+        "troll",
+        "rock troll",
+        "water troll",
+        "lich",
+        "demilich",
+        "master lich",
+        "arch-lich",
+        "white unicorn",
+        "gray unicorn",
+        "winter wolf",
+        "little dog",
+        "kitten",
+        "pony",
+    ];
+    const ALL_LIGHTS: [(LitBy, &str); 3] = [
+        (LitBy::Hero, "hero"),
+        (LitBy::Torch, "torch"),
+        (LitBy::Dark, "dark"),
+    ];
+    static LIGHTS: OnceLock<Vec<(LitBy, &'static str)>> = OnceLock::new();
+    fn lights() -> &'static [(LitBy, &'static str)] {
+        LIGHTS.get_or_init(|| {
+            let only = std::env::var("RENETHACK_PALE_LIGHTS").ok();
+            ALL_LIGHTS
+                .into_iter()
+                .filter(|(_, l)| {
+                    only.as_deref()
+                        .is_none_or(|o| o.split(',').any(|w| w == *l))
+                })
+                .collect()
+        })
+    }
+    static BODIES: OnceLock<Vec<&'static str>> = OnceLock::new();
+    fn bodies() -> &'static [&'static str] {
+        BODIES.get_or_init(|| match std::env::var("RENETHACK_PALE") {
+            Ok(list) => list
+                .split(',')
+                .map(|s| &*Box::leak(s.trim().to_string().into_boxed_str()))
+                .collect(),
+            Err(_) => PALE.to_vec(),
+        })
+    }
+    /// The next picture's light and body (none: the hero alone), a light
+    /// after another (steps are plain functions), and the light now.
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+    static NOW: AtomicUsize = AtomicUsize::new(0);
+    fn next(g: &mut RenethackGame) -> Result<(), String> {
+        let i = NEXT.fetch_add(1, Ordering::Relaxed);
+        let n = bodies().len() + 1;
+        NOW.store(i / n % lights().len(), Ordering::Relaxed);
+        let (by, light) = lights()[i / n % lights().len()];
+        let name = (i % n).checked_sub(1).map(|j| bodies()[j]);
+        let cat = g.catalog.clone().ok_or("no catalog")?;
+        crate::gallery::lay_out_lit_one(&mut g.world, &cat, name, by)?;
+        godot_print!(
+            "selftest: pale: {light}: {}",
+            name.unwrap_or("the hero alone")
+        );
+        far(g, 11.0)
+    }
+    /// The body and the hero held at a quarter of their clips (an idle
+    /// starts at a random point, and a dragon's head before its chest
+    /// changed what the light fell on): every body in its own same pose.
+    fn still(g: &mut RenethackGame) -> Result<(), String> {
+        let (by, _) = lights()[NOW.load(Ordering::Relaxed)];
+        let (at, hero, _) = crate::gallery::lit_one_cells(by);
+        let map = map_view(g)?;
+        let models = [
+            map.entity_model(at.0, at.1),
+            map.entity_model(hero.0, hero.1),
+        ];
+        for p in models.into_iter().flatten().filter_map(|m| m.player()) {
+            let mut p = p.clone();
+            let clip = p.get_current_animation().to_string();
+            let Some(len) = p.get_animation(clip.as_str()).map(|a| a.get_length()) else {
+                continue;
+            };
+            p.seek_ex(f64::from(len) * 0.25).update(true).done();
+            p.pause();
+        }
+        Ok(())
+    }
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    for &(_, light) in lights() {
+        for name in std::iter::once(None).chain(bodies().iter().copied().map(Some)) {
+            let shot = format!(
+                "pale-{light}-{}",
+                name.map_or("alone".to_string(), |n| n.replace(' ', "-"))
+            );
+            let matte_shot: &'static str = Box::leak(format!("{shot}-matte").into_boxed_str());
+            steps.extend([
+                Step::Call("the next body", next),
+                Step::Wait("the body drawn", |g| {
+                    let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                    Ok(drawn == Some(g.world.map.generation()))
+                }),
+                Step::Wait("the camera on it", drawn_here),
+            ]);
+            steps.extend(moment());
+            steps.push(Step::Call("the body still", still));
+            steps.extend(moment());
+            if name.is_some() {
+                steps.push(Step::Shot(Box::leak(shot.into_boxed_str())));
+            }
+            steps.push(Step::Call("the creatures alone", |g| matte(g, true)));
+            steps.extend(moment());
+            steps.extend([
+                Step::Shot(matte_shot),
+                Step::Call("all drawn again", |g| matte(g, false)),
+            ]);
+        }
     }
     steps.extend(quit());
     steps

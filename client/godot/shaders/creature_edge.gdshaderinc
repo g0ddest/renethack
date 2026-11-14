@@ -20,6 +20,9 @@ uniform float far = 0.0;
 // a thing on the floor's dim wash of the edge's colour over the whole of
 // it, at the far camera only (a flat blade facing the eye has no rim)
 uniform float fill = 0.0;
+// a body dyed in its rank's colour shows that colour of itself in the dark,
+// faintly, all over (`Art::outline_pass`): 0 none
+uniform float dark_floor = 0.0;
 
 void fragment() {
 	vec3 n = normalize(NORMAL);
@@ -45,5 +48,5 @@ void fragment() {
 	float distant = smoothstep(7.5, 11.5, length(VERTEX));
 	float k = 1.0 + far * distant;
 	vec3 wash = color * fill * distant * step(0.001, strength);
-	ALBEDO = (lit + glint + wash) * k;
+	ALBEDO = (lit + glint + wash) * k + color * dark_floor;
 }
