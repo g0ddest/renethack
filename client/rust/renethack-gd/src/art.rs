@@ -251,7 +251,8 @@ enum Edge {
     /// (hundredths of `OUTLINE_STRENGTH`)
     Outline(u8),
     /// A thing on the floor's dark-gold rim (hundredths of
-    /// `WARE_EDGE_STRENGTH`; its glint by it, `ware_sweep`).
+    /// `WARE_EDGE_STRENGTH`; its glint by it, `ware_sweep`; on metal cold,
+    /// `STEEL_EDGE`).
     Ware(u8),
 }
 /// A thing on the floor reads by a dark-gold rim on itself (the edge
@@ -276,16 +277,36 @@ const WARE_EDGE_SMALL: u8 = 150;
 const WARE_SWEEP: f32 = 1.2;
 const WARE_SWEEP_SMALL: f32 = 1.8;
 const WARE_FAR: f32 = 0.7;
+/// Anything else a player can pick up reads at 11 m on an unlit floor as
+/// well: a dagger was a faint grey sliver there, a sword, an axe and a
+/// pick-axe faint lines, found only by knowing where they lay. The
+/// travelling glint too, stronger on a slight thing (at most this long,
+/// metres: a dagger, a helmet; not a sword, a pick-axe); on metal a cold
+/// edge (`STEEL_EDGE`), this many times the gold one, steady, so that the
+/// thing is found in any frame and the glint (cold too) only on top.
+const WARE_SLIGHT: f32 = 0.5;
+const WARE_EDGE_SLIGHT: u8 = 105;
+const WARE_SWEEP_SLIGHT: f32 = 0.75;
+const WARE_SWEEP_FAINT: f32 = 0.55;
+const STEEL_EDGE: Color = Color::from_rgb(0.52, 0.6, 0.74);
+const STEEL_EDGE_MORE: f32 = 1.15;
+const STEEL_GLINT: Color = Color::from_rgb(0.5, 0.56, 0.68);
+/// And toward the far camera a dim wash of its edge's colour over the
+/// whole of it (creature_edge's `fill`): a flat blade facing the eye has
+/// next to no rim. At 7 m none.
+const WARE_FILL: f32 = 0.12;
 
 /// The glint travelling over a thing on the floor with this share of the
-/// edge (none on a heavy thing's).
+/// edge.
 fn ware_sweep(share: u8) -> f32 {
     if share >= WARE_EDGE_SMALL {
         WARE_SWEEP_SMALL
     } else if share >= WARE_EDGE_FULL {
         WARE_SWEEP
+    } else if share >= WARE_EDGE_SLIGHT {
+        WARE_SWEEP_SLIGHT
     } else {
-        0.0
+        WARE_SWEEP_FAINT
     }
 }
 /// A thing on the floor's own colour, this share of its material's (lit
@@ -296,8 +317,9 @@ const WARE_RIM: f32 = 0.2;
 /// The specular a thing on the floor keeps at most.
 const WARE_SPECULAR: f32 = 0.15;
 
-fn ware_edge_strength(share: u8) -> f32 {
-    WARE_EDGE_STRENGTH * f32::from(share) / 100.0
+fn ware_edge_strength(share: u8, metal: bool) -> f32 {
+    let more = if metal { STEEL_EDGE_MORE } else { 1.0 };
+    WARE_EDGE_STRENGTH * f32::from(share) / 100.0 * more
 }
 /// A living creature's contact shadow (`Art::ground`): how dark it is at
 /// its middle, and how much wider and longer than the body's own bounds
@@ -708,8 +730,9 @@ pub struct Art {
     dark_edges: HashMap<[u8; 3], Option<Gd<Material>>>,
     /// The outline of a detailed body (`OUTLINE_SHADER`).
     outline_edge: HashMap<(u8, [u8; 3]), Option<Gd<Material>>>,
-    /// A thing on the floor's rim, by its share (`Edge::Ware`).
-    ware_edges: HashMap<u8, Option<Gd<Material>>>,
+    /// A thing on the floor's rim, by its share (`Edge::Ware`) and whether
+    /// it is metal (its edge and glint cold).
+    ware_edges: HashMap<(u8, bool), Option<Gd<Material>>>,
     /// A thing on the floor's glint (`GLINT_SHADER`), the same way, and
     /// gold's (warmer and smaller).
     glint: Option<Option<Gd<Material>>>,
@@ -2074,13 +2097,14 @@ impl Art {
             let outline = self.manifest.model_at(look.art.model).1.outline;
             let edge = if let Pose::Ware(sheen @ (Sheen::Full | Sheen::Faint)) = look.pose {
                 // (a pile of gold reads by its own glints and pool)
-                let small = m.inner.as_ref().is_some_and(|inner| {
+                let reach = m.inner.as_ref().map_or(1.0, |inner| {
                     let [w, l] = aabb_reach(&m.node, inner);
-                    w.max(l) <= WARE_SMALL
+                    w.max(l)
                 });
                 Edge::Ware(match sheen {
-                    Sheen::Full if small => WARE_EDGE_SMALL,
+                    Sheen::Full if reach <= WARE_SMALL => WARE_EDGE_SMALL,
                     Sheen::Full => WARE_EDGE_FULL,
+                    _ if reach <= WARE_SLIGHT => WARE_EDGE_SLIGHT,
                     _ => WARE_EDGE_FAINT,
                 })
             } else if outline > 0.0 {
@@ -2296,16 +2320,21 @@ impl Art {
 
     /// A thing on the floor's dark-gold rim (`Edge::Ware`), lit as the
     /// edges are (`set_edges_lit`).
-    fn ware_edge_pass(&mut self, share: u8) -> Option<Gd<Material>> {
+    fn ware_edge_pass(&mut self, share: u8, metal: bool) -> Option<Gd<Material>> {
         let lit = self.edges_lit;
         self.ware_edges
-            .entry(share)
+            .entry((share, metal))
             .or_insert_with(|| {
-                let k = ware_edge_strength(share);
-                let pass = edge_material(lit, k, WARE_EDGE_FROM, Some(WARE_EDGE))?;
+                let k = ware_edge_strength(share, metal);
+                let color = if metal { STEEL_EDGE } else { WARE_EDGE };
+                let pass = edge_material(lit, k, WARE_EDGE_FROM, Some(color))?;
                 if let Ok(mut m) = pass.clone().try_cast::<ShaderMaterial>() {
                     m.set_shader_parameter("sweep", &ware_sweep(share).to_variant());
                     m.set_shader_parameter("far", &WARE_FAR.to_variant());
+                    m.set_shader_parameter("fill", &WARE_FILL.to_variant());
+                    if metal {
+                        m.set_shader_parameter("sweep_color", &STEEL_GLINT.to_variant());
+                    }
                 }
                 Some(pass)
             })
@@ -2404,11 +2433,15 @@ impl Art {
                 m.set_shader_parameter("strength", &k.to_variant());
             }
         }
-        for (&share, m) in &self.ware_edges {
+        for (&(share, metal), m) in &self.ware_edges {
             if let Some(m) = m
                 && let Ok(mut m) = m.clone().try_cast::<ShaderMaterial>()
             {
-                let k = if on { ware_edge_strength(share) } else { 0.0 };
+                let k = if on {
+                    ware_edge_strength(share, metal)
+                } else {
+                    0.0
+                };
                 m.set_shader_parameter("strength", &k.to_variant());
             }
         }
@@ -2558,8 +2591,9 @@ impl Art {
                     let specular = m.get_specular().min(WARE_SPECULAR);
                     m.set_specular(specular);
                     m.set_rim(WARE_RIM);
+                    let metal = m.has_meta(METAL_LIT) || m.get_metallic() > DULL_METALLIC;
                     if m.get_next_pass().is_none()
-                        && let Some(pass) = self.ware_edge_pass(share)
+                        && let Some(pass) = self.ware_edge_pass(share, metal)
                     {
                         m.set_next_pass(&pass);
                     }

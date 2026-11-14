@@ -17,6 +17,9 @@ uniform float sweep_share = 0.45;
 // how much stronger the edge and the glint are at the game's far camera
 // (11 m) than at its near one (7 m): a small thing's few pixels
 uniform float far = 0.0;
+// a thing on the floor's dim wash of the edge's colour over the whole of
+// it, at the far camera only (a flat blade facing the eye has no rim)
+uniform float fill = 0.0;
 
 void fragment() {
 	vec3 n = normalize(NORMAL);
@@ -39,6 +42,8 @@ void fragment() {
 		float band = exp(-pow((across - at) / 0.05, 2.0)) * on;
 		glint = mix(color, sweep_color, band) * band * sweep * step(0.001, strength);
 	}
-	float k = 1.0 + far * smoothstep(7.5, 11.5, length(VERTEX));
-	ALBEDO = (lit + glint) * k;
+	float distant = smoothstep(7.5, 11.5, length(VERTEX));
+	float k = 1.0 + far * distant;
+	vec3 wash = color * fill * distant * step(0.001, strength);
+	ALBEDO = (lit + glint + wash) * k;
 }
