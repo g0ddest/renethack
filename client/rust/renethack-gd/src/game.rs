@@ -2345,6 +2345,13 @@ impl RenethackGame {
     fn pump(&mut self) {
         let deadline = Instant::now() + POLL_BUDGET;
         while self.pending.is_none() {
+            // the hero runs along a travel's last drawing: the next one is
+            // read as that run nears its end (the engine has gone on; this
+            // only shows it at a pace that can be seen; headless, nobody
+            // sees it: the soak plays on at the engine's pace)
+            if !self.headless && self.ui.as_ref().is_some_and(|ui| ui.map.hero_runs_on()) {
+                break;
+            }
             let Some(session) = self.session.as_mut() else {
                 break;
             };
@@ -4588,7 +4595,7 @@ impl RenethackGame {
             return;
         }
         let since = self.last_action.map_or(Duration::MAX, |t| t.elapsed());
-        let walking = self.ui.as_ref().is_some_and(|ui| ui.map.hero_walking());
+        let walking = self.ui.as_ref().is_some_and(|ui| ui.map.hero_walking_on());
         if !self.driver.ready(since, walking) {
             return;
         }

@@ -46,10 +46,20 @@ pub const TURN_SECS: f32 = 0.15;
 const WALK_GROUND: f32 = 1.1;
 const RUN_GROUND: f32 = 3.2;
 const BODY_HEIGHT: f32 = 1.75;
-const GAIT_SCALE: (f32, f32) = (0.6, 2.0);
+const GAIT_SCALE: (f32, f32) = (0.6, 2.4);
 /// The hero runs (the run clip) when a step goes faster than this (metres
 /// a second); a slow step (a burdened hero, a slow order) walks.
 pub const HERO_RUNS_FROM: f32 = 2.0;
+/// A run along several cells (a travel, a rush, a fast monster drawn every
+/// few steps: `Motion::run`): its pace (metres a second) at first, and the
+/// pace it eases up to over a long way (from `RUN_EASE.0` metres run to
+/// `RUN_EASE.1`); how quickly it gets up to speed and stops (m/s²). Every
+/// stride shows: the run clip is played to keep up with the ground.
+pub const RUN_PACE: f32 = 5.0;
+pub const RUN_PACE_LONG: f32 = 7.0;
+const RUN_EASE: (f32, f32) = (4.0, 12.0);
+const RUN_SPEED_UP: f32 = 20.0;
+const RUN_SLOW_DOWN: f32 = 24.0;
 /// How far a monster's attack clip carries it (a bite, a claw), and the
 /// hero's (her clips carry her) (metres).
 const BITE: f32 = 0.22;
@@ -275,9 +285,111 @@ impl Lunge {
     }
 }
 
+/// A run's way: its corners (world positions, from where it set off) and
+/// how far along it each is; how far it has run and how fast it goes now.
+struct Way {
+    points: Vec<Vector3>,
+    along: Vec<f32>,
+    done: f32,
+    speed: f32,
+    /// The pace it is meant to keep (`RUN_PACE`, slower for a burdened
+    /// hero), and how fast its gait clip plays now.
+    pace: f32,
+    clip_speed: f32,
+    height: f32,
+    /// The leg of the way it is on (it turns at each corner).
+    leg: usize,
+}
+
+impl Way {
+    fn new(points: Vec<Vector3>, pace: f32, height: f32, speed: f32) -> Way {
+        let mut w = Way {
+            points: Vec::new(),
+            along: Vec::new(),
+            done: 0.0,
+            speed,
+            pace,
+            clip_speed: 0.0,
+            height,
+            leg: 0,
+        };
+        w.extend(points);
+        w
+    }
+
+    fn extend(&mut self, points: impl IntoIterator<Item = Vector3>) {
+        for p in points {
+            let along = match (self.points.last(), self.along.last()) {
+                (Some(last), Some(&a)) => a + Vector2::new(p.x - last.x, p.z - last.z).length(),
+                _ => 0.0,
+            };
+            // (the same spot twice is no leg)
+            if self.points.last().is_some_and(|l| (*l - p).length() < 1e-4) {
+                continue;
+            }
+            self.points.push(p);
+            self.along.push(along);
+        }
+    }
+
+    fn length(&self) -> f32 {
+        self.along.last().copied().unwrap_or(0.0)
+    }
+
+    /// The pace it means to keep after running `done` metres: easing up
+    /// over a long way.
+    fn pace_at(&self, done: f32) -> f32 {
+        let k = ((done - RUN_EASE.0) / (RUN_EASE.1 - RUN_EASE.0)).clamp(0.0, 1.0);
+        self.pace * (1.0 + (RUN_PACE_LONG / RUN_PACE - 1.0) * ease(k))
+    }
+
+    /// Run on for `delta` seconds (no farther than `most` metres): up to
+    /// speed, at its pace, slowing to a stop at the end.
+    fn go(&mut self, delta: f32, most: f32) {
+        let left = (self.length() - self.done).max(0.0);
+        let stop = (2.0 * RUN_SLOW_DOWN * left).sqrt();
+        let speed = (self.speed + RUN_SPEED_UP * delta)
+            .min(self.pace_at(self.done))
+            .min(stop)
+            // never stalls short of its end
+            .max(0.6);
+        self.speed = speed;
+        self.done = (self.done + speed * delta).min(self.length()).min(most);
+    }
+
+    /// Where it is `d` metres along, the leg it is on, and that leg's
+    /// heading (degrees).
+    fn at(&self, d: f32) -> (Vector3, usize, f32) {
+        let n = self.points.len();
+        if n < 2 {
+            return (
+                self.points.first().copied().unwrap_or(Vector3::ZERO),
+                0,
+                0.0,
+            );
+        }
+        let leg = (1..n).find(|&i| self.along[i] >= d).unwrap_or(n - 1) - 1;
+        let (a, b) = (self.points[leg], self.points[leg + 1]);
+        let span = (self.along[leg + 1] - self.along[leg]).max(1e-4);
+        let k = ((d - self.along[leg]) / span).clamp(0.0, 1.0);
+        let yaw = (b.x - a.x).atan2(b.z - a.z).to_degrees();
+        (a.lerp(b, k), leg, yaw)
+    }
+
+    /// Seconds of running left at its pace.
+    fn left(&self) -> f32 {
+        (self.length() - self.done).max(0.0) / self.pace.max(0.1)
+    }
+}
+
 enum Kind {
     Step {
         hop: f32,
+        /// A run along several cells (None: one step, eased).
+        way: Option<Way>,
+        /// A step of a walk that goes on (an order): at an even pace, not
+        /// easing to a stop at every cell.
+        even: bool,
     },
     Strike {
         toward: Vector3,
@@ -383,7 +495,11 @@ impl Motion {
             node,
             cell,
             hero,
-            kind: Kind::Step { hop },
+            kind: Kind::Step {
+                hop,
+                way: None,
+                even: false,
+            },
             from,
             to,
             yaw_from,
@@ -397,6 +513,119 @@ impl Motion {
         };
         m.apply(0.0);
         m
+    }
+
+    /// A run of the node now at `cell` along `points` (world positions, from
+    /// where it stands): its run clip (or a hop and a sway) played to keep
+    /// up with the ground, turning at each corner; up to speed from a
+    /// standstill unless `moving`, at `pace` metres a second (easing up
+    /// over a long way), slowing to a stop at the end.
+    #[allow(clippy::too_many_arguments)]
+    pub fn run(
+        node: Gd<Node3D>,
+        cell: (i32, i32),
+        hero: bool,
+        points: Vec<Vector3>,
+        yaw_from: f32,
+        clips: Clips,
+        (height, pace): (f32, f32),
+        moving: bool,
+    ) -> Motion {
+        let hop = match (&clips.player, &clips.gait) {
+            (Some(_), Some(_)) => 0.0,
+            _ => hop_height(height),
+        };
+        let from = points.first().copied().unwrap_or(Vector3::ZERO);
+        let to = points.last().copied().unwrap_or(from);
+        let way = Way::new(points, pace, height, if moving { pace } else { 0.0 });
+        let duration = way.length() / pace.max(0.1);
+        let (_, _, first) = way.at(0.0);
+        let mut m = Motion {
+            node,
+            cell,
+            hero,
+            kind: Kind::Step {
+                hop,
+                way: Some(way),
+                even: false,
+            },
+            from,
+            to,
+            yaw_from,
+            yaw_to: first,
+            elapsed: 0.0,
+            duration,
+            turn_start: 0.0,
+            clips,
+            base: from,
+            lifted: 0.0,
+        };
+        m.keep_stride();
+        m.apply(0.0);
+        m
+    }
+
+    /// A run under way goes on along `points` to `cell` (the next drawing
+    /// of a travel): no stop between.
+    pub fn run_on(&mut self, cell: (i32, i32), points: Vec<Vector3>) {
+        if let Kind::Step { way: Some(w), .. } = &mut self.kind {
+            w.extend(points);
+            self.to = w.points.last().copied().unwrap_or(self.to);
+            self.duration = self.elapsed + w.left();
+        }
+        self.cell = cell;
+    }
+
+    /// This step is one of a walk that goes on: at an even pace.
+    pub fn evenly(mut self) -> Motion {
+        if let Kind::Step { even, .. } = &mut self.kind {
+            *even = true;
+        }
+        self
+    }
+
+    /// Seconds left of a step or a run (None: not one).
+    pub fn step_left(&self) -> Option<f32> {
+        match &self.kind {
+            Kind::Step { way: Some(w), .. } => Some(w.left()),
+            Kind::Step { .. } => Some((self.duration - self.elapsed).max(0.0)),
+            _ => None,
+        }
+    }
+
+    /// A run along several cells.
+    pub fn is_run(&self) -> bool {
+        matches!(self.kind, Kind::Step { way: Some(_), .. })
+    }
+
+    /// Seconds a run has left at its pace (None: not a run).
+    pub fn run_left(&self) -> Option<f32> {
+        match &self.kind {
+            Kind::Step { way: Some(w), .. } => Some(w.left()),
+            _ => None,
+        }
+    }
+
+    /// The run clip played as fast as the ground goes by.
+    fn keep_stride(&mut self) {
+        let Kind::Step { way: Some(w), .. } = &mut self.kind else {
+            return;
+        };
+        let (Some(p), Some(gait)) = (&mut self.clips.player, &self.clips.gait) else {
+            return;
+        };
+        if !p.is_instance_valid() {
+            return;
+        }
+        let speed = gait_speed(w.speed.max(1.0), 1.0, w.height, true);
+        if (speed - w.clip_speed).abs() > 0.04 {
+            w.clip_speed = speed;
+            p.play_ex()
+                .name(gait.as_str())
+                .custom_blend(0.1)
+                .custom_speed(speed)
+                .done();
+        }
     }
 
     /// The node at `cell` (standing at `at`) turns from `yaw_from` to
@@ -558,19 +787,34 @@ impl Motion {
 
     fn apply(&mut self, t: f32) {
         let yaw = self.yaw_now();
-        match self.kind {
-            Kind::Step { hop } => {
-                self.base = self.from.lerp(self.to, ease(t));
-                let (lift, roll) = sway(hop, t);
+        match &self.kind {
+            Kind::Step {
+                hop,
+                way: None,
+                even,
+            } => {
+                let k = if *even { t } else { ease(t) };
+                self.base = self.from.lerp(self.to, k);
+                let (lift, roll) = sway(*hop, t);
                 let pos = self.base + Vector3::new(0.0, lift, 0.0);
                 place(&mut self.node, pos, yaw, roll);
             }
-            Kind::Strike { toward, reach } => {
+            Kind::Step {
+                hop, way: Some(w), ..
+            } => {
+                let (at, _, _) = w.at(w.done);
+                self.base = at;
+                // a body with no gait hops twice a cell
+                let (lift, roll) = sway(*hop, w.done.fract());
+                let pos = self.base + Vector3::new(0.0, lift, 0.0);
+                place(&mut self.node, pos, yaw, roll);
+            }
+            &Kind::Strike { toward, reach } => {
                 self.base = self.to;
                 let out = reach * out_and_back(t);
                 place(&mut self.node, self.to + toward * out, yaw, 0.0);
             }
-            Kind::Lunge {
+            &Kind::Lunge {
                 toward,
                 lunge,
                 size,
@@ -580,7 +824,7 @@ impl Motion {
                 self.lifted = pose.height_at(0.0);
                 place_posed(&mut self.node, self.to, yaw, toward, &pose);
             }
-            Kind::Reel { away } => {
+            &Kind::Reel { away } => {
                 // knocked back and staggering back from the blow, a lean
                 // from its feet (the camera, the ring and the torch stay
                 // where it stands)
@@ -599,20 +843,48 @@ impl Motion {
     /// Move on by `delta` seconds; true once it has arrived.
     pub fn advance(&mut self, delta: f32, hold: Option<f32>) -> bool {
         self.elapsed += delta;
+        if let Kind::Step { way: Some(w), .. } = &mut self.kind {
+            let most = w.length() * hold.unwrap_or(1.0);
+            w.go(delta, most);
+            let (_, leg, heading) = w.at(w.done);
+            let turned = leg != w.leg;
+            w.leg = leg;
+            let arrived = w.done >= w.length() - 1e-4;
+            if turned {
+                self.turn_to(heading);
+            }
+            self.keep_stride();
+            self.apply(0.0);
+            return arrived;
+        }
         let t = progress(self.elapsed, self.duration, hold);
         self.apply(t);
         t >= 1.0
     }
 
+    /// The share of its way a run has gone (None: not a run).
+    fn run_share(&self) -> Option<f32> {
+        match &self.kind {
+            Kind::Step { way: Some(w), .. } => Some(w.done / w.length().max(1e-4)),
+            _ => None,
+        }
+    }
+
     /// Reached the self-test's hold point (or the end).
     pub fn is_held(&self, hold: Option<f32>) -> bool {
-        progress(self.elapsed, self.duration, None) >= hold.unwrap_or(1.0)
+        let share = self
+            .run_share()
+            .unwrap_or_else(|| progress(self.elapsed, self.duration, None));
+        share >= hold.unwrap_or(1.0) - 1e-4
     }
 
     /// At its end: not short of it, nor stopped short by a self-test's
     /// hold.
     pub fn arrived(&self, hold: Option<f32>) -> bool {
-        progress(self.elapsed, self.duration, hold) >= 1.0
+        match self.run_share() {
+            Some(share) => share >= 1.0 - 1e-4,
+            None => progress(self.elapsed, self.duration, hold) >= 1.0,
+        }
     }
 
     /// Put the node where the world model has it, facing its way, idle
@@ -712,6 +984,78 @@ mod tests {
         assert_eq!(gait_speed(1.0, 0.0, BODY_HEIGHT, false), GAIT_SCALE.1);
         // never three cells in 0.4 s
         assert!(pace(2, true).0 / 2.0 * 3.0 > 0.5);
+    }
+
+    #[test]
+    fn a_run_gets_up_to_speed_keeps_it_and_stops_at_its_end() {
+        let dt = 1.0 / 60.0;
+        let line = |n: i32| -> Vec<Vector3> {
+            (0..=n).map(|i| Vector3::new(i as f32, 0.0, 0.0)).collect()
+        };
+        // seven cells from a standstill (a travel's first drawing)
+        let mut w = Way::new(line(7), RUN_PACE, BODY_HEIGHT, 0.0);
+        let (mut t, mut top) = (0.0f32, 0.0f32);
+        while w.done < w.length() - 1e-4 {
+            w.go(dt, f32::MAX);
+            t += dt;
+            top = top.max(w.speed);
+            assert!(t < 5.0, "it never got there");
+        }
+        // about five cells a second, never a blur of several in a frame
+        assert!((1.3..=1.9).contains(&t), "{t} s");
+        assert!(top <= RUN_PACE_LONG && top > RUN_PACE * 0.95, "{top}");
+        assert!(w.speed < 1.5, "it stops at its end: {}", w.speed);
+        // the run clip keeps up with the ground at any pace it keeps
+        for pace in [RUN_PACE, RUN_PACE_LONG] {
+            let clip = gait_speed(pace, 1.0, BODY_HEIGHT, true);
+            assert!(clip < GAIT_SCALE.1, "{pace} m/s skates: {clip}");
+        }
+    }
+
+    #[test]
+    fn a_run_goes_on_into_the_next_drawing_and_eases_up_over_a_long_way() {
+        let dt = 1.0 / 60.0;
+        let mut w = Way::new(
+            vec![Vector3::ZERO, Vector3::new(7.0, 0.0, 0.0)],
+            RUN_PACE,
+            BODY_HEIGHT,
+            RUN_PACE,
+        );
+        // the next drawing is read as the run nears its end
+        while w.left() > 0.12 {
+            w.go(dt, f32::MAX);
+        }
+        let before = w.speed;
+        w.extend([Vector3::new(14.0, 0.0, 0.0), Vector3::new(21.0, 0.0, 0.0)]);
+        w.go(dt, f32::MAX);
+        assert!(
+            w.speed >= before * 0.95,
+            "no stop: {before} then {}",
+            w.speed
+        );
+        while w.done < 14.0 {
+            w.go(dt, f32::MAX);
+        }
+        assert!(w.speed > RUN_PACE * 1.2, "it eased up: {}", w.speed);
+        // a hold stops it there
+        let at = w.done;
+        w.go(dt, at);
+        assert_eq!(w.done, at);
+        // it turns at each corner, to the next leg's heading
+        let w = Way::new(
+            vec![
+                Vector3::ZERO,
+                Vector3::new(1.0, 0.0, 0.0),
+                Vector3::new(2.0, 0.0, 1.0),
+            ],
+            RUN_PACE,
+            BODY_HEIGHT,
+            0.0,
+        );
+        assert_eq!((w.at(0.5).1, w.at(0.5).2), (0, 90.0));
+        assert_eq!(w.at(1.5).1, 1);
+        assert!((w.at(1.5).2 - 45.0).abs() < 1e-3);
+        assert!((w.at(w.length()).0 - Vector3::new(2.0, 0.0, 1.0)).length() < 1e-4);
     }
 
     #[test]

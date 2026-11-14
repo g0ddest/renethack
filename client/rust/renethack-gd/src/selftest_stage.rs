@@ -8,10 +8,12 @@
 //!   where it and she stand in the window), then is slain by #wizkill.
 //!   RENETHACK_BITES_DISTANCE: the camera's distance (11 m).
 //! - `stride`: a debug-mode Valkyrie and her kitten, the level mapped; a
-//!   travel (`_`, a far cell picked)
-//!   and a click back, every frame logged (`selftest: stride: frame N ...`:
-//!   the hero's cell, where her model stands, its clip and the clip's
-//!   speed), so a run's cells a second and strides a cell can be read off.
+//!   travel (`_`) to the farthest floor eight steps off, round a corner
+//!   (RENETHACK_STRIDE_STEPS: more), and a click back, every frame logged
+//!   (`selftest: stride: frame N ...`: the hero's cell, where her model
+//!   stands, its clip, the clip's speed and length), so a run's metres a
+//!   second and strides a metre can be read off. RENETHACK_STRIDE_DISTANCE:
+//!   the camera's distance; RENETHACK_STRIDE_KNIGHT=1: a Knight on his pony.
 //!
 //! Nothing is checked but that the scenes were played.
 
@@ -284,17 +286,23 @@ fn open_floor(g: &RenethackGame, (x, y): (i32, i32)) -> bool {
 }
 
 /// The open floor farthest from the hero by the known way, at most
-/// `most` steps: a travel long enough to take several of the engine's
-/// drawings, round a corner or two.
+/// `most` steps, one round a corner first (not straight ahead nor on a
+/// diagonal): a travel long enough to take more than one of the engine's
+/// drawings, turning on its way.
 fn far_floor(g: &RenethackGame, most: i32) -> Option<(i32, i32)> {
     let from = g.world.map.hero()?;
     let mut dist = std::collections::HashMap::from([(from, 0)]);
     let mut queue = std::collections::VecDeque::from([from]);
     let mut best = None;
+    let corner = |(x, y): (i32, i32)| {
+        let (dx, dy) = ((x - from.0).abs(), (y - from.1).abs());
+        dx != 0 && dy != 0 && dx != dy
+    };
     while let Some(at) = queue.pop_front() {
         let d = dist[&at];
-        if open_floor(g, at) && best.is_none_or(|(b, _)| d > b) {
-            best = Some((d, at));
+        let score = (corner(at), d);
+        if open_floor(g, at) && best.is_none_or(|(b, _)| score > b) {
+            best = Some((score, at));
         }
         if d == most {
             continue;
@@ -316,15 +324,21 @@ fn log_leg(g: &RenethackGame, leg: &str, goal: (i32, i32)) -> Result<bool, Strin
     let map = map_view(g)?;
     let cell = g.world.map.hero();
     let at = map.hero_stands().map(|(p, _)| p);
-    let (clip, speed) = map
+    let (clip, speed, length) = map
         .hero_model()
         .and_then(|m| m.player())
         .filter(|p| p.is_instance_valid())
-        .map(|p| (p.get_current_animation().to_string(), p.get_playing_speed()))
+        .map(|p| {
+            (
+                p.get_current_animation().to_string(),
+                p.get_playing_speed(),
+                p.get_current_animation_length(),
+            )
+        })
         .unwrap_or_default();
     let walking = map.hero_walking();
     eprintln!(
-        "selftest: stride: {leg} frame {} cell {:?} at {} clip {clip} speed {speed:.2} walking {walking}",
+        "selftest: stride: {leg} frame {} cell {:?} at {} clip {clip} speed {speed:.2} length {length:.3} walking {walking}",
         frames(),
         cell,
         at.map_or("-".into(), |p| format!("{:.3},{:.3}", p.x, p.z)),
@@ -341,26 +355,93 @@ fn log_leg(g: &RenethackGame, leg: &str, goal: (i32, i32)) -> Result<bool, Strin
     Ok(false)
 }
 
+/// `#ride` onto the pet beside him, the mount forced (debug mode).
+fn ride() -> Vec<Step> {
+    vec![
+        Step::Wait("the pony beside him", |g| Ok(pet_way(g).is_some())),
+        key('#'),
+        Step::Request("the command palette", |p| *p == Prompt::ExtCmd),
+        Step::Dialog(DialogEvent::TextSubmitted("ride".into())),
+        Step::Request("the way to the steed", |p| {
+            matches!(
+                p,
+                Prompt::FreeKey {
+                    directions: true,
+                    ..
+                }
+            )
+        }),
+        Step::KeyFrom("towards the pony", |g| {
+            Ok(KeyInput::plain(Key::Char(
+                pet_way(g).ok_or("no pet beside him")?,
+            )))
+        }),
+        Step::Request(
+            "Force the mount?",
+            |p| matches!(p, Prompt::Choice { query, .. } if query.contains("Force")),
+        ),
+        key('y'),
+        Step::AnswerUntil('n', "a command after mounting", |g| {
+            Ok(matches!(g.pending, Some((_, Prompt::Command))) && !g.world.getpos)
+        }),
+        Step::Wait("in the saddle", |g| Ok(map_view(g)?.steed().is_some())),
+    ]
+}
+
+/// The way to the pet beside the hero (a vi-key).
+fn pet_way(g: &RenethackGame) -> Option<char> {
+    let (hx, hy) = g.world.map.hero()?;
+    super::audio_tests::STEPS.iter().find_map(|&((dx, dy), k)| {
+        let gl = g.world.map.cell(hx + dx, hy + dy)?.glyph.as_ref()?;
+        (gl.kind == GlyphKind::Mon && gl.flags & mg::PET != 0).then_some(k)
+    })
+}
+
 pub(super) fn stride() -> Vec<Step> {
+    // RENETHACK_STRIDE_KNIGHT=1: a Knight travels on his pony
+    let knight = std::env::var_os("RENETHACK_STRIDE_KNIGHT").is_some();
     let mut steps = vec![Step::Call("debug mode, seed 11", |g| {
         g.debug_mode = true;
         g.seed = Some(11);
         Ok(())
     })];
-    steps.extend(start());
+    steps.extend(if knight {
+        super::start_as(crate::ui_events::CharacterChoice {
+            name: "wizard".into(),
+            role: "knight".into(),
+            gender: "male".into(),
+            align: "lawful".into(),
+            ..super::smoke_choice()
+        })
+    } else {
+        start()
+    });
     steps.extend([
         Step::Wait("the hero on the map", |g| Ok(g.world.map.hero().is_some())),
         // the level mapped: a far cell to travel to, in the dark too
         Step::Key(ctrl_key('f')),
         Step::Request("a command after the map", command),
-        Step::Call("7 m off, as in play", |g| {
-            g.ui.as_mut().ok_or("no UI")?.map.set_distance(7.0, 0.2);
+        Step::Call("7 m off, as in play (or the distance asked)", |g| {
+            let d = std::env::var("RENETHACK_STRIDE_DISTANCE")
+                .ok()
+                .and_then(|d| d.parse().ok())
+                .unwrap_or(7.0);
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(d, 0.2);
             Ok(())
         }),
         Step::Wait("the camera on the hero", camera_settled),
+    ]);
+    if knight {
+        steps.extend(ride());
+    }
+    steps.extend([
         Step::Call("the travel's goal", |g| {
             let from = g.world.map.hero().ok_or("no hero")?;
-            let goal = far_floor(g, 18).ok_or("no far floor")?;
+            let most = std::env::var("RENETHACK_STRIDE_STEPS")
+                .ok()
+                .and_then(|d| d.parse().ok())
+                .unwrap_or(8);
+            let goal = far_floor(g, most).ok_or("no far floor")?;
             *FROM.lock().unwrap() = from;
             *GOAL.lock().unwrap() = goal;
             eprintln!(

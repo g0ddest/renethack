@@ -1777,7 +1777,8 @@ fn orders() -> Vec<Step> {
             Ok(())
         }),
         Step::Wait("the first step played", |g| {
-            let walking = map_view(g)?.hero_walking();
+            // (to its last moments: the next goes then, no stop between)
+            let walking = map_view(g)?.hero_walking_on();
             let moved = g.world.hero() != marked().hero;
             Ok(actions_since(g) == 1 && moved && !walking && g.driver.is_active())
         }),

@@ -53,20 +53,41 @@ pub struct Change {
     pub after: Option<Ident>,
 }
 
-/// An entity that left `from` and now stands on `to`, one or two cells
-/// away (a fast monster may take two steps in one turn).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// An entity that left `from` and now stands on `to`: a cell or two away
+/// (a fast monster may take two steps in one turn), or farther along a
+/// way through the cells drawn with it (a run, a travel: the engine draws
+/// those every few steps).
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Move {
     pub from: (i32, i32),
     pub to: (i32, i32),
     pub ident: Ident,
+    /// The cells it went through after `from`, `to` the last; `[to]` when
+    /// that is all that is known (a step, or two steps whose middle was
+    /// not drawn).
+    pub path: Vec<(i32, i32)>,
 }
 
 impl Move {
-    /// Steps taken: 1 or 2.
+    /// Steps taken: 1 or 2, or the length of its way.
     pub fn steps(&self) -> i32 {
-        chebyshev(self.from, self.to)
+        chebyshev(self.from, self.to).max(self.path.len() as i32)
     }
+}
+
+/// The most steps a move is followed through the cells drawn with it: the
+/// engine draws a run or a travel every seventh turn (`runmode` leap), and
+/// a fast hero takes up to two steps a turn.
+pub const MOST_STEPS: i32 = 16;
+
+/// What a cell lets through, for following a move across it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Way {
+    Open,
+    /// A door in its frame: never entered or left diagonally.
+    Door,
+    /// Rock, a wall, a closed door, bars, a tree.
+    Shut,
 }
 
 fn chebyshev(a: (i32, i32), b: (i32, i32)) -> i32 {
@@ -81,6 +102,80 @@ fn chebyshev(a: (i32, i32), b: (i32, i32)) -> i32 {
 /// Unpaired ones simply appear and disappear; a jump of more than two cells
 /// (running, a teleport) is never a move.
 pub fn detect_moves(changes: &[Change]) -> Vec<Move> {
+    detect_moves_through(changes, &[], |_| Way::Open)
+}
+
+/// The shortest way from `from` to `to` over the cells `drawn` (each step
+/// to one of the eight neighbours, none through a shut cell nor diagonally
+/// through a door), at most `MOST_STEPS` long: the cells after `from`, `to`
+/// the last. Among ways as short, straight steps are tried first.
+fn way_through(
+    from: (i32, i32),
+    to: (i32, i32),
+    drawn: &std::collections::HashSet<(i32, i32)>,
+    way: &impl Fn((i32, i32)) -> Way,
+) -> Option<Vec<(i32, i32)>> {
+    const AROUND: [(i32, i32); 8] = [
+        (1, 0),
+        (-1, 0),
+        (0, 1),
+        (0, -1),
+        (1, 1),
+        (-1, 1),
+        (1, -1),
+        (-1, -1),
+    ];
+    let mut came: std::collections::HashMap<(i32, i32), (i32, i32)> = Default::default();
+    let mut frontier = vec![from];
+    for _ in 0..MOST_STEPS {
+        let mut next = Vec::new();
+        for &at in &frontier {
+            for (dx, dy) in AROUND {
+                let n = (at.0 + dx, at.1 + dy);
+                if n == from || came.contains_key(&n) || !(drawn.contains(&n) || n == to) {
+                    continue;
+                }
+                let diagonal = dx != 0 && dy != 0;
+                let passes = match way(n) {
+                    Way::Shut => false,
+                    Way::Door => !diagonal,
+                    Way::Open => true,
+                };
+                if !passes || (diagonal && way(at) == Way::Door) {
+                    continue;
+                }
+                came.insert(n, at);
+                if n == to {
+                    let mut path = vec![to];
+                    let mut back = at;
+                    while back != from {
+                        path.push(back);
+                        back = came[&back];
+                    }
+                    path.reverse();
+                    return Some(path);
+                }
+                next.push(n);
+            }
+        }
+        if next.is_empty() {
+            return None;
+        }
+        frontier = next;
+    }
+    None
+}
+
+/// As `detect_moves`, following a move farther (up to `MOST_STEPS`) where
+/// a way through the cells `drawn` with it joins the two ends (`way` tells
+/// what each cell lets through), and giving each its way (`Move::path`).
+/// Among candidates the shorter way wins.
+pub fn detect_moves_through(
+    changes: &[Change],
+    drawn: &[(i32, i32)],
+    way: impl Fn((i32, i32)) -> Way,
+) -> Vec<Move> {
+    let drawn: std::collections::HashSet<(i32, i32)> = drawn.iter().copied().collect();
     let vanished: Vec<((i32, i32), Ident)> = changes
         .iter()
         .filter(|c| c.before.is_some() && c.before != c.after)
@@ -91,16 +186,38 @@ pub fn detect_moves(changes: &[Change]) -> Vec<Move> {
         .filter(|c| c.after.is_some() && c.before != c.after)
         .filter_map(|c| Some((c.at, c.after?)))
         .collect();
-    let mut candidates: Vec<(i32, Move)> = Vec::new();
+    let mut candidates: Vec<((usize, i32), Move)> = Vec::new();
     for &(from, ident) in &vanished {
         for &(to, other) in &appeared {
-            if other == ident && (1..=2).contains(&chebyshev(from, to)) {
-                let d2 = (from.0 - to.0).pow(2) + (from.1 - to.1).pow(2);
-                candidates.push((d2, Move { from, to, ident }));
+            let d = chebyshev(from, to);
+            if other != ident || !(1..=MOST_STEPS).contains(&d) {
+                continue;
             }
+            let found = if d == 1 || drawn.is_empty() {
+                None
+            } else {
+                way_through(from, to, &drawn, &way)
+            };
+            let path = match found {
+                Some(path) => path,
+                // a step, or two whose middle cell was not drawn
+                None if d <= 2 => vec![to],
+                None => continue,
+            };
+            let d2 = (from.0 - to.0).pow(2) + (from.1 - to.1).pow(2);
+            let steps = path.len().max(d as usize);
+            candidates.push((
+                (steps, d2),
+                Move {
+                    from,
+                    to,
+                    ident,
+                    path,
+                },
+            ));
         }
     }
-    candidates.sort_by_key(|&(d2, m)| (d2, m.from.1, m.from.0, m.to.1, m.to.0));
+    candidates.sort_by_key(|(k, m)| (*k, m.from.1, m.from.0, m.to.1, m.to.0));
     let mut used_from = Vec::new();
     let mut used_to = Vec::new();
     let mut moves = Vec::new();
@@ -345,7 +462,8 @@ mod tests {
             vec![Move {
                 from: (10, 5),
                 to: (11, 5),
-                ident: HERO
+                ident: HERO,
+                path: vec![(11, 5)],
             }]
         );
         // diagonally too
@@ -407,6 +525,67 @@ mod tests {
     }
 
     #[test]
+    fn a_run_drawn_at_its_end_is_followed_through_the_cells_it_crossed() {
+        // a travel drawn every seventh step: the hero vanished from one
+        // cell and stands six further; the cells between were drawn (the
+        // engine redraws a cell the hero passed), and so was a pillar's
+        // wall beside them
+        let mut changes = vec![
+            change((10, 5), Some(HERO), None),
+            change((16, 6), None, Some(HERO)),
+        ];
+        let drawn = [
+            (10, 5),
+            (11, 5),
+            (12, 5),
+            (13, 5),
+            (13, 4),
+            (14, 6),
+            (15, 6),
+            (16, 6),
+        ];
+        let wall = |at: (i32, i32)| {
+            if at == (13, 4) { Way::Shut } else { Way::Open }
+        };
+        let moves = detect_moves_through(&changes, &drawn, wall);
+        assert_eq!(moves.len(), 1);
+        let m = &moves[0];
+        assert_eq!((m.from, m.to), ((10, 5), (16, 6)));
+        assert_eq!(
+            m.path,
+            vec![(11, 5), (12, 5), (13, 5), (14, 6), (15, 6), (16, 6)]
+        );
+        assert_eq!(m.steps(), 6);
+        // the way never crosses what is shut, nor a door diagonally
+        let door = |at: (i32, i32)| match at {
+            (13, 5) => Way::Door,
+            (13, 4) => Way::Shut,
+            _ => Way::Open,
+        };
+        let drawn_round = [(11, 5), (12, 5), (13, 5), (14, 5), (15, 6), (16, 6)];
+        let moves = detect_moves_through(&changes, &drawn_round, door);
+        assert_eq!(
+            moves[0].path,
+            vec![(11, 5), (12, 5), (13, 5), (14, 5), (15, 6), (16, 6)]
+        );
+        // no way through what was drawn: no move (a teleport)
+        assert!(detect_moves_through(&changes, &[(11, 5), (15, 6)], |_| Way::Open).is_empty());
+        // nor past the farthest a drawing holds
+        changes[1] = change((10 + MOST_STEPS + 1, 5), None, Some(HERO));
+        let line: Vec<(i32, i32)> = (10..=10 + MOST_STEPS + 1).map(|x| (x, 5)).collect();
+        assert!(detect_moves_through(&changes, &line, |_| Way::Open).is_empty());
+        // two steps in a turn: its middle cell when drawn
+        let two = [
+            change((10, 5), Some(DOG), None),
+            change((12, 4), None, Some(DOG)),
+        ];
+        let moves = detect_moves_through(&two, &[(10, 5), (11, 5), (12, 4)], |_| Way::Open);
+        assert_eq!(moves[0].path, vec![(11, 5), (12, 4)]);
+        assert_eq!(detect_moves(&two)[0].path, vec![(12, 4)]);
+        assert_eq!(detect_moves(&two)[0].steps(), 2);
+    }
+
+    #[test]
     fn swapping_places_moves_both() {
         // the hero displaces the pet
         let moves = detect_moves(&[
@@ -417,12 +596,14 @@ mod tests {
         assert!(moves.contains(&Move {
             from: (10, 5),
             to: (11, 5),
-            ident: HERO
+            ident: HERO,
+            path: vec![(11, 5)],
         }));
         assert!(moves.contains(&Move {
             from: (11, 5),
             to: (10, 5),
-            ident: DOG
+            ident: DOG,
+            path: vec![(10, 5)],
         }));
     }
 

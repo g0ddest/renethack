@@ -141,6 +141,26 @@ pub fn terrain_of(sym: &str) -> Terrain {
     }
 }
 
+/// What a terrain lets a move through (`detect_moves_through`): a door in
+/// its frame never diagonally; rock, walls, closed doors, bars, trees and
+/// a raised drawbridge not at all.
+pub fn way_of(t: Terrain) -> crate::Way {
+    use Terrain::*;
+    match t {
+        Stone | Wall | ClosedDoor | IronBars | Tree | LavaWall | DrawbridgeUp => crate::Way::Shut,
+        OpenDoor => crate::Way::Door,
+        _ => crate::Way::Open,
+    }
+}
+
+/// Each cmap index's `Way`, for `MapState::set_ways`.
+pub fn way_cmaps(catalog: &Catalog) -> impl Iterator<Item = (i32, crate::Way)> + '_ {
+    catalog
+        .cmap
+        .iter()
+        .map(|c| (c.idx, way_of(terrain_of(&c.sym))))
+}
+
 /// Cmap indices of brief effects (`Terrain::Effect`), for `MapState::set_effect_cmaps`.
 pub fn effect_cmaps(catalog: &Catalog) -> impl Iterator<Item = i32> + '_ {
     catalog

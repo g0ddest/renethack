@@ -1,6 +1,6 @@
 use nh_protocol::{Glyph, GlyphKind, mg};
 
-use crate::motion::{Change, Ident, Move, detect_moves};
+use crate::motion::{Change, Ident, Move, Way, detect_moves_through};
 
 /// Map width in NetHack; column 0 is never used.
 pub const COLNO: i32 = 80;
@@ -118,6 +118,8 @@ pub struct MapState {
     left: Vec<(u64, (i32, i32))>,
     /// Cmap indices that are brief effects, not terrain.
     effect_cmaps: Vec<bool>,
+    /// What each cmap index lets a move through (`detect_moves_through`).
+    ways: Vec<Way>,
     /// Cells where a thing was drawn over a monster (a missile flying
     /// past it): the monster is taken to be there still, the thing over
     /// it, until the cell is drawn again or the monster turns up
@@ -130,8 +132,8 @@ pub struct MapState {
 pub struct Batch {
     /// The cells drawn, each once, in drawing order.
     pub dirty: Vec<(i32, i32)>,
-    /// The entities that stepped to a neighbouring cell among them (see
-    /// `detect_moves`).
+    /// The entities that stepped to a neighbouring cell among them, or
+    /// went farther along a way through them (see `detect_moves_through`).
     pub moves: Vec<Move>,
     /// The cells among them that show another entity than before, or
     /// none where one was: what only passes over a cell (an effect, a
@@ -161,6 +163,7 @@ impl MapState {
             hero: None,
             left: Vec::new(),
             effect_cmaps: Vec::new(),
+            ways: Vec::new(),
             flying: Vec::new(),
         }
     }
@@ -175,6 +178,30 @@ impl MapState {
             }
             self.effect_cmaps[c] = true;
         }
+    }
+
+    /// What each cmap index lets a move through (walls, doors).
+    pub fn set_ways(&mut self, ways: impl IntoIterator<Item = (i32, Way)>) {
+        self.ways.clear();
+        for (c, w) in ways {
+            let Ok(c) = usize::try_from(c) else {
+                continue;
+            };
+            if c >= self.ways.len() {
+                self.ways.resize(c + 1, Way::Open);
+            }
+            self.ways[c] = w;
+        }
+    }
+
+    /// What the terrain a cell remembers lets a move through.
+    fn way(&self, (x, y): (i32, i32)) -> Way {
+        self.cell(x, y)
+            .and_then(|c| c.terrain.as_ref())
+            .and_then(|t| t.cmap)
+            .and_then(|c| usize::try_from(c).ok())
+            .and_then(|c| self.ways.get(c).copied())
+            .unwrap_or(Way::Open)
     }
 
     /// A Cmap glyph that is a lasting map feature.
@@ -258,7 +285,9 @@ impl MapState {
             .map(|c| c.at)
             .collect();
         Batch {
-            moves: detect_moves(&changes),
+            // a run or a travel is drawn every few steps: followed through
+            // the cells drawn with it
+            moves: detect_moves_through(&changes, &dirty, |at| self.way(at)),
             dirty,
             changed,
         }

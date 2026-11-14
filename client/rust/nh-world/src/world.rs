@@ -7,7 +7,7 @@ use nh_protocol::{
 use crate::prompt::{choice, free_key};
 use crate::{
     ATR_BOLD, ATR_NOHISTORY, Gameplay, HelplessSpan, HelplessWatch, MapState, MessageLog, Pack,
-    Prompt, Status, Told, TrapKind, effect_cmaps,
+    Prompt, Status, Told, TrapKind, effect_cmaps, way_cmaps,
 };
 
 /// getpos() says this (with `flags.verbose`) right after its goal ("Where
@@ -208,6 +208,7 @@ impl World {
     /// effects rather than terrain. Call it once the catalog is known.
     pub fn set_catalog(&mut self, catalog: &Catalog) {
         self.map.set_effect_cmaps(effect_cmaps(catalog));
+        self.map.set_ways(way_cmaps(catalog));
         self.helpless.set_catalog(catalog);
     }
 

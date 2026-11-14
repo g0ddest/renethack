@@ -45,7 +45,7 @@ use nh_world::{
 };
 
 use crate::animator::{
-    CONTACT_SECS, HERO_RUNS_FROM, Lunge, Motion, STEP_SECS, ease, pace, turn, yaw_toward,
+    CONTACT_SECS, HERO_RUNS_FROM, Lunge, Motion, RUN_PACE, STEP_SECS, ease, pace, turn, yaw_toward,
 };
 use crate::art::{
     Art, CREATURE_LAYER, Finish, Model, ModelLook, Pose, build_flat, no_shadow, set_layer_mask,
@@ -4060,8 +4060,13 @@ struct Carried {
     from: Vector3,
     /// Its previous step had not ended when this one came: it runs.
     hurry: bool,
-    /// Cells crossed: 1, or 2 for a fast monster's two steps in a turn.
+    /// Cells crossed: 1, or 2 for a fast monster's two steps in a turn,
+    /// or more along a way (a travel drawn every few steps).
     cells: i32,
+    /// The cells it went through, its new one last (`Move::path`).
+    path: Vec<(i32, i32)>,
+    /// Its run under way, which goes on along this way.
+    running: Option<Motion>,
 }
 
 /// The hero's own model while they ride: their cell shows the steed, and
@@ -4083,6 +4088,10 @@ struct Rider {
 /// Seconds the hero takes from the ground to the steed's back, and how
 /// high they hop on the way.
 const MOUNT_SECS: f32 = 0.3;
+/// An order's step lasts its tick and this (seconds): the engine's answer
+/// to the next action comes a frame or two after the tick, and the step
+/// is still going when it does.
+const ORDER_SLACK: f32 = 0.05;
 const MOUNT_HOP: f32 = 0.12;
 /// The top of a rider's head over the saddle, and how high a body's hips
 /// are as it stands, in its own heights.
@@ -4468,8 +4477,9 @@ pub struct MapView {
     /// seconds left; the overlay they flash in.
     flashes: Vec<(Vec<Gd<GeometryInstance3D>>, f32)>,
     flash: Option<Gd<Material>>,
-    /// Cells whose step was cut short by the next batch, and when.
-    interrupted: HashSet<(i32, i32)>,
+    /// Cells whose step was cut short by the next batch (where it had got
+    /// to), and when.
+    interrupted: HashMap<(i32, i32), Vector3>,
     cut_at: f64,
     /// The newest message already looked at for fights.
     log_seq: Option<u64>,
@@ -5307,7 +5317,7 @@ impl MapView {
             hero_falls_at: None,
             flashes: Vec::new(),
             flash: None,
-            interrupted: HashSet::new(),
+            interrupted: HashMap::new(),
             cut_at: 0.0,
             log_seq: None,
             sounds: Vec::new(),
@@ -5460,8 +5470,11 @@ impl MapView {
                 self.finish_falls_where(|c| changed.contains(&c));
             }
             if !moves.is_empty() {
-                // the engine went on: the scene catches up at once
-                self.finish_motions();
+                // the engine went on: the scene catches up at once, but
+                // for a run that goes on from where it is heading (the
+                // next drawing of a travel)
+                let goes_on = |m: &Motion| m.is_run() && moves.iter().any(|mv| mv.from == m.cell);
+                self.finish_motions_where(|m| !goes_on(m));
             } else if !changed.is_empty() {
                 // a motion whose cell shows another now catches up; one
                 // that something only passes over (a missile in flight, a
@@ -5512,6 +5525,9 @@ impl MapView {
             }
             // a carried model whose new cell did not take it
             for (_, c) in std::mem::take(&mut self.incoming) {
+                if let Some(r) = c.running {
+                    r.finish(false);
+                }
                 self.art.give(c.model);
             }
             // down in a pit or out of it where they stand: their floor opens
@@ -10109,8 +10125,10 @@ impl MapView {
                     .and_then(|c| c.glyph.as_ref())
                     .is_some_and(|g| g.flags & mg::HERO != 0);
                 let (secs, run) = match self.order_pace {
-                    // an order's step lasts its tick, never a hurried run
-                    Some(p) if hero && c.cells == 1 => (p, false),
+                    // an order's step lasts its tick and the moment the
+                    // engine takes to answer, never a hurried run: it walks
+                    // on into the next step without a stop
+                    Some(p) if hero && c.cells == 1 => (p + ORDER_SLACK, false),
                     // a burdened hero walks, slower the heavier the load
                     _ if hero => {
                         let (secs, run) = pace(c.cells, c.hurry);
@@ -10125,12 +10143,60 @@ impl MapView {
                 } else {
                     run
                 };
+                // a run along several cells (a travel, a rush, drawn every
+                // few steps): along its way, at a run's pace, going on
+                // from the run under way
+                if c.running.is_some() || c.path.len() >= 2 {
+                    let ground = self.ground(x, y);
+                    let mut points = vec![c.from];
+                    for (k, &(cx, cy)) in c.path.iter().enumerate() {
+                        points.push(if k + 1 == c.path.len() {
+                            origin + p.pos
+                        } else {
+                            Vector3::new(cx as f32, self.ground(cx, cy) - ground, cy as f32) + p.pos
+                        });
+                    }
+                    let pace = if hero {
+                        // a burdened hero runs slower
+                        let (secs, _) = self.hero_look.pace(1.0 / RUN_PACE, false);
+                        1.0 / secs.max(0.05)
+                    } else {
+                        RUN_PACE
+                    };
+                    if let Some(mut r) = c.running {
+                        r.run_on((x, y), points);
+                        self.motions.push(r);
+                    } else {
+                        let mut clips = self.art.clips(&c.model, true);
+                        if hero && self.rider.is_none() && self.hero_look.floating() {
+                            clips.gait = clips.idle.clone();
+                        }
+                        self.motions.push(Motion::run(
+                            c.model.node.clone(),
+                            (x, y),
+                            hero,
+                            points,
+                            c.placed.yaw,
+                            clips,
+                            (p.look.art.height, pace),
+                            // two steps in a turn: a quick scurry
+                            c.hurry || c.path.len() == 2,
+                        ));
+                    }
+                    if hero {
+                        self.stats.hero_steps += 1;
+                    } else {
+                        self.stats.other_steps += 1;
+                    }
+                    kept.push(c.model);
+                    continue;
+                }
                 let mut clips = self.art.clips(&c.model, run);
                 // a floating hero glides, their legs still
                 if hero && self.rider.is_none() && self.hero_look.floating() {
                     clips.gait = clips.idle.clone();
                 }
-                self.motions.push(Motion::step(
+                let step = Motion::step(
                     c.model.node.clone(),
                     (x, y),
                     hero,
@@ -10139,7 +10205,11 @@ impl MapView {
                     clips,
                     p.look.art.height,
                     (secs, run),
-                ));
+                );
+                // an order walks on: an even pace, not a stop at each cell
+                let walks_on = hero && self.order_pace.is_some() && c.cells == 1;
+                self.motions
+                    .push(if walks_on { step.evenly() } else { step });
                 if hero {
                     self.stats.hero_steps += 1;
                 } else {
@@ -10255,6 +10325,9 @@ impl MapView {
             self.give_old(m, gone, (x, y));
         }
         if let Some(c) = carried {
+            if let Some(r) = c.running {
+                r.finish(false);
+            }
             self.art.give(c.model);
         }
         nodes.models = kept;
@@ -10397,10 +10470,21 @@ impl MapView {
             let placed = nodes.look.models.remove(i);
             nodes.look.entity = None;
             let origin = Vector3::new(mv.from.0 as f32, 0.0, mv.from.1 as f32);
-            let from = origin + placed.pos;
-            // its last step cut short a moment ago: it runs
-            let hurry =
-                self.interrupted.contains(&mv.from) && self.clock - self.cut_at <= STEP_SECS as f64;
+            // its last step cut short a moment ago: it runs on from where
+            // it got to, never a jump to the cell's middle first
+            let cut = self
+                .interrupted
+                .get(&mv.from)
+                .filter(|_| self.clock - self.cut_at <= STEP_SECS as f64)
+                .copied();
+            let hurry = cut.is_some();
+            let from = cut.unwrap_or(origin + placed.pos);
+            // its run goes on
+            let running = self
+                .motions
+                .iter()
+                .position(|m| m.cell == mv.from && m.is_run())
+                .map(|i| self.motions.swap_remove(i));
             if let Some(old) = self.incoming.insert(
                 mv.to,
                 Carried {
@@ -10409,8 +10493,13 @@ impl MapView {
                     from,
                     hurry,
                     cells: mv.steps(),
+                    path: mv.path.clone(),
+                    running,
                 },
             ) {
+                if let Some(r) = old.running {
+                    r.finish(false);
+                }
                 self.art.give(old.model);
             }
         }
@@ -11126,12 +11215,17 @@ impl MapView {
             let (Some(gait), Some(floor)) = (hearing::gait(info), floor) else {
                 continue;
             };
-            let at = self.sound_at(mv.to);
+            // a run's feet land a cell apart at its pace, where they land
+            let run = mv.path.len() >= 3;
             for i in 0..mv.steps().max(1) {
+                let (at, apart) = match mv.path.get(i as usize) {
+                    Some(&cell) if run => (self.sound_at(cell), 1.0 / RUN_PACE),
+                    _ => (self.sound_at(mv.to), STEP_SECS * 0.5),
+                };
                 let mut step = Sound::exactly(hearing::step(floor, gait))
                     .at(at)
                     .sized(Size::of(&info.size))
-                    .after(LANDS + i as f32 * STEP_SECS * 0.5);
+                    .after(LANDS + i as f32 * apart);
                 if hero {
                     step = step.urgent();
                 }
@@ -11536,7 +11630,7 @@ impl MapView {
             let keep = walking && m.hero && step;
             // one a self-test holds midway is cut short too
             if !m.arrived(self.hold) && step {
-                self.interrupted.insert(cell);
+                self.interrupted.insert(cell, m.base);
             }
             m.finish(keep);
         }
@@ -11686,6 +11780,34 @@ impl MapView {
             .filter(|p| p.is_instance_valid() && p.is_playing())
             .map(|p| p.get_current_animation().to_string());
         (now, clips.idle)
+    }
+
+    /// The hero's run along several cells has more to go than the time a
+    /// drawing takes to come: the game reads no more of the engine for now
+    /// (the next drawing of a travel extends the run as it nears its end).
+    pub fn hero_runs_on(&self) -> bool {
+        /// Seconds before a run's end the next drawing is read.
+        const READ_AHEAD: f32 = 0.12;
+        self.hold.is_none()
+            && self
+                .motions
+                .iter()
+                .filter(|m| m.hero)
+                .filter_map(|m| m.run_left())
+                .any(|left| left > READ_AHEAD)
+    }
+
+    /// The hero's step is being played, and not in its last moments: an
+    /// order's next step goes then, so its drawing comes as this one ends
+    /// and the walk goes on without a stop.
+    pub fn hero_walking_on(&self) -> bool {
+        /// Seconds before a step's end the next is asked for.
+        const AHEAD: f32 = 0.07;
+        self.motions
+            .iter()
+            .filter(|m| m.hero)
+            .filter_map(|m| m.step_left())
+            .any(|left| left > AHEAD)
     }
 
     /// The hero's step is being played.
