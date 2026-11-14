@@ -12,14 +12,10 @@ uniform vec4 crust : source_color = vec4(0.07, 0.05, 0.045, 1.0);
 uniform float energy = 3.5;
 uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 uniform sampler2D fow_tex : filter_linear, repeat_disable;
-// what the ground under the level shows where nothing is known
-// (map_surface.gdshader's), for the crust cooled toward it
-global uniform vec4 branch_chasm;
-global uniform vec4 branch_void;
-global uniform float overview;
 // per cell, full in the channel of its ground: water, lava, ice, land
 uniform sampler2D ground_tex : filter_linear, repeat_disable;
-// per cell: G full where nothing is drawn at all (surface.rs `StandField`)
+// per cell: G full where nothing is drawn at all, B where such a cell is
+// the cell or one beside it (surface.rs `StandField`)
 uniform sampler2D stand_tex : filter_linear, repeat_disable;
 // a photographed flow (TextureCan's Volcanic Lava Flow): its crust and
 // its molten channels; without it the crust is all noise
@@ -30,6 +26,8 @@ uniform bool has_flow = false;
 // branch): its rivers and pools; the rest cooled crust
 uniform float running = 0.35;
 uniform float flow_scale = 0.45;
+
+#include "res://shaders/known_edge.gdshaderinc"
 
 const vec2 FIELD = vec2(80.0, 21.0);
 
@@ -125,9 +123,12 @@ float ground_kind(vec4 v) {
 
 void vertex() {
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	// the surface heaves a little
+	// the surface heaves a little; not beside the unknown, where the
+	// ground under the level lies just under it (map_view's
+	// `lay_bedrock`: no hole there) and would show through it
 	float h = texture(noise_tex, wpos.xz * 0.2 + TIME * 0.01).r;
-	VERTEX.y += (h - 0.5) * 0.03;
+	float edge = texture(stand_tex, (wpos.xz + 0.5) / FIELD).b;
+	VERTEX.y += (h - 0.5) * 0.03 * (1.0 - edge);
 }
 
 void fragment() {
@@ -155,31 +156,16 @@ void fragment() {
 		}
 		shore = 1.0 - smoothstep(0.0, 0.3, v.g - max(max(v.r, v.b), v.a));
 	}
-	// where nothing is drawn beside it (past what the hero has seen) its
-	// edge frays as a floor's does, wandering over a couple of metres and
-	// its corners rounded over a cell or so, its crust cooling dark there
-	// (a field half seen stepped along the cells); each cell's middle
-	// keeps its lava
+	// where nothing is drawn beside it (past what the hero has seen) it
+	// ends as a floor does there (known_edge): a ragged line through the
+	// edge cell, its corners round, nothing past it; its crust cooling
+	// dark toward the line (its fray along the cells' blur ran straight
+	// over four cells, black notches square where the unknown cut in)
 	vec2 uv = (wpos.xz + 0.5) / FIELD;
-	float empty = texture(stand_tex, uv).g;
-	vec2 d = vec2(1.0) / FIELD;
-	float wide = (empty * 4.0
-		+ (texture(stand_tex, uv + vec2(d.x, 0.0)).g + texture(stand_tex, uv - vec2(d.x, 0.0)).g
-		+ texture(stand_tex, uv + vec2(0.0, d.y)).g + texture(stand_tex, uv - vec2(0.0, d.y)).g) * 2.0
-		+ texture(stand_tex, uv + d).g + texture(stand_tex, uv - d).g
-		+ texture(stand_tex, uv + vec2(d.x, -d.y)).g
-		+ texture(stand_tex, uv + vec2(-d.x, d.y)).g) / 16.0;
-	float fray = 0.0;
-	if (empty > 0.001) {
-		vec2 middle = floor(wpos.xz + 0.5);
-		float core = 1.0 - smoothstep(0.15, 0.4, length(wpos.xz - middle));
-		// (the line always inside the cell, wandering in from its edge: a
-		// lava cell ends at its own edge, so wherever the noise would
-		// carry the line out past it the field ended straight along the
-		// cells, square blocks against the unknown)
-		fray = mix(empty, wide, 0.6) + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.45
-			+ (tl2(wpos.xz * 0.42 + vec2(5.3, 17.9)) - 0.5) * 0.3 - core
-			+ 0.5 * smoothstep(0.22, 0.48, empty);
+	float reach = known_reach(stand_tex, wpos.xz);
+	float inward = reach >= KNOWN_FAR ? KNOWN_FAR : reach - known_bite(noise_tex, wpos.xz);
+	if (inward < 0.0) {
+		discard;
 	}
 	vec2 flow = vec2(t * 0.015, t * 0.008);
 	float plates = texture(noise_tex, wpos.xz * 0.45 + flow).r;
@@ -244,19 +230,13 @@ void fragment() {
 	float rim = smoothstep(0.75, 0.97, shore);
 	glow = molten.rgb * max(crack, rim * 0.8) * seethe;
 
-	// toward what nothing is known of its crust closes over it and past
-	// that it lies cooled black (a hole there showed the ground under the
-	// level lit, a square of it); no line of glow where it closes (along
+	// toward what nothing is known of its crust closes over it and lies
+	// cooled black at the line; no line of glow where it closes (along
 	// the cells it drew the field's blocks in bright lines)
-	// (a crust dying back over a cell and a half from every cell nothing
-	// is drawn on cut a maze's field into crust blocks and glow blocks)
-	float cooled = 0.0;
-	if (empty > 0.001) {
-		cooled = smoothstep(0.33, 0.39, fray);
-		crack *= 1.0 - smoothstep(-0.05, 0.3, fray);
-		glow = molten.rgb * max(crack, rim * 0.8) * seethe * (1.0 - cooled);
-		rock *= mix(1.0 - 0.5 * smoothstep(0.1, 0.33, fray), 0.06, cooled);
-	}
+	float cooled = 1.0 - smoothstep(0.0, 0.18, inward);
+	crack *= smoothstep(0.12, 0.5, inward);
+	glow = molten.rgb * max(crack, rim * 0.8) * seethe * (1.0 - cooled);
+	rock *= mix(1.0 - 0.5 * (1.0 - smoothstep(0.1, 0.4, inward)), 0.06, cooled);
 	float seen = texture(fow_tex, uv).r;
 	// what the hero sees of it meets what they remember along a curved,
 	// wandering line, not along the cells (a big field half seen stepped,
@@ -277,36 +257,10 @@ void fragment() {
 	// nor does it mirror the metal sky (map_view's): it shines by its fire
 	RADIANCE = vec4(0.0, 0.0, 0.0, 1.0);
 	EMISSION = (glow * energy + rock * 0.15 * heat) * mix(0.62, 1.0, seen);
-	// and its crust cooled toward the unknown fades, past its line, into
-	// what the ground under the level shows where nothing is known
-	// (Gehennom's smouldering chasm, elsewhere the smoky dark: as
-	// map_surface draws them), so the field's edge there runs through
-	// the cells: a dark crust stopped at each cell's edge against what lay
-	// beyond stepped along them
-	// and at its very edge toward the unknown it is as dark as the ground
-	// under the level there, whatever its fray: a field's edge cell lit at
-	// all met that dark along the cells' straight edge
-	float rim_dark = smoothstep(0.3, 0.5, empty + (tl2(wpos.xz * 2.3 + vec2(1.9, 6.7)) - 0.5) * 0.08);
+	// and at its very line as dark as the ground under the level beside
+	// it (what shows past it)
+	float rim_dark = 1.0 - smoothstep(0.0, 0.06, inward);
 	ALBEDO *= 1.0 - rim_dark;
 	EMISSION *= 1.0 - rim_dark;
 	SPECULAR *= 1.0 - rim_dark;
-	if (cooled > 0.0) {
-		vec3 beyond = vec3(0.0);
-		if (branch_chasm.a > 0.0) {
-			float smoke = tl2(wpos.xz * 0.05 + TIME * vec2(0.01, 0.004));
-			float deep = smoothstep(0.35, 0.75, tl2(wpos.xz * 0.11 + 7.0 - TIME * 0.006));
-			beyond = branch_chasm.rgb * mix(0.45, 1.0, deep) * mix(0.6, 1.0, smoke);
-		} else if (branch_void.a > 0.0) {
-			float drift = tl2(wpos.xz * 0.045 + TIME * vec2(0.008, 0.003));
-			float grain = tl2(wpos.xz * 0.23 + vec2(3.1, 7.7));
-			beyond = branch_void.rgb * mix(0.55, 1.0, drift) * mix(0.8, 1.0, grain) * (1.0 - overview);
-		}
-		float gone = smoothstep(0.37, 0.5, fray);
-		ALBEDO *= 1.0 - gone;
-		EMISSION = mix(EMISSION, beyond, gone);
-		// (nor any sheen there: the lava's lights shone on its gone part,
-		// a block lighter than the dark beside it, cut along the cells)
-		SPECULAR *= 1.0 - gone;
-		ROUGHNESS = mix(ROUGHNESS, 1.0, gone);
-	}
 }

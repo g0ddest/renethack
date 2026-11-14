@@ -34,16 +34,20 @@ uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 uniform sampler2D ground_tex : filter_linear, repeat_disable;
 uniform sampler2D depth_tex : hint_depth_texture, filter_linear_mipmap;
 uniform sampler2D fow_tex : filter_linear, repeat_disable;
-// what is drawn on each cell (G: nothing), so that toward what nothing is
-// known of the water's edge frays and fades into the dark as a floor's
+// what is drawn on each cell (G: nothing; B: such a cell the cell or one
+// beside it), so that toward what nothing is known of the water ends as
+// a floor's does (known_edge)
 uniform sampler2D stand_tex : filter_linear, repeat_disable;
 uniform bool has_stand = false;
-global uniform vec4 branch_chasm;
-global uniform vec4 branch_void;
 // the whole level framed (map_view's overview, as map_surface.gdshader)
 global uniform float overview;
 
+#include "res://shaders/known_edge.gdshaderinc"
+
 const vec2 FIELD = vec2(80.0, 21.0);
+// how far inside its ragged line the water's edge toward the unknown
+// fades (cells: a floor's)
+const float KNOWN_FADE = 0.2;
 // what the overview shows water by, as the stone shows by its own light
 const float OVERVIEW_GLOW = 1.2;
 
@@ -165,29 +169,14 @@ void fragment() {
 		}
 		shore = 1.0 - smoothstep(0.0, 0.3, v.r - max(max(v.g, v.b), v.a));
 	}
-	// toward what nothing is known of: frayed as a floor's edge is there,
-	// and fading into the dark over the edge cell (it ended square, the
-	// side of a slab standing out of the void)
+	// toward what nothing is known of: a ragged line through the edge
+	// cell as a floor's (known_edge), the water fading inside it into
+	// what is remembered, and past it nothing
 	float edge_fade = 0.0;
 	if (has_stand && !basin) {
-		vec2 suv = (wpos.xz + 0.5) / FIELD;
-		float empty = texture(stand_tex, suv).g;
-		if (empty > 0.001) {
-			if (empty + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.6 > 0.5) {
-				discard;
-			}
-			vec2 d = vec2(1.0) / FIELD;
-			float wide = (empty * 4.0
-				+ (texture(stand_tex, suv + vec2(d.x, 0.0)).g + texture(stand_tex, suv - vec2(d.x, 0.0)).g
-				+ texture(stand_tex, suv + vec2(0.0, d.y)).g + texture(stand_tex, suv - vec2(0.0, d.y)).g) * 2.0
-				+ texture(stand_tex, suv + d).g + texture(stand_tex, suv - d).g
-				+ texture(stand_tex, suv + vec2(d.x, -d.y)).g
-				+ texture(stand_tex, suv + vec2(-d.x, d.y)).g) / 16.0;
-			vec2 middle = floor(wpos.xz + 0.5);
-			float core = 1.0 - smoothstep(0.2, 0.42, length(wpos.xz - middle));
-			float fray = mix(empty, wide, 0.5) + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.3
-				- core * 0.5;
-			edge_fade = smoothstep(0.08, 0.45, fray) * (1.0 - 0.6 * overview);
+		edge_fade = known_edge(stand_tex, noise_tex, wpos.xz, KNOWN_FADE);
+		if (edge_fade > 0.999) {
+			discard;
 		}
 	}
 	float seen = texture(fow_tex, (wpos.xz + 0.5) / FIELD).r;
@@ -198,6 +187,7 @@ void fragment() {
 			+ (tl2(wpos.xz * 0.42 + vec2(9.7, 33.1)) - 0.5) * 0.3;
 		seen = smoothstep(0.3, 0.7, s);
 	}
+	seen *= 1.0 - edge_fade;
 	const float DS = 0.02;
 	float h = waves(wpos.xz, t);
 	float hx = waves(wpos.xz + vec2(DS, 0.0), t);
@@ -210,6 +200,11 @@ void fragment() {
 	vec4 under = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, d, 1.0);
 	float thickness = abs(VERTEX.z - under.z / under.w);
 	float depth_t = clamp(thickness / depth_range, 0.0, 1.0);
+	// beside the unknown the ground under the level lies just under it
+	// (map_view's `lay_bedrock`: no hole there): as deep as elsewhere
+	if (has_stand) {
+		depth_t = mix(depth_t, 1.0, texture(stand_tex, (wpos.xz + 0.5) / FIELD).b);
+	}
 	// shallow along its shore, whatever lies under it there
 	depth_t = min(depth_t, mix(1.0, 0.1, shore));
 
@@ -257,21 +252,6 @@ void fragment() {
 
 	ALBEDO = col;
 	ALPHA = max(mix(0.8, 0.97, depth_t), foam * 0.75);
-	if (edge_fade > 0.0) {
-		vec3 beyond = vec3(0.0);
-		if (branch_chasm.a > 0.0) {
-			float smoke = tl2(wpos.xz * 0.05 + TIME * vec2(0.01, 0.004));
-			float glow = smoothstep(0.35, 0.75, tl2(wpos.xz * 0.11 + 7.0 - TIME * 0.006));
-			beyond = branch_chasm.rgb * mix(0.45, 1.0, glow) * mix(0.6, 1.0, smoke);
-		} else if (branch_void.a > 0.0) {
-			float drift = tl2(wpos.xz * 0.045 + TIME * vec2(0.008, 0.003));
-			float grain = tl2(wpos.xz * 0.23 + vec2(3.1, 7.7));
-			beyond = branch_void.rgb * mix(0.55, 1.0, drift) * mix(0.8, 1.0, grain) * (1.0 - overview);
-		}
-		ALBEDO *= 1.0 - edge_fade;
-		EMISSION = mix(EMISSION, beyond, edge_fade);
-		ALPHA = mix(ALPHA, 1.0, edge_fade);
-	}
 	// rough enough, and rougher where the ripples turn faster than
 	// a pixel: the lights glint as soft streaks along them, not as
 	// points (stars)

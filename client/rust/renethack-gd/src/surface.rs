@@ -506,25 +506,30 @@ impl Default for GroundField {
 }
 
 /// Per cell of the level, where something stands or lies (a creature, the
-/// hero, a thing, a body: R full) and where nothing is drawn at all (the
-/// unknown, a floor NetHack leaves unmapped out of sight: G full): the
-/// shaders read it as a texture.
+/// hero, a thing, a body: R full), where nothing is drawn at all (the
+/// unknown, a floor NetHack leaves unmapped out of sight: G full), and
+/// where such a cell is the cell itself or one beside it (B full: the
+/// ground's edge toward the unknown is worked out there, known_edge's
+/// `known_reach`): the shaders read it as a texture.
 pub struct StandField {
     cells: Vec<bool>,
     empty: Vec<bool>,
     image: Gd<Image>,
     changed: bool,
+    /// Where nothing is drawn changed since `take_empty_changed`.
+    empty_changed: bool,
 }
 
 impl StandField {
     pub fn new() -> StandField {
         let image =
-            Image::create_empty(COLNO, ROWNO, false, Format::RG8).unwrap_or_else(Image::new_gd);
+            Image::create_empty(COLNO, ROWNO, false, Format::RGBA8).unwrap_or_else(Image::new_gd);
         StandField {
             cells: vec![false; (COLNO * ROWNO) as usize],
             empty: vec![true; (COLNO * ROWNO) as usize],
             image,
             changed: true,
+            empty_changed: true,
         }
     }
 
@@ -532,6 +537,7 @@ impl StandField {
         if let Some(i) = index(x, y)
             && (self.cells[i] != on || self.empty[i] != empty)
         {
+            self.empty_changed |= self.empty[i] != empty;
             self.cells[i] = on;
             self.empty[i] = empty;
             self.changed = true;
@@ -540,10 +546,22 @@ impl StandField {
 
     pub fn clear(&mut self) {
         if self.cells.contains(&true) || self.empty.contains(&false) {
+            self.empty_changed |= self.empty.contains(&false);
             self.cells.fill(false);
             self.empty.fill(true);
             self.changed = true;
         }
+    }
+
+    /// Nothing is drawn on the cell (x, y) or on one beside it (past the
+    /// level's field nothing is either).
+    pub fn near_empty(&self, x: i32, y: i32) -> bool {
+        (-1..=1).any(|j| (-1..=1).any(|k| index(x + k, y + j).is_none_or(|i| self.empty[i])))
+    }
+
+    /// Where nothing is drawn changed since this was last asked.
+    pub fn take_empty_changed(&mut self) -> bool {
+        std::mem::take(&mut self.empty_changed)
     }
 
     /// The image made again if a cell changed since; true then.
@@ -552,14 +570,18 @@ impl StandField {
             return false;
         }
         let mut bytes = PackedByteArray::new();
-        bytes.resize(self.cells.len() * 2);
+        bytes.resize(self.cells.len() * 4);
         let out = bytes.as_mut_slice();
         for (i, (&on, &empty)) in self.cells.iter().zip(&self.empty).enumerate() {
-            out[i * 2] = if on { 255 } else { 0 };
-            out[i * 2 + 1] = if empty { 255 } else { 0 };
+            let (x, y) = ((i as i32) % COLNO, (i as i32) / COLNO);
+            let edge = self.near_empty(x, y);
+            out[i * 4] = if on { 255 } else { 0 };
+            out[i * 4 + 1] = if empty { 255 } else { 0 };
+            out[i * 4 + 2] = if edge { 255 } else { 0 };
+            out[i * 4 + 3] = 255;
         }
         self.image
-            .set_data(COLNO, ROWNO, false, Format::RG8, &bytes);
+            .set_data(COLNO, ROWNO, false, Format::RGBA8, &bytes);
         true
     }
 }

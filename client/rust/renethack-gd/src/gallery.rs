@@ -728,6 +728,150 @@ pub fn lay_out_ground_edges(
     Ok((cx, cy))
 }
 
+/// A room long used, for pictures (the `floors` scene): a lit room walled
+/// all round with three doorways (west, north and east) and stairs down,
+/// the hero in it. Where she stands.
+pub fn lay_out_floor_room(world: &mut World, cat: &Catalog) -> Result<(i32, i32), String> {
+    const W: i32 = 13;
+    const H: i32 = 7;
+    let map = &mut world.map;
+    map.clear();
+    let lit = cmap(cat, "S_room")?;
+    let (x0, y0) = (34, 6);
+    let (x1, y1) = (x0 + W - 1, y0 + H - 1);
+    let doors = [(x0 - 1, y0 + 2), (x0 + 4, y0 - 1), (x1 + 1, y0 + 5)];
+    for y in y0 - 1..=y1 + 1 {
+        for x in x0 - 1..=x1 + 1 {
+            let (n, s, w, e) = (y == y0 - 1, y == y1 + 1, x == x0 - 1, x == x1 + 1);
+            let sym = match (n, s, w, e) {
+                _ if doors.contains(&(x, y)) => Some("S_ndoor"),
+                (true, _, true, _) => Some("S_tlcorn"),
+                (true, _, _, true) => Some("S_trcorn"),
+                (_, true, true, _) => Some("S_blcorn"),
+                (_, true, _, true) => Some("S_brcorn"),
+                (true, ..) | (_, true, ..) => Some("S_hwall"),
+                (_, _, true, _) | (_, _, _, true) => Some("S_vwall"),
+                _ => None,
+            };
+            match sym {
+                Some(sym) => map.print(x, y, &cmap(cat, sym)?, None),
+                None => map.print(x, y, &lit, None),
+            }
+        }
+    }
+    map.print(x0 + 9, y0 + 2, &cmap(cat, "S_dnstair")?, None);
+    let at = (x0 + 6, y0 + 4);
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(at.0, at.1, &hero, Some(&lit));
+    world.view_center = Some((x0 + W / 2, y0 + H / 2));
+    Ok(at)
+}
+
+/// Where what is known meets what is not, for pictures (the `edges`
+/// scene): a dark room's floor seen along a winding way through it, the
+/// rock beside a corridor walked from it whose end goes on unknown, and a
+/// lava field, a pool and ice each with cells of it unknown at its edge
+/// and inside it; the hero on the dark floor, in the corridor near its
+/// end or on the lit floor beside the liquids (`at` 0, 1, 2). Where she
+/// stands.
+pub fn lay_out_edges(world: &mut World, cat: &Catalog, at: usize) -> Result<(i32, i32), String> {
+    let map = &mut world.map;
+    map.clear();
+    let (cx, cy) = (40, 10);
+    // the dark room's floor along her way, two or three cells wide, and
+    // a lit room's corner beside it (rows from the north, '#' floor)
+    const DARK: [&str; 7] = [
+        "......##....",
+        ".....####...",
+        "....###.##..",
+        "..####...##.",
+        ".####.....##",
+        "####......##",
+        ".##.........",
+    ];
+    let dark = cmap(cat, "S_darkroom")?;
+    let (dx, dy) = (cx - 14, cy - 3);
+    for (j, row) in DARK.iter().enumerate() {
+        for (i, ch) in row.chars().enumerate() {
+            if ch == '#' {
+                map.print(dx + i as i32, dy + j as i32, &dark, None);
+            }
+        }
+    }
+    // a corridor walked east from the room's east side, then north, its
+    // end going on unknown; the rock beside it known
+    let corr = cmap(cat, "S_corr")?;
+    let stone = cmap(cat, "S_stone")?;
+    let way: Vec<(i32, i32)> = (cx - 3..=cx + 3)
+        .map(|x| (x, cy + 2))
+        .chain((cy - 2..=cy + 1).rev().map(|y| (cx + 3, y)))
+        .collect();
+    for &(x, y) in &way {
+        for (ox, oy) in [
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (-1, 0),
+            (1, 0),
+            (-1, 1),
+            (0, 1),
+            (1, 1),
+        ] {
+            let (sx, sy) = (x + ox, y + oy);
+            let ahead = sy < cy - 2;
+            if !ahead
+                && !way.contains(&(sx, sy))
+                && map.cell(sx, sy).is_none_or(|c| c.glyph.is_none())
+            {
+                map.print(sx, sy, &stone, None);
+            }
+        }
+    }
+    for &(x, y) in &way {
+        map.print(x, y, &corr, None);
+    }
+    // the liquids east of it: a lava field, a pool and ice, unknown cells
+    // inside each and at its edge
+    let lava = cmap(cat, "S_lava")?;
+    let pool = cmap(cat, "S_pool")?;
+    let ice = cmap(cat, "S_ice")?;
+    let lit = cmap(cat, "S_room")?;
+    let (lx, ly) = (cx + 12, cy);
+    for y in ly - 4..=ly + 4 {
+        for x in lx - 4..=lx + 9 {
+            let (i, j) = (x - lx, y - ly);
+            // (holes and bites the hero has not seen)
+            let unknown = matches!(
+                (i, j),
+                (0, -1) | (1, -1) | (0, 0) | (5, 2) | (9, -4) | (9, -3) | (8, -4)
+            ) || (i == -4 && j.abs() >= 3)
+                || (i >= 7 && j >= 3);
+            if unknown {
+                continue;
+            }
+            let g = if i <= -2 {
+                &lit
+            } else if i >= 6 && j <= 0 {
+                &pool
+            } else if i >= 6 {
+                &ice
+            } else {
+                &lava
+            };
+            map.print(x, y, g, None);
+        }
+    }
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    let (here, under) = match at {
+        0 => ((dx + 7, dy + 1), &dark),
+        1 => ((cx + 3, cy - 1), &corr),
+        _ => ((lx - 3, ly + 1), &lit),
+    };
+    map.print(here.0, here.1, &hero, Some(under));
+    world.view_center = Some(here);
+    Ok(here)
+}
+
 /// What lies on a dim floor about the hero, for pictures (the `dim-floor`
 /// scene): a dark room's floor within its walls, the hero in it, a dagger
 /// lying two cells west of her, a known bear trap two east, a black

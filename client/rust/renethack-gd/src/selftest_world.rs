@@ -406,7 +406,59 @@ fn light_visit(
     light_visit_at(steps, pick, depth, shot, wish, None);
 }
 
-/// The Amulet's wish is asked now.
+/// A level teleport for pictures of what the hero sees as she arrives:
+/// to the special level the debug menu's entry `pick` names, or without
+/// one to `depth`; a picture at the game's distance (`shot`) and close
+/// (`shot`-close), the level unmapped. With `wish`, the Amulet's wish on
+/// arriving in the endgame is wished away ("nothing").
+fn arrival_pair(
+    steps: &mut Vec<Step>,
+    pick: Option<KeyCheck>,
+    depth: &'static str,
+    shot: &'static str,
+    wish: bool,
+) {
+    let close: &'static str = Box::leak(format!("{shot}-close").into_boxed_str());
+    steps.extend([
+        Step::Key(ctrl_key('v')),
+        Step::Request(
+            "to what level",
+            |p| matches!(p, Prompt::Text { query, .. } if query.contains("level")),
+        ),
+        Step::Dialog(DialogEvent::TextSubmitted(
+            if pick.is_some() { "?" } else { depth }.into(),
+        )),
+    ]);
+    if let Some(pick) = pick {
+        steps.extend([
+            Step::Request("the levels to teleport to", is_menu),
+            Step::KeyFrom("the level", pick),
+        ]);
+    }
+    if wish {
+        steps.extend([
+            Step::AnswerUntil('n', "the Amulet's wish, or a command", |g| {
+                Ok(amulet_wish(g) || at_command(g)?)
+            }),
+            Step::DialogIf("the wish wished away", |g| {
+                Ok(amulet_wish(g).then(|| DialogEvent::TextSubmitted("nothing".into())))
+            }),
+        ]);
+    }
+    steps.extend([
+        Step::AnswerUntil('n', "a command on the new level", at_command),
+        Step::Call("the game's distance", |g| far(g, 11.0)),
+        Step::Wait("the level drawn as the hero arrives", drawn_here),
+        Step::Shot(shot),
+        Step::Call("the camera close", |g| far(g, 7.0)),
+        Step::Wait("the camera close", drawn_here),
+        Step::Shot(close),
+        Step::Call("the camera back", |g| far(g, 11.0)),
+        Step::Wait("the camera back", drawn_here),
+    ]);
+}
+
+/// The Amulet's wish is asked now./// The Amulet's wish is asked now.
 fn amulet_wish(g: &RenethackGame) -> bool {
     matches!(&g.pending,
         Some((_, Prompt::Text { query, .. })) if query.contains("wish"))
@@ -928,6 +980,131 @@ pub(super) fn lava_edge() -> Vec<Step> {
         Step::Wait("the camera closer", drawn_here),
         Step::Shot("lava-edge-close"),
     ]);
+    steps.extend(quit());
+    steps
+}
+
+/// Where what is known meets what is not, a room's floor toward its middle
+/// and the Valley as the hero comes into it (the art loop's iteration 8),
+/// for pictures before and after (not part of `make test-client`): a dark
+/// room's floor seen along a winding way, a corridor's end, and a lava
+/// field, a pool and ice with unknown cells, the hero at each
+/// (`edges-floor`, `edges-corridor`, `edges-liquids`); a lit room with
+/// three doorways and stairs (`edges-room`); then as the hero arrives,
+/// unmapped: Dlvl 2, 3 and 4, the Big Room, Minetown, the Valley,
+/// Gehennom 33 and 36 and the Plane of Fire (`edges-dlvl2` ...
+/// `edges-fire`); each at 11 m and 7 m (`-close`). `RENETHACK_EDGES` (a
+/// comma list: "scene,room,dungeon,mines,gehennom,fire") picks some.
+pub(super) fn edges() -> Vec<Step> {
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+    let wanted = |name: &str| {
+        std::env::var("RENETHACK_EDGES")
+            .map(|only| only.split(',').any(|w| w.trim() == name))
+            .unwrap_or(true)
+    };
+    let mut steps = vec![Step::Call(
+        "debug mode for this game",
+        |g: &mut RenethackGame| {
+            g.debug_mode = true;
+            Ok(())
+        },
+    )];
+    steps.extend(start());
+    steps.push(Step::Wait("the first level drawn", |g| {
+        drawn_in(g, Branch::Main)
+    }));
+    if wanted("scene") {
+        for (shot, close) in [
+            ("edges-floor", "edges-floor-close"),
+            ("edges-corridor", "edges-corridor-close"),
+            ("edges-liquids", "edges-liquids-close"),
+        ] {
+            steps.extend([
+                Step::Call("lay out the edges, the hero in the next spot", |g| {
+                    let cat = g.catalog.clone().ok_or("no catalog")?;
+                    let k = NEXT.fetch_add(1, Ordering::Relaxed);
+                    crate::gallery::lay_out_edges(&mut g.world, &cat, k)?;
+                    far(g, 11.0)
+                }),
+                Step::Wait("the scene drawn", |g| {
+                    let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                    Ok(drawn == Some(g.world.map.generation()))
+                }),
+                Step::Wait("the camera there", drawn_here),
+                Step::Shot(shot),
+                Step::Call("closer", |g| far(g, 7.0)),
+                Step::Wait("the camera closer", drawn_here),
+                Step::Shot(close),
+            ]);
+        }
+    }
+    if wanted("room") {
+        steps.extend([
+            Step::Call("lay out the room", |g| {
+                let cat = g.catalog.clone().ok_or("no catalog")?;
+                crate::gallery::lay_out_floor_room(&mut g.world, &cat)?;
+                far(g, 11.0)
+            }),
+            Step::Wait("the room drawn", |g| {
+                let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                Ok(drawn == Some(g.world.map.generation()))
+            }),
+            Step::Wait("the camera there", drawn_here),
+            Step::Shot("edges-room"),
+            Step::Call("closer", |g| far(g, 7.0)),
+            Step::Wait("the camera closer", drawn_here),
+            Step::Shot("edges-room-close"),
+        ]);
+    }
+    if wanted("scene") || wanted("room") {
+        steps.push(Step::Call("the camera back on the hero", |g| {
+            g.world.view_center = None;
+            far(g, 11.0)
+        }));
+    }
+    if wanted("dungeon") {
+        arrival_pair(&mut steps, None, "2", "edges-dlvl2", false);
+        arrival_pair(&mut steps, None, "3", "edges-dlvl3", false);
+        arrival_pair(&mut steps, None, "4", "edges-dlvl4", false);
+        arrival_pair(
+            &mut steps,
+            Some(|g| entry_key(g, "bigrm")),
+            "",
+            "edges-bigroom",
+            false,
+        );
+    }
+    if wanted("mines") {
+        arrival_pair(
+            &mut steps,
+            Some(|g| entry_key(g, "minetn")),
+            "",
+            "edges-minetown",
+            false,
+        );
+    }
+    // (Gehennom before the endgame: from it no level teleport leaves; and
+    // through the Valley: no level teleport passes it unvisited)
+    if wanted("gehennom") {
+        arrival_pair(
+            &mut steps,
+            Some(|g| entry_key(g, "valley")),
+            "",
+            "edges-valley",
+            false,
+        );
+        arrival_pair(&mut steps, None, "33", "edges-g33", false);
+        arrival_pair(&mut steps, None, "36", "edges-g36", false);
+    }
+    if wanted("fire") {
+        arrival_pair(
+            &mut steps,
+            Some(|g| entry_key(g, "fire")),
+            "",
+            "edges-fire",
+            true,
+        );
+    }
     steps.extend(quit());
     steps
 }

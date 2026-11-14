@@ -3697,6 +3697,8 @@ struct Near<'a> {
     cells: [Option<&'a Cell>; 8],
     far_north: Option<&'a Cell>,
     beyond: [Option<&'a Cell>; 3],
+    /// Two cells off north, south, west and east (`cells`' order).
+    far: [Option<&'a Cell>; 4],
 }
 
 impl<'a> Near<'a> {
@@ -3718,7 +3720,31 @@ impl<'a> Near<'a> {
                 map.cell(x + 1, y - 2),
                 map.cell(x, y - 3),
             ],
+            far: [
+                map.cell(x, y - 2),
+                map.cell(x, y + 2),
+                map.cell(x - 2, y),
+                map.cell(x + 2, y),
+            ],
         }
+    }
+
+    /// The cell lies ahead of a corridor or a door where the way goes on
+    /// into the unknown: one beside it, square on, with the way it came on
+    /// its far side (the way may go on here; rock drawn here shut it in a
+    /// wall of rock the hero has never seen).
+    fn ahead_of_corridor(&self, catalog: &Catalog) -> bool {
+        use Terrain::*;
+        let t = |c: Option<&Cell>| c.and_then(|c| cell_terrain(c, catalog));
+        (0..4).any(|i| {
+            matches!(
+                t(self.cells[i]),
+                Some(Corridor | Doorway | BrokenDoor | OpenDoor | ClosedDoor)
+            ) && matches!(
+                t(self.far[i]),
+                Some(Corridor | Doorway | BrokenDoor | OpenDoor | ClosedDoor | Floor | DarkFloor)
+            )
+        })
     }
 
     /// Only the orthogonal neighbours known (tests).
@@ -3872,6 +3898,9 @@ fn look_of(cell: &Cell, near: Near, ctx: &Ctx) -> Look {
                 ground_layers(&mut look, Ground::Land, &near, ctx);
             }
         },
+        // (nothing ahead of a corridor where it goes on unknown: its floor
+        // ends ragged there, as any floor at the unknown)
+        None if near.ahead_of_corridor(catalog) => {}
         None => rock_look(&mut look, &near, ctx),
     }
     // an opening in the floor: cut away with nobody on it, or the hero
@@ -4413,6 +4442,9 @@ pub struct MapView {
     /// below the ground.
     bedrock: Gd<MeshInstance3D>,
     holes: HashSet<(i32, i32)>,
+    /// Those of `holes` under lava or water: none where nothing is drawn
+    /// beside them (`lay_bedrock`).
+    liquid_holes: HashSet<(i32, i32)>,
     bedrock_dirty: bool,
     /// The sea of clouds far below the Plane of Air (made the first time),
     /// and the light from above (the moon's, the Planes' own sun).
@@ -5282,6 +5314,7 @@ impl MapView {
             lights_dirty: false,
             bedrock,
             holes: HashSet::new(),
+            liquid_holes: HashSet::new(),
             bedrock_dirty: true,
             sky_sea: None,
             sea_mats: Vec::new(),
@@ -5584,6 +5617,11 @@ impl MapView {
         }
         self.surfaces.show_ground(&mut self.ground);
         self.surfaces.show_standing(&mut self.standing);
+        // (lava and water beside the unknown keep the ground under the
+        // level under them: `lay_bedrock`)
+        if self.standing.take_empty_changed() && !self.liquid_holes.is_empty() {
+            self.bedrock_dirty = true;
+        }
         // water enough seen on a level of a branch that turns to a swamp:
         // a swamp, its light and air, for the rest of the visit
         if self.level_look.swamps && !self.swamp && self.ground.count(Ground::Water) >= SWAMP_WATER
@@ -7575,7 +7613,10 @@ impl MapView {
             }
         };
         // the level's field cell by cell (runs of cells along each row),
-        // and a wide margin around it
+        // and a wide margin around it; a hole where something lies below
+        // the ground, but none under lava or water beside the unknown:
+        // there it ends ragged (known_edge), and its bed showed square
+        // past its line, a black block cut along the cells
         let (left, right) = (0.5, COLNO as f32 - 0.5);
         let (top, bottom) = (-0.5, ROWNO as f32 - 0.5);
         let m = 60.0;
@@ -7586,7 +7627,10 @@ impl MapView {
         for row in 0..ROWNO {
             let mut run: Option<i32> = None;
             for x in 1..=COLNO {
-                let solid = x < COLNO && !self.holes.contains(&(x, row));
+                let solid = x < COLNO
+                    && (!self.holes.contains(&(x, row))
+                        || (self.liquid_holes.contains(&(x, row))
+                            && self.standing.near_empty(x, row)));
                 match (solid, run) {
                     (true, None) => run = Some(x),
                     (false, Some(x0)) => {
@@ -8002,6 +8046,7 @@ impl MapView {
         }
         self.place_torches(&[]);
         self.holes.clear();
+        self.liquid_holes.clear();
         self.bedrock_dirty = true;
         self.engulfed.show(None, Vector3::ZERO, 0.0);
         self.snap = true;
@@ -10395,6 +10440,15 @@ impl MapView {
                 self.holes.insert((x, y));
             } else {
                 self.holes.remove(&(x, y));
+            }
+            self.bedrock_dirty = true;
+        }
+        let liquid = look.sunk && matches!(look.kind, Ground::Lava | Ground::Water);
+        if liquid != self.liquid_holes.contains(&(x, y)) {
+            if liquid {
+                self.liquid_holes.insert((x, y));
+            } else {
+                self.liquid_holes.remove(&(x, y));
             }
             self.bedrock_dirty = true;
         }
@@ -13716,6 +13770,7 @@ mod tests {
                 cells: behind,
                 far_north: None,
                 beyond,
+                far: [None; 4],
             };
             let r = look_of(&unknown, near, &f.ctx());
             assert!((r.ground - ROCK_CUT).abs() < 1e-3, "{i}");
@@ -13734,6 +13789,35 @@ mod tests {
             ..Near::default()
         };
         assert!(look_of(&stone, near, &f.ctx()).rock);
+        // ahead of a corridor or a door whose way goes on into the unknown
+        // (the corridor south of it, the way it came south of that):
+        // nothing drawn, the corridor may go on; known stone there is rock
+        let door = feature(cat, "S_ndoor");
+        for (way, back) in [(&corr, &corr), (&door, &floor)] {
+            let mut ahead = none;
+            ahead[1] = Some(way);
+            let near = Near {
+                cells: ahead,
+                far: [None, Some(back), None, None],
+                ..Near::default()
+            };
+            assert!(look_of(&unknown, near, &f.ctx()).is_empty());
+            let near = Near {
+                cells: ahead,
+                far: [None, Some(back), None, None],
+                ..Near::default()
+            };
+            assert!(look_of(&stone, near, &f.ctx()).rock);
+        }
+        // beside a corridor running past (rock on its far side): rock
+        let mut side = none;
+        side[2] = Some(&corr);
+        let near = Near {
+            cells: side,
+            far: [None, None, Some(&stone), None],
+            ..Near::default()
+        };
+        assert!(look_of(&unknown, near, &f.ctx()).rock);
     }
 
     #[test]

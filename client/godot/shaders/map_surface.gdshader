@@ -31,7 +31,8 @@ uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 uniform sampler2D ground_tex : filter_linear, repeat_disable;
 // per cell of the level: R full where something stands or lies (a
 // creature, a thing: the fire's cracks keep clear of it), G where nothing
-// is drawn at all (a floor frays towards it) (surface.rs `StandField`)
+// is drawn at all (a floor ends ragged towards it: known_edge), B where
+// such a cell is the cell or one beside it (surface.rs `StandField`)
 uniform sampler2D stand_tex : filter_linear, repeat_disable;
 // the ground's own kind (1 land, 4 ice), shown where it wins; 0: whatever
 // lies around it
@@ -129,7 +130,12 @@ global uniform float branch_strata;
 // nearly as it is, lit by its own faint light
 global uniform float overview;
 
+#include "res://shaders/known_edge.gdshaderinc"
+
 const vec2 FIELD = vec2(80.0, 21.0);
+// how far inside its ragged line a floor's edge toward the unknown fades
+// (cells)
+const float KNOWN_FADE = 0.2;
 const vec3 MEMORY_TINT = vec3(0.54, 0.59, 0.72);
 // how far toward it what is remembered turns in the overview
 const float OVERVIEW_TINT = 0.15;
@@ -434,34 +440,17 @@ void fragment() {
 	}
 	// a floor's or ice's edge where nothing is drawn beside it (the dark
 	// past what is seen, a floor NetHack leaves unmapped out of sight):
-	// frayed by the noise as a shore is, never a square step (ice ended
-	// square and pale on arrival at Gehennom 31, against the floor's fray)
+	// a ragged line through the edge cell, its corners round, the ground
+	// fading inside it into what is remembered, and past it nothing (the
+	// ground under the level shows, as it does over the unknown beside
+	// it). Faded into a dark of its own it stood ringed in black on the
+	// ground under the level, its line straight along the cells (the art
+	// director's iteration 7: square edges against the unknown)
 	float edge_fade = 0.0;
 	if (edge_kind == 1.0 || edge_kind == 4.0) {
-		vec2 suv = (wpos.xz + 0.5) / FIELD;
-		float empty = texture(stand_tex, suv).g;
-		if (empty > 0.001 && empty + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.6 > 0.5) {
+		edge_fade = known_edge(stand_tex, noise_tex, wpos.xz, KNOWN_FADE);
+		if (edge_fade > 0.999) {
 			discard;
-		}
-		// and toward it fading into the dark over the edge cell, the cell's
-		// middle kept as it is (ending crisp at the fray it sat as a slab
-		// lifted off the void, hard sides in its haze)
-		if (empty > 0.001) {
-			vec2 d = vec2(1.0) / FIELD;
-			float wide = (empty * 4.0
-				+ (texture(stand_tex, suv + vec2(d.x, 0.0)).g + texture(stand_tex, suv - vec2(d.x, 0.0)).g
-				+ texture(stand_tex, suv + vec2(0.0, d.y)).g + texture(stand_tex, suv - vec2(0.0, d.y)).g) * 2.0
-				+ texture(stand_tex, suv + d).g + texture(stand_tex, suv - d).g
-				+ texture(stand_tex, suv + vec2(d.x, -d.y)).g
-				+ texture(stand_tex, suv + vec2(-d.x, d.y)).g) / 16.0;
-			vec2 middle = floor(wpos.xz + 0.5);
-			float core = 1.0 - smoothstep(0.2, 0.42, length(wpos.xz - middle));
-			float fray = mix(empty, wide, 0.5) + (tl2(wpos.xz * 1.7 + vec2(23.1, 9.4)) - 0.5) * 0.3
-				- core * 0.5;
-			edge_fade = smoothstep(0.08, 0.45, fray) * (1.0 - 0.6 * overview);
-			// (pale ice faded all the way went darker than the dark beyond
-			// it, a black band round it before its fray)
-			edge_fade *= edge_kind == 4.0 ? 0.7 : 1.0;
 		}
 	}
 	vec3 n = normalize(wnrm);
@@ -715,6 +704,9 @@ void fragment() {
 			+ (tl2(wpos.xz * 0.42 + vec2(9.7, 33.1)) - 0.5) * 0.3;
 		seen = mix(seen, smoothstep(0.3, 0.7, s), branch_cave);
 	}
+	// (toward the unknown it turns to what is remembered, as the ground
+	// under the level beside it is drawn)
+	seen *= 1.0 - edge_fade;
 	float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
 	vec3 remembered = mix(albedo, luma * MEMORY_TINT, mix(0.8, OVERVIEW_TINT, overview))
 		* mix(0.4, 0.75, overview);
@@ -743,7 +735,15 @@ void fragment() {
 	// (how far the ground under the level beside lava takes no light)
 	float void_unlit = 0.0;
 	if (void_fade > 0.0) {
-		near = mix(1.0, fow.a, void_fade);
+		// (sampled where a slow noise carries it, a metre or so either
+		// way, and torn finer over that: the darkness closing in along
+		// the cells drew black blocks with square corners where the
+		// unknown cut into what is known)
+		vec2 warp = (vec2(tl2(wpos.xz * 0.21 + vec2(5.1, 2.3)), tl2(wpos.xz * 0.21 + vec2(1.7, 9.4))) - 0.5) * 1.8
+			+ (vec2(tl2(wpos.xz * 0.8 + vec2(3.9, 7.1)), tl2(wpos.xz * 0.8 + vec2(8.3, 4.6))) - 0.5) * 0.7;
+		float about = texture(fow_tex, (cell + warp) / FIELD).a
+			+ (tl2(wpos.xz * 1.3 + vec2(6.7, 1.1)) - 0.5) * 0.18;
+		near = mix(1.0, clamp(about, 0.0, 1.0), void_fade);
 		// (beside lava known it takes next to no light, its albedo's own
 		// glow neither: lit, it stood by a field as flat red blocks cut
 		// square along the known cells, brighter than the dark the
@@ -797,22 +797,6 @@ void fragment() {
 		}
 	}
 
-	// a floor's edge toward the unknown fading into what the ground under
-	// the level shows there (Gehennom's chasm, elsewhere the smoky dark)
-	if (edge_fade > 0.0) {
-		vec3 beyond = vec3(0.0);
-		if (branch_chasm.a > 0.0) {
-			float smoke = tn2(wpos.xz * 0.05 + TIME * vec2(0.01, 0.004));
-			float deep = smoothstep(0.35, 0.75, tn2(wpos.xz * 0.11 + 7.0 - TIME * 0.006));
-			beyond = branch_chasm.rgb * mix(0.45, 1.0, deep) * mix(0.6, 1.0, smoke);
-		} else if (branch_void.a > 0.0) {
-			float drift = tn2(wpos.xz * 0.045 + TIME * vec2(0.008, 0.003));
-			float grain = tn2(wpos.xz * 0.23 + vec2(3.1, 7.7));
-			beyond = branch_void.rgb * mix(0.55, 1.0, drift) * mix(0.8, 1.0, grain) * (1.0 - overview);
-		}
-		color *= 1.0 - edge_fade;
-		emission = mix(emission, beyond, edge_fade);
-	}
 	// the stone dark towards the see-through's rim
 	color *= 1.0 - 0.6 * rim_near;
 	emission *= 1.0 - 0.6 * rim_near;

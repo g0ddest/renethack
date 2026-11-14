@@ -5304,6 +5304,7 @@ impl SelfTest {
             "dim-floor" => world_looks::dim_floor(),
             "furnish" => world_looks::furnish(),
             "ring-steps" => world_looks::ring_steps(),
+            "edges" => world_looks::edges(),
             "far" => world_looks::far_view(),
             "title" => world_looks::title(),
             "bestiary" => world_looks::bestiary(),
