@@ -156,6 +156,8 @@ mod sizes;
 mod skills_tests;
 #[path = "selftest_spells.rs"]
 mod spells_tests;
+#[path = "selftest_stage.rs"]
+mod stage_tests;
 #[path = "selftest_states.rs"]
 mod states_tests;
 #[path = "selftest_threats.rs"]
@@ -5357,6 +5359,8 @@ impl SelfTest {
             "overhang" => overhang_tests::overhang(),
             "outfits" => outfits_tests::outfits(),
             "motion" => motion_tests::motion(),
+            "bites" => stage_tests::bites(),
+            "stride" => stage_tests::stride(),
             "late-monsters" => late_tests::late_monsters(),
             "helm-hair" => helm_hair_tests::helm_hair(),
             "feet" => feet_tests::feet(),

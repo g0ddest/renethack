@@ -24,6 +24,7 @@ use nh_protocol::{Catalog, GlyphKind, mg};
 use nh_world::World;
 
 use super::{MapView, Opening};
+use crate::animator::Lunge;
 use crate::art::bone_at;
 use crate::vfx::{Ray, VfxKind};
 
@@ -586,7 +587,7 @@ impl MapView {
             .and_then(|m| m.player())
             .is_some_and(|p| p.has_animation(clip));
         if has {
-            self.strike_with(cell, to, world, Some(clip.to_string()));
+            self.strike_with(cell, to, world, Some(clip.to_string()), Lunge::Lean);
             return true;
         }
         self.turn_to(cell, to, world);

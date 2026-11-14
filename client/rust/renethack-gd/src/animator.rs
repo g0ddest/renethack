@@ -24,8 +24,18 @@ pub fn pace(cells: i32, hurry: bool) -> (f32, bool) {
         _ => (STEP_SECS, false),
     }
 }
-/// Seconds of a strike's turn and lunge (the attack clip plays on).
+/// Seconds of a strike's turn and nudge (the attack clip plays on).
 const STRIKE_SECS: f32 = 0.3;
+/// Seconds from the start of a strike to the blow landing: the attack
+/// clips reach their target about then, and a body with no clip snaps in
+/// (`Lunge`) to arrive then. The one struck flashes and reels then.
+pub const CONTACT_SECS: f32 = 0.16;
+/// A lunge's beats (seconds from its start): it gathers itself till
+/// `GATHER_SECS`, snaps in to land at `CONTACT_SECS`, holds there a moment
+/// till `HOLD_SECS`, and draws back to rest, slower, by `LUNGE_SECS`.
+const GATHER_SECS: f32 = 0.10;
+const HOLD_SECS: f32 = 0.19;
+pub const LUNGE_SECS: f32 = 0.42;
 /// Seconds a body takes to turn to a new heading, wherever it turns (a
 /// step, a blow, facing a foe): never a snap in one frame.
 pub const TURN_SECS: f32 = 0.15;
@@ -40,10 +50,8 @@ const GAIT_SCALE: (f32, f32) = (0.6, 2.0);
 /// The hero runs (the run clip) when a step goes faster than this (metres
 /// a second); a slow step (a burdened hero, a slow order) walks.
 pub const HERO_RUNS_FROM: f32 = 2.0;
-/// How far a body without an attack clip lunges at its target, how far a
-/// monster's attack clip carries it (a bite, a claw), and the hero's
-/// (her clips carry her) (metres).
-const LUNGE: f32 = 0.3;
+/// How far a monster's attack clip carries it (a bite, a claw), and the
+/// hero's (her clips carry her) (metres).
 const BITE: f32 = 0.22;
 const NUDGE: f32 = 0.08;
 /// Seconds the idle takes to blend in after an attack clip.
@@ -114,6 +122,159 @@ pub fn progress(elapsed: f32, duration: f32, hold: Option<f32>) -> f32 {
     t.min(hold.unwrap_or(1.0)).clamp(0.0, 1.0)
 }
 
+/// How a body with no attack clip of its own strikes, by its body plan
+/// (`Motion::strike`): each gathers itself, snaps in to land the blow,
+/// and draws back to rest.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Lunge {
+    /// The head leads, low (a bite, a butt, a peck): it crouches, its head
+    /// drawn back, then darts in head down.
+    Bite,
+    /// The rear end leads (a sting): its tail end cocks up high, then
+    /// drives down and in.
+    Sting,
+    /// A blob swells up, then slams its bulk forward, flattening, and
+    /// wobbles as it draws back.
+    Slam,
+    /// A flyer rises and draws back, then swoops down onto its target.
+    Swoop,
+    /// An upright body leans back, then lunges in from its feet (a claw, a
+    /// blow, a touch).
+    Lean,
+}
+
+/// A lunge's pose at one moment: off where it stands, along its heading
+/// and up (metres); pitched nose down (degrees) about the end of its body
+/// that stays on the ground (`half` metres ahead of its feet or behind
+/// them: its head end as it pitches down, its rear as it rears up; 0 for
+/// one that pitches about its feet); its size along (across, up, along)
+/// its body.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Pose {
+    pub forward: f32,
+    pub lift: f32,
+    pub pitch: f32,
+    pub half: f32,
+    pub scale: Vector3,
+}
+
+impl Pose {
+    const REST: Pose = Pose {
+        forward: 0.0,
+        lift: 0.0,
+        pitch: 0.0,
+        half: 0.0,
+        scale: Vector3::ONE,
+    };
+
+    /// Where it turns about, along its heading: the end that stays down.
+    pub fn pivot(&self) -> f32 {
+        self.half * self.pitch.signum()
+    }
+
+    /// How high a point `along` metres ahead of its feet is lifted.
+    pub fn height_at(&self, along: f32) -> f32 {
+        self.lift - (along - self.pivot()) * self.pitch.to_radians().sin()
+    }
+
+    fn lerp(&self, to: &Pose, k: f32) -> Pose {
+        let l = |a: f32, b: f32| a + (b - a) * k;
+        Pose {
+            forward: l(self.forward, to.forward),
+            lift: l(self.lift, to.lift),
+            pitch: l(self.pitch, to.pitch),
+            half: l(self.half, to.half),
+            scale: self.scale.lerp(to.scale, k),
+        }
+    }
+}
+
+impl Lunge {
+    /// Its gathered pose and the pose it lands the blow in, for a body of
+    /// `size` (its height as drawn, metres).
+    fn keys(self, size: f32) -> (Pose, Pose) {
+        let s = size.clamp(0.3, 2.2);
+        // how far it darts in: a cell's gap to its target, a bigger body a
+        // longer reach
+        let reach = (0.24 + 0.1 * s).min(0.45);
+        let v = |x: f32, y: f32, z: f32| Vector3::new(x, y, z);
+        let half = 0.3 * s;
+        let pose = |forward, lift, pitch, half, scale| Pose {
+            forward,
+            lift,
+            pitch,
+            half,
+            scale,
+        };
+        match self {
+            // it rears, its head drawn back, then its head comes down,
+            // its hindquarters rising
+            Lunge::Bite => (
+                pose(-0.1, 0.0, -12.0, half, v(1.04, 0.9, 0.92)),
+                pose(reach, 0.0, 18.0, half, v(0.96, 0.96, 1.14)),
+            ),
+            // its rear end rises high, then drives down
+            Lunge::Sting => (
+                pose(-0.09, 0.03 * s, 22.0, half, v(1.0, 1.05, 0.95)),
+                pose(reach * 0.9, 0.02 * s, -9.0, half, v(1.0, 0.95, 1.1)),
+            ),
+            Lunge::Slam => (
+                pose(-0.06, 0.0, -5.0, half, v(1.1, 1.18, 1.06)),
+                pose(reach * 0.85, 0.0, 6.0, half, v(1.16, 0.78, 1.24)),
+            ),
+            Lunge::Swoop => (
+                pose(-0.14, (0.22 * s).min(0.35), -16.0, 0.0, Vector3::ONE),
+                pose(reach * 1.05, -0.04, 24.0, 0.0, v(0.97, 0.97, 1.06)),
+            ),
+            Lunge::Lean => (
+                pose(-0.07, 0.0, -9.0, 0.0, v(1.0, 1.03, 0.98)),
+                pose(reach * 0.8, 0.0, 13.0, 0.0, Vector3::ONE),
+            ),
+        }
+    }
+
+    /// How high it leaves the ground as it snaps in (metres): a biter
+    /// pounces, a blob hops into its slam.
+    fn pounce(self, size: f32) -> f32 {
+        let s = size.clamp(0.3, 2.2);
+        match self {
+            Lunge::Bite => (0.05 * s).min(0.07),
+            Lunge::Sting => (0.03 * s).min(0.05),
+            Lunge::Slam => (0.06 * s).min(0.08),
+            Lunge::Swoop | Lunge::Lean => 0.0,
+        }
+    }
+
+    /// Its pose `secs` into the lunge: gathering (eased in and out), the
+    /// snap (quickening to the contact), a hold, and the draw back to rest
+    /// (eased, slower); a blob wobbles as it settles.
+    pub fn pose(self, size: f32, secs: f32) -> Pose {
+        let (gathered, landed) = self.keys(size);
+        let span = |a: f32, b: f32| ((secs - a) / (b - a)).clamp(0.0, 1.0);
+        let mut p = if secs < GATHER_SECS {
+            Pose::REST.lerp(&gathered, ease(span(0.0, GATHER_SECS)))
+        } else if secs < CONTACT_SECS {
+            // a pounce: it leaves the ground on the way in
+            let k = span(GATHER_SECS, CONTACT_SECS);
+            let mut p = gathered.lerp(&landed, k * k);
+            p.lift += self.pounce(size) * (std::f32::consts::PI * k).sin();
+            p
+        } else if secs < HOLD_SECS {
+            let settle = landed.lerp(&Pose::REST, 0.12);
+            landed.lerp(&settle, span(CONTACT_SECS, HOLD_SECS))
+        } else {
+            let settle = landed.lerp(&Pose::REST, 0.12);
+            settle.lerp(&Pose::REST, ease(span(HOLD_SECS, LUNGE_SECS)))
+        };
+        if self == Lunge::Slam && secs > HOLD_SECS {
+            let k = span(HOLD_SECS, LUNGE_SECS);
+            let wobble = 0.07 * (std::f32::consts::TAU * 2.0 * k).sin() * (1.0 - k).powi(2);
+            p.scale += Vector3::new(-wobble * 0.5, wobble, -wobble * 0.5);
+        }
+        p
+    }
+}
+
 enum Kind {
     Step {
         hop: f32,
@@ -121,6 +282,12 @@ enum Kind {
     Strike {
         toward: Vector3,
         reach: f32,
+    },
+    /// A strike with no attack clip: the body's own lunge, its size.
+    Lunge {
+        toward: Vector3,
+        lunge: Lunge,
+        size: f32,
     },
     Reel {
         away: Vector3,
@@ -147,6 +314,8 @@ pub struct Motion {
     /// Where it is now without hops or lunges: the camera, the hero's ring
     /// and torch follow it.
     pub base: Vector3,
+    /// How far a lunge lifts its feet off the ground now (metres).
+    pub lifted: f32,
 }
 
 fn place(node: &mut Gd<Node3D>, pos: Vector3, yaw: f32, roll: f32) {
@@ -165,6 +334,22 @@ fn place_leaning(node: &mut Gd<Node3D>, pos: Vector3, yaw: f32, roll: f32, lean:
     if lean.1 != 0.0 && axis.length_squared() > 1e-6 {
         basis = Basis::from_axis_angle(axis.normalized(), lean.1.to_radians()) * basis;
     }
+    node.set_transform(Transform3D::new(basis, pos));
+}
+
+/// As `place`, in a lunge's pose: off along `toward` (a flat unit vector)
+/// and up, pitched about its pivot, squashed or stretched.
+fn place_posed(node: &mut Gd<Node3D>, at: Vector3, yaw: f32, toward: Vector3, pose: &Pose) {
+    if !node.is_instance_valid() {
+        return;
+    }
+    let turn = Basis::from_euler(EulerOrder::YXZ, Vector3::new(0.0, yaw.to_radians(), 0.0));
+    let pitch = Basis::from_axis_angle(Vector3::RIGHT, pose.pitch.to_radians());
+    let basis = turn * pitch * Basis::from_scale(pose.scale);
+    // turned about the end that stays down, not its feet
+    let pivot = Vector3::new(0.0, 0.0, pose.pivot());
+    let about = turn * (pivot - pitch * pivot);
+    let pos = at + toward * pose.forward + Vector3::new(0.0, pose.lift, 0.0) + about;
     node.set_transform(Transform3D::new(basis, pos));
 }
 
@@ -208,13 +393,16 @@ impl Motion {
             turn_start: 0.0,
             clips,
             base: from,
+            lifted: 0.0,
         };
         m.apply(0.0);
         m
     }
 
     /// The node at `cell` (standing at `at`) turns from `yaw_from` to
-    /// `yaw_to` and attacks along `toward` (a flat unit vector).
+    /// `yaw_to` and attacks along `toward` (a flat unit vector): with its
+    /// attack clip, else in `lunge`'s pose for a body `size` tall.
+    #[allow(clippy::too_many_arguments)]
     pub fn strike(
         node: Gd<Node3D>,
         cell: (i32, i32),
@@ -223,10 +411,11 @@ impl Motion {
         (yaw_from, yaw_to): (f32, f32),
         toward: Vector3,
         mut clips: Clips,
+        (lunge, size): (Lunge, f32),
     ) -> Motion {
         // the hero's clips carry her; a monster's bite or claw carries it
-        // at her too, a body with no clip lunges
-        let reach = match (&mut clips.player, &clips.attack) {
+        // at her too, a body with no clip lunges its own way
+        let (kind, duration) = match (&mut clips.player, &clips.attack) {
             (Some(p), Some(attack)) => {
                 p.play_ex().name(attack.as_str()).custom_blend(0.08).done();
                 if let Some(idle) = &clips.idle {
@@ -235,24 +424,33 @@ impl Motion {
                     p.set_blend_time(attack.as_str(), idle.as_str(), AFTER_BLOW);
                     p.queue(idle.as_str());
                 }
-                if hero { NUDGE } else { BITE }
+                let reach = if hero { NUDGE } else { BITE };
+                (Kind::Strike { toward, reach }, STRIKE_SECS)
             }
-            _ => LUNGE,
+            _ => (
+                Kind::Lunge {
+                    toward,
+                    lunge,
+                    size,
+                },
+                LUNGE_SECS,
+            ),
         };
         let mut m = Motion {
             node,
             cell,
             hero,
-            kind: Kind::Strike { toward, reach },
+            kind,
             from: at,
             to: at,
             yaw_from,
             yaw_to,
             elapsed: 0.0,
-            duration: STRIKE_SECS,
+            duration,
             turn_start: 0.0,
             clips,
             base: at,
+            lifted: 0.0,
         };
         m.apply(0.0);
         m
@@ -284,6 +482,7 @@ impl Motion {
             turn_start: 0.0,
             clips,
             base: at,
+            lifted: 0.0,
         };
         m.apply(0.0);
         m
@@ -314,6 +513,7 @@ impl Motion {
             turn_start: 0.0,
             clips,
             base: at,
+            lifted: 0.0,
         };
         m.apply(0.0);
         m
@@ -369,6 +569,16 @@ impl Motion {
                 self.base = self.to;
                 let out = reach * out_and_back(t);
                 place(&mut self.node, self.to + toward * out, yaw, 0.0);
+            }
+            Kind::Lunge {
+                toward,
+                lunge,
+                size,
+            } => {
+                self.base = self.to;
+                let pose = lunge.pose(size, t * self.duration);
+                self.lifted = pose.height_at(0.0);
+                place_posed(&mut self.node, self.to, yaw, toward, &pose);
             }
             Kind::Reel { away } => {
                 // knocked back and staggering back from the blow, a lean
@@ -514,6 +724,89 @@ mod tests {
             .max_by(|a, b| out_and_back(*a).total_cmp(&out_and_back(*b)))
             .unwrap();
         assert!(peak < 0.4, "{peak}");
+    }
+
+    #[test]
+    fn a_lunge_gathers_snaps_in_and_draws_back_slower() {
+        let samples: Vec<f32> = (0..=42).map(|i| i as f32 * 0.01).collect();
+        for lunge in [
+            Lunge::Bite,
+            Lunge::Sting,
+            Lunge::Slam,
+            Lunge::Swoop,
+            Lunge::Lean,
+        ] {
+            let at = |secs: f32| lunge.pose(0.6, secs);
+            // from rest to rest
+            assert_eq!(at(0.0), Pose::REST, "{lunge:?}");
+            let end = at(LUNGE_SECS);
+            assert!(
+                end.forward.abs() < 1e-4
+                    && end.lift.abs() < 1e-4
+                    && end.pitch.abs() < 1e-3
+                    && (end.scale - Vector3::ONE).length() < 1e-3,
+                "{lunge:?}: {end:?}"
+            );
+            // gathered, it is drawn back
+            assert!(at(GATHER_SECS).forward < 0.0, "{lunge:?}");
+            // it lands its blow at the contact, the farthest in
+            let far = samples
+                .iter()
+                .copied()
+                .max_by(|a, b| at(*a).forward.total_cmp(&at(*b).forward))
+                .unwrap();
+            assert!(
+                (far - CONTACT_SECS).abs() <= 0.011,
+                "{lunge:?}: farthest at {far}"
+            );
+            // never a slide: from the gather to the contact it quickens
+            let early = at(GATHER_SECS + 0.02).forward - at(GATHER_SECS).forward;
+            let late = at(CONTACT_SECS).forward - at(CONTACT_SECS - 0.02).forward;
+            assert!(late > early * 1.5, "{lunge:?}: {early} then {late}");
+            // squashed and stretched within bounds
+            for &t in &samples {
+                let p = at(t);
+                for c in [p.scale.x, p.scale.y, p.scale.z] {
+                    assert!((0.7..=1.3).contains(&c), "{lunge:?} at {t}: {p:?}");
+                }
+            }
+        }
+        // in fast, back slow: the snap takes 0.06 s, the draw back more
+        // than three times that
+        const { assert!(CONTACT_SECS - GATHER_SECS <= 0.06 + 1e-4) };
+        const { assert!(LUNGE_SECS - HOLD_SECS >= 3.5 * (CONTACT_SECS - GATHER_SECS)) };
+        assert!((0.35..=0.45).contains(&LUNGE_SECS));
+    }
+
+    #[test]
+    fn each_body_plan_leads_with_its_own_end() {
+        let landed = |l: Lunge| l.pose(0.6, CONTACT_SECS);
+        let gathered = |l: Lunge| l.pose(0.6, GATHER_SECS);
+        // a biter crouches, head back, then its head comes down, its hind
+        // feet staying
+        assert!(gathered(Lunge::Bite).pitch < 0.0 && gathered(Lunge::Bite).scale.y < 1.0);
+        assert!(landed(Lunge::Bite).pitch > 10.0 && landed(Lunge::Bite).pivot() > 0.0);
+        // a stinger's rear end goes up about its head, then drives down
+        let sting = (gathered(Lunge::Sting), landed(Lunge::Sting));
+        assert!(sting.0.pitch > 10.0 && sting.1.pitch < 0.0 && sting.1.pivot() < 0.0);
+        // a blob swells up, then flattens as it slams
+        assert!(gathered(Lunge::Slam).scale.y > 1.1 && landed(Lunge::Slam).scale.y < 0.85);
+        // a flyer rises, then dives
+        assert!(gathered(Lunge::Swoop).lift > 0.1 && landed(Lunge::Swoop).lift < 0.0);
+        // nothing on the ground sinks into it: each end of the body stays
+        // at or over its feet, whatever it pitches (a flyer dips, in the
+        // air)
+        for lunge in [Lunge::Bite, Lunge::Sting, Lunge::Slam, Lunge::Lean] {
+            for i in 0..=42 {
+                let p = lunge.pose(0.6, i as f32 * 0.01);
+                for along in [-p.half, 0.0, p.half] {
+                    assert!(p.height_at(along) >= -1e-4, "{lunge:?} {i}: {p:?}");
+                }
+            }
+        }
+        // a bigger body reaches farther, within a cell's gap
+        let reach = |size| Lunge::Bite.pose(size, CONTACT_SECS).forward;
+        assert!(reach(1.8) > reach(0.45) && reach(5.0) <= 0.45);
     }
 
     #[test]

@@ -115,7 +115,7 @@ fn pet(g: &RenethackGame) -> Option<(i32, i32)> {
 }
 
 /// The pet slain by #wizkill, its cursor walked to it.
-fn slay_pet() -> Vec<Step> {
+pub(super) fn slay_pet() -> Vec<Step> {
     vec![
         Step::Wait("the pet near the hero", |g| {
             let at = pet(g);

@@ -44,7 +44,9 @@ use nh_world::{
     cell_terrain, in_field, locate_attack, parse_attack, terrain_of,
 };
 
-use crate::animator::{HERO_RUNS_FROM, Motion, STEP_SECS, ease, pace, turn, yaw_toward};
+use crate::animator::{
+    CONTACT_SECS, HERO_RUNS_FROM, Lunge, Motion, STEP_SECS, ease, pace, turn, yaw_toward,
+};
 use crate::art::{
     Art, CREATURE_LAYER, Finish, Model, ModelLook, Pose, build_flat, no_shadow, set_layer_mask,
 };
@@ -236,8 +238,6 @@ const CREATION_FRAME_SECS: f32 = 0.6;
 /// chance (`set_creation_hero`).
 const HOODED_FIGURE: &str = "figure_hooded";
 
-/// Seconds from the start of a strike to the blow landing.
-const CONTACT_SECS: f32 = 0.16;
 /// A blow landing flashes the one it struck white for a moment, the hero
 /// a shade warmer (`FLASH_SHADER`, an overlay on its meshes); it staggers
 /// back (`Motion::reel`). A longer red tint read as a body dyed, not a hit.
@@ -1253,6 +1253,28 @@ fn cmap_sym<'a>(g: &Glyph, catalog: &'a Catalog) -> Option<&'a str> {
 
 fn monster_info(catalog: &Catalog, mon: Option<i32>) -> Option<&MonsterInfo> {
     catalog.monsters.get(usize::try_from(mon?).ok()?)
+}
+
+/// How a body with no attack clip strikes (`Lunge`): by how it moves (a
+/// blob slams, a small flyer swoops), else by the blow told ("stings": its
+/// rear end; "bites", "butts": its head), an upright body leaning in.
+fn lunge_of(verb: &str, info: Option<&MonsterInfo>) -> Lunge {
+    let has = |flag: &str| info.is_some_and(|i| i.body.iter().any(|b| b == flag));
+    let class = info.map_or("", |i| i.class.as_str());
+    if has("amorphous") || matches!(class, "b" | "j" | "P" | "F") {
+        return Lunge::Slam;
+    }
+    // (a dragon flies too, but walks the map: it bites)
+    let small = info.is_some_and(|i| matches!(i.size.as_str(), "tiny" | "small"));
+    if has("fly") && !has("humanoid") && small {
+        return Lunge::Swoop;
+    }
+    match verb {
+        "sting" => Lunge::Sting,
+        "bite" | "butt" | "headbutt" | "peck" | "tentacle" => Lunge::Bite,
+        _ if has("humanoid") => Lunge::Lean,
+        _ => Lunge::Bite,
+    }
 }
 
 /// An object's appearance tile: all the client knows of an object.
@@ -4067,6 +4089,34 @@ const MOUNT_HOP: f32 = 0.12;
 const RIDER_OVER_SEAT: f32 = 0.5;
 const HIPS_HEIGHT: f32 = 0.57;
 
+/// A blow told, struck in its turn (`MapView::play_blows`): the one at
+/// `from` strikes the one at `to` when the map's clock reaches `at`.
+struct Blow {
+    at: f64,
+    from: (i32, i32),
+    to: (i32, i32),
+    /// Who strikes: still on `from` when its turn comes, or the blow goes
+    /// unshown (the engine went on, it stepped away).
+    attacker: Option<Ident>,
+    hit: bool,
+    at_hero: bool,
+    /// The hero struck dead by it falls instead of reeling.
+    dying: bool,
+    lunge: Lunge,
+}
+
+/// A blow landing `CONTACT_SECS` into its strike: the one struck flashes,
+/// plays its hit clip and reels.
+struct Landing {
+    at: f64,
+    from: (i32, i32),
+    to: (i32, i32),
+    at_hero: bool,
+    dying: bool,
+    /// The node the blow was struck at: none other takes it.
+    node: InstanceId,
+}
+
 /// What the animator did (self-tests).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct MotionStats {
@@ -4409,6 +4459,11 @@ pub struct MapView {
     /// Models on their way to the cell an entity stepped to (this batch).
     incoming: HashMap<(i32, i32), Carried>,
     motions: Vec<Motion>,
+    /// Blows told and not yet struck, and blows struck and not yet landed
+    /// (`play_blows`); when the hero struck dead falls.
+    blows: Vec<Blow>,
+    landings: Vec<Landing>,
+    hero_falls_at: Option<f64>,
     /// The meshes of the ones a blow just struck, flashing, and the
     /// seconds left; the overlay they flash in.
     flashes: Vec<(Vec<Gd<GeometryInstance3D>>, f32)>,
@@ -5247,6 +5302,9 @@ impl MapView {
             facing: HashMap::new(),
             incoming: HashMap::new(),
             motions: Vec::new(),
+            blows: Vec::new(),
+            landings: Vec::new(),
+            hero_falls_at: None,
             flashes: Vec::new(),
             flash: None,
             interrupted: HashSet::new(),
@@ -5361,6 +5419,8 @@ impl MapView {
         if new_level {
             // a new level (or a redraw from scratch) never animates
             self.finish_motions();
+            self.blows.clear();
+            self.landings.clear();
             self.ground.clear();
             self.standing.clear();
             // a swamp seen was that level's
@@ -5483,6 +5543,7 @@ impl MapView {
         self.seat_rider(hero);
         self.light_steed();
         self.watch_fights(world, catalog);
+        self.play_blows(world, catalog);
         // the deaths told fall; what no death claims goes
         self.claim_falls(catalog);
         self.greet_summoned();
@@ -8067,6 +8128,7 @@ impl MapView {
             (yaw_from, yaw_to),
             Vector3::ZERO,
             clips,
+            (Lunge::Lean, height),
         ));
         let facing = Vector3::new(yaw_to.to_radians().sin(), 0.0, yaw_to.to_radians().cos());
         let hand = pos + Vector3::new(0.0, lift + height * 0.62, 0.0) + facing * 0.25;
@@ -8307,6 +8369,15 @@ impl MapView {
     /// Where the creature or thing on a cell stands now (between two cells
     /// while it walks) and how tall it is: the HUD hangs its arrow over a
     /// hostile's own head.
+    /// How far a lunge under way lifts the feet of what stands on a cell
+    /// off the ground (its own motion, not where it stands: self-tests).
+    pub fn lunge_lift(&self, x: i32, y: i32) -> f32 {
+        self.motions
+            .iter()
+            .find(|m| m.cell == (x, y))
+            .map_or(0.0, |m| m.lifted)
+    }
+
     pub fn entity_stands(&self, x: i32, y: i32) -> Option<(Vector3, f32)> {
         let nodes = self.cells.get(&(x, y))?;
         let i = nodes.look.entity?;
@@ -10826,83 +10897,193 @@ impl MapView {
             }
         }
         // blows told together (a fast hero's two, a monster's claws and
-        // bite) sound one after another, as they were struck
+        // bite, the hero's blow and the foe's back) are struck one after
+        // another, and sound so: the next a moment after the one before,
+        // a body's own next once its lunge is nearly back
         const NEXT_BLOW: f32 = 0.25;
-        let mut blows = 0;
+        const AGAIN: f32 = 0.36;
+        let mut struck_by: Vec<((i32, i32), f32)> = Vec::new();
+        let (mut next, mut last) = (0.0f32, None::<f32>);
         for ((from, to), hit, a) in fights {
+            let again = struck_by
+                .iter()
+                .rev()
+                .find(|(c, _)| *c == from)
+                .map(|(_, t)| t + AGAIN);
+            let start = again.map_or(next, |t| t.max(next));
+            struck_by.push((from, start));
+            next = start + NEXT_BLOW;
+            last = Some(last.map_or(start, |l: f32| l.max(start)));
             let at_hero = a.target == Who::Hero;
-            let start = self.sounds.len();
+            let first = self.sounds.len();
             self.hear_blow(from, to, &a, hit, world, catalog);
-            for s in &mut self.sounds[start..] {
-                s.delay += blows as f32 * NEXT_BLOW;
+            for s in &mut self.sounds[first..] {
+                s.delay += start;
             }
-            blows += 1;
-            self.strike(from, to, world);
-            if hit {
-                self.impact(from, to, world, catalog);
-                // the one struck reels (its hit clip), and the blow
-                // flashes on its chest as it lands
-                let struck = self.cells.get(&to).and_then(|n| {
-                    n.look
-                        .entity
-                        .and_then(|i| n.models.get(i).zip(n.look.models.get(i)))
-                });
-                if let Some((m, placed)) = struck {
-                    let height = placed.look.art.height;
-                    // a blow at the hero in the saddle is the rider's to
-                    // reel from, not the steed's
-                    let m = match self.rider.as_ref().filter(|_| at_hero) {
-                        Some(r) => &r.model,
-                        None => m,
-                    };
-                    // (a hero struck dead falls instead)
-                    let dying = at_hero && hero_dies == Some(true);
-                    if !dying && self.art.flinch(m) {
-                        self.stats.flinches += 1;
-                    }
-                    if at_hero && from != to {
-                        self.last_foe = Some(from);
-                    }
-                    // (from where it stands: a blow from inside it, an
-                    // engulfer's, has no way and knocks nothing back)
-                    let toward = Vector3::new((from.0 - to.0) as f32, 0.0, (from.1 - to.1) as f32)
-                        .try_normalized()
-                        .unwrap_or(Vector3::ZERO);
-                    // and is knocked back, flashing
-                    let node = m.node.clone();
-                    if !dying {
-                        self.reel(to, -toward, at_hero);
-                    }
-                    self.flash_struck(&node, at_hero);
-                    let chest = Vector3::new(to.0 as f32, self.ground(to.0, to.1), to.1 as f32)
-                        + Vector3::new(0.0, height * 0.6, 0.0)
-                        + toward * 0.25;
-                    self.vfx.burst_after(VfxKind::Sparkle, chest, CONTACT_SECS);
-                }
+            if hit && at_hero && from != to {
+                self.last_foe = Some(from);
             }
+            let glyph = world
+                .map
+                .cell(from.0, from.1)
+                .and_then(|c| c.glyph.as_ref());
+            let info = glyph
+                .filter(|g| g.kind == GlyphKind::Mon)
+                .and_then(|g| monster_info(catalog, g.mon));
+            self.blows.push(Blow {
+                at: self.clock + f64::from(start),
+                from,
+                to,
+                attacker: glyph.and_then(Ident::of),
+                hit,
+                at_hero,
+                // (a hero struck dead falls instead)
+                dying: at_hero && hero_dies == Some(true),
+                lunge: lunge_of(&a.verb, info),
+            });
         }
         match hero_dies {
-            Some(true) => self.hero_falls(),
-            Some(false) => self.hero_rises(),
+            // after the blows that killed them land
+            Some(true) => {
+                let after = last.map_or(0.0, |l| l + CONTACT_SECS);
+                self.hero_falls_at = Some(self.clock + f64::from(after));
+            }
+            Some(false) => {
+                self.hero_falls_at = None;
+                self.hero_rises();
+            }
             None => {}
         }
         for (at, hit, a) in unplaced {
-            let start = self.sounds.len();
+            let first = self.sounds.len();
             self.hear_blow(at, at, &a, hit, world, catalog);
-            for s in &mut self.sounds[start..] {
-                s.delay += blows as f32 * NEXT_BLOW;
+            for s in &mut self.sounds[first..] {
+                s.delay += next;
             }
-            blows += 1;
+            last = Some(next);
+            next += NEXT_BLOW;
         }
         // a death told after its blows falls after them
-        let start = self.sounds.len();
+        let first = self.sounds.len();
         for (name, at) in deaths {
             self.hear_death(&name, at, catalog);
         }
-        let last = blows.max(1) - 1;
-        for s in &mut self.sounds[start..] {
-            s.delay += last as f32 * NEXT_BLOW;
+        for s in &mut self.sounds[first..] {
+            s.delay += last.unwrap_or(0.0);
         }
+    }
+
+    /// The blows whose turn has come strike (an attack clip, or the body's
+    /// own lunge) and throw their sparks; those that reach their target
+    /// land: it flashes, plays its hit clip and reels. A blow whose
+    /// attacker is no longer where it struck from goes unshown. The hero
+    /// struck dead falls once the blows that killed them landed.
+    fn play_blows(&mut self, world: &World, catalog: &Catalog) {
+        let now = self.clock;
+        if self.blows.iter().any(|b| b.at <= now) {
+            let (due, later): (Vec<Blow>, Vec<Blow>) = std::mem::take(&mut self.blows)
+                .into_iter()
+                .partition(|b| b.at <= now);
+            self.blows = later;
+            for b in due {
+                let there = world
+                    .map
+                    .cell(b.from.0, b.from.1)
+                    .and_then(|c| c.glyph.as_ref())
+                    .and_then(Ident::of);
+                if b.attacker.is_some() && there != b.attacker {
+                    continue;
+                }
+                self.strike_with(b.from, b.to, world, None, b.lunge);
+                if !b.hit {
+                    continue;
+                }
+                self.impact(b.from, b.to, world, catalog);
+                if let Some(node) = self.struck_node(b.to, b.at_hero) {
+                    self.landings.push(Landing {
+                        at: now + f64::from(CONTACT_SECS),
+                        from: b.from,
+                        to: b.to,
+                        at_hero: b.at_hero,
+                        dying: b.dying,
+                        node,
+                    });
+                }
+            }
+        }
+        if self.landings.iter().any(|l| l.at <= now) {
+            let (due, later): (Vec<Landing>, Vec<Landing>) = std::mem::take(&mut self.landings)
+                .into_iter()
+                .partition(|l| l.at <= now);
+            self.landings = later;
+            for l in due {
+                self.land(&l);
+            }
+        }
+        if self.hero_falls_at.is_some_and(|t| t <= now) {
+            self.hero_falls_at = None;
+            self.hero_falls();
+        }
+    }
+
+    /// The node of the model a blow at `cell` strikes (the rider's, at the
+    /// hero in the saddle).
+    fn struck_node(&self, cell: (i32, i32), at_hero: bool) -> Option<InstanceId> {
+        let m = match self.rider.as_ref().filter(|_| at_hero) {
+            Some(r) => &r.model,
+            None => {
+                let n = self.cells.get(&cell)?;
+                n.models.get(n.look.entity?)?
+            }
+        };
+        m.node.is_instance_valid().then(|| m.node.instance_id())
+    }
+
+    /// A blow lands on the one it struck, if it still stands there: its hit
+    /// clip, knocked back from the blow, a flash on it and sparks on its
+    /// chest.
+    fn land(&mut self, l: &Landing) {
+        if self.struck_node(l.to, l.at_hero) != Some(l.node) {
+            return;
+        }
+        let Some(height) = self
+            .cells
+            .get(&l.to)
+            .and_then(|n| n.look.entity.and_then(|i| n.look.models.get(i)))
+            .map(|p| p.look.art.height)
+        else {
+            return;
+        };
+        let m = match self.rider.as_ref().filter(|_| l.at_hero) {
+            Some(r) => &r.model,
+            None => {
+                let Some(m) = self
+                    .cells
+                    .get(&l.to)
+                    .and_then(|n| n.models.get(n.look.entity?))
+                else {
+                    return;
+                };
+                m
+            }
+        };
+        if !l.dying && self.art.flinch(m) {
+            self.stats.flinches += 1;
+        }
+        let node = m.node.clone();
+        // (from where it stands: a blow from inside it, an engulfer's, has
+        // no way and knocks nothing back)
+        let toward = Vector3::new((l.from.0 - l.to.0) as f32, 0.0, (l.from.1 - l.to.1) as f32)
+            .try_normalized()
+            .unwrap_or(Vector3::ZERO);
+        if !l.dying {
+            self.reel(l.to, -toward, l.at_hero);
+        }
+        self.flash_struck(&node, l.at_hero);
+        let chest = Vector3::new(l.to.0 as f32, self.ground(l.to.0, l.to.1), l.to.1 as f32)
+            + Vector3::new(0.0, height * 0.6, 0.0)
+            + toward * 0.25;
+        self.vfx.burst_after(VfxKind::Sparkle, chest, 0.0);
     }
 
     /// Where a sound of the cell `(x, y)` is placed: a body's height
@@ -11113,18 +11294,21 @@ impl MapView {
         }
     }
 
-    /// The entity at `from` turns to `to` and attacks.
+    /// The entity at `from` turns to `to` and attacks (with no attack clip,
+    /// it leans in).
     fn strike(&mut self, from: (i32, i32), to: (i32, i32), world: &World) {
-        self.strike_with(from, to, world, None);
+        self.strike_with(from, to, world, None, Lunge::Lean);
     }
 
-    /// As `strike`, with `clip` in place of the attack clip (a spell cast).
+    /// As `strike`, with `clip` in place of the attack clip (a spell cast),
+    /// a body with none lunging as `lunge`.
     fn strike_with(
         &mut self,
         from: (i32, i32),
         to: (i32, i32),
         world: &World,
         clip: Option<String>,
+        lunge: Lunge,
     ) {
         let yaw = yaw_toward(from, to);
         let ident = world
@@ -11167,6 +11351,7 @@ impl MapView {
         };
         let placed = &mut nodes.look.models[i];
         let yaw_from = placed.yaw;
+        let size = placed.look.art.height;
         placed.yaw = yaw;
         let at = Vector3::new(from.0 as f32, 0.0, from.1 as f32) + placed.pos;
         let toward = Vector3::new((to.0 - from.0) as f32, 0.0, (to.1 - from.1) as f32)
@@ -11193,6 +11378,7 @@ impl MapView {
             (yaw_from, yaw),
             toward,
             clips,
+            (lunge, size),
         ));
         self.stats.strikes += 1;
     }
@@ -11576,6 +11762,8 @@ impl MapView {
     /// Every motion has reached the hold point (or there are none).
     pub fn motions_held(&self) -> bool {
         self.motions.iter().all(|m| m.is_held(self.hold))
+            && self.blows.is_empty()
+            && self.landings.is_empty()
     }
 
     /// Steps now under way: (the hero's, others').
@@ -11904,6 +12092,33 @@ mod tests {
         assert!(!out_of_sight(&sight, 4, 4));
         // before the fog is first worked out, all is as seen
         assert!(!out_of_sight(&[], 3, 4));
+    }
+
+    #[test]
+    fn a_body_with_no_attack_clip_lunges_by_its_plan() {
+        let cat = catalog();
+        let lunge = |verb: &str, name: &str| {
+            let info = cat.monsters.iter().find(|m| m.name == name);
+            assert!(info.is_some(), "{name}");
+            lunge_of(verb, info)
+        };
+        assert_eq!(lunge("bite", "soldier ant"), Lunge::Bite);
+        assert_eq!(lunge("sting", "soldier ant"), Lunge::Sting);
+        assert_eq!(lunge("bite", "newt"), Lunge::Bite);
+        assert_eq!(lunge("bite", "sewer rat"), Lunge::Bite);
+        // blobs, jellies, puddings and fungi slam, whatever they do
+        assert_eq!(lunge("bite", "black pudding"), Lunge::Slam);
+        assert_eq!(lunge("touch", "quivering blob"), Lunge::Slam);
+        assert_eq!(lunge("touch", "lichen"), Lunge::Slam);
+        // small flyers swoop; a dragon flies, but walks the map: it bites
+        assert_eq!(lunge("bite", "raven"), Lunge::Swoop);
+        assert_eq!(lunge("bite", "giant bat"), Lunge::Swoop);
+        assert_eq!(lunge("bite", "baby gray dragon"), Lunge::Bite);
+        // an upright body leans in; a beast's unknown blow is a bite
+        assert_eq!(lunge("claw", "yeti"), Lunge::Lean);
+        assert_eq!(lunge("hit", "hill orc"), Lunge::Lean);
+        assert_eq!(lunge("miss", "jackal"), Lunge::Bite);
+        assert_eq!(lunge_of("bite", None), Lunge::Bite);
     }
 
     fn catalog() -> Catalog {

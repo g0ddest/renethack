@@ -161,7 +161,9 @@ fn on_the_floor(g: &RenethackGame, when: &str, stance: Stance) -> Result<(), Str
     let foe = toward(DOORWAY_HERO, DOORWAY_HERO_FOE.1);
     everyone.push((who, doorway_cell(DOORWAY_HERO), foe, p));
     for (who, (x, y), foe, p) in everyone {
-        let up = p.y - floor;
+        // (a body with no attack clip lunges: it rears and pounces, its
+        // feet off the ground by its own pose)
+        let up = p.y - floor - map.lunge_lift(x, y);
         let off = Vector2::new(p.x - x as f32, p.z - y as f32);
         let back = -off.dot(foe);
         let across = (off + foe * back).length();
