@@ -175,7 +175,19 @@ fn edge_material(
     from: f32,
     color: Option<Color>,
 ) -> Option<Gd<Material>> {
-    let shader = godot::tools::try_load::<Shader>(EDGE_SHADER).ok()?;
+    edge_material_of(EDGE_SHADER, lit, strength, from, color)
+}
+
+/// As `edge_material`, of the edge shader at `path` (the hero's own,
+/// `HERO_EDGE_SHADER`, also marks where she is the nearest).
+fn edge_material_of(
+    path: &str,
+    lit: bool,
+    strength: f32,
+    from: f32,
+    color: Option<Color>,
+) -> Option<Gd<Material>> {
+    let shader = godot::tools::try_load::<Shader>(path).ok()?;
     let mut m = ShaderMaterial::new_gd();
     m.set_shader(&shader);
     let k = if lit { strength } else { 0.0 };
@@ -204,6 +216,11 @@ const RIM_SPECULAR: f32 = 0.5;
 pub const CREATURE_LAYER: u32 = 1 << 6;
 /// The pass round a living creature's outline (`Art::rim`).
 const EDGE_SHADER: &str = "res://shaders/creature_edge.gdshader";
+/// The hero's edge: `EDGE_SHADER`'s, and where her body, what she wears or
+/// what she holds is the nearest it marks the stencil, so that her x-ray
+/// (xray.gdshader) draws nowhere they do: her own shield or cloak never
+/// sets it off, a wall in front of her leaves no mark.
+const HERO_EDGE_SHADER: &str = "res://shaders/hero_edge.gdshader";
 /// How far a rank's colour is mixed into a generated body's cloth where
 /// its dye mask is white, unless its model says (`ModelSpec::dye_strength`).
 const DYE_STRENGTH: f32 = 0.55;
@@ -2297,7 +2314,15 @@ impl Art {
     fn hero_edge_pass(&mut self) -> Option<Gd<Material>> {
         let lit = self.edges_lit;
         self.hero_edge
-            .get_or_insert_with(|| edge_material(lit, HERO_EDGE_STRENGTH, HERO_EDGE_FROM, None))
+            .get_or_insert_with(|| {
+                edge_material_of(
+                    HERO_EDGE_SHADER,
+                    lit,
+                    HERO_EDGE_STRENGTH,
+                    HERO_EDGE_FROM,
+                    None,
+                )
+            })
             .clone()
     }
 
@@ -2307,7 +2332,13 @@ impl Art {
         let lit = self.edges_lit;
         self.hero_edge_lined
             .get_or_insert_with(|| {
-                let mut edge = edge_material(lit, HERO_EDGE_STRENGTH, HERO_EDGE_FROM, None)?;
+                let mut edge = edge_material_of(
+                    HERO_EDGE_SHADER,
+                    lit,
+                    HERO_EDGE_STRENGTH,
+                    HERO_EDGE_FROM,
+                    None,
+                )?;
                 if let Ok(shader) = godot::tools::try_load::<Shader>(LINING_SHADER) {
                     let mut lining = ShaderMaterial::new_gd();
                     lining.set_shader(&shader);

@@ -5,9 +5,12 @@
 // about a body's depth first, so the model never shows through itself.
 // Not for the inventory's doll: its camera sees the hero's layer alone,
 // from close by, and there what is nearer than a limb is the hero's own
-// shield or arm.
+// shield or arm. Nor where the nearest thing is the hero's own (her shield
+// held before her, her cloak from behind: art.rs `HERO_STENCIL`): only
+// what is not hers hides her.
 shader_type spatial;
 render_mode unshaded, blend_mix, depth_test_inverted, depth_draw_never, cull_back, shadows_disabled, fog_disabled, skip_vertex_transform;
+stencil_mode read, compare_not_equal, 4;
 
 uniform vec4 color : source_color = vec4(0.55, 0.68, 1.0, 0.45);
 uniform float pull = 0.35;

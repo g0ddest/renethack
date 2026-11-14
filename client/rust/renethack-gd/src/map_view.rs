@@ -4635,6 +4635,13 @@ fn wears(node: &Gd<Node3D>, ids: &[InstanceId]) -> bool {
         })
 }
 
+/// RENETHACK_XRAY=1: the hero drawn through what hides them all the time,
+/// hidden or not (self-tests: nothing of their own may set it off).
+fn xray_forced() -> bool {
+    static FORCED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *FORCED.get_or_init(|| std::env::var_os("RENETHACK_XRAY").is_some())
+}
+
 /// Every geometry under `node` drawn once more with `overlay` (None: not).
 fn set_overlay(node: &Gd<Node3D>, overlay: Option<&Gd<Material>>) {
     for n in node
@@ -4900,6 +4907,10 @@ impl MapView {
                 let mut m = ShaderMaterial::new_gd();
                 m.set_shader(shader);
                 m.set_shader_parameter("color", &color.to_variant());
+                // after every edge of hers has marked where she is the
+                // nearest (hero_edge.gdshader), whatever the order of her
+                // body and her shield back to front
+                m.set_render_priority(1);
                 m.upcast::<Material>()
             })
         };
@@ -6886,7 +6897,7 @@ impl MapView {
                 .filter(|n| n.look.ground >= 1.0)
                 .map(|n| n.look.top)
         });
-        let hidden = walls || self.stands_before(chest, hero);
+        let hidden = walls || self.stands_before(chest, hero) || xray_forced();
         if hidden != self.xray_on
             && let Some(n) = self.rim_model.as_ref().filter(|n| n.is_instance_valid())
         {

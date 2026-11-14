@@ -142,6 +142,14 @@ shader:res://shaders/flame.gdshader|800001017/3
 shader:res://shaders/flame.gdshader|800001017/3|fade
 shader:res://shaders/glint.gdshader|800001017/3
 shader:res://shaders/heat_haze.gdshader|800001017/3
+shader:res://shaders/hero_edge.gdshader|800001017/3
+shader:res://shaders/hero_edge.gdshader|80000101f/3
+shader:res://shaders/hero_edge.gdshader|800001c17/3+inst
+shader:res://shaders/hero_edge.gdshader|800001c1f/3+inst
+shader:res://shaders/hero_edge.gdshader|800001c3f/3+inst
+shader:res://shaders/hero_edge.gdshader|80000fc7f/3+inst
+shader:res://shaders/hero_edge.gdshader|820001017/3
+shader:res://shaders/hero_edge.gdshader|82000101f/3
 shader:res://shaders/holy_light.gdshader|800001017/3
 shader:res://shaders/lava.gdshader|800001017/3
 shader:res://shaders/lining.gdshader|800001017/3
