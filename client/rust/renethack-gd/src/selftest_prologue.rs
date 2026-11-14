@@ -281,6 +281,297 @@ pub(super) fn prologue() -> Vec<Step> {
     steps
 }
 
+/// The beat now and its seconds, and how far `play_on` plays it to.
+static PLAY_TO: std::sync::Mutex<Option<(usize, f64)>> = std::sync::Mutex::new(None);
+
+/// How long the beat plays on unwatched, at most, a step at a time: the
+/// self-test's timeout is the wall's, and a recording's frames are slow.
+const PLAY_ON_SECS: f64 = 3.0;
+
+/// The beat played on, unhurried, till it gives way to the next (a step
+/// for each `PLAY_ON_SECS` of it: the longest beat, the hero's, is some
+/// twenty seconds).
+fn play_on() -> Vec<Step> {
+    // (the beat played on is this one: once it has given way, the steps
+    // left pass at once, and the next beat is the next steps')
+    let mut steps = vec![Step::Call("", |g| {
+        *PLAY_TO.lock().unwrap_or_else(|e| e.into_inner()) = g
+            .prologue
+            .as_ref()
+            .map(|p| (p.run.beat().index(), p.run.secs()));
+        Ok(())
+    })];
+    for _ in 0..10 {
+        steps.push(Step::Call("", |g| {
+            let mut to = PLAY_TO.lock().unwrap_or_else(|e| e.into_inner());
+            if let (Some(p), Some((beat, _))) = (g.prologue.as_ref(), *to)
+                && p.run.beat().index() == beat
+            {
+                *to = Some((beat, p.run.secs() + PLAY_ON_SECS));
+            }
+            Ok(())
+        }));
+        steps.push(Step::Wait("the beat played on", |g| {
+            fail_on_error_screen(g)?;
+            feet_on_ground(g)?;
+            let to = *PLAY_TO.lock().unwrap_or_else(|e| e.into_inner());
+            Ok(match (g.prologue.as_ref(), to) {
+                (Some(p), Some((beat, secs))) => {
+                    p.run.beat().index() != beat || p.run.secs() >= secs
+                }
+                _ => true,
+            })
+        }));
+    }
+    steps
+}
+
+/// The frame the recorded prologue began on (`prologue-full`).
+static FULL_FROM: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+fn frame() -> u64 {
+    <godot::classes::Engine as godot::obj::Singleton>::singleton().get_process_frames()
+}
+
+/// Frames since the recorded prologue began (a recording at a fixed 30 fps:
+/// its frames' numbers, about).
+fn frames_in() -> u64 {
+    frame().saturating_sub(FULL_FROM.load(std::sync::atomic::Ordering::Relaxed))
+}
+
+/// Where the recording is (for a picture of a moment): the beat, its
+/// seconds, the frames since the prologue began.
+fn moment(g: &mut RenethackGame) -> Result<(), String> {
+    if let Some(p) = g.prologue.as_ref() {
+        godot_print!(
+            "selftest: prologue-full: the {} beat at {:.2} s, {} frames in",
+            p.run.beat().name(),
+            p.run.secs(),
+            frames_in()
+        );
+    }
+    Ok(())
+}
+
+/// A recorded beat's voice: on (its clips waited for), the beat as long as
+/// it is read aloud and a breath, never cut short.
+fn read_aloud(g: &mut RenethackGame) -> Result<(), String> {
+    let p = g.prologue.as_ref().ok_or("no prologue")?;
+    let beat = p.run.beat();
+    godot_print!(
+        "selftest: prologue-full: the {} beat's words all shown at {:.2} s, {} frames in \
+         (held {:.2} s in black for its scene)",
+        beat.name(),
+        p.run.secs(),
+        frames_in(),
+        p.held
+    );
+    let voiced = p.narration.as_ref().is_some_and(|n| n.voiced(beat.index()));
+    match p.run.voice() {
+        Some(end) => {
+            godot_print!(
+                "selftest: prologue-full: the {} beat read aloud till {end:.2} s, \
+                 the beat {:.2} s",
+                beat.name(),
+                p.run.length()
+            );
+            if p.run.length() + 1e-6 < end {
+                return Err(format!(
+                    "the {} beat ({:.2} s) ends before its voice ({end:.2} s)",
+                    beat.name(),
+                    p.run.length()
+                ));
+            }
+        }
+        None if voiced => {
+            return Err(format!(
+                "the {} beat has a voice, but it was not read aloud",
+                beat.name()
+            ));
+        }
+        None => godot_print!(
+            "selftest: prologue-full: the {} beat has no voice in this language",
+            beat.name()
+        ),
+    }
+    Ok(())
+}
+
+/// `prologue-full`: the prologue as a player sees it, for recordings (the
+/// movie writer, a fixed 30 fps): no key pressed, every beat played out for
+/// its narrator's length (its clips waited for: each beat's length the
+/// clips', frame for frame), about 80 s. Its pictures: each beat at its
+/// words (as `prologue`), the Amulet as it touches the lava, half sunk and
+/// gone under, and the Descent as she takes the stairs' top step, halfway
+/// down and in the last frame before black. The short `prologue` stays the
+/// fast check.
+pub(super) fn prologue_full() -> Vec<Step> {
+    let mut steps = vec![Step::Call("the narrator on, waited for", |g| {
+        g.settings.narration_off = false;
+        g.prologue_recorded = true;
+        Ok(())
+    })];
+    steps.extend(begin());
+    steps.push(Step::Call("its first frame", |_| {
+        FULL_FROM.store(frame(), std::sync::atomic::Ordering::Relaxed);
+        godot_print!(
+            "selftest: prologue-full: the prologue begins at frame {}",
+            frame()
+        );
+        Ok(())
+    }));
+    for beat in Beat::ALL {
+        let (name, shot) = match beat {
+            Beat::Book => ("the Book", "prologue-book"),
+            Beat::Rebellion => ("Moloch's rebellion", "prologue-rebellion"),
+            Beat::Amulet => ("the Amulet into Gehennom", "prologue-amulet"),
+            Beat::God => ("the god's altar", "prologue-god"),
+            Beat::Hero => ("the hero", "prologue-hero"),
+            Beat::Descent => ("the descent", "prologue-descent"),
+        };
+        let wait: fn(&RenethackGame) -> Result<bool, String> = match beat {
+            Beat::Book => |g| shown(g, Beat::Book),
+            Beat::Rebellion => |g| shown(g, Beat::Rebellion),
+            Beat::Amulet => |g| shown(g, Beat::Amulet),
+            Beat::God => |g| shown(g, Beat::God),
+            Beat::Hero => |g| shown(g, Beat::Hero),
+            Beat::Descent => |g| shown(g, Beat::Descent),
+        };
+        steps.push(Step::Wait(name, wait));
+        steps.push(Step::Shot(shot));
+        steps.push(Step::Call("its words, word for word", words));
+        steps.push(Step::Call("read aloud, the beat as long", read_aloud));
+        match beat {
+            Beat::Amulet => steps.extend(amulet_sinking()),
+            Beat::Descent => steps.extend(descent_down()),
+            _ => {}
+        }
+        steps.extend(play_on());
+    }
+    steps.extend([
+        Step::Wait("the prologue over", |g| {
+            feet_on_ground(g)?;
+            Ok(g.prologue.is_none())
+        }),
+        Step::Call("its length", |_| {
+            let n = frames_in();
+            godot_print!(
+                "selftest: prologue-full: the prologue took {n} frames ({:.1} s at 30 fps)",
+                n as f64 / 30.0
+            );
+            Ok(())
+        }),
+        Step::Wait("the game up out of black", in_game),
+        Step::Shot("prologue-game"),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
+/// The Amulet's beat at `secs` (or past it), its seconds checked against
+/// what its scene saw (`touched` / `under`).
+fn amulet_at(g: &RenethackGame, secs: f32) -> Result<bool, String> {
+    fail_on_error_screen(g)?;
+    let p = g
+        .prologue
+        .as_ref()
+        .ok_or("the prologue ended in the Amulet's beat")?;
+    if p.run.beat() != Beat::Amulet {
+        return Err(format!(
+            "the Amulet's beat ended at {:.1} s, before {secs:.1} s",
+            p.run.secs()
+        ));
+    }
+    Ok(p.run.secs() as f32 >= secs)
+}
+
+/// The Amulet's sinking pictured: as it touches the lava (the splash just
+/// begun), half sunk, and gone under (the lava closing over it).
+fn amulet_sinking() -> Vec<Step> {
+    vec![
+        Step::Wait("the Amulet touching the lava", |g| {
+            let (touch, _) = crate::map_view::amulet_moments();
+            amulet_at(g, touch + 0.15)
+        }),
+        Step::Call("the lava answered", |g| {
+            let seen = g.ui.as_ref().and_then(|ui| ui.map.prologue_splash());
+            match seen {
+                Some((Some(t), _)) => {
+                    godot_print!(
+                        "selftest: prologue-full: the Amulet touched the lava at {t:.2} s"
+                    );
+                    Ok(())
+                }
+                _ => Err(format!(
+                    "the Amulet's scene has not seen it touch: {seen:?}"
+                )),
+            }
+        }),
+        Step::Call("", moment),
+        Step::Shot("prologue-amulet-touch"),
+        Step::Wait("the Amulet half sunk", |g| {
+            let (touch, under) = crate::map_view::amulet_moments();
+            amulet_at(g, (touch + under) / 2.0)
+        }),
+        Step::Call("", moment),
+        Step::Shot("prologue-amulet-sinking"),
+        Step::Wait("the Amulet gone under", |g| {
+            let (_, under) = crate::map_view::amulet_moments();
+            amulet_at(g, under + 0.8)
+        }),
+        Step::Call("gone under, as its scene saw", |g| {
+            let seen = g.ui.as_ref().and_then(|ui| ui.map.prologue_splash());
+            match seen {
+                Some((Some(_), Some(t))) => {
+                    godot_print!("selftest: prologue-full: the Amulet was gone under at {t:.2} s");
+                    Ok(())
+                }
+                _ => Err(format!(
+                    "the Amulet's scene has not seen it go under: {seen:?}"
+                )),
+            }
+        }),
+        Step::Call("", moment),
+        Step::Shot("prologue-amulet-gone"),
+    ]
+}
+
+/// The Descent pictured: her first step down from the stairs' top, halfway
+/// down the flight (where its two flights meet), and its last frame before
+/// the black, her feet and the camera checked all the way.
+fn descent_down() -> Vec<Step> {
+    vec![
+        Step::Wait("her first step down", |g| {
+            fail_on_error_screen(g)?;
+            feet_on_ground(g)?;
+            Ok(g.prologue.is_none() || hero_feet(g).is_some_and(|p| p.y < -0.1))
+        }),
+        Step::Call("", moment),
+        Step::ShotIf("prologue-descent-top", |g| Ok(g.prologue.is_some())),
+        Step::Wait("halfway down", |g| {
+            fail_on_error_screen(g)?;
+            feet_on_ground(g)?;
+            Ok(g.prologue.is_none()
+                || hero_feet(g).is_some_and(|p| p.y <= -crate::map_view::PROLOGUE_FLIGHT_DROP))
+        }),
+        Step::Call("", moment),
+        Step::ShotIf("prologue-descent-mid", |g| Ok(g.prologue.is_some())),
+        // (the picture is taken a few frames on: before the beat's end by
+        // as much)
+        Step::Wait("the last of it, before the black", |g| {
+            fail_on_error_screen(g)?;
+            feet_on_ground(g)?;
+            Ok(g.prologue
+                .as_ref()
+                .is_none_or(|p| p.run.leaving() || p.run.secs() >= p.run.length() - 0.25))
+        }),
+        Step::Call("", moment),
+        Step::ShotIf("prologue-descent-last", |g| {
+            Ok(g.prologue.as_ref().is_some_and(|p| p.run.shade() < 0.2))
+        }),
+    ]
+}
+
 /// The legacy text a game told a Valkyrie of Tyr, as the profile keeps it.
 fn kept_legacy() -> Vec<String> {
     [

@@ -86,7 +86,9 @@ pub use fall::{FallKind, Fell};
 pub use hero_look::{Effects, Posture, Shown};
 pub use hero_pose::{Held, HelplessPhase, STATE_CLIPS};
 pub use opening::Opening;
-pub use prologue_stage::{MOUTH as PROLOGUE_MOUTH, PrologueHero};
+pub use prologue_stage::{
+    FLIGHT_DROP as PROLOGUE_FLIGHT_DROP, MOUTH as PROLOGUE_MOUTH, PrologueHero, amulet_moments,
+};
 
 /// Low enough to see creatures from the side, high enough to see the floor
 /// between walls: the pitch at the default distance; closer in the camera

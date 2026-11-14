@@ -356,7 +356,7 @@ const STEP_DROP: f32 = 0.45;
 const FLIGHT: &str = "res://art/cc0/sigilsvault/dungeon/pieces/stairs_large_01.glb";
 const FLIGHTS: usize = 2;
 const FLIGHT_LONG: f32 = 4.0;
-const FLIGHT_DROP: f32 = 3.0;
+pub const FLIGHT_DROP: f32 = 3.0;
 const FLIGHT_TREADS: [(f32, f32, f32); 10] = [
     (3.0, -2.0, -1.551),
     (2.709, -1.551, -1.163),
@@ -1622,8 +1622,7 @@ impl MapView {
             // it sinks slowly, swaying on its chain (its back is plain: it
             // never turns it to us), and is gone under the lava; the lava's
             // light on it the stronger the nearer, its stone beating
-            let k = smooth((t / AMULET_SINK).min(1.0));
-            let y = AMULET_FROM + (AMULET_TO - AMULET_FROM) * k;
+            let y = amulet_height(t);
             let at = mid + Vector3::new(0.0, y, 0.0);
             a.node.set_position(at);
             a.node.set_rotation(Vector3::new(
@@ -1646,9 +1645,8 @@ impl MapView {
             }
             // the lava answers: when its disc's foot first touches it, and
             // as its chain's top goes under
-            let k = a.tall / 1.9;
             let sp = &mut a.splash;
-            if sp.touched.is_none() && at.y - DISC_BELOW * k <= LAVA_TOP {
+            if sp.touched.is_none() && touches(at.y, a.tall) {
                 sp.touched = Some(t);
                 for b in &mut sp.bursts {
                     b.restart();
@@ -1657,7 +1655,7 @@ impl MapView {
                 sp.spot.0.set_visible(true);
                 touched_at = Some(sp.at);
             }
-            if sp.under.is_none() && sp.touched.is_some() && at.y + DISC_ABOVE * k <= LAVA_TOP {
+            if sp.under.is_none() && sp.touched.is_some() && gone_under(at.y, a.tall) {
                 sp.under = Some(t);
             }
             answer(sp, t);
@@ -1817,6 +1815,13 @@ impl MapView {
     /// Which beat's scene the map draws (self-tests).
     pub fn prologue_beat(&self) -> Option<Beat> {
         self.stage.as_ref().map(|s| s.beat)
+    }
+
+    /// When the Amulet touched the lava and when it was gone under, seconds
+    /// into its beat, as its scene saw them (self-tests); None: no Amulet.
+    pub fn prologue_splash(&self) -> Option<(Option<f32>, Option<f32>)> {
+        let a = self.stage.as_ref()?.amulet.as_ref()?;
+        Some((a.splash.touched, a.splash.under))
     }
 
     /// Where the beat's camera is and what it looks at (self-tests).
@@ -2007,6 +2012,36 @@ enum Stride {
     Floor,
     Stairs,
     Still,
+}
+
+/// How high the Amulet's stone hangs over the lava's top `t` seconds into
+/// its beat: lowered slowly, eased in and out, till it is under.
+fn amulet_height(t: f32) -> f32 {
+    AMULET_FROM + (AMULET_TO - AMULET_FROM) * smooth((t / AMULET_SINK).clamp(0.0, 1.0))
+}
+
+/// The Amulet, drawn `tall` from its chain to its foot, its stone `y` over
+/// the lava's top: its disc's foot touches the lava; its disc's top is gone
+/// under it.
+fn touches(y: f32, tall: f32) -> bool {
+    y - DISC_BELOW * tall / 1.9 <= LAVA_TOP
+}
+
+fn gone_under(y: f32, tall: f32) -> bool {
+    y + DISC_ABOVE * tall / 1.9 <= LAVA_TOP
+}
+
+/// When the Amulet first touches the lava and when it is gone under it,
+/// seconds into its beat (self-tests: the moments a recording pictures).
+pub fn amulet_moments() -> (f32, f32) {
+    let first = |hit: fn(f32, f32) -> bool| {
+        (0..)
+            .map(|i| i as f32 / 240.0)
+            .take_while(|&t| t <= AMULET_SINK)
+            .find(|&t| hit(amulet_height(t), AMULET_TALL))
+            .unwrap_or(AMULET_SINK)
+    };
+    (first(touches), first(gone_under))
 }
 
 /// The descent's camera `d` seconds into her walk (before it, where it
@@ -3096,6 +3131,18 @@ mod tests {
             .iter()
             .fold((f32::MAX, f32::MIN), |(l, h), &(_, z)| (l.min(z), h.max(z)));
         assert!((far - near - FLIGHT_LONG).abs() < 1e-3);
+    }
+
+    #[test]
+    fn the_amulet_touches_the_lava_and_is_gone_as_the_narrator_says_so() {
+        // (the narrator's "and he hid it in the dark cavities of
+        // Gehennom": 8.2 to 11.0 s into the beat)
+        let (touch, under) = amulet_moments();
+        assert!((8.0..8.5).contains(&touch), "it touches at {touch} s");
+        assert!((9.4..10.6).contains(&under), "it is under at {under} s");
+        assert!(touches(amulet_height(touch), AMULET_TALL));
+        assert!(!touches(amulet_height(touch - 0.01), AMULET_TALL));
+        assert!(gone_under(amulet_height(under), AMULET_TALL));
     }
 
     #[test]

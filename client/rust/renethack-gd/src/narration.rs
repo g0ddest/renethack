@@ -159,8 +159,10 @@ impl Narration {
     }
 
     /// The clips of `beat` once all are loaded (in order); None while one
-    /// is still loading; empty when it has none (or one would not load).
-    pub fn ready(&self, beat: usize) -> Option<Vec<Gd<AudioStream>>> {
+    /// is still loading, unless `wait`: then it waits for them (a recording
+    /// holds the beat for them: `RenethackGame::prologue_steady`); empty
+    /// when it has none (or one would not load).
+    pub fn ready(&self, beat: usize, wait: bool) -> Option<Vec<Gd<AudioStream>>> {
         let Some(paths) = self.beats.get(beat) else {
             return Some(Vec::new());
         };
@@ -172,8 +174,9 @@ impl Narration {
                 .call("load_threaded_get_status", &arg)
                 .try_to::<i64>()
             {
-                Ok(IN_PROGRESS) => return None,
-                Ok(LOADED) => {}
+                Ok(IN_PROGRESS) if !wait => return None,
+                // (the threaded get waits for a load still going)
+                Ok(IN_PROGRESS | LOADED) => {}
                 _ => {
                     godot_warn!("renethack: the narration's {p} would not load");
                     return Some(Vec::new());

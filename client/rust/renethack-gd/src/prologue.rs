@@ -204,6 +204,11 @@ impl Run {
         self.voice = Some(self.t + secs);
     }
 
+    /// When the beat's narration ends, seconds into it (None: unvoiced).
+    pub fn voice(&self) -> Option<f64> {
+        self.voice
+    }
+
     pub fn beat(&self) -> Beat {
         self.beat
     }

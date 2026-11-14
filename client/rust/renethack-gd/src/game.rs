@@ -104,7 +104,7 @@ pub(crate) struct PrologueShown {
     voice_due: bool,
     /// How long the beat has been held at its start, in black, for its
     /// scene to be drawn (`SCENE_WAIT`).
-    held: f64,
+    pub(crate) held: f64,
 }
 
 /// A beat waits in black at its start, at most this long, till its scene
@@ -563,6 +563,9 @@ pub struct RenethackGame {
     prologue_choice: Option<(String, bool)>,
     /// A self-test's game plays the prologue (self-tests have none else).
     pub(crate) prologue_forced: bool,
+    /// A self-test's prologue is played as a recording needs it
+    /// (`prologue_steady`).
+    pub(crate) prologue_recorded: bool,
     /// A new game not yet handed on to what follows the prologue
     /// (`prologue_done`): its start, prologue or none.
     new_game: bool,
@@ -1006,6 +1009,7 @@ impl INode for RenethackGame {
             prologue_fade: None,
             prologue_choice: None,
             prologue_forced: false,
+            prologue_recorded: false,
             new_game: false,
             last_hero_of: None,
             legacy_hero_of: None,
@@ -5851,7 +5855,10 @@ impl RenethackGame {
 
     /// The beat's narration starts with its words once its clips are
     /// loaded (not loaded by `VOICE_LATE`, the beat is read in silence);
-    /// the beat then lasts as long as the voice.
+    /// the beat then lasts as long as the voice. A recording (a self-test's
+    /// `prologue-full`, or any run under Godot's movie writer) waits for
+    /// the clips instead: its voice starts on time whatever the machine,
+    /// and each beat lasts its clips' length, frame for frame.
     fn start_voice(&mut self) {
         let Some(p) = self
             .prologue
@@ -5861,7 +5868,11 @@ impl RenethackGame {
             return;
         };
         let beat = p.run.beat().index();
-        let clips = p.narration.as_ref().and_then(|n| n.ready(beat));
+        let wait = self.prologue_recorded
+            || !godot::classes::Engine::singleton()
+                .get_write_movie_path()
+                .is_empty();
+        let clips = p.narration.as_ref().and_then(|n| n.ready(beat, wait));
         match clips {
             Some(clips) => {
                 p.voice_due = false;
