@@ -6,6 +6,10 @@
 #   make run          play: engine + client, then start Godot ($(GODOT))
 #   make test         engine tests, then every Rust test against the fresh engine
 #   make test-client  headless self-tests of the Godot client, one process each
+#   make test-bodies  what a body, kind, rig, clip or creature material change
+#                     runs before it lands (BODY_SELFTESTS, every form)
+#   make test-hud     what a HUD, inventory, panel or tip layout change runs
+#                     before it lands (HUD_SELFTESTS, every form)
 #   make deck         screenshots at the Steam Deck's 1280×800 (needs a display)
 #   make soak         random play through the client UI, seeds 1..8
 #   make perf         the game timed on a release build (tools/perf.py): fails
@@ -61,6 +65,13 @@ PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achi
 # nor does it render the inventory's doll.
 # Needs a display (without one: xvfb-run, or WINDOW_SELFTESTS= to skip)
 WINDOW_SELFTESTS ?= rim doll portrait
+# What a change of one kind runs before it lands, besides its own scenes, each
+# in every form the lists above run it in (`make test-client` runs them all;
+# on 2026-11-14 six runs had failed on main for days, for no landing ran
+# them): a body, a kind, a rig or its clips, a creature's material
+BODY_SELFTESTS := acts conditions overhang polyself riding kits worn footprints two-hands
+# the HUD, the inventory, a panel's layout, a tip
+HUD_SELFTESTS := hud-tips hud-buttons hud inventory pack-list layouts bar
 # `make deck`: the same screens shot at a real 1280×800, into DECK_DIR
 # (`make deck DECK_ARGS=--lang=ru`: in Russian)
 DECK_SHOTS := smoke tour inventory bar hud dialogs gamepad settings credits
@@ -75,7 +86,7 @@ SOAK_WINDOW ?=
 # more for tools/perf.py, e.g. PERF_ARGS="--scenes tour,crowd --wait 30"
 PERF_ARGS ?=
 
-.PHONY: all engine client steam import run test test-client soak perf cold-start variants lint need-timeout art audio app-icon icons achievement-icons spell-icons state-icons achievement-vdf steam-art deck \
+.PHONY: all engine client steam import run test test-client test-bodies test-hud soak perf cold-start variants lint need-timeout art audio app-icon icons achievement-icons spell-icons state-icons achievement-vdf steam-art deck \
 	i18n-catalog i18n-check help help-check dist dist-macos dist-linux dist-windows source-check steampipe
 all: engine
 
@@ -189,6 +200,30 @@ test-client: need-timeout all client
 		"in Russian: $(RU_DECK_SELFTESTS) at 1280x800, $(RU_SELFTESTS) at 1920x1080;" \
 		"in the pseudo-language: $(PSEUDO_SELFTESTS); read in pieces: $(PIECES_SELFTESTS);" \
 		"in a window: $(WINDOW_SELFTESTS)"
+
+# A change's landing set: $(BODY_SELFTESTS) or $(HUD_SELFTESTS), each in every
+# form test-client runs it in (its lists above say which)
+test-bodies: LAND_SELFTESTS = $(BODY_SELFTESTS)
+test-hud: LAND_SELFTESTS = $(HUD_SELFTESTS)
+test-bodies test-hud: need-timeout all client
+	@set -e; for s in $(filter $(LAND_SELFTESTS),$(SELFTESTS)); do \
+		$(call run_selftest,$$s,,180,$$s); \
+	done; \
+	for s in $(filter $(LAND_SELFTESTS),$(DECK_SELFTESTS)); do \
+		$(call run_selftest,$$s,--size=1280x800,180,$$s at 1280x800); \
+	done; \
+	for s in $(filter $(LAND_SELFTESTS),$(RU_DECK_SELFTESTS)); do \
+		$(call run_selftest,$$s,--size=1280x800 --lang=ru,180,$$s in Russian at 1280x800); \
+	done; \
+	for s in $(filter $(LAND_SELFTESTS),$(RU_SELFTESTS)); do \
+		$(call run_selftest,$$s,--size=1920x1080 --lang=ru,180,$$s in Russian at 1920x1080); \
+	done; \
+	for s in $(filter $(LAND_SELFTESTS),$(PSEUDO_SELFTESTS)); do \
+		$(call run_selftest,$$s,--lang=qps,180,$$s in the pseudo-language); \
+	done; \
+	for s in $(filter $(LAND_SELFTESTS),$(PIECES_SELFTESTS)); do \
+		$(call run_selftest,$$s,--engine-pieces=1,300,$$s read in pieces); \
+	done; echo "passed: $(LAND_SELFTESTS), in every form test-client runs them in"
 
 # The Steam Deck's screen for review: $(DECK_SHOTS) shot at a real
 # 1280×800 into $(DECK_DIR)/<scenario>. A run fails when the window is not
