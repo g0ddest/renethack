@@ -1087,3 +1087,22 @@ impl MapView {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The hero's states' clips are the listed ones: every role's bodies
+    /// are checked for each.
+    #[test]
+    fn the_code_plays_the_listed_clips() {
+        let listed = |use_| crate::map_view::acts::listed_clip("hero", use_);
+        let uses = [
+            "crouch", "struggle", "climb", "kneel", "collapse", "get_up", "slump",
+        ];
+        assert_eq!(
+            STATE_CLIPS.map(str::to_string).to_vec(),
+            uses.map(listed).to_vec()
+        );
+    }
+}

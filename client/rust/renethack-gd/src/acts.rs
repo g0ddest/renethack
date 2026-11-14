@@ -941,9 +941,30 @@ fn seen_named(world: &World, catalog: &Catalog, name: &str) -> Option<(i32, i32)
     best.map(|(c, _)| c)
 }
 
+/// The clip art/played_clips.json names for `group`'s `use_`: the list the
+/// manifest's bodies are checked against (nh-art) and rig tooling keeps.
+#[cfg(test)]
+pub(crate) fn listed_clip(group: &str, use_: &str) -> String {
+    let json: serde_json::Value =
+        serde_json::from_str(include_str!("../../../godot/art/played_clips.json")).unwrap();
+    json[group]["clips"][use_]
+        .as_str()
+        .unwrap_or_else(|| panic!("played_clips.json lists no {group}.{use_}"))
+        .to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The acts' clips are the listed ones: a body is checked for each.
+    #[test]
+    fn the_code_plays_the_listed_clips() {
+        assert_eq!(CAST_CLIP, listed_clip("acting", "cast"));
+        assert_eq!(ZAP_CLIP, listed_clip("acting", "zap"));
+        assert_eq!(DRINK_CLIP, listed_clip("acting", "drink"));
+        assert_eq!(HANDLE_CLIP, listed_clip("acting", "handle"));
+    }
 
     #[test]
     fn a_line_tells_who_did_what() {

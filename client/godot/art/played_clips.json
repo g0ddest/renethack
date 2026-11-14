@@ -1,0 +1,61 @@
+{
+  "about": "The clips the code plays by their names, by the bodies it plays them on, each under the use it is played for. nh-art's test every_body_has_the_clips_the_code_plays fails a body that lacks one unless its model lists it in lacks_clips (the code then shows the act or the state without that clip); renethack-gd's test the_code_plays_the_listed_clips fails a constant of the code that is not here as it is. Rig tooling keeps every clip named here on the rigs it makes. The hero's item uses, idles and blows come from the manifest's held section and are checked with the hero's; the clips built in code (proc/) are made on every rigged body.",
+  "acting": {
+    "about": "acts.rs, on a monster: a cast (unless its model names its own anims.cast), a zap, a drink, a read or a wield. Checked on the bodies of the monsters with hands that are not animals.",
+    "clips": {
+      "cast": "Spell_Simple_Shoot",
+      "zap": "Pistol_Shoot",
+      "drink": "ual2/Consume",
+      "handle": "Interact"
+    }
+  },
+  "hero": {
+    "about": "hero_pose.rs, on the hero: crouched in a pit, struggling, climbing out, kneeling at prayer, collapsing, getting up, slumped. Checked on every role's bodies, with the held section's clips.",
+    "clips": {
+      "crouch": "Crouch_Idle",
+      "struggle": "Push",
+      "climb": "ual2/ClimbUp_1m",
+      "kneel": "Fixing_Kneeling",
+      "collapse": "Death01",
+      "get_up": "ual2/LayToIdle",
+      "slump": "ual2/Zombie_Idle"
+    }
+  },
+  "pending": {
+    "about": "Bodies that lack a clip by mistake, each to be given it (2026-11-14: the generated rigs' kept clips left out the acting ones; impl-hero-2's fix). The check lets them pass while they lack it and fails once one has it, so its line goes with the fix.",
+    "models": {
+      "dwarf_owner": ["Interact"],
+      "dwarf_owner_leader": ["Interact"],
+      "dwarf_owner_ruler": ["Interact"],
+      "flayer_owner": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "flayer_owner_master": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "giant_owner": ["Interact"],
+      "giant_owner_fire": ["Interact"],
+      "giant_owner_frost": ["Interact"],
+      "giant_owner_hill": ["Interact"],
+      "giant_owner_stone": ["Interact"],
+      "gnome_owner": ["Interact"],
+      "gnome_owner_leader": ["Interact"],
+      "gnome_owner_ruler": ["Interact"],
+      "gnome_owner_wizard": ["Interact"],
+      "lich_owner": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "lich_owner_arch": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "lich_owner_demi": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "lich_owner_master": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "troll_owner": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "troll_owner_ice": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "troll_owner_olog": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "troll_owner_rock": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "troll_owner_water": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "vampire_owner": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "vampire_owner_leader": ["Interact", "Pistol_Shoot", "ual2/Consume"],
+      "vampire_owner_vlad": ["Interact", "Pistol_Shoot", "ual2/Consume"]
+    }
+  },
+  "optional": {
+    "about": "Played when a body has it and not missed when it has not, so not checked: drop.rs, arms up as a body drops through an opening.",
+    "clips": {
+      "drop": "Jump"
+    }
+  }
+}

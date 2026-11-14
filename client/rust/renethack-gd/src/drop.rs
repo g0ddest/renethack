@@ -556,6 +556,15 @@ fn free_lid(lid: Option<[Gd<Node3D>; 2]>) {
 mod tests {
     use super::*;
 
+    /// The drop's clip is the listed one (played when a body has it).
+    #[test]
+    fn the_code_plays_the_listed_clips() {
+        assert_eq!(
+            DROP_CLIP,
+            crate::map_view::acts::listed_clip("optional", "drop")
+        );
+    }
+
     #[test]
     fn a_fall_through_the_floor_is_told() {
         let told = |o| Some(Fall::Told(o));

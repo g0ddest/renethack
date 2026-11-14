@@ -239,6 +239,12 @@ pub struct ModelSpec {
     /// `<library>/<clip>` (the hero's use and gear clips).
     #[serde(default)]
     pub extra_rigs: Vec<String>,
+    /// Clips the code plays by name (art/played_clips.json) that this body
+    /// has not: the code shows the act or the state without one, and says
+    /// so here (a centaur reads with no clip). Any other missing one fails
+    /// `every_body_has_the_clips_the_code_plays`.
+    #[serde(default)]
+    pub lacks_clips: Vec<String>,
     /// Drop the library's position tracks (a shorter rig keeps its height).
     #[serde(default)]
     pub strip_root: bool,
@@ -1573,6 +1579,7 @@ impl ArtManifest {
             rot: [0.0; 3],
             rig: None,
             extra_rigs: Vec::new(),
+            lacks_clips: Vec::new(),
             strip_root: false,
             anims: Anims::default(),
             size_factor: spec.size_factor,
@@ -2869,6 +2876,164 @@ mod tests {
                 assert!(found, "model {name}: no clip {clip} in {file}");
             }
         }
+    }
+
+    /// art/played_clips.json: the clips the code plays by name, by group
+    /// and use, and the bodies still waiting for one.
+    fn played_json() -> serde_json::Value {
+        serde_json::from_str(include_str!("../../../godot/art/played_clips.json")).unwrap()
+    }
+
+    fn played_clips(group: &str) -> BTreeMap<String, String> {
+        serde_json::from_value(played_json()[group]["clips"].clone()).unwrap()
+    }
+
+    /// Whether a body has `clip` as the code plays it: `<library>/<clip>`
+    /// from that extra rig's library, any other from its rig's library or
+    /// its own scene (glTF: its clips; FBX: searched for in its bytes).
+    /// None: the body plays no clip at all (built in code, or a scene
+    /// without any), so the code never asks it for one.
+    fn body_has(
+        art: &ArtManifest,
+        spec: &ModelSpec,
+        clip: &str,
+        files: &mut BTreeMap<String, (Option<Vec<String>>, Vec<u8>)>,
+    ) -> Option<bool> {
+        let own = match (&spec.rig, &spec.scene) {
+            (Some(rig), _) => art.library(rig)?.to_string(),
+            (None, Some(scene)) => scene.clone(),
+            (None, None) => return None,
+        };
+        let mut read = |file: &str| {
+            files
+                .entry(file.to_string())
+                .or_insert_with(|| {
+                    let path = art_dir().join(file);
+                    (clips_in(&path), std::fs::read(&path).unwrap())
+                })
+                .clone()
+        };
+        let (own_clips, _) = read(&own);
+        if own_clips.as_ref().is_some_and(Vec::is_empty) && spec.extra_rigs.is_empty() {
+            return None;
+        }
+        let (file, name) = match clip.split_once('/') {
+            Some((lib, name)) => match spec.extra_rigs.iter().find(|r| played_as(r) == lib) {
+                Some(rig) => (art.library(rig)?.to_string(), name),
+                None => return Some(false),
+            },
+            None => (own, clip),
+        };
+        let (clips, bytes) = read(&file);
+        Some(match clips {
+            Some(c) => c.iter().any(|c| c == name),
+            None => bytes.windows(name.len()).any(|w| w == name.as_bytes()),
+        })
+    }
+
+    /// Every body the code plays a clip on by name has it, or says in its
+    /// model's `lacks_clips` that it shows the act without it (2026-11-14:
+    /// the generated rigs lost Interact and every monster's read and wield
+    /// went without a clip, and `acts` failed on main for two days). The
+    /// acting clips on the bodies of the monsters with hands that are not
+    /// animals (they zap, drink, read, wield and cast), the hero's on every
+    /// role's bodies with the held section's. A body waiting for its clip
+    /// (played_clips.json's `pending`) passes while it lacks it, and fails
+    /// once it has it, so the line goes with the fix.
+    #[test]
+    fn every_body_has_the_clips_the_code_plays() {
+        let (art, cat) = (manifest(), catalog());
+        let pending: BTreeMap<String, Vec<String>> =
+            serde_json::from_value(played_json()["pending"]["models"].clone()).unwrap();
+        let mut files = BTreeMap::new();
+        let mut missing = std::collections::BTreeSet::new();
+        let mut waiting = std::collections::BTreeSet::new();
+        let mut check = |who: &str, model: usize, clips: &[String]| {
+            let (name, spec) = art.model_at(model);
+            for clip in clips {
+                if clip.starts_with(&format!("{PROC_CLIPS}/")) || spec.lacks_clips.contains(clip) {
+                    continue;
+                }
+                if body_has(&art, spec, clip, &mut files) == Some(false) {
+                    if pending.get(name).is_some_and(|p| p.contains(clip)) {
+                        waiting.insert((name.to_string(), clip.clone()));
+                    } else {
+                        missing.insert(format!("{name} ({who}): no {clip}"));
+                    }
+                }
+            }
+        };
+        let acting = played_clips("acting");
+        for m in &cat.monsters {
+            let body = |f: &str| m.body.iter().any(|b| b == f);
+            if !body("humanoid") || body("nohands") || body("animal") {
+                continue;
+            }
+            for flags in [0, mg::FEMALE] {
+                let model = art.monster(m, flags).model;
+                let spec = art.model_at(model).1;
+                // a model's own cast clip is the one cast with
+                let clips: Vec<String> = acting
+                    .iter()
+                    .filter(|(use_, _)| *use_ != "cast" || spec.anims.cast.is_none())
+                    .map(|(_, clip)| clip.clone())
+                    .collect();
+                check(&m.name, model, &clips);
+            }
+        }
+        let held = art.held_rules();
+        let mut hero: Vec<String> = played_clips("hero").into_values().collect();
+        hero.extend(held.uses.values().cloned());
+        hero.extend(held.idle.values().cloned());
+        hero.extend(held.attack.values().cloned());
+        for h in held.models.values() {
+            hero.extend(h.idle.iter().chain(&h.attack).cloned());
+            if let Some(a) = &h.apply {
+                hero.extend(std::iter::once(a.clip.clone()).chain(a.down.clone()));
+                hero.extend(a.mounted.as_ref().map(|m| m.clip.clone()));
+            }
+        }
+        hero.sort();
+        hero.dedup();
+        const ROLES: [&str; 13] = [
+            "archeologist",
+            "barbarian",
+            "cave dweller",
+            "healer",
+            "knight",
+            "monk",
+            "cleric",
+            "ranger",
+            "rogue",
+            "samurai",
+            "tourist",
+            "valkyrie",
+            "wizard",
+        ];
+        for role in ROLES {
+            let m = cat.monsters.iter().find(|m| m.name == role).unwrap();
+            for flags in [0, mg::FEMALE] {
+                check(role, art.monster(m, flags).model, &hero);
+            }
+        }
+        // a pending line whose body has its clip now (or is checked no
+        // more) goes
+        for (model, clips) in &pending {
+            for clip in clips {
+                if !waiting.contains(&(model.clone(), clip.clone())) {
+                    missing.insert(format!(
+                        "{model}: {clip} is pending in played_clips.json, but the body has it \
+                         now (or is not checked): take it off the list"
+                    ));
+                }
+            }
+        }
+        assert!(
+            missing.is_empty(),
+            "bodies without a clip the code plays (give the body the clip, or list it in \
+             its model's lacks_clips if the code may show that without it):\n{}",
+            missing.into_iter().collect::<Vec<_>>().join("\n")
+        );
     }
 
     #[test]

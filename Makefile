@@ -170,10 +170,15 @@ need-timeout:
 		exit 1; \
 	fi
 
-# every scenario but tour (map screenshots); the soak with seed 42 and
-# $(SOAK_CI) requests; then $(DECK_SELFTESTS) at the Deck's size, the
-# Russian runs, the pseudo-language's, and $(WINDOW_SELFTESTS) in a window
+# Every body has the clips the code plays on it by name (art/played_clips.json),
+# or its model says it does without (nh-art's test: no Godot, a few seconds)
+CLIP_CHECK = cd client/rust && cargo test -q -p nh-art --lib every_body_has_the_clips_the_code_plays
+
+# the bodies' clips; every scenario but tour (map screenshots); the soak with
+# seed 42 and $(SOAK_CI) requests; then $(DECK_SELFTESTS) at the Deck's size,
+# the Russian runs, the pseudo-language's, and $(WINDOW_SELFTESTS) in a window
 test-client: need-timeout all client
+	@$(CLIP_CHECK)
 	@set -e; for s in $(SELFTESTS); do \
 		args=""; if [ $$s = soak ]; then args="--soak=$(SOAK_CI)"; fi; \
 		$(call run_selftest,$$s,$$args,180,$$s $$args); \
@@ -202,10 +207,14 @@ test-client: need-timeout all client
 		"in a window: $(WINDOW_SELFTESTS)"
 
 # A change's landing set: $(BODY_SELFTESTS) or $(HUD_SELFTESTS), each in every
-# form test-client runs it in (its lists above say which)
+# form test-client runs it in (its lists above say which); a body's, after the
+# bodies' clips
 test-bodies: LAND_SELFTESTS = $(BODY_SELFTESTS)
 test-hud: LAND_SELFTESTS = $(HUD_SELFTESTS)
+test-bodies: CLIP_FIRST = $(CLIP_CHECK)
+test-hud: CLIP_FIRST = true
 test-bodies test-hud: need-timeout all client
+	@$(CLIP_FIRST)
 	@set -e; for s in $(filter $(LAND_SELFTESTS),$(SELFTESTS)); do \
 		$(call run_selftest,$$s,,180,$$s); \
 	done; \
