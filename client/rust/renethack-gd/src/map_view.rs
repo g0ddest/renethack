@@ -375,8 +375,12 @@ const PET_RING: Color = Color::from_rgba(0.37, 0.84, 0.75, 0.32);
 /// Under a monster the pointer is on (not the hero's or a pet), and its
 /// outline.
 const HOSTILE_RING: Color = Color::from_rgba(0.88, 0.29, 0.23, 0.6);
-/// The frame on the cell under the pointer.
-const HOVER_FRAME: Color = Color::from_rgba(1.0, 0.88, 0.62, 0.2);
+/// The frame on the cell under the pointer: a thin warm line at the
+/// hero's ring's weight, its glow (a mark's is `MARK_GLOW`); under a
+/// hostile none (its red ring is the mark: a white frame over the ring was
+/// the brightest mark in the frame).
+const HOVER_FRAME: Color = Color::from_rgba(0.85, 0.62, 0.38, 0.2);
+const HOVER_GLOW: f32 = 0.22;
 /// The outline of a pet or an object under the pointer.
 const HOVER_OUTLINE: Color = Color::from_rgba(0.95, 0.86, 0.62, 0.9);
 /// The hero seen through what hides them.
@@ -4870,7 +4874,8 @@ impl MapView {
         cells_root.set_name("Cells");
 
         let ring_tex = crate::vfx::ring_texture();
-        let mut hover = marker(&mut root, &crate::vfx::frame_texture(), 1.0);
+        let mut hover = marker(&mut root, &crate::vfx::pointer_texture(), 1.0);
+        hover.set_emission_energy(HOVER_GLOW);
         mark_color(&mut hover, HOVER_FRAME);
         let mut cursor = marker(&mut root, &crate::vfx::frame_texture(), 1.05);
         mark_color(&mut cursor, CURSOR);
@@ -7298,7 +7303,7 @@ impl MapView {
         let stepped = self.cells.get(&(x, y)).is_some_and(|n| n.look.stepped);
         self.hover.set_position(p);
         set_mark_flat(&mut self.hover, HOVER_FRAME, stepped);
-        self.hover.set_visible(true);
+        self.hover.set_visible(!hostile);
         self.hostile_ring.set_position(p);
         set_mark_flat(&mut self.hostile_ring, HOSTILE_RING, stepped);
         self.hostile_ring.set_visible(hostile);
@@ -9546,11 +9551,12 @@ impl MapView {
     pub(crate) fn warm_flat_marks(&mut self, cells: &[(i32, i32)]) {
         let ring = self.ring_tex.clone();
         let frame = crate::vfx::frame_texture();
+        let pointer = crate::vfx::pointer_texture();
         let marks = [
             (&ring, HERO_RING_SIZE, HERO_RING, HERO_RING_GLOW),
             (&ring, 0.95, PET_RING, MARK_GLOW),
             (&ring, 1.05, HOSTILE_RING, MARK_GLOW),
-            (&frame, 1.0, HOVER_FRAME, MARK_GLOW),
+            (&pointer, 1.0, HOVER_FRAME, HOVER_GLOW),
             (&frame, 1.05, CURSOR, MARK_GLOW),
         ];
         for (&(x, y), (tex, size, color, glow)) in cells.iter().zip(marks) {

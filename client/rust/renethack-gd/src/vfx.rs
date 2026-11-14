@@ -1451,7 +1451,20 @@ pub fn ring_texture() -> Gd<Texture2D> {
     })
 }
 
-/// A rounded square outline, for the cell under the pointer.
+/// The pointer's frame: a thin rounded-square line and nothing inside it
+/// (the cursor's frame, thicker and faintly filled, was the brightest
+/// mark in a frame, a white square over the cell).
+pub fn pointer_texture() -> Gd<Texture2D> {
+    texture(128, |x, y| {
+        let (qx, qy) = ((x - 0.5).abs() * 2.0, (y - 0.5).abs() * 2.0);
+        let r = 0.18;
+        let (dx, dy) = ((qx - (1.0 - r)).max(0.0), (qy - (1.0 - r)).max(0.0));
+        let d = (dx * dx + dy * dy).sqrt() + qx.max(qy).min(1.0 - r) - (1.0 - r);
+        (-((d - (r - 0.06)) / 0.016).powi(2)).exp()
+    })
+}
+
+/// A rounded square outline, for the cursor's cell.
 pub fn frame_texture() -> Gd<Texture2D> {
     texture(128, |x, y| {
         let (qx, qy) = ((x - 0.5).abs() * 2.0, (y - 0.5).abs() * 2.0);
