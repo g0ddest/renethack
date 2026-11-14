@@ -100,6 +100,21 @@ const FOG_SPEED: f32 = 0.32;
 /// A steam vortex: how dense, and the little light its vapour catches.
 const STEAM_DENSITY: f32 = 0.9;
 const STEAM_GLOW: f32 = 0.1;
+/// A light or a sphere (`light_body`): its hot core's radius; how much
+/// of a yellow's green and blue it keeps (an amber); its wisps' share of
+/// the core's colour, their own light and how thick they are; and each
+/// wisp's radius, middle and turns a second (three, at their own paces, so
+/// that its outline is ragged and keeps changing, never a disc).
+const LIGHT_CORE: f32 = 0.07;
+const LIGHT_AMBER: (f32, f32) = (0.62, 0.35);
+const LIGHT_WISP_DIM: f32 = 0.6;
+const LIGHT_WISP_GLOW: f32 = 0.9;
+const LIGHT_WISP_DENSITY: f32 = 0.5;
+const LIGHT_WISPS: [(f32, [f32; 3], f32); 3] = [
+    (0.3, [0.0, 0.5, 0.0], 0.18),
+    (0.22, [0.13, 0.58, -0.06], -0.27),
+    (0.18, [-0.12, 0.42, 0.1], 0.33),
+];
 /// An energy vortex: magic's deep blue and its own light (the creature's
 /// bright blue, paled, at 2.2 burned a white-violet funnel brighter than
 /// anything about it), and the rope of it up its middle.
@@ -766,17 +781,24 @@ impl Kit<'_> {
         m.upcast()
     }
 
-    /// A light (or a sphere): a bright core in its colour (the Body pivot
-    /// bobs), a halo of light round it shimmering (the weather shader's
-    /// soft cloud, glowing), sparks rising off it; a black light's core
-    /// dark, its halo and its sparks the dim violet of a lamp of that name.
+    /// A light (or a sphere): a small hot core in its colour (the Body
+    /// pivot bobs), dim wisps of its light drifting and turning round it
+    /// at their own paces (the weather shader's mist, banded, glowing a
+    /// little: one soft glowing ball read from above as a flat cream disc),
+    /// sparks rising off it; a yellow light's colour an amber; a black
+    /// light's core dark, its wisps and its sparks the dim violet of a lamp
+    /// of that name.
     pub(super) fn light_body(&mut self, root: &mut Gd<Node3D>) {
         let mut body = self.pivot(root, "Body", [0.0; 3]);
         let black = self.shape.as_deref() == Some("black");
+        let t = self.tint;
         let glow = if black {
             Color::from_rgb(0.45, 0.2, 0.85)
+        } else if t.r > 0.7 && t.g > 0.6 && t.b < 0.5 {
+            // (a yellow burns amber, not lemon)
+            Color::from_rgb(t.r, t.g * LIGHT_AMBER.0, t.b * LIGHT_AMBER.1)
         } else {
-            self.tint
+            t
         };
         let core = if black {
             self.art
@@ -784,25 +806,40 @@ impl Kit<'_> {
         } else {
             self.art.flat(glow, Finish::Ember)
         };
-        self.part(&mut body, sphere(0.16), &core, [0.0, 0.5, 0.0], FLAT, ONE);
-        let halo = self.wind(Wind {
-            color: glow,
-            glow: if black { 1.4 } else { 2.4 },
-            bands: 0.0,
-            twist: 0.0,
-            speed: 0.6,
-            density: 0.55,
-            soft: true,
-            spin: 0.2,
-            soot: 0.0,
-            murk: false,
-        });
-        let mut mi = MeshInstance3D::new_alloc();
-        mi.set_mesh(&self.art.mesh(sphere(0.42)));
-        mi.set_material_override(&halo);
-        mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
-        mi.set_position(Vector3::new(0.0, 0.5, 0.0));
-        body.add_child(&mi);
+        self.part(
+            &mut body,
+            sphere(LIGHT_CORE),
+            &core,
+            [0.0, 0.5, 0.0],
+            FLAT,
+            ONE,
+        );
+        let k = LIGHT_WISP_DIM;
+        let dim = Color::from_rgb(glow.r * k, glow.g * k, glow.b * k);
+        for (radius, at, spin) in LIGHT_WISPS {
+            let wisp = self.wind(Wind {
+                color: dim,
+                glow: if black {
+                    LIGHT_WISP_GLOW * 0.8
+                } else {
+                    LIGHT_WISP_GLOW
+                },
+                bands: 2.0,
+                twist: 1.0,
+                speed: 0.5,
+                density: LIGHT_WISP_DENSITY,
+                soft: true,
+                spin,
+                soot: 0.0,
+                murk: true,
+            });
+            let mut mi = MeshInstance3D::new_alloc();
+            mi.set_mesh(&self.art.mesh(sphere(radius)));
+            mi.set_material_override(&wisp);
+            mi.set_cast_shadows_setting(ShadowCastingSetting::OFF);
+            mi.set_position(Vector3::from_array(at));
+            body.add_child(&mi);
+        }
         // its sparks in its glow's colour
         let tint = std::mem::replace(&mut self.tint, glow);
         self.motes(&mut body, Weather::Energy);
