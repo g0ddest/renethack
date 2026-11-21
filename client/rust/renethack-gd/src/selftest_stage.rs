@@ -18,7 +18,22 @@
 //!   second and strides a metre can be read off. RENETHACK_STRIDE_DISTANCE:
 //!   the camera's distance; RENETHACK_STRIDE_KNIGHT=1: a Knight on his pony.
 //!
-//! Nothing is checked but that the scenes were played.
+//! - `catch-up` (in a window: headless, nothing is held): a debug-mode
+//!   Valkyrie (her pet slain) walks to the farthest
+//!   floor by the open ways (RENETHACK_CATCH_UP_LONG=1: some seventy steps
+//!   off, opening the doors and fighting on the way, to time a travel
+//!   across the level). Then she
+//!   travels home, let run (`selftest: catch-up: a travel of ... m took
+//!   ...`): the game's next question, and any word that came with her last
+//!   leg, is never up while she has more than a scurry still to run. Then
+//!   there again, and mid-run
+//!   (her travel drawn at a run, the engine's later drawings held) a key
+//!   (`:`, look here) cuts in: within 40 frames she stands on the engine's
+//!   cell, nothing held, the camera's aim never jumping, and the key's
+//!   answer comes after, on that picture. Then home again, cut into by a
+//!   click on a cell near home: she dashes home and walks to that cell.
+//!
+//! Nothing is checked but that the scenes were played (but in `catch-up`).
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, AtomicUsize, Ordering};
@@ -319,6 +334,9 @@ static GOAL: Mutex<(i32, i32)> = Mutex::new((0, 0));
 static STILL: AtomicU32 = AtomicU32::new(0);
 static LEG_FRAMES: AtomicU32 = AtomicU32::new(0);
 
+/// `passable` takes a shut door too (`catch-up` opens them on its way).
+static THROUGH_DOORS: AtomicBool = AtomicBool::new(false);
+
 /// Cells a travel crosses: floor, corridors, doorways, stairs.
 fn passable(g: &RenethackGame, (x, y): (i32, i32)) -> bool {
     use nh_world::Terrain as T;
@@ -338,7 +356,8 @@ fn passable(g: &RenethackGame, (x, y): (i32, i32)) -> bool {
                     | T::StairsUp
                     | T::StairsDown
             )
-        )
+        ) || (THROUGH_DOORS.load(Ordering::Relaxed)
+            && nh_world::cell_terrain(c, cat) == Some(T::ClosedDoor))
     })
 }
 
@@ -554,6 +573,381 @@ pub(super) fn stride() -> Vec<Step> {
         }),
         Step::Wait("the walk back, frame by frame", |g| {
             log_leg(g, "click", *FROM.lock().unwrap())
+        }),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
+static RUN_FROM: AtomicI64 = AtomicI64::new(0);
+static CUT_AT: AtomicI64 = AtomicI64::new(0);
+static LOG_MARK: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+static CUT_MARK: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+static SEEN: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(u64::MAX);
+static PREP_REQ: AtomicI64 = AtomicI64::new(-1);
+static PREP_TRIES: AtomicU32 = AtomicU32::new(0);
+static HOME: Mutex<(i32, i32)> = Mutex::new((0, 0));
+static NEAR: Mutex<(i32, i32)> = Mutex::new((0, 0));
+/// A leg's start, the way run so far (m, and where she was last), the top
+/// speed (m/s) and the most a frame moved the camera's aim (m).
+#[derive(Clone, Copy)]
+struct Leg {
+    began: Option<std::time::Instant>,
+    last: Option<Vector3>,
+    way: f32,
+    top: f32,
+    aim: Option<Vector3>,
+    jolt: f32,
+    /// How far from the engine's cell she was drawn when cut into (m).
+    to_go: f32,
+}
+static LEG: Mutex<Leg> = Mutex::new(Leg {
+    began: None,
+    last: None,
+    way: 0.0,
+    top: 0.0,
+    aim: None,
+    jolt: 0.0,
+    to_go: 0.0,
+});
+
+/// Where the hero's model stands is the engine's cell (to a few cm).
+fn drawn_where_she_is(g: &RenethackGame) -> Result<bool, String> {
+    let map = map_view(g)?;
+    let (Some((x, y)), Some((p, _))) = (g.world.map.hero(), map.hero_stands()) else {
+        return Ok(false);
+    };
+    Ok((p.x - x as f32).abs() < 0.05 && (p.z - y as f32).abs() < 0.05)
+}
+
+/// The way to `GOAL` travelled once, however often the engine stops her
+/// (a door to open, a newt in view): `_` and a click on the goal at each
+/// command prompt till she stands there.
+fn open_the_way() -> Step {
+    Step::Wait("the long way walked once, its doors opened", |g| {
+        let Some((id, Prompt::Command)) = &g.pending else {
+            return Ok(false);
+        };
+        let id = *id as i64;
+        if PREP_REQ.load(Ordering::Relaxed) == id
+            || map_view(g)?.hero_running()
+            || !drawn_where_she_is(g)?
+        {
+            return Ok(false);
+        }
+        let hero = g.world.map.hero().ok_or("no hero")?;
+        let (x, y) = *GOAL.lock().unwrap();
+        if g.world.getpos {
+            PREP_REQ.store(id, Ordering::Relaxed);
+            g.push_ui(UiEvent::MapClick { x, y, button: 1 });
+            return Ok(false);
+        }
+        if hero == (x, y) {
+            return Ok(true);
+        }
+        if PREP_TRIES.fetch_add(1, Ordering::Relaxed) > 120 {
+            return Err(format!("she never got there: at {hero:?}"));
+        }
+        PREP_REQ.store(id, Ordering::Relaxed);
+        // a travel does not open a door: a step into the shut one beside her
+        // does (and again while it sticks)
+        let cat = g.catalog.as_deref().ok_or("no catalog")?;
+        let door = super::audio_tests::STEPS[..4].iter().find(|((dx, dy), _)| {
+            g.world.map.cell(hero.0 + dx, hero.1 + dy).is_some_and(|c| {
+                nh_world::cell_terrain(c, cat) == Some(nh_world::Terrain::ClosedDoor)
+            })
+        });
+        // and a blow at the foe beside her
+        let foe = foe_near(g, 1).and_then(|(fx, fy)| {
+            super::audio_tests::STEPS
+                .iter()
+                .find(|((dx, dy), _)| (hero.0 + dx, hero.1 + dy) == (fx, fy))
+        });
+        let k = foe.or(door).map_or('_', |(_, k)| *k);
+        g.push_ui(UiEvent::Key(KeyInput::plain(Key::Char(k))));
+        Ok(false)
+    })
+}
+
+/// A frame of a travel watched: its way and speed summed, and never a
+/// message of the engine's up (one since the travel began) while she has
+/// more than a scurry still to run once the engine is done with the travel
+/// (a word of the dungeon's on her way is up as she runs on, as it came).
+fn watch_leg(g: &RenethackGame) -> Result<(), String> {
+    let map = map_view(g)?;
+    let mut leg = LEG.lock().unwrap();
+    if let Some((p, _)) = map.hero_stands() {
+        if let Some(q) = leg.last {
+            leg.way += Vector2::new(p.x - q.x, p.z - q.z).length();
+        }
+        leg.last = Some(p);
+    }
+    let aim = map.camera_aim();
+    if let Some(a) = leg.aim {
+        leg.jolt = leg.jolt.max(a.distance_to(aim));
+    }
+    leg.aim = Some(aim);
+    let run = map.hero_run();
+    if let Some((_, speed)) = run
+        && !map.catching_up()
+    {
+        leg.top = leg.top.max(speed);
+    }
+    // a message that came this frame, the engine done with the travel
+    let seen = SEEN.swap(g.world.log.last_seq(), Ordering::Relaxed);
+    let over = g.pending.is_some() || g.world.map.hero() == Some(*GOAL.lock().unwrap());
+    if let Some((left, _)) = run.filter(|(left, _)| *left > 0.45 && g.pending.is_some())
+        && !map.catching_up()
+        && !g.world.getpos
+        && frames() - CUT_AT.load(Ordering::Relaxed) > 60
+    {
+        return Err(format!(
+            "the game asks for the next command and she has {left:.2} s still to run"
+        ));
+    }
+    if over
+        && frames() - CUT_AT.load(Ordering::Relaxed) > 60
+        && let Some((left, _)) = run.filter(|(left, _)| *left > 0.45)
+        && let Some(m) = g.world.log.since(seen).find(|m| !m.from_history)
+    {
+        return Err(format!(
+            "\"{}\" is up and she has {left:.2} s still to run",
+            m.text
+        ));
+    }
+    Ok(())
+}
+
+/// `_` to `GOAL`, picked by a click; her run under way and held.
+fn travel() -> Vec<Step> {
+    vec![
+        key('_'),
+        Step::Request("where to travel", command),
+        Step::Call("the goal picked", |g| {
+            let (x, y) = *GOAL.lock().unwrap();
+            RUN_FROM.store(frames(), Ordering::Relaxed);
+            LOG_MARK.store(g.world.log.last_seq(), Ordering::Relaxed);
+            SEEN.store(g.world.log.last_seq(), Ordering::Relaxed);
+            *LEG.lock().unwrap() = Leg {
+                began: Some(std::time::Instant::now()),
+                last: None,
+                way: 0.0,
+                top: 0.0,
+                aim: None,
+                jolt: 0.0,
+                to_go: 0.0,
+            };
+            g.push_ui(UiEvent::MapClick { x, y, button: 1 });
+            Ok(())
+        }),
+        Step::Wait("her run under way, the engine's drawings held", |g| {
+            watch_leg(g)?;
+            Ok(map_view(g)?.hero_runs_on() && frames() >= RUN_FROM.load(Ordering::Relaxed) + 30)
+        }),
+    ]
+}
+
+/// The travel let run to its end, timed.
+fn arrive(leg: &'static str) -> Vec<Step> {
+    vec![
+        Step::Wait("there, standing, the game waiting", |g| {
+            watch_leg(g)?;
+            Ok(!map_view(g)?.hero_running()
+                && matches!(g.pending, Some((_, Prompt::Command)))
+                && drawn_where_she_is(g)?)
+        }),
+        Step::Call(leg, |g| {
+            let l = *LEG.lock().unwrap();
+            let secs = l.began.map_or(0.0, |t| t.elapsed().as_secs_f32());
+            eprintln!(
+                "selftest: catch-up: a travel of {:.1} m took {secs:.2} s ({:.1} m/s), top speed {:.1} m/s, at {:?}",
+                l.way,
+                l.way / secs.max(0.01),
+                l.top,
+                g.world.map.hero()
+            );
+            let long = std::env::var_os("RENETHACK_CATCH_UP_LONG").is_some();
+            if !long && g.world.map.hero() != Some(*GOAL.lock().unwrap()) {
+                return Err("the travel ended short of its goal".into());
+            }
+            Ok(())
+        }),
+    ]
+}
+
+/// A cut is made now: how far she is drawn from where the game has her
+/// by the time it has read all of the engine (measured in `caught_up`).
+fn note_cut(g: &RenethackGame) -> Result<(), String> {
+    let (p, _) = map_view(g)?.hero_stands().ok_or("no hero drawn")?;
+    let (x, y) = *GOAL.lock().unwrap();
+    CUT_AT.store(frames(), Ordering::Relaxed);
+    CUT_MARK.store(g.world.log.last_seq(), Ordering::Relaxed);
+    let mut leg = LEG.lock().unwrap();
+    leg.jolt = 0.0;
+    leg.to_go = Vector2::new(p.x - x as f32, p.z - y as f32).length();
+    Ok(())
+}
+
+/// After a cut made at `CUT_AT`: within 40 frames she stands on the
+/// engine's cell, nothing held; the camera's aim never jumped.
+fn caught_up() -> Step {
+    Step::Wait("caught up: on the engine's cell, nothing held", |g| {
+        watch_leg(g)?;
+        let n = frames() - CUT_AT.load(Ordering::Relaxed);
+        if drawn_where_she_is(g)? && !map_view(g)?.hero_running() && g.pending.is_some() {
+            let Leg { jolt, to_go, .. } = *LEG.lock().unwrap();
+            eprintln!(
+                "selftest: catch-up: on the engine's cell {n} frames after the cut, {to_go:.1} m dashed; the camera's aim moved {jolt:.2} m a frame at most"
+            );
+            if jolt > (0.3 * to_go).max(1.5) {
+                return Err(format!("the camera jumped {jolt:.2} m in a frame"));
+            }
+            return Ok(true);
+        }
+        if n > 40 {
+            let map = map_view(g)?;
+            return Err(format!(
+                "{n} frames after the cut she is still not drawn where the game has her: at {:?}, drawn at {:?}, run {:?}, pending {:?}",
+                g.world.map.hero(),
+                map.hero_stands().map(|(p, _)| (p.x, p.z)),
+                map.hero_run(),
+                g.pending.as_ref().map(|(_, p)| p),
+            ));
+        }
+        Ok(false)
+    })
+}
+
+pub(super) fn catch_up() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode, seed 11", |g| {
+        g.debug_mode = true;
+        g.seed = Some(11);
+        Ok(())
+    })];
+    steps.extend(start());
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    steps.extend(super::motion_tests::slay_pet());
+    steps.extend([
+        Step::Key(ctrl_key('f')),
+        Step::Request("a command after the map", command),
+        Step::Call("7 m off, as in play", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(7.0, 0.2);
+            Ok(())
+        }),
+        Step::Wait("the camera on the hero", camera_settled),
+        Step::Call("home, a cell near it, and the far floor", |g| {
+            let home = g.world.map.hero().ok_or("no hero")?;
+            *HOME.lock().unwrap() = home;
+            *NEAR.lock().unwrap() = far_floor(g, 3).ok_or("no floor near")?;
+            // RENETHACK_CATCH_UP_LONG: across the level, through its doors
+            // (a measure: foes on the way make it no test)
+            let long = std::env::var_os("RENETHACK_CATCH_UP_LONG").is_some();
+            THROUGH_DOORS.store(long, Ordering::Relaxed);
+            let goal = far_floor(g, 75);
+            THROUGH_DOORS.store(false, Ordering::Relaxed);
+            let goal = goal.ok_or("no far floor")?;
+            *FROM.lock().unwrap() = goal;
+            *GOAL.lock().unwrap() = goal;
+            eprintln!("selftest: catch-up: from {home:?} to {goal:?}");
+            Ok(())
+        }),
+        open_the_way(),
+    ]);
+    // a whole travel, let run: how long it takes; the game's next question
+    // (and any word of it) waits for her last leg
+    let home = Step::Call("", |_| {
+        *GOAL.lock().unwrap() = *HOME.lock().unwrap();
+        Ok(())
+    });
+    let there = Step::Call("", |_| {
+        *GOAL.lock().unwrap() = *FROM.lock().unwrap();
+        Ok(())
+    });
+    steps.push(home);
+    steps.extend(travel());
+    steps.extend(arrive("home"));
+    if std::env::var_os("RENETHACK_CATCH_UP_LONG").is_some() {
+        // the measure: there and back twice more (a foe may stop one)
+        for _ in 0..2 {
+            steps.push(Step::Call("", |_| {
+                *GOAL.lock().unwrap() = *FROM.lock().unwrap();
+                Ok(())
+            }));
+            steps.extend(travel());
+            steps.extend(arrive("there"));
+            steps.push(Step::Call("", |_| {
+                *GOAL.lock().unwrap() = *HOME.lock().unwrap();
+                Ok(())
+            }));
+            steps.extend(travel());
+            steps.extend(arrive("home"));
+        }
+        steps.extend(quit());
+        return steps;
+    }
+    // there again, cut into mid-run by a key
+    steps.push(there);
+    steps.extend(travel());
+    steps.extend([
+        Step::Call("a key mid-run: look here", |g| {
+            if drawn_where_she_is(g)? {
+                return Err("she stands on the engine's cell before the key".into());
+            }
+            note_cut(g)?;
+            g.push_ui(UiEvent::Key(KeyInput::plain(Key::Char(':'))));
+            Ok(())
+        }),
+        caught_up(),
+        Step::Wait("the key's answer, on that picture", |g| {
+            let mark = CUT_MARK.load(Ordering::Relaxed);
+            let answered = g
+                .world
+                .log
+                .since(mark)
+                .any(|m| !m.from_history && m.text.contains("here"));
+            if answered && !drawn_where_she_is(g)? {
+                return Err("the key was answered with her drawn elsewhere".into());
+            }
+            if frames() - CUT_AT.load(Ordering::Relaxed) > 240 {
+                return Err("the key was never answered (eaten?)".into());
+            }
+            Ok(answered && matches!(g.pending, Some((_, Prompt::Command))))
+        }),
+        Step::Call("where the travel took her", |g| {
+            if g.world.map.hero() != Some(*GOAL.lock().unwrap()) {
+                return Err("the key cut the travel itself short".into());
+            }
+            Ok(())
+        }),
+    ]);
+    // home again, cut into by a click on a cell near home: she dashes home,
+    // then walks to that cell (the click not eaten)
+    steps.push(Step::Call("", |_| {
+        *GOAL.lock().unwrap() = *HOME.lock().unwrap();
+        Ok(())
+    }));
+    steps.extend(travel());
+    steps.extend([
+        Step::Call("a click mid-run", |g| {
+            if drawn_where_she_is(g)? {
+                return Err("she stands on the engine's cell before the click".into());
+            }
+            note_cut(g)?;
+            let (x, y) = *NEAR.lock().unwrap();
+            g.push_ui(UiEvent::MapClick { x, y, button: 1 });
+            Ok(())
+        }),
+        caught_up(),
+        Step::Wait("she walks to the cell clicked", |g| {
+            if frames() - CUT_AT.load(Ordering::Relaxed) > 900 {
+                return Err(format!(
+                    "the click was eaten: she is at {:?}",
+                    g.world.map.hero()
+                ));
+            }
+            Ok(g.world.map.hero() == Some(*NEAR.lock().unwrap()) && drawn_where_she_is(g)?)
         }),
     ]);
     steps.extend(quit());

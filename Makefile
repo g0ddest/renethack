@@ -64,7 +64,7 @@ PSEUDO_SELFTESTS := smoke keys dialogs orders inventory gamepad hud pickers achi
 # shows only when it runs, as a "BUG" error of Godot's or a crash on quit;
 # nor does it render the inventory's doll.
 # Needs a display (without one: xvfb-run, or WINDOW_SELFTESTS= to skip)
-WINDOW_SELFTESTS ?= rim doll portrait
+WINDOW_SELFTESTS ?= rim doll portrait catch-up
 # What a change of one kind runs before it lands, besides its own scenes, each
 # in every form the lists above run it in (`make test-client` runs them all;
 # on 2026-11-14 six runs had failed on main for days, for no landing ran

@@ -60,6 +60,9 @@ pub const RUN_PACE_LONG: f32 = 7.0;
 const RUN_EASE: (f32, f32) = (4.0, 12.0);
 const RUN_SPEED_UP: f32 = 20.0;
 const RUN_SLOW_DOWN: f32 = 24.0;
+/// A run the player cut into (a key, a click: `Motion::sprint`) is over in
+/// this many seconds, however much of it is left: a dash, not a jump.
+const SPRINT_SECS: f32 = 0.18;
 /// How far a monster's attack clip carries it (a bite, a claw), and the
 /// hero's (her clips carry her) (metres).
 const BITE: f32 = 0.22;
@@ -299,6 +302,11 @@ struct Way {
     height: f32,
     /// The leg of the way it is on (it turns at each corner).
     leg: usize,
+    /// The player cut in: it dashes to its end (`SPRINT_SECS`), at this
+    /// speed (m/s; set from what is left when the dash begins, and raised
+    /// when the way grows).
+    sprint: bool,
+    dash: f32,
 }
 
 impl Way {
@@ -312,6 +320,8 @@ impl Way {
             clip_speed: 0.0,
             height,
             leg: 0,
+            sprint: false,
+            dash: 0.0,
         };
         w.extend(points);
         w
@@ -347,6 +357,14 @@ impl Way {
     /// speed, at its pace, slowing to a stop at the end.
     fn go(&mut self, delta: f32, most: f32) {
         let left = (self.length() - self.done).max(0.0);
+        if self.sprint {
+            self.dash = self.dash.max(left / SPRINT_SECS);
+            self.speed = self.dash.max(self.pace_at(self.done));
+            self.done = (self.done + self.speed * delta)
+                .min(self.length())
+                .min(most);
+            return;
+        }
         let stop = (2.0 * RUN_SLOW_DOWN * left).sqrt();
         let speed = (self.speed + RUN_SPEED_UP * delta)
             .min(self.pace_at(self.done))
@@ -593,6 +611,14 @@ impl Motion {
         }
     }
 
+    /// A run the player cut into dashes to its end (and so does what it
+    /// goes on along, until `SPRINT_SECS` after the last of it).
+    pub fn sprint(&mut self) {
+        if let Kind::Step { way: Some(w), .. } = &mut self.kind {
+            w.sprint = true;
+        }
+    }
+
     /// A run along several cells.
     pub fn is_run(&self) -> bool {
         matches!(self.kind, Kind::Step { way: Some(_), .. })
@@ -602,6 +628,14 @@ impl Motion {
     pub fn run_left(&self) -> Option<f32> {
         match &self.kind {
             Kind::Step { way: Some(w), .. } => Some(w.left()),
+            _ => None,
+        }
+    }
+
+    /// How fast a run goes now (m/s; None: not a run).
+    pub fn run_speed(&self) -> Option<f32> {
+        match &self.kind {
+            Kind::Step { way: Some(w), .. } => Some(w.speed),
             _ => None,
         }
     }
@@ -1037,6 +1071,41 @@ mod tests {
             w.go(dt, f32::MAX);
         }
         assert!(w.speed > RUN_PACE * 1.2, "it eased up: {}", w.speed);
+        // a travel across a level, drawn seven cells at a time: its length
+        // over a little less than the long pace
+        for cells in [60, 75] {
+            let mut far = Way::new(
+                vec![Vector3::ZERO, Vector3::new(7.0, 0.0, 0.0)],
+                RUN_PACE,
+                BODY_HEIGHT,
+                RUN_PACE,
+            );
+            let (mut secs, mut top, mut drawn) = (0.0, 0.0f32, 7);
+            while far.done < far.length() - 1e-3 {
+                if far.left() <= 0.12 && drawn < cells {
+                    drawn = (drawn + 7).min(cells);
+                    far.extend([Vector3::new(drawn as f32, 0.0, 0.0)]);
+                }
+                far.go(dt, f32::MAX);
+                secs += dt;
+                top = top.max(far.speed);
+            }
+            println!("a run of {cells} m: {secs:.1} s, top speed {top:.1} m/s");
+            assert!(top <= RUN_PACE_LONG + 1e-3, "{top}");
+            let even = cells as f32 / RUN_PACE_LONG;
+            assert!(secs > even && secs < even + 2.5, "{cells} m in {secs} s");
+        }
+        // cut into, it dashes to its end
+        let line: Vec<Vector3> = (0..=20).map(|i| Vector3::new(i as f32, 0.0, 0.0)).collect();
+        let mut dash = Way::new(line, RUN_PACE, BODY_HEIGHT, RUN_PACE);
+        dash.go(dt, f32::MAX);
+        dash.sprint = true;
+        let mut secs = 0.0;
+        while dash.done < dash.length() - 1e-4 {
+            dash.go(dt, f32::MAX);
+            secs += dt;
+        }
+        assert!(secs <= SPRINT_SECS + 2.0 * dt, "{secs}");
         // a hold stops it there
         let at = w.done;
         w.go(dt, at);

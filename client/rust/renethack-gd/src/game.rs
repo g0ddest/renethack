@@ -51,6 +51,10 @@ use crate::ui_events::{CharacterChoice, UiEvent, UiQueue, new_queue, push};
 
 /// Time per frame spent reading the engine.
 const POLL_BUDGET: Duration = Duration::from_millis(8);
+/// A drawing that moves the hero this many cells or more is a travel's
+/// leg, run along: the engine's words after it wait for that run (`pump`).
+/// Less is a step or a fast hero's two.
+const FAR_MOVE: i32 = 3;
 /// The engine owes output and has said nothing this long: it hangs.
 const HANG_TIMEOUT: Duration = Duration::from_secs(20);
 /// The guide's next card waits this long after the last went.
@@ -668,6 +672,14 @@ pub struct RenethackGame {
     /// A slot or panel action waiting for the command prompt (the engine
     /// was busy with an order's step).
     deferred: Option<SlotUse>,
+    /// A click (or Rest, the command menu, a slot) made while the hero's
+    /// run was still drawn: done at the command prompt once she stands
+    /// where the game has her (the last one made; `flush_after_run`).
+    after_run: Option<UiEvent>,
+    /// The engine's words and its next question, read in one batch with a
+    /// drawing that moved the hero far: kept till her run along it nears
+    /// its end (`pump`), so no message is up while she is still running.
+    held_events: Vec<SessionEvent>,
     /// The slot a right click cleared last, for Undo.
     cleared: Option<(usize, SlotBinding)>,
     /// The bar is drawn again when this changes.
@@ -1073,6 +1085,8 @@ impl INode for RenethackGame {
             macros: MacroRunner::new(),
             typing: std::collections::VecDeque::new(),
             deferred: None,
+            after_run: None,
+            held_events: Vec::new(),
             cleared: None,
             bar_key: None,
             bar_pw: None,
@@ -1388,6 +1402,17 @@ impl INode for RenethackGame {
         self.lap("input", t);
         let t = Instant::now();
         self.pump();
+        // the game waits for the player again: runs go at their pace; keys
+        // typed during a run answer once it is drawn to its end
+        if self.pending.is_some()
+            && let Some(ui) = self.ui.as_mut()
+        {
+            ui.map.caught_up();
+        }
+        if !self.typeahead.is_empty() {
+            self.flush_typeahead();
+        }
+        self.flush_after_run();
         parts.pump = ms(t);
         self.lap("pump", t);
         let t = Instant::now();
@@ -2355,12 +2380,37 @@ impl RenethackGame {
             let Some(session) = self.session.as_mut() else {
                 break;
             };
-            let events = session.poll(deadline);
+            let events = match std::mem::take(&mut self.held_events) {
+                held if held.is_empty() => session.poll(deadline),
+                held => held,
+            };
             if events.is_empty() {
                 break;
             }
+            // what the engine says, and what it asks next, after a drawing
+            // that moved the hero far (a travel's leg) waits for her run
+            // along it: read on in the next frame, the run begun by then
+            let catching_up = self.ui.as_ref().is_none_or(|ui| ui.map.catching_up());
+            let from = self
+                .world
+                .map
+                .hero()
+                .filter(|_| !self.headless && !catching_up);
             let mut frame = false;
-            for ev in events {
+            let mut events = events.into_iter();
+            while let Some(ev) = events.next() {
+                let tells = matches!(
+                    ev,
+                    SessionEvent::Request { .. } | SessionEvent::Win(WinCall::Putstr { .. })
+                );
+                if tells
+                    && let (Some((fx, fy)), Some((x, y))) = (from, self.world.map.hero())
+                    && (x - fx).abs().max((y - fy).abs()) >= FAR_MOVE
+                {
+                    self.held_events = std::iter::once(ev).chain(events).collect();
+                    frame = true;
+                    break;
+                }
                 frame |= matches!(ev, SessionEvent::Win(WinCall::DelayOutput));
                 self.on_session_event(ev);
             }
@@ -2613,18 +2663,95 @@ impl RenethackGame {
         }
         self.pending = Some((id, prompt));
         // keys typed while the engine was busy: the first one that answers
-        while keeps && self.pending.is_some() {
-            let Some(k) = self.typeahead.pop() else {
-                break;
-            };
-            self.on_key(k);
-        }
+        // (once the hero's run is drawn to its end: never on a picture
+        // that is behind the game)
+        self.flush_typeahead();
         // a slot pressed while an order's step was out
         if self.at_command()
             && !self.driver.is_active()
             && let Some(u) = self.deferred.take()
         {
             self.use_slot(u);
+        }
+    }
+
+    /// Keys typed ahead answer the pending request, once the hero's run
+    /// (a travel drawn, or dashing to its end) is over.
+    fn flush_typeahead(&mut self) {
+        let keeps = self
+            .pending
+            .as_ref()
+            .is_some_and(|(_, p)| p.keeps_typeahead());
+        if !keeps
+            || self
+                .ui
+                .as_ref()
+                .is_some_and(|ui| ui.map.hero_behind(self.world.map.hero()))
+        {
+            return;
+        }
+        while self.pending.is_some() {
+            let Some(k) = self.typeahead.pop() else {
+                break;
+            };
+            self.on_key(k);
+        }
+    }
+
+    /// A click, Rest, the command menu or a slot while the hero's run is
+    /// still drawn (the engine's drawings held, or she dashes to its end):
+    /// kept (the last one), to be done on the picture as the game has it.
+    /// Whether `ev` was kept.
+    fn keep_for_after_run(&mut self, ev: &UiEvent) -> bool {
+        let stop = match ev {
+            UiEvent::MapClick { .. } => Stop::Click,
+            UiEvent::Rest | UiEvent::CommandMenu | UiEvent::ActionSlot { button: 1, .. } => {
+                Stop::Key
+            }
+            _ => return false,
+        };
+        let behind = self.state == GameState::Playing
+            && (self.pending.is_none() || self.at_command())
+            && self
+                .ui
+                .as_ref()
+                .is_some_and(|ui| ui.map.hero_behind(self.world.map.hero()));
+        if !behind {
+            return false;
+        }
+        self.driver.interrupt(stop);
+        self.after_run = Some(ev.clone());
+        true
+    }
+
+    /// What was kept for after the hero's run is done at the command
+    /// prompt, she standing where the game has her; another question
+    /// asked first drops it (it was not meant for that).
+    fn flush_after_run(&mut self) {
+        if self.after_run.is_none()
+            || self.pending.is_none()
+            || self
+                .ui
+                .as_ref()
+                .is_some_and(|ui| ui.map.hero_behind(self.world.map.hero()))
+        {
+            return;
+        }
+        let ev = self.after_run.take();
+        if let Some(ev) = ev.filter(|_| matches!(self.pending, Some((_, Prompt::Command)))) {
+            self.on_ui_event(ev);
+        }
+    }
+
+    /// A key, a click or a panel opened while the hero's travel is drawn
+    /// at a run (the engine done with it, its drawings held): the run
+    /// dashes to its end and the drawings come, so what the player does
+    /// meets the picture as it is.
+    fn cut_into_run(&mut self) {
+        if let Some(ui) = self.ui.as_mut()
+            && ui.map.hero_runs_on()
+        {
+            ui.map.catch_up();
         }
     }
 
@@ -3007,7 +3134,15 @@ impl RenethackGame {
                 return;
             }
         }
-        let Some((id, prompt)) = &self.pending else {
+        // at the command prompt while the hero's run is still drawn (to its
+        // end, dashing): the key waits for it, typed ahead, never acting
+        // on a picture behind the game
+        let behind = self.at_command()
+            && self
+                .ui
+                .as_ref()
+                .is_some_and(|ui| ui.map.hero_behind(self.world.map.hero()));
+        let Some((id, prompt)) = self.pending.as_ref().filter(|_| !behind) else {
             // a gamepad's key waits as the key the player presses for it:
             // it gives the game its command again when it is read
             let queued = if self.raw_keys {
@@ -4713,6 +4848,8 @@ impl RenethackGame {
         self.macros.cancel();
         self.typing.clear();
         self.deferred = None;
+        self.after_run = None;
+        self.held_events.clear();
         self.held = None;
         self.count.clear();
         self.stop_note = None;
@@ -4810,6 +4947,27 @@ impl RenethackGame {
 
     fn on_ui_event(&mut self, ev: UiEvent) {
         let idle = self.session.is_none();
+        // the player cuts into a travel drawn at a run
+        let cuts = match &ev {
+            UiEvent::Key(k) | UiEvent::GameKey(k) => !k.echo,
+            UiEvent::MapClick { .. }
+            | UiEvent::Rest
+            | UiEvent::CommandMenu
+            | UiEvent::ActionSlot { .. }
+            | UiEvent::Inventory(_)
+            | UiEvent::ToggleFullLog
+            | UiEvent::ToggleHelp
+            | UiEvent::ToggleOverview
+            | UiEvent::OpenSettings
+            | UiEvent::GameMenu(_) => true,
+            _ => false,
+        };
+        if cuts {
+            self.cut_into_run();
+        }
+        if self.keep_for_after_run(&ev) {
+            return;
+        }
         match ev {
             UiEvent::Key(k) => self.on_key(k),
             // a gamepad's and a button's keys are the game's own: no moved
@@ -6586,6 +6744,8 @@ impl RenethackGame {
                 self.driver.interrupt(Stop::Reset);
                 self.pending = None;
                 self.typeahead.clear();
+                self.after_run = None;
+                self.held_events.clear();
                 self.state = GameState::Closing;
                 self.close_deadline = Some(Instant::now() + CLOSE_TIMEOUT);
                 let ui = self.ui_mut();

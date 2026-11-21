@@ -4512,6 +4512,13 @@ pub struct MapView {
     /// Models on their way to the cell an entity stepped to (this batch).
     incoming: HashMap<(i32, i32), Carried>,
     motions: Vec<Motion>,
+    /// The player cut into the hero's run (a key, a click): every run dashes
+    /// to its end, and the engine's drawings come unheld, till the game
+    /// waits for the player again (`catch_up`, `caught_up`).
+    catching_up: bool,
+    /// The game waits for the player again (`caught_up`): the catching up
+    /// ends when the hero is drawn where the game has her.
+    catch_done: bool,
     /// Blows told and not yet struck, and blows struck and not yet landed
     /// (`play_blows`); when the hero struck dead falls.
     blows: Vec<Blow>,
@@ -5359,6 +5366,8 @@ impl MapView {
             facing: HashMap::new(),
             incoming: HashMap::new(),
             motions: Vec::new(),
+            catching_up: false,
+            catch_done: false,
             blows: Vec::new(),
             landings: Vec::new(),
             hero_falls_at: None,
@@ -5611,6 +5620,9 @@ impl MapView {
         self.claim_falls(catalog);
         self.greet_summoned();
         self.advance_motions(delta as f32);
+        if self.catch_done && !self.hero_running() && self.hero_at == hero {
+            (self.catching_up, self.catch_done) = (false, false);
+        }
         self.advance_flashes(delta as f32);
         self.edge_the_hero();
         self.advance_falls(delta as f32);
@@ -8028,6 +8040,12 @@ impl MapView {
         self.to_arm.clear();
         self.sounds.clear();
         self.facing.clear();
+        self.blows.clear();
+        self.landings.clear();
+        self.hero_falls_at = None;
+        self.catching_up = false;
+        self.catch_done = false;
+        self.interrupted.clear();
         for (_, c) in std::mem::take(&mut self.incoming) {
             self.art.give(c.model);
         }
@@ -10245,13 +10263,16 @@ impl MapView {
                     };
                     if let Some(mut r) = c.running {
                         r.run_on((x, y), points);
+                        if self.catching_up {
+                            r.sprint();
+                        }
                         self.motions.push(r);
                     } else {
                         let mut clips = self.art.clips(&c.model, true);
                         if hero && self.rider.is_none() && self.hero_look.floating() {
                             clips.gait = clips.idle.clone();
                         }
-                        self.motions.push(Motion::run(
+                        let mut r = Motion::run(
                             c.model.node.clone(),
                             (x, y),
                             hero,
@@ -10261,7 +10282,11 @@ impl MapView {
                             (p.look.art.height, pace),
                             // two steps in a turn: a quick scurry
                             c.hurry || c.path.len() == 2,
-                        ));
+                        );
+                        if self.catching_up {
+                            r.sprint();
+                        }
+                        self.motions.push(r);
                     }
                     if hero {
                         self.stats.hero_steps += 1;
@@ -11877,7 +11902,8 @@ impl MapView {
     pub fn hero_runs_on(&self) -> bool {
         /// Seconds before a run's end the next drawing is read.
         const READ_AHEAD: f32 = 0.12;
-        self.hold.is_none()
+        !self.catching_up
+            && self.hold.is_none()
             && self
                 .motions
                 .iter()
@@ -11897,6 +11923,58 @@ impl MapView {
             .filter(|m| m.hero)
             .filter_map(|m| m.step_left())
             .any(|left| left > AHEAD)
+    }
+
+    /// The player cut into the hero's run (a key, a click, a panel opened
+    /// while it goes on): it dashes to where the engine has her, and so
+    /// do the drawings still to come, unheld (`hero_runs_on`), so what
+    /// the player does next meets the picture as it is.
+    pub fn catch_up(&mut self) {
+        self.catching_up = true;
+        self.catch_done = false;
+        for m in self.motions.iter_mut().filter(|m| m.is_run()) {
+            m.sprint();
+        }
+    }
+
+    /// Where the camera aims on the ground (it eases after the hero).
+    pub fn camera_aim(&self) -> Vector3 {
+        self.focus
+    }
+
+    /// The hero's run: the seconds it has left at its pace and how fast
+    /// it goes now (m/s). None: she is not running.
+    pub fn hero_run(&self) -> Option<(f32, f32)> {
+        self.motions
+            .iter()
+            .filter(|m| m.hero)
+            .find_map(|m| Some((m.run_left()?, m.run_speed()?)))
+    }
+
+    /// The player cut in and the game does not wait for them yet.
+    pub fn catching_up(&self) -> bool {
+        self.catching_up
+    }
+
+    /// The game waits for the player again: once the hero is drawn where
+    /// it has her (the dash over), runs go at their pace again.
+    pub fn caught_up(&mut self) {
+        self.catch_done = self.catching_up;
+    }
+
+    /// The picture of the hero is behind the game, which has her at
+    /// `hero`: she runs still (or dashes to her run's end), or the map has
+    /// not drawn her there yet. What the player does waits for it.
+    pub fn hero_behind(&self, hero: Option<(i32, i32)>) -> bool {
+        self.catching_up
+            || self.hero_running()
+            || (hero.is_some() && self.hero_at.is_some() && self.hero_at != hero)
+    }
+
+    /// A run of the hero's is under way (a travel drawn, or dashing to its
+    /// end).
+    pub fn hero_running(&self) -> bool {
+        self.motions.iter().any(|m| m.hero && m.is_run())
     }
 
     /// The hero's step is being played.

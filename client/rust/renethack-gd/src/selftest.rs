@@ -5365,6 +5365,7 @@ impl SelfTest {
             "motion" => motion_tests::motion(),
             "bites" => stage_tests::bites(),
             "stride" => stage_tests::stride(),
+            "catch-up" => stage_tests::catch_up(),
             "late-monsters" => late_tests::late_monsters(),
             "helm-hair" => helm_hair_tests::helm_hair(),
             "feet" => feet_tests::feet(),
