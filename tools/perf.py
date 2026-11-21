@@ -73,6 +73,9 @@ SCENES = {
     "deep": ("deep", [], 1200),
     # a new game told with the prologue, beat by beat, into the game
     "prologue": ("prologue", [], 600),
+    # the whole prologue as a player sees it, every beat played out with
+    # its narrator (about 82 s): what a beat's first frames cost
+    "prologue-full": ("prologue-full", [], 600),
     # falling through: a trap door (a dwarf's, then the hero's), a pit, a
     # hole, one dug with a wand
     "trapdoor": ("trapdoor", [], 600),
@@ -120,7 +123,7 @@ CENSUS_ONLY = (
     "through", "outfits", "late-monsters", "command-wheel", "spells", "places", "bestiary",
     "dark-creatures", "furnish", "ring-steps",
 )
-DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants", *CENSUS_ONLY)]
+DEFAULT_SCENES = [s for s in SCENES if s not in ("smoke", "variants", "prologue-full", *CENSUS_ONLY)]
 
 
 def say(*a):
