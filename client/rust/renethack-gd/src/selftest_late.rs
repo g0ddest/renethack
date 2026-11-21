@@ -165,6 +165,15 @@ pub(super) const PILOT: &[(&str, Rows)] = &[
     ("generated", GENERATED),
     ("demon", GENERATED_DEMON),
     ("dragons", &[(4, &["black dragon", "silver dragon"])]),
+    // the generated ants on the spider's rig (iteration 8): a row of
+    // each, and the ants they replace
+    (
+        "ants",
+        &[
+            (2, &["giant ant", "soldier ant", "fire ant"]),
+            (2, &["giant beetle", "killer bee", "queen bee"]),
+        ],
+    ),
     (
         "liches",
         &[(2, &["lich", "master lich", "demilich", "arch-lich"])],

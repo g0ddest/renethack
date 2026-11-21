@@ -216,6 +216,7 @@ wear our kits were re-rigged to our skeleton and clips.
 | `owner/cat.glb`, `cat_lynx.jpg`, `cat_panther.jpg`, `cat_jaguar.jpg`, `cat_tiger.jpg` | A grey tabby: the kitten, the housecat and the large cat, its weights taken from Quaternius' husky (12k triangles); its coat recoloured for the lynx and the panther, and retextured by Meshy for the jaguar's rosettes and the tiger's stripes |
 | `owner/wolf.glb`, `wolf_coyote.jpg`, `wolf_fox.jpg`, `wolf_jackal.jpg`, `wolf_warg.jpg`, `wolf_winter.jpg`, `wolf_hellhound.jpg` | A grey wolf, its weights taken from Quaternius' wolf (12k triangles); its coat recoloured for the coyote, the fox, the jackal, the warg, the winter wolf and the hell hound |
 | `owner/horse.glb`, `unicorn_white.jpg`, `unicorn_gray.jpg`, `unicorn_black.jpg` | A dark bay horse: the pony, the horse and the warhorse, its weights taken from Quaternius' horse (15k triangles); its coat recoloured for the three unicorns |
+| `owner/ant.glb`, `ant_fire_dye.png` | A giant ant in wet black chitin: the giant ant, the soldier ant (its head larger) and the fire ant (its joints dyed rust-red), on Quaternius' spider's bones moved onto it, the spider's two spare legs parked (15k triangles) |
 
 ## Fonts
 

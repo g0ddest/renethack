@@ -2708,12 +2708,16 @@ mod tests {
         }
         let side = |n: &str| longest(find(n));
         // the smaller of two still the smaller, by more than a hair
-        let order = ["garter snake", "giant ant", "newt", "homunculus", "hobbit"];
+        let order = ["garter snake", "newt", "homunculus", "hobbit"];
         for w in order.windows(2) {
             assert!(side(w[0]) + 0.02 < side(w[1]), "{} against {}", w[0], w[1]);
         }
         assert!(side("killer bee") < side("queen bee"));
-        assert!(side("giant ant") < side("kitten"));
+        // an ant's side is its legs' span, wider than a newt is long: it
+        // stays under a kitten, and its soldier a size over it
+        assert!(side("newt") < side("giant ant"));
+        assert!(side("giant ant") + 0.02 < side("kitten"));
+        assert!(side("giant ant") + 0.02 < side("soldier ant"));
         // the bigger ones as they were
         let jackal = art.monster(find("jackal"), 0).height;
         assert_eq!(jackal, art.monsters.sizes["small"] * 0.85);

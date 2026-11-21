@@ -6,7 +6,10 @@
 //!   dragon and a raven are made beside her one at a time, each attacks
 //!   her for a few turns (`selftest: bites: <foe> strikes at frame N`,
 //!   where it and she stand in the window), then is slain by #wizkill.
-//!   RENETHACK_BITES_DISTANCE: the camera's distance (11 m).
+//!   RENETHACK_BITES_DISTANCE: the camera's distance (11 m);
+//!   RENETHACK_BITES_FOES=giant ant,fire ant: those foes instead;
+//!   RENETHACK_BITES_WALK=4: she first steps that many cells away from
+//!   each, so it is seen walking after her (`... walks at frame N`).
 //! - `stride`: a debug-mode Valkyrie and her kitten, the level mapped; a
 //!   travel (`_`) to the farthest floor eight steps off, round a corner
 //!   (RENETHACK_STRIDE_STEPS: more), and a click back, every frame logged
@@ -46,6 +49,70 @@ const FOES: [&str; 7] = [
     "baby gray dragon",
     "raven",
 ];
+/// The foes of this run: `FOES`, or RENETHACK_BITES_FOES's.
+static CAST: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
+
+fn cast() -> &'static [String] {
+    CAST.get_or_init(|| match std::env::var("RENETHACK_BITES_FOES") {
+        Ok(list) => list.split(',').map(|f| f.trim().to_string()).collect(),
+        Err(_) => FOES.iter().map(|f| f.to_string()).collect(),
+    })
+}
+
+/// The foe beside her now.
+fn foe_now() -> &'static str {
+    &cast()[FOE.load(Ordering::Relaxed).min(cast().len() - 1)]
+}
+
+/// Steps she has still to take away from the foe.
+static AWAY: AtomicU32 = AtomicU32::new(0);
+
+/// She steps away from the foe over open floor, a cell a turn, and it
+/// comes after her (RENETHACK_BITES_WALK cells).
+fn walk_away(cells: u32) -> Vec<Step> {
+    static CELLS: AtomicU32 = AtomicU32::new(0);
+    CELLS.store(cells, Ordering::Relaxed);
+    vec![
+        Step::Call("", |g| {
+            AWAY.store(CELLS.load(Ordering::Relaxed), Ordering::Relaxed);
+            *TARGET.lock().unwrap() = g.world.map.hero().unwrap_or((0, 0));
+            SINCE.store(frames(), Ordering::Relaxed);
+            Ok(())
+        }),
+        Step::KeysUntil("her steps away from the foe", |g| {
+            if !matches!(g.pending, Some((_, Prompt::Command))) {
+                return to_command(g);
+            }
+            log_strikes(g, foe_now())?;
+            let (hx, hy) = g.world.map.hero().ok_or("no hero")?;
+            // (asked every frame: a step is counted when she has moved)
+            let mut last = TARGET.lock().unwrap();
+            if *last != (hx, hy) {
+                *last = (hx, hy);
+                AWAY.store(
+                    AWAY.load(Ordering::Relaxed).saturating_sub(1),
+                    Ordering::Relaxed,
+                );
+                eprintln!("selftest: bites: {} walks at frame {}", foe_now(), frames());
+            }
+            if AWAY.load(Ordering::Relaxed) == 0 || frames() > SINCE.load(Ordering::Relaxed) + 900 {
+                return Ok(None);
+            }
+            let (fx, fy) = foe_near(g, 8).unwrap_or((hx, hy));
+            // the open cell beside her farthest from the foe
+            let way = super::audio_tests::STEPS
+                .iter()
+                .filter(|((dx, dy), _)| open_floor(g, (hx + dx, hy + dy)))
+                .max_by_key(|((dx, dy), _)| {
+                    let (x, y) = (hx + dx - fx, hy + dy - fy);
+                    // (a straight step before a diagonal one of the same reach)
+                    (x.abs().max(y.abs()) * 4) + (x.abs() + y.abs())
+                });
+            Ok(way.map(|(_, k)| KeyInput::plain(Key::Char(*k))))
+        }),
+    ]
+}
+
 /// Turns she waits beside each.
 const WAIT_TURNS: u32 = 6;
 
@@ -109,7 +176,7 @@ fn log_strikes(g: &RenethackGame, what: &str) -> Result<(), String> {
 /// Past whatever a turn beside the foe asks ("Die?" is answered no) to
 /// the next command, logging the blows.
 fn to_command(g: &RenethackGame) -> Result<Option<KeyInput>, String> {
-    log_strikes(g, FOES[FOE.load(Ordering::Relaxed)])?;
+    log_strikes(g, foe_now())?;
     match g.pending.as_ref().map(|(_, p)| p) {
         Some(Prompt::Command) => Ok(None),
         Some(Prompt::Choice { query, .. }) if query.contains("Die?") => {
@@ -131,7 +198,7 @@ fn turn_beside() -> Vec<Step> {
             Ok(())
         }),
         Step::Wait("its blows played", |g| {
-            log_strikes(g, FOES[FOE.load(Ordering::Relaxed)])?;
+            log_strikes(g, foe_now())?;
             Ok(frames() >= SINCE.load(Ordering::Relaxed) + 30)
         }),
     ]
@@ -205,7 +272,11 @@ pub(super) fn bites() -> Vec<Step> {
         FOE.store(0, Ordering::Relaxed);
         Ok(())
     }));
-    for foe in FOES {
+    let walk: u32 = std::env::var("RENETHACK_BITES_WALK")
+        .ok()
+        .and_then(|w| w.parse().ok())
+        .unwrap_or(0);
+    for foe in cast() {
         steps.extend([
             Step::Key(ctrl_key('g')),
             Step::Request(
@@ -217,11 +288,14 @@ pub(super) fn bites() -> Vec<Step> {
             Step::Request("a command after the monster", command),
             Step::Call("its turns counted from here", |g| {
                 STRIKES.store(map_view(g)?.motion_stats().strikes, Ordering::Relaxed);
-                let foe = FOES[FOE.load(Ordering::Relaxed)];
+                let foe = foe_now();
                 eprintln!("selftest: bites: {foe} made at frame {}", frames());
                 Ok(())
             }),
         ]);
+        if walk > 0 {
+            steps.extend(walk_away(walk));
+        }
         for _ in 0..WAIT_TURNS {
             steps.extend(turn_beside());
         }
