@@ -1179,6 +1179,53 @@ pub(super) fn ring_steps() -> Vec<Step> {
     steps
 }
 
+/// A step that lays a scene out.
+type Lay = fn(&mut RenethackGame) -> Result<(), String>;
+
+/// A scene laid out lit and then dark, each at the game's distance and at
+/// 7 m (`<name>`, `<name>-close`, `<name>-dark`, `<name>-dark-close`), for
+/// pictures (not part of `make test-client`).
+fn lit_and_dark(lay: [Lay; 2], shots: [&'static str; 4]) -> Vec<Step> {
+    let mut steps = start();
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    for (lay, shots) in lay
+        .into_iter()
+        .zip([[shots[0], shots[1]], [shots[2], shots[3]]])
+    {
+        steps.extend([
+            Step::Call("lay out the scene", lay),
+            Step::Wait("the scene drawn", |g| {
+                let drawn = g.ui.as_ref().and_then(|ui| ui.map.drawn_generation());
+                Ok(drawn == Some(g.world.map.generation()))
+            }),
+            Step::Call("the game's distance", |g| far(g, 11.0)),
+            Step::Wait("the camera on it", drawn_here),
+            Step::Shot(shots[0]),
+            Step::Call("closer", |g| far(g, 7.0)),
+            Step::Wait("the camera closer", drawn_here),
+            Step::Shot(shots[1]),
+        ]);
+    }
+    steps.extend(quit());
+    steps
+}
+
+/// Small things on a lit floor and on a dark one (`gallery::lay_out_wares`:
+/// potions, gems, rings, gold, scrolls, books, wands): `wares`, `-close`,
+/// `wares-dark`, `-dark-close`.
+pub(super) fn wares() -> Vec<Step> {
+    fn lay(g: &mut RenethackGame, dark: bool) -> Result<(), String> {
+        let cat = g.catalog.clone().ok_or("no catalog")?;
+        crate::gallery::lay_out_wares(&mut g.world, &cat, dark).map(|_| ())
+    }
+    lit_and_dark(
+        [|g| lay(g, false), |g| lay(g, true)],
+        ["wares", "wares-close", "wares-dark", "wares-dark-close"],
+    )
+}
+
 /// Rooms of a used dungeon (the art loop's fifth critique, #7: chains,
 /// cobwebs, broken furniture), for pictures before and after (not part of
 /// `make test-client`): four lit rooms, at the game's distance

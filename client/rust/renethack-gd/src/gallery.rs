@@ -304,6 +304,9 @@ fn appearance_color(appearance: &str) -> i32 {
         ("brass", 11),
         ("candle", 15),
         ("silver", 7),
+        ("pearl", 15),
+        ("yellow", 11),
+        ("pink", 13),
     ];
     words
         .iter()
@@ -1007,6 +1010,70 @@ pub fn lay_out_ring_steps(
     map.print(foe.0, foe.1, &jackal, Some(&under));
     world.view_center = Some(here);
     Ok(foe)
+}
+
+/// Small things on a floor, for pictures (the `wares` scene): a room's
+/// floor (lit, or `dark`), the hero in its middle, and round her in three
+/// rows potions of pale, dark and bright liquids, gems, rings, an amulet
+/// and gold, scrolls, books and wands. Where she stands.
+pub fn lay_out_wares(world: &mut World, cat: &Catalog, dark: bool) -> Result<(i32, i32), String> {
+    const ROWS: [(i32, &[(&str, &str)]); 3] = [
+        (
+            -1,
+            &[
+                ("!", "milky"),
+                ("!", "white"),
+                ("!", "black"),
+                ("!", "ruby"),
+                ("!", "emerald"),
+                ("!", "yellow"),
+                ("!", "sky blue"),
+            ],
+        ),
+        (
+            1,
+            &[
+                ("*", "white"),
+                ("*", "red"),
+                ("*", "gray"),
+                ("=", "pearl"),
+                ("=", "ruby"),
+                ("\"", "circular"),
+                ("$", "gold piece"),
+            ],
+        ),
+        (
+            2,
+            &[
+                ("?", "ZELGO MER"),
+                ("?", "FOOBIE BLETCH"),
+                ("+", "red"),
+                ("/", "oak"),
+                ("/", "silver"),
+                ("!", "pink"),
+                ("!", "cloudy"),
+            ],
+        ),
+    ];
+    let map = &mut world.map;
+    map.clear();
+    let floor = cmap(cat, if dark { "S_darkroom" } else { "S_room" })?;
+    let (cx, cy) = (40, 10);
+    for y in cy - 3..=cy + 4 {
+        for x in cx - 6..=cx + 6 {
+            map.print(x, y, &floor, None);
+        }
+    }
+    for (dy, things) in ROWS {
+        for (i, &(class, appearance)) in things.iter().enumerate() {
+            let thing = object(cat, class, appearance, false)?;
+            map.print(cx - 3 + i as i32, cy + dy, &thing, Some(&floor));
+        }
+    }
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(cx, cy, &hero, Some(&floor));
+    world.view_center = Some((cx, cy));
+    Ok((cx, cy))
 }
 
 /// As `lay_out_rows`, on a floor of `floor` (a dark one: "S_darkroom").

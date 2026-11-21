@@ -262,8 +262,26 @@ enum Edge {
     Outline(u8, bool),
     /// A thing on the floor's dark-gold rim (hundredths of
     /// `WARE_EDGE_STRENGTH`; its glint by it, `ware_sweep`; on metal cold,
-    /// `STEEL_EDGE`).
-    Ware(u8),
+    /// `STEEL_EDGE`), and how much of the travelling glint it takes
+    /// (`Sweep`).
+    Ware(u8, Sweep),
+}
+/// How much of the travelling glint (`ware_sweep`) a thing on the floor
+/// takes. The glint is a band of light added over every surface it
+/// crosses: a line on a wand, a ring's hoop or a blade, but over a body
+/// with a face to it (a flask, a cut stone, an amulet's disc) a cream
+/// blob for half a second in every two and a half, and more than white
+/// where it is added twice, on a flask's glass and on the liquid seen
+/// through it (a black potion on Dlvl 2 at 7 m was a cream flask in two
+/// screenshots of six).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum Sweep {
+    /// All of it.
+    Full,
+    /// A faint pass (`WARE_SWEEP_BODY`): a body with a face to it.
+    Body,
+    /// None: a see-through surface, what lies behind it has its own.
+    None,
 }
 /// A thing on the floor reads by a dark-gold rim on itself (the edge
 /// pass, in the game's light), not by a pool of light round it: a warm
@@ -286,6 +304,8 @@ const WARE_EDGE_FULL: u8 = 115;
 const WARE_EDGE_SMALL: u8 = 150;
 const WARE_SWEEP: f32 = 1.2;
 const WARE_SWEEP_SMALL: f32 = 1.8;
+/// The glint over a body with a face to it (`Sweep::Body`).
+const WARE_SWEEP_BODY: f32 = 0.3;
 const WARE_FAR: f32 = 0.7;
 /// Anything else a player can pick up reads at 11 m on an unlit floor as
 /// well: a dagger was a faint grey sliver there, a sword, an axe and a
@@ -308,8 +328,12 @@ const WARE_FILL: f32 = 0.12;
 
 /// The glint travelling over a thing on the floor with this share of the
 /// edge.
-fn ware_sweep(share: u8) -> f32 {
-    if share >= WARE_EDGE_SMALL {
+fn ware_sweep(share: u8, sweep: Sweep) -> f32 {
+    if sweep == Sweep::None {
+        0.0
+    } else if sweep == Sweep::Body {
+        WARE_SWEEP_BODY
+    } else if share >= WARE_EDGE_SMALL {
         WARE_SWEEP_SMALL
     } else if share >= WARE_EDGE_FULL {
         WARE_SWEEP
@@ -324,6 +348,12 @@ fn ware_sweep(share: u8) -> f32 {
 /// of 67), and the lights' rim on it (a creature's `RIM`).
 const WARE_ALBEDO: f32 = 0.5;
 const WARE_RIM: f32 = 0.2;
+/// A thing on the floor's glass: this share of its colour, and at least
+/// this opaque; and the most a liquid or a stone lit from inside glows
+/// (the luma of its glow's colour).
+const WARE_GLASS: f32 = 0.22;
+const WARE_GLASS_ALPHA: f32 = 0.4;
+const WARE_GLOW_MOST: f32 = 0.4;
 /// The specular a thing on the floor keeps at most.
 const WARE_SPECULAR: f32 = 0.15;
 
@@ -745,7 +775,7 @@ pub struct Art {
     outline_edge: HashMap<(u8, [u8; 3], bool), Option<Gd<Material>>>,
     /// A thing on the floor's rim, by its share (`Edge::Ware`) and whether
     /// it is metal (its edge and glint cold).
-    ware_edges: HashMap<(u8, bool), Option<Gd<Material>>>,
+    ware_edges: HashMap<(u8, bool, Sweep), Option<Gd<Material>>>,
     /// A thing on the floor's glint (`GLINT_SHADER`), the same way, and
     /// gold's (warmer and smaller).
     glint: Option<Option<Gd<Material>>>,
@@ -2115,12 +2145,19 @@ impl Art {
                     let [w, l] = aabb_reach(&m.node, inner);
                     w.max(l)
                 });
-                Edge::Ware(match sheen {
+                let share = match sheen {
                     Sheen::Full if reach <= WARE_SMALL => WARE_EDGE_SMALL,
                     Sheen::Full => WARE_EDGE_FULL,
                     _ if reach <= WARE_SLIGHT => WARE_EDGE_SLIGHT,
                     _ => WARE_EDGE_FAINT,
-                })
+                };
+                // (a flask, a cut stone, an amulet's disc: a face the
+                // glint would wash whole)
+                let body = matches!(
+                    self.manifest.model_at(look.art.model).1.proc,
+                    Some(Proc::Potion | Proc::Gem | Proc::Amulet)
+                );
+                Edge::Ware(share, if body { Sweep::Body } else { Sweep::Full })
             } else if outline > 0.0 {
                 Edge::Outline((outline.min(2.0) * 100.0).round() as u8, false)
             } else if reads_black(look.tint) {
@@ -2356,16 +2393,16 @@ impl Art {
 
     /// A thing on the floor's dark-gold rim (`Edge::Ware`), lit as the
     /// edges are (`set_edges_lit`).
-    fn ware_edge_pass(&mut self, share: u8, metal: bool) -> Option<Gd<Material>> {
+    fn ware_edge_pass(&mut self, share: u8, metal: bool, sweep: Sweep) -> Option<Gd<Material>> {
         let lit = self.edges_lit;
         self.ware_edges
-            .entry((share, metal))
+            .entry((share, metal, sweep))
             .or_insert_with(|| {
                 let k = ware_edge_strength(share, metal);
                 let color = if metal { STEEL_EDGE } else { WARE_EDGE };
                 let pass = edge_material(lit, k, WARE_EDGE_FROM, Some(color))?;
                 if let Ok(mut m) = pass.clone().try_cast::<ShaderMaterial>() {
-                    m.set_shader_parameter("sweep", &ware_sweep(share).to_variant());
+                    m.set_shader_parameter("sweep", &ware_sweep(share, sweep).to_variant());
                     m.set_shader_parameter("far", &WARE_FAR.to_variant());
                     m.set_shader_parameter("fill", &WARE_FILL.to_variant());
                     if metal {
@@ -2471,7 +2508,7 @@ impl Art {
                 m.set_shader_parameter("strength", &k.to_variant());
             }
         }
-        for (&(share, metal), m) in &self.ware_edges {
+        for (&(share, metal, _), m) in &self.ware_edges {
             if let Some(m) = m
                 && let Ok(mut m) = m.clone().try_cast::<ShaderMaterial>()
             {
@@ -2616,7 +2653,7 @@ impl Art {
                     {
                         m.set_next_pass(&pass);
                     }
-                } else if let Edge::Ware(share) = edge {
+                } else if let Edge::Ware(share, sweep) = edge {
                     // (lit as a creature is, a pale ration or a steel mace
                     // head still burned to cream on a dim floor: dimmer, it
                     // reads by its rim)
@@ -2627,13 +2664,45 @@ impl Art {
                         albedo.b * k,
                         albedo.a,
                     ));
+                    if see_through != Transparency::DISABLED {
+                        // glass: dark, and enough of it to read as a
+                        // flask round its liquid (clear and pale, a torch
+                        // lit the whole flask cream)
+                        m.set_albedo(Color::from_rgba(
+                            albedo.r * WARE_GLASS,
+                            albedo.g * WARE_GLASS,
+                            albedo.b * WARE_GLASS,
+                            albedo.a.max(WARE_GLASS_ALPHA),
+                        ));
+                    } else if m.get_feature(Feature::EMISSION) {
+                        // a liquid or a stone lit from inside: a pale one
+                        // (milky, white) no brighter than `WARE_GLOW_MOST`
+                        let glow = m.get_emission();
+                        let luma = 0.2126 * glow.r + 0.7152 * glow.g + 0.0722 * glow.b;
+                        if luma > WARE_GLOW_MOST {
+                            let k = WARE_GLOW_MOST / luma;
+                            m.set_emission(Color::from_rgb(glow.r * k, glow.g * k, glow.b * k));
+                            m.set_albedo(Color::from_rgba(
+                                albedo.r * k.sqrt() * WARE_ALBEDO,
+                                albedo.g * k.sqrt() * WARE_ALBEDO,
+                                albedo.b * k.sqrt() * WARE_ALBEDO,
+                                albedo.a,
+                            ));
+                        }
+                    }
                     // (a white point on a dome drew the eye before the thing)
                     let specular = m.get_specular().min(WARE_SPECULAR);
                     m.set_specular(specular);
                     m.set_rim(WARE_RIM);
                     let metal = m.has_meta(METAL_LIT) || m.get_metallic() > DULL_METALLIC;
+                    // (glass: the glint is the liquid's, seen through it)
+                    let sweep = if see_through == Transparency::DISABLED {
+                        sweep
+                    } else {
+                        Sweep::None
+                    };
                     if m.get_next_pass().is_none()
-                        && let Some(pass) = self.ware_edge_pass(share, metal)
+                        && let Some(pass) = self.ware_edge_pass(share, metal, sweep)
                     {
                         m.set_next_pass(&pass);
                     }
@@ -2647,7 +2716,7 @@ impl Art {
                 // its lit value capped (an opaque one's: the pass knows
                 // nothing of a card's cut-outs, and reads what the frame
                 // holds, where a see-through one is not yet)
-                if !matches!(edge, Edge::Ware(_))
+                if !matches!(edge, Edge::Ware(..))
                     && see_through == Transparency::DISABLED
                     && let Some(cap) = self.lit_cap_pass(m.get_next_pass())
                 {
