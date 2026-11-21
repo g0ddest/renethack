@@ -34,6 +34,10 @@ uniform sampler2D ground_tex : filter_linear, repeat_disable;
 // is drawn at all (a floor ends ragged towards it: known_edge), B where
 // such a cell is the cell or one beside it (surface.rs `StandField`)
 uniform sampler2D stand_tex : filter_linear, repeat_disable;
+// per cell of the level, what a room's long use has left on its floor
+// (surface.rs `AgeField`): R how near a wall or a door, G how worn by the
+// ways between its doors and stairs, B a room's floor at all
+uniform sampler2D age_tex : filter_linear, repeat_disable;
 // the ground's own kind (1 land, 4 ice), shown where it wins; 0: whatever
 // lies around it
 uniform float edge_kind = 0.0;
@@ -636,6 +640,53 @@ void fragment() {
 				* smoothstep(0.3, 0.58, tn2(wpos.xz * 1.3 + vec2(5.3, 29.7)))
 				* smoothstep(0.15, 0.6, near);
 			albedo *= 1.0 - 0.62 * st * debris;
+		}
+	}
+	// a room's age carried toward its middle (the art director's
+	// iteration 7: its floors read bare but at the walls): ways worn
+	// smooth and dark between its doors, flags cracked and sunk, dirt in
+	// them, darker damp, grit and chips thinning out from the walls.
+	// Flat, in the floor's own stone: never a thing on it
+	if (debris > 0.0 && edge_kind == 1.0) {
+		vec4 used = texture(age_tex, cell / FIELD);
+		float roomy = used.b * debris;
+		if (roomy > 0.001) {
+			// the ways feet wore, their edges ragged
+			float way = smoothstep(0.12, 0.55, used.g
+				+ (tn2(wpos.xz * 1.9 + vec2(4.1, 8.7)) - 0.5) * 0.4);
+			albedo *= 1.0 - 0.36 * way * roomy;
+			rough = mix(rough, rough * 0.85, way * roomy);
+			// flags sunk a little and dirt in them: irregular slabs of
+			// half a metre to a metre, their rims a line of dark
+			float slab = tn2(wpos.xz * 0.95 + vec2(17.3, 2.9));
+			float sunk = smoothstep(0.6, 0.66, slab);
+			float lip = smoothstep(0.585, 0.6, slab) * (1.0 - smoothstep(0.6, 0.625, slab));
+			albedo *= 1.0 - (0.3 * sunk + 0.45 * lip) * roomy;
+			// (sunk two centimetres: its rim lit on the far side, in shadow
+			// on the near, as the light falls on it; flat it read as a stain)
+			float sx = smoothstep(0.6, 0.66, tn2((wpos.xz + vec2(0.02, 0.0)) * 0.95 + vec2(17.3, 2.9)));
+			float sz = smoothstep(0.6, 0.66, tn2((wpos.xz + vec2(0.0, 0.02)) * 0.95 + vec2(17.3, 2.9)));
+			wn = normalize(wn + vec3(sx - sunk, 0.0, sz - sunk) * 0.35 * roomy);
+			// cracks across the stone, in stretches, never everywhere
+			float c = tn2(wpos.xz * 0.82 + vec2(31.7, 12.1));
+			float crack = 1.0 - smoothstep(0.006, 0.014, abs(c - 0.5));
+			crack *= smoothstep(0.5, 0.62, tn2(wpos.xz * 0.21 + vec2(5.9, 44.3)));
+			albedo *= 1.0 - 0.6 * crack * roomy;
+			rough = min(rough + 0.15 * crack * roomy, 1.0);
+			// damp gathered dark in the middle, away from the walls
+			float damp = smoothstep(0.6, 0.7, tn2(wpos.xz * 0.42 + vec2(23.3, 7.7)))
+				* (1.0 - used.r);
+			albedo *= 1.0 - 0.3 * damp * roomy;
+			rough = mix(rough, 0.62, damp * roomy);
+			// grit and small chips: thick at the walls' feet, thinning out
+			// toward the middle, a little everywhere
+			float thick = mix(0.25, 1.0, used.r);
+			float grit = smoothstep(0.66, 0.72, tn2(wpos.xz * 7.3 + vec2(2.1, 9.3)))
+				* step(1.0 - thick, tn2(wpos.xz * 2.1 + vec2(13.9, 3.1)));
+			float chip = smoothstep(0.7, 0.76, tn2(wpos.xz * 5.1 + vec2(29.1, 17.3)))
+				* step(1.0 - thick * 0.8, tn2(wpos.xz * 1.7 + vec2(7.7, 21.1)));
+			albedo *= 1.0 - 0.55 * grit * roomy;
+			albedo = mix(albedo, albedo * 1.35 + vec3(0.02), chip * 0.7 * roomy);
 		}
 	}
 	vec3 lava = vec3(0.0);

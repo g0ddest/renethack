@@ -65,6 +65,7 @@ pub struct Surfaces {
     fow: Gd<ImageTexture>,
     ground: Gd<ImageTexture>,
     standing: Gd<ImageTexture>,
+    age: Gd<ImageTexture>,
     noise: Gd<Texture2D>,
     detail: Option<Gd<Texture2D>>,
     textures: HashMap<String, Option<Gd<Texture2D>>>,
@@ -80,6 +81,7 @@ impl Surfaces {
         fow: &Fow,
         ground: &GroundField,
         standing: &StandField,
+        age: &AgeField,
         manifest: &ArtManifest,
     ) -> Surfaces {
         let shader = godot::tools::try_load::<Shader>(SHADER).ok();
@@ -91,11 +93,13 @@ impl Surfaces {
             ImageTexture::create_from_image(&ground.image).unwrap_or_else(ImageTexture::new_gd);
         let standing =
             ImageTexture::create_from_image(&standing.image).unwrap_or_else(ImageTexture::new_gd);
+        let age = ImageTexture::create_from_image(&age.image).unwrap_or_else(ImageTexture::new_gd);
         let mut s = Surfaces {
             shader,
             fow,
             ground,
             standing,
+            age,
             noise: noise_texture(),
             detail: None,
             textures: HashMap::new(),
@@ -186,6 +190,14 @@ impl Surfaces {
     pub fn show_standing(&mut self, standing: &mut StandField) {
         if standing.write() {
             self.standing.update(&standing.image);
+        }
+    }
+
+    /// What a room's long use has left on some cells changed: the floors'
+    /// shader sees it.
+    pub fn show_age(&mut self, age: &mut AgeField) {
+        if age.write() {
+            self.age.update(&age.image);
         }
     }
 
@@ -315,6 +327,7 @@ impl Surfaces {
                 set(&mut mat, "grime", 1.0);
                 set(&mut mat, "wet", 0.8);
                 set(&mut mat, "debris", self.debris);
+                mat.set_shader_parameter("age_tex", &self.age.to_variant());
             }
             Role::Wall | Role::Door => {
                 set(
@@ -719,6 +732,234 @@ fn nearness(known: &[bool]) -> Vec<f32> {
         .collect()
 }
 
+/// What a room's long use has left on each cell of the level's floor, and
+/// its texture (map_surface's `age_tex`, where the branch dresses its rooms
+/// as used): how near a wall or a door the cell lies (R: full beside one,
+/// nothing `WALL_REACH` cells in), how worn it is by the ways between the
+/// room's doors and stairs (G), and whether it is a room's floor at all
+/// (B). Of what is known only: a door not yet seen wears no way.
+pub struct AgeField {
+    /// What it was worked out from last (the same: nothing to do).
+    from: Vec<AgeCell>,
+    cells: Vec<[u8; 3]>,
+    image: Gd<Image>,
+    changed: bool,
+}
+
+/// What `AgeField` reads of a cell.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct AgeCell {
+    /// A room's floor (lit or dark).
+    pub room: bool,
+    /// A wall's masonry (the room's grit gathers at its foot).
+    pub wall: bool,
+    /// A door or a doorway (a way runs from it).
+    pub door: bool,
+    /// Something a way runs to inside a room: stairs, an altar, a
+    /// fountain.
+    pub goal: bool,
+}
+
+/// Cells from a wall over which a room's grit thins out.
+const WALL_REACH: f32 = 3.0;
+/// The most ways' ends taken in a room (its doors and goals).
+const MOST_ENDS: usize = 8;
+
+impl AgeField {
+    pub fn new() -> AgeField {
+        let image =
+            Image::create_empty(COLNO, ROWNO, false, Format::RGBA8).unwrap_or_else(Image::new_gd);
+        AgeField {
+            from: Vec::new(),
+            cells: vec![[0; 3]; (COLNO * ROWNO) as usize],
+            image,
+            changed: true,
+        }
+    }
+
+    /// The cells as they are known now.
+    pub fn set(&mut self, cells: &[AgeCell]) {
+        if cells == self.from.as_slice() {
+            return;
+        }
+        self.from = cells.to_vec();
+        let made = age(cells);
+        if made != self.cells {
+            self.cells = made;
+            self.changed = true;
+        }
+    }
+
+    /// The image made again if a cell changed since; true then.
+    fn write(&mut self) -> bool {
+        if !std::mem::take(&mut self.changed) {
+            return false;
+        }
+        let mut bytes = PackedByteArray::new();
+        bytes.resize(self.cells.len() * 4);
+        let out = bytes.as_mut_slice();
+        for (i, c) in self.cells.iter().enumerate() {
+            out[i * 4..i * 4 + 3].copy_from_slice(c);
+            out[i * 4 + 3] = 255;
+        }
+        self.image
+            .set_data(COLNO, ROWNO, false, Format::RGBA8, &bytes);
+        true
+    }
+}
+
+impl Default for AgeField {
+    fn default() -> AgeField {
+        AgeField::new()
+    }
+}
+
+/// A cell's place in the field, from its index.
+fn place(i: usize) -> (i32, i32) {
+    ((i as i32) % COLNO, (i as i32) / COLNO)
+}
+
+/// Per cell: how near a wall or door it lies, how worn its way is, and
+/// whether it is a room's floor (`AgeField`), each 0-255.
+fn age(cells: &[AgeCell]) -> Vec<[u8; 3]> {
+    use std::collections::VecDeque;
+    const SIDE: [(i32, i32); 4] = [(1, 0), (-1, 0), (0, 1), (0, -1)];
+    let n = cells.len();
+    let at = |x: i32, y: i32| index(x, y).map(|i| cells[i]);
+    // how near a wall or a door: by the steps over the room's floor from
+    // the cells beside one
+    let mut steps = vec![u32::MAX; n];
+    let mut queue = VecDeque::new();
+    for (i, c) in cells.iter().enumerate() {
+        let (x, y) = place(i);
+        let beside =
+            (-1..=1).any(|j| (-1..=1).any(|k| at(x + k, y + j).is_some_and(|c| c.wall || c.door)));
+        if c.room && beside {
+            steps[i] = 0;
+            queue.push_back(i);
+        }
+    }
+    while let Some(i) = queue.pop_front() {
+        let (x, y) = place(i);
+        for (k, j) in SIDE {
+            if let Some(o) = index(x + k, y + j)
+                && cells[o].room
+                && steps[o] == u32::MAX
+            {
+                steps[o] = steps[i] + 1;
+                queue.push_back(o);
+            }
+        }
+    }
+    // the ways between a room's doors and goals: the room's floor taken
+    // room by room (cells joined side by side), each way the shortest over
+    // it from one end to another
+    let mut worn = vec![0.0f32; n];
+    let mut which = vec![usize::MAX; n];
+    let mut rooms = 0;
+    for start in 0..n {
+        if !cells[start].room || which[start] != usize::MAX {
+            continue;
+        }
+        let mut members = Vec::new();
+        let mut q = VecDeque::from([start]);
+        which[start] = rooms;
+        while let Some(i) = q.pop_front() {
+            members.push(i);
+            let (x, y) = place(i);
+            for (k, j) in SIDE {
+                if let Some(o) = index(x + k, y + j)
+                    && cells[o].room
+                    && which[o] == usize::MAX
+                {
+                    which[o] = rooms;
+                    q.push_back(o);
+                }
+            }
+        }
+        // its ends: the doors beside it, the goals in it or beside it (the
+        // first few by their place)
+        let mut ends: Vec<usize> = Vec::new();
+        for &i in &members {
+            let (x, y) = place(i);
+            for (k, j) in SIDE {
+                if let Some(o) = index(x + k, y + j)
+                    && (cells[o].door || cells[o].goal)
+                    && !ends.contains(&o)
+                {
+                    ends.push(o);
+                }
+            }
+        }
+        ends.sort_unstable();
+        let ends = &ends[..ends.len().min(MOST_ENDS)];
+        let open = |i: usize| which[i] == rooms || ends.contains(&i);
+        for (a, &from) in ends.iter().enumerate() {
+            // every way from this end at once, then back from each other
+            let mut back = vec![usize::MAX; n];
+            back[from] = from;
+            let mut q = VecDeque::from([from]);
+            while let Some(i) = q.pop_front() {
+                let (x, y) = place(i);
+                for (k, j) in [
+                    (1, 0),
+                    (-1, 0),
+                    (0, 1),
+                    (0, -1),
+                    (1, 1),
+                    (1, -1),
+                    (-1, 1),
+                    (-1, -1),
+                ] {
+                    let Some(o) = index(x + k, y + j) else {
+                        continue;
+                    };
+                    // (no corner cut past a wall)
+                    let corner = k != 0 && j != 0;
+                    let past = |dx: i32, dy: i32| index(x + dx, y + dy).is_some_and(open);
+                    if back[o] != usize::MAX || !open(o) || (corner && !(past(k, 0) && past(0, j)))
+                    {
+                        continue;
+                    }
+                    back[o] = i;
+                    q.push_back(o);
+                }
+            }
+            for &to in &ends[a + 1..] {
+                let mut i = to;
+                while back[i] != usize::MAX && i != from {
+                    if which[i] == rooms {
+                        worn[i] += 1.0;
+                    }
+                    i = back[i];
+                }
+            }
+        }
+        rooms += 1;
+    }
+    // a way worn wider than its own cells, softly
+    let wear = |x: i32, y: i32| index(x, y).map_or(0.0, |i| worn[i].min(1.0));
+    (0..n)
+        .map(|i| {
+            if !cells[i].room {
+                return [0, 0, 0];
+            }
+            let (x, y) = place(i);
+            let near = match steps[i] {
+                u32::MAX => 0.0,
+                d => (1.0 - d as f32 / WALL_REACH).clamp(0.0, 1.0),
+            };
+            let about = (wear(x + 1, y) + wear(x - 1, y) + wear(x, y + 1) + wear(x, y - 1)) / 4.0;
+            let way = (wear(x, y) * 0.75 + about * 0.5).min(1.0);
+            [byte(near), byte(way), 255]
+        })
+        .collect()
+}
+
+fn byte(v: f32) -> u8 {
+    (v.clamp(0.0, 1.0) * 255.0).round() as u8
+}
+
 /// A cell of the map as the sight rules take it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Seen {
@@ -805,6 +1046,58 @@ mod tests {
 
     fn put(cells: &mut [Seen], x: i32, y: i32, s: Seen) {
         cells[cell_index(x, y).unwrap()] = s;
+    }
+
+    /// A room of floor from (10, 5) to (20, 9) between its walls, a door
+    /// in the middle of its west wall and one in its east.
+    fn used_room() -> Vec<AgeCell> {
+        let mut cells = vec![AgeCell::default(); (COLNO * ROWNO) as usize];
+        for y in 4..=10 {
+            for x in 9..=21 {
+                let inside = (10..=20).contains(&x) && (5..=9).contains(&y);
+                cells[cell_index(x, y).unwrap()] = AgeCell {
+                    room: inside,
+                    wall: !inside,
+                    ..AgeCell::default()
+                };
+            }
+        }
+        for x in [9, 21] {
+            cells[cell_index(x, 7).unwrap()] = AgeCell {
+                door: true,
+                ..AgeCell::default()
+            };
+        }
+        cells
+    }
+
+    #[test]
+    fn a_way_is_worn_between_a_rooms_doors_and_its_grit_thins_out_from_the_walls() {
+        let made = age(&used_room());
+        let at = |x: i32, y: i32| made[cell_index(x, y).unwrap()];
+        // the way runs straight from door to door, and nowhere else
+        for x in 10..=20 {
+            assert!(at(x, 7)[1] > 150, "no way at {x},7: {:?}", at(x, 7));
+            assert_eq!(at(x, 5)[1], 0, "a way at {x},5");
+        }
+        // grit: full at a wall's foot, less a cell in, none in the middle
+        assert_eq!(at(15, 5)[0], 255);
+        assert!(at(15, 6)[0] < at(15, 5)[0] && at(15, 6)[0] > at(15, 7)[0]);
+        // a room's floor only
+        assert_eq!(at(15, 7)[2], 255);
+        assert_eq!(at(15, 4), [0, 0, 0]);
+        assert_eq!(at(30, 7), [0, 0, 0]);
+    }
+
+    #[test]
+    fn a_door_not_yet_known_wears_no_way() {
+        let mut cells = used_room();
+        cells[cell_index(21, 7).unwrap()] = AgeCell {
+            wall: true,
+            ..AgeCell::default()
+        };
+        let made = age(&cells);
+        assert!(made.iter().all(|c| c[1] == 0));
     }
 
     fn get(fow: &[FowCell], x: i32, y: i32) -> Sight {

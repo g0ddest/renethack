@@ -791,6 +791,7 @@ pub(super) fn floor(look: &mut Look, around: &Around, ctx: &Ctx) {
             wall_rubble(look, around, ctx);
         }
         bones(look, around, ctx);
+        scatter(look, around, ctx);
     }
     for s in &mut look.solids[first..] {
         s.shadow = false;
@@ -1072,6 +1073,38 @@ fn wall_rubble(look: &mut Look, around: &Around, ctx: &Ctx) {
             };
             let rot = at(ctx.noise(salt + 2) * 90.0, ctx.noise(salt) * 360.0, 0.0);
             look.turned(facets(r, 5), rock, pos, rot);
+        }
+    }
+}
+
+/// How often a cell of a room's floor away from its walls has chips of
+/// stone lying on it.
+const CHIPS: f32 = 0.35;
+
+/// A room's floor toward its middle (the art director's iteration 7: the
+/// floors bare but at the walls): a few small chips of stone lying about
+/// it, half in the dirt; small, dull and flat, never a thing to pick up
+/// (the floor's shader carries the grit, the worn ways and the sunk
+/// flags). Among the room's own floor only: not at a wall's foot (its
+/// fallen stones lie there), nor at the edge of what is known.
+fn scatter(look: &mut Look, around: &Around, ctx: &Ctx) {
+    if around.floor != [true; 4] {
+        return;
+    }
+    if let Some(rock) = ctx.mat("bedrock").filter(|_| ctx.branch.rubble)
+        && ctx.noise(501) < CHIPS
+    {
+        let rock = Paint::Pbr(rock, SHADE_RUBBLE, Role::Trim);
+        let n = 1 + (ctx.noise(502) * 2.99) as u32;
+        for k in 0..n {
+            let salt = 510 + k * 4;
+            let r = 0.02 + ctx.noise(salt) * 0.015;
+            let (x, z) = (
+                (ctx.noise(salt + 1) - 0.5) * 0.8,
+                (ctx.noise(salt + 2) - 0.5) * 0.8,
+            );
+            let rot = at(ctx.noise(salt + 3) * 90.0, ctx.noise(salt) * 360.0, 0.0);
+            look.turned(facets(r, 5), rock, at(x, -r * 0.5, z), rot);
         }
     }
 }

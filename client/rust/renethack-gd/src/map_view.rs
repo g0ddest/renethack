@@ -61,7 +61,8 @@ use crate::meshes::{
 };
 use crate::seated::Mount;
 use crate::surface::{
-    Fow, FowCell, Ground, GroundField, Role, Seen, Sight, StandField, Surfaces, cell_index, sight,
+    AgeCell, AgeField, Fow, FowCell, Ground, GroundField, Role, Seen, Sight, StandField, Surfaces,
+    cell_index, sight,
 };
 use crate::theme::{self, nh_color};
 use crate::vfx::{Blast, Ray, Vfx, VfxKind};
@@ -4339,6 +4340,8 @@ pub struct MapView {
     ground: GroundField,
     /// Where something stands or lies (the fire's cracks keep clear).
     standing: StandField,
+    /// What a room's long use has left on its floor (map_surface).
+    age: AgeField,
     vfx: Vfx,
     /// Low mist over the level.
     mist: Gd<FogVolume>,
@@ -5174,7 +5177,8 @@ impl MapView {
         let fow = Fow::new();
         let ground = GroundField::new();
         let standing = StandField::new();
-        let surfaces = Surfaces::new(&fow, &ground, &standing, art.manifest());
+        let age = AgeField::new();
+        let surfaces = Surfaces::new(&fow, &ground, &standing, &age, art.manifest());
         let batches = Batches::new(cells_root.clone(), 1 | TERRAIN_LAYER);
         let vfx = Vfx::new(root.clone(), TERRAIN_LAYER);
         let mut view = MapView {
@@ -5255,6 +5259,7 @@ impl MapView {
             sight: Vec::new(),
             ground,
             standing,
+            age,
             vfx,
             mist,
             post_mat,
@@ -6259,6 +6264,21 @@ impl MapView {
         }
         let fow: Vec<FowCell> = sight(&cells, &walls, hero);
         self.fow.set(&fow, snap);
+        // what a room's long use has left on its floor, by what is known
+        let mut age = vec![AgeCell::default(); n];
+        for (&(x, y), c) in &self.cells {
+            if let Some(i) = cell_index(x, y) {
+                let l = &c.look;
+                age[i] = AgeCell {
+                    room: matches!(l.seen, Seen::LitFloor | Seen::DarkFloor),
+                    wall: l.masonry,
+                    door: l.passage.is_some(),
+                    goal: l.stepped && l.kind == Ground::Land,
+                };
+            }
+        }
+        self.age.set(&age);
+        self.surfaces.show_age(&mut self.age);
         self.sight = fow.iter().map(|c| c.sight).collect();
         // what lies out of sight reads as remembered: no metal glints there
         for (&(x, y), nodes) in &self.cells {
