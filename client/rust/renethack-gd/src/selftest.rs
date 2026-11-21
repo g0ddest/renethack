@@ -5284,6 +5284,7 @@ impl SelfTest {
             "kits" => hero::kits(),
             "two-hands" => hero::two_hands(),
             "coat-steps" => hero::coat_steps(),
+            "grip-kinds" => hero::grip_kinds(),
             "worn" => worn_looks::worn(),
             "worn-generated" => worn_looks::worn_generated(),
             "footprints" => sizes::footprints(),

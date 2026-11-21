@@ -1149,6 +1149,10 @@ pub(super) fn kits() -> Vec<Step> {
                             let at =
                                 crate::art::bone_at(&m.node, "hand_l").ok_or("no left hand")?;
                             let p = map.on_screen(at).ok_or("off the screen")?;
+                            // (and the right, its grip's sheets)
+                            let r = crate::art::bone_at(&m.node, "hand_r")
+                                .and_then(|at| map.on_screen(at))
+                                .unwrap_or(Vector2::new(-1.0, -1.0));
                             let i = POSE_AT.load(Ordering::Relaxed);
                             let (pose, view) = (
                                 KIT_POSES[i / KIT_VIEWS.len()],
@@ -1156,10 +1160,12 @@ pub(super) fn kits() -> Vec<Step> {
                             );
                             let (role, gender) = kit_hero(KIT_AT.load(Ordering::Relaxed));
                             godot_print!(
-                                "selftest: kit: pose {role}-{} {pose} {view}: the left hand at {:.0},{:.0}",
+                                "selftest: kit: pose {role}-{} {pose} {view}: the left hand at {:.0},{:.0}, the right at {:.0},{:.0}",
                                 &gender[..1],
                                 p.x,
-                                p.y
+                                p.y,
+                                r.x,
+                                r.y
                             );
                             Ok(())
                         }),
@@ -2374,6 +2380,269 @@ pub(super) fn coat_steps() -> Vec<Step> {
                 }),
                 Step::Call("this frame", |_| {
                     FRAME.store(frames(), Ordering::Relaxed);
+                    Ok(())
+                }),
+            ]);
+        }
+    }
+    steps.extend(quit());
+    steps
+}
+
+/// The kinds of thing a hand closes round (`grip_kinds`): what is wished
+/// for, the name it is wielded by, and the pictures' name.
+const GRIP_KINDS: [(&str, &str, &str); 7] = [
+    ("long sword", "long sword", "sword"),
+    ("spear", "spear", "spear"),
+    ("dagger", "dagger", "dagger"),
+    ("axe", "axe", "axe"),
+    ("bow", "bow", "bow"),
+    ("wand of striking", "wand", "wand"),
+    ("two-handed sword", "two-handed", "two-hander"),
+];
+/// The views of each: its name and the hero's turn (2.8 m off).
+const GRIP_VIEWS: [(&str, f32); 3] = [("front", 0.0), ("right", 90.0), ("left", 270.0)];
+
+/// The grip round each kind of thing held (the generated hands' grip
+/// morphs, iteration 8): the generated Valkyrie (debug mode) wishes for
+/// each of `GRIP_KINDS` and wields it (her shield off before the two-handed
+/// sword), and is pictured at rest 2.8 m off from the front and either
+/// side (`grip-<kind>-<view>`); the log tells where each hand is.
+pub(super) fn grip_kinds() -> Vec<Step> {
+    static KIND: AtomicUsize = AtomicUsize::new(0);
+    /// What the right hand held before the wield, and since when the
+    /// wield's change is awaited.
+    static HELD: Mutex<(Vec<String>, Option<std::time::Instant>)> = Mutex::new((Vec::new(), None));
+    static VIEW: AtomicUsize = AtomicUsize::new(0);
+    fn pose(g: &mut RenethackGame) -> Result<(), String> {
+        let map = map_view(g)?;
+        let (idle, _) = map.hero_fight_clips();
+        let m = map.hero_model().ok_or("no hero model")?;
+        let mut p = m.player().cloned().ok_or("no animation player")?;
+        if let Some(idle) = idle.filter(|c| p.has_animation(c.as_str())) {
+            p.play_ex().name(idle.as_str()).custom_blend(0.0).done();
+            p.seek_ex(0.5).update(true).done();
+            p.pause();
+        }
+        kit_turn(g, GRIP_VIEWS[VIEW.load(Ordering::Relaxed)].1)?;
+        // (RENETHACK_GRIP_AT=1.0 RENETHACK_GRIP_LIFT=0.8: a close look at
+        // the hand instead)
+        let env = |name: &str, or: f32| {
+            std::env::var(name)
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(or)
+        };
+        let lift = env("RENETHACK_GRIP_LIFT", 0.5);
+        g.ui.as_mut()
+            .ok_or("no UI")?
+            .map
+            .set_distance(env("RENETHACK_GRIP_AT", 2.8), lift);
+        Ok(())
+    }
+    fn hands(g: &mut RenethackGame) -> Result<(), String> {
+        let map = map_view(g)?;
+        let m = map.hero_model().ok_or("no hero model")?;
+        let at = |bone: &str| {
+            crate::art::bone_at(&m.node, bone)
+                .and_then(|p| map.on_screen(p))
+                .unwrap_or(Vector2::new(-1.0, -1.0))
+        };
+        let (l, r) = (at("hand_l"), at("hand_r"));
+        // where the held thing's long axis passes the hand's slot point: a
+        // thing lies along its own z (object_kit), so the axis is its z
+        // through the middle of its bounds across z; measured in the slot's
+        // frame (the units of the held grips), with the shift of the grip
+        // that would put the axis through the slot point
+        let node: Gd<Node> = m.node.clone().upcast();
+        let off = node
+            .find_child_ex("Gear_hand_r")
+            .owned(false)
+            .done()
+            .and_then(|att| {
+                att.get_children()
+                    .iter_shared()
+                    .filter(|c| c.get_name().to_string().starts_with(HELD_NODE))
+                    .find_map(|c| c.try_cast::<Node3D>().ok())
+            })
+            .and_then(|root| {
+                // the thing's vertices in the holder's frame and the slot's
+                let holder = root.get_child(0)?.try_cast::<Node3D>().ok()?;
+                let to_holder = holder.get_global_transform().affine_inverse();
+                let h = holder.get_transform();
+                let mut pts: Vec<Vector3> = Vec::new();
+                for mi in holder
+                    .find_children_ex("*")
+                    .type_("MeshInstance3D")
+                    .owned(false)
+                    .done()
+                    .iter_shared()
+                    .filter_map(|n| n.try_cast::<godot::classes::MeshInstance3D>().ok())
+                    .filter(|mi| mi.is_visible_in_tree())
+                {
+                    let Some(mesh) = mi.get_mesh() else {
+                        continue;
+                    };
+                    let t = to_holder * mi.get_global_transform();
+                    for s in 0..mesh.get_surface_count() {
+                        let arrays = mesh.surface_get_arrays(s);
+                        let Some(v) = arrays
+                            .get(0)
+                            .and_then(|v| v.try_to::<PackedVector3Array>().ok())
+                        else {
+                            continue;
+                        };
+                        pts.extend(v.as_slice().iter().map(|&p| t * p));
+                    }
+                }
+                if pts.is_empty() {
+                    return None;
+                }
+                // its long axis: the holder's axis it spans most along
+                let (mut lo, mut hi) = (Vector3::splat(f32::MAX), Vector3::splat(f32::MIN));
+                for &p in &pts {
+                    lo = lo.coord_min(p);
+                    hi = hi.coord_max(p);
+                }
+                let span = hi - lo;
+                let along = if span.z >= span.x && span.z >= span.y {
+                    Vector3::BACK
+                } else if span.y >= span.x {
+                    Vector3::UP
+                } else {
+                    Vector3::RIGHT
+                };
+                let axis = (h.basis * along).normalized();
+                // the middle of its cross-section where the slot point is
+                // along it (within 3 cm of it, or 6)
+                let slot_pts: Vec<Vector3> = pts.iter().map(|&p| h * p).collect();
+                let near = |w: f32| -> Vec<Vector3> {
+                    slot_pts
+                        .iter()
+                        .copied()
+                        .filter(|p| p.dot(axis).abs() < w)
+                        .collect()
+                };
+                let mut sel = near(0.03);
+                if sel.len() < 8 {
+                    sel = near(0.06);
+                }
+                if sel.is_empty() {
+                    return None;
+                }
+                let c = sel.iter().fold(Vector3::ZERO, |a, &p| a + p) / sel.len() as f32;
+                let shift = -(c - axis * c.dot(axis));
+                let grip = h.origin + shift;
+                Some((shift.length() * 100.0, shift * 100.0, grip))
+            });
+        if let Some((cm, shift, grip)) = off {
+            godot_print!(
+                "selftest: grip: the held axis passes {cm:.1} cm from the right hand's slot (shift {:.1}, {:.1}, {:.1} cm in the slot; a grip pos through it [{:.3}, {:.3}, {:.3}])",
+                shift.x,
+                shift.y,
+                shift.z,
+                grip.x,
+                grip.y,
+                grip.z
+            );
+        }
+        let (_, _, kind) = GRIP_KINDS[KIND.load(Ordering::Relaxed)];
+        let (view, _) = GRIP_VIEWS[VIEW.load(Ordering::Relaxed)];
+        godot_print!(
+            "selftest: grip: {kind} {view}: the left hand at {:.0},{:.0}, the right at {:.0},{:.0}",
+            l.x,
+            l.y,
+            r.x,
+            r.y
+        );
+        Ok(())
+    }
+    let mut steps = vec![Step::Call("debug mode, seed 1", |g| {
+        g.debug_mode = true;
+        g.seed = Some(1);
+        KIND.store(0, Ordering::Relaxed);
+        Ok(())
+    })];
+    steps.extend(start_as(CharacterChoice {
+        align: "neutral".into(),
+        ..choice("valkyrie", "female")
+    }));
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(map_view(g)?.hero_model().is_some_and(|m| !m.is_pending()))
+    }));
+    // (RENETHACK_GRIP_KINDS=sword+spear: only those)
+    let only = std::env::var("RENETHACK_GRIP_KINDS").ok();
+    for (k, &(wish, _, kind)) in GRIP_KINDS.iter().enumerate() {
+        if k > 0 {
+            steps.push(Step::Call("the next kind", |_| {
+                KIND.fetch_add(1, Ordering::Relaxed);
+                Ok(())
+            }));
+        }
+        if only
+            .as_deref()
+            .is_some_and(|o| !o.split(['+', ',']).any(|w| w == kind))
+        {
+            continue;
+        }
+        if kind == "two-hander" {
+            // (with nothing else to take off the game asks nothing)
+            steps.extend([
+                key('T'),
+                Step::Request("the shield asked for, or the next command", |_| true),
+                Step::KeysUntil("the shield off", |g| match g.pending {
+                    Some((_, Prompt::Command)) => Ok(None),
+                    _ => super::audio_tests::letter(g, "shield").map(Some),
+                }),
+            ]);
+        }
+        steps.extend(super::audio_tests::wish(wish));
+        steps.extend([
+            Step::Call("what the right hand holds now", |g| {
+                *HELD.lock().unwrap_or_else(|e| e.into_inner()) = (held_on(g, "hand_r")?.0, None);
+                Ok(())
+            }),
+            key('w'),
+            Step::Request("what to wield", |p| !matches!(p, Prompt::Command)),
+            Step::KeyFrom("the wished-for thing", |g| {
+                let (_, name, _) = GRIP_KINDS[KIND.load(Ordering::Relaxed)];
+                super::audio_tests::letter(g, name)
+            }),
+            Step::AnswerUntil('y', "a command after wielding", idle_command),
+            // (the model takes the new thing a moment after the pack says
+            // so: three seconds at most, for a thing drawn as the last)
+            Step::Wait("the right hand holds it", |g| {
+                let now = held_on(g, "hand_r")?.0;
+                let mut held = HELD.lock().unwrap_or_else(|e| e.into_inner());
+                let since = *held.1.get_or_insert_with(std::time::Instant::now);
+                let changed = !now.is_empty() && now != held.0;
+                if changed || since.elapsed().as_secs_f32() > 3.0 {
+                    godot_print!("selftest: grip: wielded {now:?} (was {:?})", held.0);
+                    return Ok(true);
+                }
+                Ok(false)
+            }),
+        ]);
+        steps.push(Step::Call("the first view", |_| {
+            VIEW.store(0, Ordering::Relaxed);
+            HELD.lock().unwrap_or_else(|e| e.into_inner()).1 = Some(std::time::Instant::now());
+            Ok(())
+        }));
+        // (the hands close and the off hand comes to a haft over a moment)
+        steps.push(Step::Wait("her hands settled on it", |_| {
+            let held = HELD.lock().unwrap_or_else(|e| e.into_inner());
+            Ok(held.1.is_none_or(|t| t.elapsed().as_secs_f32() > 1.5))
+        }));
+        for &(view, _) in GRIP_VIEWS.iter() {
+            let shot: &'static str = format!("grip-{kind}-{view}").leak();
+            steps.extend([
+                Step::Call("held at rest, turned to the view", pose),
+                Step::Wait("the camera there", camera_settled),
+                Step::Wait("a frame", |_| Ok(true)),
+                Step::Call("where the hands are", hands),
+                Step::Shot(shot),
+                Step::Call("the next view", |_| {
+                    VIEW.fetch_add(1, Ordering::Relaxed);
                     Ok(())
                 }),
             ]);

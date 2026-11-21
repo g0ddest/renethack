@@ -70,8 +70,42 @@ pub struct Worn {
     upright: f32,
     /// The left arm's IK onto a two-handed weapon's haft (`off_hand.rs`).
     off_hand: Option<Gd<OffHand>>,
+    /// The hands' grip morphs, once looked for (none: a body without them).
+    grip: Option<Option<Grip>>,
     /// A monster's, not the hero's: given back, it is not kept aside.
     monster: bool,
+}
+
+/// A body without finger bones closes its hands by morphs (`grip_l`,
+/// `grip_r`, glb_grip.py): the mesh that has them, their indices, and how
+/// far each hand is closed now.
+struct Grip {
+    mesh: Gd<MeshInstance3D>,
+    shapes: [i32; 2],
+    now: [f32; 2],
+}
+
+/// Seconds a hand takes to close round what it takes up, or to open.
+const GRIP_SECS: f32 = 0.1;
+
+/// The mesh under `skeleton` with both grip morphs, if any.
+fn find_grip(skeleton: &Gd<Skeleton3D>) -> Option<Grip> {
+    skeleton
+        .find_children_ex("*")
+        .type_("MeshInstance3D")
+        .owned(false)
+        .done()
+        .iter_shared()
+        .filter_map(|n| n.try_cast::<MeshInstance3D>().ok())
+        .find_map(|mut mesh| {
+            let l = mesh.find_blend_shape_by_name("grip_l");
+            let r = mesh.find_blend_shape_by_name("grip_r");
+            (l >= 0 && r >= 0).then_some(Grip {
+                mesh,
+                shapes: [l, r],
+                now: [-1.0; 2],
+            })
+        })
 }
 
 /// An item used: its node, the seconds it stays in the hand, the hand's
@@ -281,6 +315,7 @@ impl Art {
                 show_slot(worn, hand, true);
             }
         }
+        self.ease_grip(worn, gear, delta);
         if worn.upright > 0.0 {
             worn.upright -= delta;
             let slot = self.manifest.held_slot_of(m.key.model, "hand_r");
@@ -453,6 +488,49 @@ impl Art {
             }
         }
         Some((p, clips))
+    }
+
+    /// A hand closed round what it holds (a two-handed haft both), open
+    /// when empty, eased over `GRIP_SECS`; the shield arm's hand is left
+    /// to its own fist (`ShieldHand` draws it in behind the boss):
+    /// a body without finger bones, by its grip morphs
+    /// (RENETHACK_NO_GRIP: open always, to compare).
+    fn ease_grip(&self, worn: &mut Worn, gear: &Gear, delta: f32) {
+        static OFF: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        if *OFF.get_or_init(|| std::env::var_os("RENETHACK_NO_GRIP").is_some()) {
+            return;
+        }
+        let Some(skeleton) = worn.skeleton.as_ref() else {
+            return;
+        };
+        let grip = worn.grip.get_or_insert_with(|| find_grip(skeleton));
+        let Some(g) = grip.as_mut().filter(|g| g.mesh.is_instance_valid()) else {
+            return;
+        };
+        let used = worn.in_use.as_ref().map(|u| u.hand);
+        let two = gear.hand_l.is_none()
+            && gear.arm_l.is_none()
+            && gear
+                .hand_r
+                .and_then(|h| self.manifest.held_at(h.held).1.two)
+                .is_some();
+        let want = [
+            gear.hand_l.is_some() || two || used == Some("hand_l"),
+            gear.hand_r.is_some() || used == Some("hand_r"),
+        ];
+        for (k, &want) in want.iter().enumerate() {
+            let to = if want { 1.0 } else { 0.0 };
+            // (the first time at once: a hero comes in holding her spear)
+            let next = if g.now[k] < 0.0 {
+                to
+            } else {
+                g.now[k] + (to - g.now[k]) * (delta / GRIP_SECS).min(1.0)
+            };
+            if (next - g.now[k]).abs() > 1e-4 {
+                g.mesh.set_blend_shape_value(g.shapes[k], next);
+                g.now[k] = next;
+            }
+        }
     }
 
     /// A two-handed weapon in the right hand takes the left hand onto its
