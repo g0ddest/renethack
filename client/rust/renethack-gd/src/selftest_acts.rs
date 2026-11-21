@@ -308,11 +308,13 @@ const GAZES: [(&str, &str, ActKind, bool, &str); 3] = [
         true,
         "acts-spit",
     ),
+    // (a dragon's body is the generated one, with no attack clip of its
+    // own: it breathes in its lunge, the mouth thrust at the hero)
     (
         "red dragon",
         "The red dragon breathes fire!",
         ActKind::Breath,
-        true,
+        false,
         "acts-breath",
     ),
 ];
