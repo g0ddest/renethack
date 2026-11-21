@@ -127,6 +127,72 @@ impl ISkeletonModifier3D for Bearing {
     }
 }
 
+/// The bones a glance turns, and each one's share of it.
+const GLANCE_BONES: [(&str, f32); 2] = [("neck_01", 0.4), ("Head", 0.6)];
+
+/// A look round: the neck and the head turned about the body's up, after
+/// the animation, whatever clip plays. `idle.rs` makes it on the hero's
+/// skeleton at their first glance and puts it to sleep between two.
+#[derive(GodotClass)]
+#[class(base = SkeletonModifier3D, init)]
+pub struct Glance {
+    base: Base<SkeletonModifier3D>,
+    /// The body the skeleton is of: its frame says which way is up.
+    body: Option<Gd<Node3D>>,
+    /// Degrees the head is turned to the body's left.
+    turn: f32,
+    bones: Option<[i32; 2]>,
+}
+
+impl Glance {
+    pub fn set_body(&mut self, body: Gd<Node3D>) {
+        self.body = Some(body);
+    }
+
+    pub fn set_turn(&mut self, degrees: f32) {
+        self.turn = degrees;
+    }
+}
+
+#[godot_api]
+impl ISkeletonModifier3D for Glance {
+    fn process_modification_with_delta(&mut self, _delta: f64) {
+        if self.turn == 0.0 {
+            return;
+        }
+        let Some(body) = self.body.clone().filter(|b| b.is_instance_valid()) else {
+            return;
+        };
+        let Some(mut sk) = self.base().get_skeleton() else {
+            return;
+        };
+        if self.bones.is_none() {
+            let found = GLANCE_BONES.map(|(name, _)| sk.find_bone(name));
+            self.bones = found.iter().all(|&i| i >= 0).then_some(found);
+        }
+        let Some(bones) = self.bones else {
+            return;
+        };
+        if !body.is_inside_tree() {
+            return;
+        }
+        let axes =
+            sk.get_global_transform().affine_inverse().basis * body.get_global_transform().basis;
+        let up = axes.col_b().normalized();
+        // the neck first: the head takes its turn along and adds its own
+        for (&bone, (_, share)) in bones.iter().zip(GLANCE_BONES) {
+            let parent = sk.get_bone_parent(bone);
+            let above = if parent >= 0 {
+                sk.get_bone_global_pose(parent).basis
+            } else {
+                Basis::IDENTITY
+            };
+            let own = sk.get_bone_global_pose(bone).basis;
+            sk.set_bone_pose_rotation(bone, bent(above, own, up, self.turn * share));
+        }
+    }
+}
+
 /// The bones of a throat clutched: the neck and the head, and each arm's
 /// clavicle, upper arm, lower arm and hand, the left's then the right's.
 const NECK_BONES: [&str; 2] = ["neck_01", "Head"];

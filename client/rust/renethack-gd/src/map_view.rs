@@ -79,6 +79,8 @@ mod fall;
 mod hero_look;
 #[path = "hero_pose.rs"]
 mod hero_pose;
+#[path = "idle.rs"]
+mod idle;
 #[path = "opening.rs"]
 mod opening;
 #[path = "prologue_stage.rs"]
@@ -88,6 +90,7 @@ pub use acts::{ActKind, Acted, Aim};
 pub use fall::{FallKind, Fell};
 pub use hero_look::{Effects, Posture, Shown};
 pub use hero_pose::{Held, HelplessPhase, STATE_CLIPS};
+pub use idle::set_on as set_idle_life;
 pub use opening::Opening;
 pub use prologue_stage::{
     FLIGHT_DROP as PROLOGUE_FLIGHT_DROP, MOUTH as PROLOGUE_MOUTH, PrologueHero, amulet_moments,
@@ -4177,6 +4180,10 @@ pub struct MotionStats {
     pub falls: u32,
     /// Frames whose rays waited for a breather's mouth to open.
     pub breaths_held: u32,
+    /// Bodies breathing (standing still with no clip of their own) in the
+    /// last frame, and the looks round at the hero so far.
+    pub breathing: u32,
+    pub glances: u32,
 }
 
 /// Frame times summed for `MapView::frame_stats`.
@@ -4585,6 +4592,8 @@ pub struct MapView {
     /// What the hero's body shows of their state.
     hero_pose: hero_pose::HeroPose,
     hero_look: hero_look::HeroLook,
+    /// The hero's glances (`idle.rs`).
+    idle: idle::Idle,
     /// Creatures gone from their cells this frame, the deaths the frame's
     /// messages tell (by name, and the cell a blow found them on), the
     /// bodies falling, and the last fall to end (self-tests).
@@ -5391,6 +5400,7 @@ impl MapView {
             hero_fx,
             hero_pose,
             hero_look,
+            idle: idle::Idle::new(),
             gone: Vec::new(),
             deaths: Vec::new(),
             falls: Vec::new(),
@@ -5623,6 +5633,7 @@ impl MapView {
         if self.catch_done && !self.hero_running() && self.hero_at == hero {
             (self.catching_up, self.catch_done) = (false, false);
         }
+        self.idle_life(world, catalog, hero, delta);
         self.advance_flashes(delta as f32);
         self.edge_the_hero();
         self.advance_falls(delta as f32);

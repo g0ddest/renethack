@@ -5255,6 +5255,11 @@ impl SelfTest {
     pub fn new(args: &Args) -> Option<SelfTest> {
         let name = args.selftest.as_deref()?;
         watch_panics();
+        // the scenarios measure bodies standing: no breath, no glance (but
+        // where it is the scene, and in the soak)
+        let idle_life =
+            matches!(name, "idle" | "soak") && std::env::var_os("RENETHACK_IDLE_OFF").is_none();
+        crate::map_view::set_idle_life(idle_life);
         let steps = match name {
             "tour" => tour(),
             "hud" => hud(),
@@ -5369,6 +5374,7 @@ impl SelfTest {
             "bites" => stage_tests::bites(),
             "stride" => stage_tests::stride(),
             "catch-up" => stage_tests::catch_up(),
+            "idle" => stage_tests::idle(),
             "late-monsters" => late_tests::late_monsters(),
             "helm-hair" => helm_hair_tests::helm_hair(),
             "feet" => feet_tests::feet(),

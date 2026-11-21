@@ -33,7 +33,16 @@
 //!   answer comes after, on that picture. Then home again, cut into by a
 //!   click on a cell near home: she dashes home and walks to that cell.
 //!
-//! Nothing is checked but that the scenes were played (but in `catch-up`).
+//! - `idle`: a debug-mode Valkyrie (her pet slain) among bodies with no
+//!   idle clip of their own (a sewer rat, a centipede, a scorpion, a yeti),
+//!   turns passing, then still: each second logs how many breathe, how
+//!   often one looked round at her and how far her own glance turns her
+//!   head (`selftest: idle: ...`), and where she and they are in the
+//!   window. RENETHACK_IDLE_OFF=1: without the idle life (a strip's
+//!   "before").
+//!
+//! Nothing is checked but that the scenes were played (but in `catch-up`;
+//! and in `idle`, that some body breathed and she glanced).
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, AtomicUsize, Ordering};
@@ -948,6 +957,130 @@ pub(super) fn catch_up() -> Vec<Step> {
                 ));
             }
             Ok(g.world.map.hero() == Some(*NEAR.lock().unwrap()) && drawn_where_she_is(g)?)
+        }),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
+/// The bodies `idle` makes: none has an idle clip of its own.
+const STILL_ONES: [&str; 4] = ["sewer rat", "centipede", "scorpion", "yeti"];
+
+static IDLE_FRAMES: AtomicI64 = AtomicI64::new(0);
+static MOST_BREATHING: AtomicU32 = AtomicU32::new(0);
+static MOST_TURNED: AtomicU32 = AtomicU32::new(0);
+
+/// Where a cell is in the window (the movie's pixels), for a strip's crop.
+fn in_window(g: &RenethackGame, (x, y): (i32, i32)) -> String {
+    let at = g.base().get_viewport().and_then(|vp| {
+        let cam = vp.get_camera_3d()?;
+        Some(
+            vp.get_screen_transform()
+                * cam.unproject_position(Vector3::new(x as f32, 0.5, y as f32)),
+        )
+    });
+    at.map_or("-".into(), |at| format!("{:.0},{:.0}", at.x, at.y))
+}
+
+pub(super) fn idle() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode, seed 11", |g| {
+        g.debug_mode = true;
+        g.seed = Some(11);
+        Ok(())
+    })];
+    steps.extend(start());
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    steps.extend(super::motion_tests::slay_pet());
+    steps.extend([
+        Step::Call("7 m off, as in play", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(7.0, 0.2);
+            Ok(())
+        }),
+        Step::Wait("the camera on the hero", camera_settled),
+    ]);
+    for one in STILL_ONES {
+        steps.extend([
+            Step::Key(ctrl_key('g')),
+            Step::Request(
+                "the kind of monster to make",
+                |p| matches!(p, Prompt::Text { query, .. } if query.contains("Create what kind of monster")),
+            ),
+            Step::Dialog(DialogEvent::TextSubmitted(format!("peaceful {one}"))),
+            Step::Request("a command after the monster", command),
+        ]);
+    }
+    // turns pass (they wander and stand), then a still while
+    for _ in 0..4 {
+        steps.extend([
+            key('s'),
+            Step::Request("the next command", command),
+            Step::Call("", |_| {
+                IDLE_FRAMES.store(frames(), Ordering::Relaxed);
+                Ok(())
+            }),
+            Step::Wait("a second", |_| {
+                Ok(frames() >= IDLE_FRAMES.load(Ordering::Relaxed) + 30)
+            }),
+        ]);
+    }
+    steps.extend([
+        Step::Call("still from now: her glance due, they look round", |g| {
+            IDLE_FRAMES.store(frames(), Ordering::Relaxed);
+            let hero = g.world.map.hero().ok_or("no hero")?;
+            let mut around = Vec::new();
+            for y in hero.1 - 4..=hero.1 + 4 {
+                for x in hero.0 - 4..=hero.0 + 4 {
+                    let mon = g.world.map.cell(x, y).is_some_and(|c| {
+                        c.glyph.as_ref().is_some_and(|gl| {
+                            gl.kind == GlyphKind::Mon && gl.flags & mg::HERO == 0
+                        })
+                    });
+                    if mon {
+                        around.push(format!("({x},{y}) at {}", in_window(g, (x, y))));
+                    }
+                }
+            }
+            eprintln!(
+                "selftest: idle: still from frame {}; hero {hero:?} at {}; bodies {}",
+                frames(),
+                in_window(g, hero),
+                around.join("; ")
+            );
+            if std::env::var_os("RENETHACK_IDLE_OFF").is_none() {
+                g.ui.as_mut().ok_or("no UI")?.map.idle_now();
+            }
+            Ok(())
+        }),
+        Step::Wait("eight seconds still, logged", |g| {
+            let n = frames() - IDLE_FRAMES.load(Ordering::Relaxed);
+            let map = map_view(g)?;
+            let s = map.motion_stats();
+            let (turn, glances) = map.hero_glance_now();
+            MOST_BREATHING.fetch_max(s.breathing, Ordering::Relaxed);
+            MOST_TURNED.fetch_max(turn.abs() as u32, Ordering::Relaxed);
+            if n % 15 == 0 {
+                eprintln!(
+                    "selftest: idle: frame {} breathing {} looks round {} her head {turn:.0} deg, glances {glances}",
+                    frames(),
+                    s.breathing,
+                    s.glances
+                );
+            }
+            Ok(n >= 240)
+        }),
+        Step::Call("some body breathed and she glanced", |_| {
+            if std::env::var_os("RENETHACK_IDLE_OFF").is_some() {
+                return Ok(());
+            }
+            if MOST_BREATHING.load(Ordering::Relaxed) == 0 {
+                return Err("no body breathed".into());
+            }
+            match MOST_TURNED.load(Ordering::Relaxed) {
+                t if t < 10 => Err(format!("her head turned {t} degrees at most")),
+                _ => Ok(()),
+            }
         }),
     ]);
     steps.extend(quit());
