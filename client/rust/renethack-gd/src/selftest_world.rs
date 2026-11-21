@@ -31,11 +31,13 @@ fn drawn_in(g: &RenethackGame, branch: Branch) -> Result<bool, String> {
     Ok(g.world.branch() == branch && map.branch() == branch && camera_settled(g)?)
 }
 
-/// The walls drawn are of the branch's own material, not the main
-/// dungeon's.
+/// The walls drawn are of the branch's own material (its level's: the
+/// way into Gehennom is the Valley of the Dead, in its grey stone), not
+/// the main dungeon's.
 fn own_walls(g: &RenethackGame, branch: Branch) -> Result<(), String> {
     let wall = map_view(g)?.wall_material();
-    let expected = crate::branch_look::look_of(branch).material("masonry");
+    let expected =
+        crate::branch_look::look_of_level(branch, g.world.level.as_ref()).material("masonry");
     if wall != expected || wall == "masonry" {
         return Err(format!("{branch:?}: walls of {wall:?}, not {expected:?}"));
     }

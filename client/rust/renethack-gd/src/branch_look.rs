@@ -223,6 +223,9 @@ pub struct BranchLook {
     /// What lies on a wall's top (its cap), by manifest name.
     pub cap: &'static str,
     pub torch: Color,
+    /// Its torches burn cold, a corpse-light's pale flame (flame.gdshader's
+    /// `cold`: 0 a fire's own colours, 1 none of them).
+    pub cold_fire: f32,
     pub torch_energy: f32,
     /// How far a torch's light reaches, in metres.
     pub torch_range: f32,
@@ -231,6 +234,9 @@ pub struct BranchLook {
     /// far it reaches (metres from the light over their head).
     pub hero_light: f32,
     pub hero_range: f32,
+    /// The colour of the hero's own pool where it is not map_view's warm
+    /// `HERO_LIGHT` (the Valley's: cold).
+    pub hero_color: Option<Color>,
     /// A low light all round the hero where they stand in no lit room,
     /// reaching about three cells and casting no shadow, so what is drawn
     /// there (the rock, the walls, the floor remembered) reads in the
@@ -324,10 +330,12 @@ const MAIN: BranchLook = BranchLook {
     rubble: true,
     cap: "bedrock",
     torch: Color::from_rgb(1.0, 0.66, 0.38),
+    cold_fire: 0.0,
     torch_energy: 2.4,
     torch_range: 5.5,
     hero_light: 1.0,
     hero_range: 5.5,
+    hero_color: None,
     near_fill: 1.2,
     floor_memory: 1.0,
     creature_key: None,
@@ -851,10 +859,30 @@ pub fn look_of_level(branch: Branch, level: Option<&LevelNotice>) -> BranchLook 
         // in ash (its lair is told from the arrival on: NetHack names the
         // Valley as the hero comes into it, so its cells are its own from
         // the first)
+        // (and its own place from the first cells seen, the art loop's
+        // eighth critique: on arrival a warm torch on brown brick over a
+        // red glow read as any dark level. Its walls dressed grey stone,
+        // its floors dead ash; its torches corpse-lights, the hero's pool
+        // cold; no fire's glow from below, no embers in its air)
         Some("valley") => BranchLook {
-            fog: rgb(0.44, 0.46, 0.42),
-            fog_density: 0.008,
-            haze: 1.3,
+            remap: &[
+                ("masonry", "dressed"),
+                ("bedrock", "basalt_rock"),
+                ("floor", "ash"),
+                ("dirt", "ash"),
+            ],
+            torch: rgb(0.5, 0.76, 0.88),
+            cold_fire: 1.0,
+            torch_energy: 1.0,
+            hero_color: Some(rgb(0.74, 0.82, 0.9)),
+            hero_light: 1.15,
+            fill: rgb(0.55, 0.68, 0.8),
+            underglow: None,
+            embers: false,
+            cool_shadows: 1.0,
+            fog: rgb(0.4, 0.46, 0.5),
+            fog_density: 0.009,
+            haze: 1.1,
             // (its fire banked low: the red veins in its floors were all
             // the arrival showed of it)
             cracks: 0.12,
@@ -866,11 +894,11 @@ pub fn look_of_level(branch: Branch, level: Option<&LevelNotice>) -> BranchLook 
                 wreck: false,
                 ..look.dress
             },
-            ambient: rgb(0.32, 0.34, 0.36),
+            ambient: rgb(0.3, 0.35, 0.4),
             grade: Grade {
-                saturation: 0.85,
-                shadows: rgb(0.97, 1.0, 1.04),
-                highlights: rgb(1.02, 1.0, 0.98),
+                saturation: 0.7,
+                shadows: rgb(0.94, 1.0, 1.07),
+                highlights: rgb(0.97, 1.0, 1.03),
                 ..look.grade
             },
             ..look

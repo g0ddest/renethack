@@ -18,6 +18,9 @@ uniform float foot = 0.0;
 // and how much of it is left as it dies (a torch's: none deeper, all)
 uniform float deeper = 0.0;
 uniform float left = 1.0;
+// a corpse-light (the Valley of the Dead's torches): how much of the fire's
+// colours gives way to a pale cold flame of the same heat
+uniform float cold = 0.0;
 // each flame its own
 instance uniform float phase = 0.0;
 
@@ -67,6 +70,7 @@ void fragment() {
 		fire = mix(fire, vec3(1.0, 0.62, 0.2), smoothstep(0.6, 0.95, heat));
 		float stand = foot > 0.0 ? smoothstep(0.0, foot, 1.0 - UV.y) : 1.0;
 		fire = mix(fire, fire * vec3(1.0, 0.55, 0.35), deeper);
+		fire = mix(fire, mix(vec3(0.16, 0.42, 0.62), vec3(0.62, 0.9, 1.0), smoothstep(0.3, 0.9, heat)), cold);
 		ALBEDO = fire * heat * energy * 1.1 * stand * left;
 		ALPHA = clamp(heat * 1.5, 0.0, 1.0) * stand * 0.8 * left;
 	} else {
@@ -80,6 +84,7 @@ void fragment() {
 		float heat = shape * (1.25 - y);
 		vec3 col = mix(vec3(1.0, 0.22, 0.03), vec3(1.0, 0.68, 0.3), smoothstep(0.25, 0.8, heat));
 		col = mix(col, vec3(1.0, 0.93, 0.75), smoothstep(0.8, 1.1, heat));
+		col = mix(col, mix(vec3(0.16, 0.42, 0.62), vec3(0.62, 0.9, 1.0), smoothstep(0.3, 0.9, heat)), cold);
 		ALPHA = clamp(shape * 1.2, 0.0, 1.0);
 		ALBEDO = col * energy * ALPHA;
 		ALPHA *= 0.8;

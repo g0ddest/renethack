@@ -879,8 +879,8 @@ const MIST_OPACITY: f32 = 0.16;
 /// The Valley's cold mist over its floors (`Liquid::GraveMist`): its lit
 /// colour and how see-through, a puff or two to a cell.
 const GRAVE_MIST_LIT: Color = Color::from_rgb(0.3, 0.33, 0.36);
-const GRAVE_MIST_OPACITY: f32 = 0.13;
-const GRAVE_MIST_PUFFS: u32 = 2;
+const GRAVE_MIST_OPACITY: f32 = 0.2;
+const GRAVE_MIST_PUFFS: u32 = 3;
 /// Lava's light (`place_lava_lights`): its colour, energy and reach (3 to
 /// 4 cells), one every so many cells over a big pool, and how many at
 /// most on a level.
@@ -6049,6 +6049,10 @@ impl MapView {
         {
             m.set_shader_parameter("running", &l.molten.to_variant());
         }
+        // (its torches' flames a fire's, or a corpse-light's)
+        if let Ok(mut m) = self.flame_mat.clone().try_cast::<ShaderMaterial>() {
+            m.set_shader_parameter("cold", &l.cold_fire.to_variant());
+        }
         self.built_look = crate::branch_look::built(l);
         self.sanctum_look = crate::branch_look::sanctum(l);
         self.still_water();
@@ -6120,9 +6124,11 @@ impl MapView {
         // hand keeps its own)
         if !self.hero_gear.lamp() {
             let energy = HERO_LIGHT_ENERGY * HERO_GAIN * l.hero_light;
+            let color = l.hero_color.unwrap_or(HERO_LIGHT);
+            self.hero_light.set_color(color);
             self.hero_light.set_param(Param::ENERGY, energy);
             self.hero_light.set_param(Param::RANGE, l.hero_range);
-            self.hero_cap.set_color(HERO_LIGHT);
+            self.hero_cap.set_color(color);
             self.hero_cap.set_param(Param::ENERGY, energy * HERO_CAP);
             self.hero_cap.set_param(
                 Param::RANGE,
@@ -8391,7 +8397,7 @@ impl MapView {
             } else {
                 let l = &self.branch_look;
                 let energy = HERO_LIGHT_ENERGY * HERO_GAIN * l.hero_light;
-                (HERO_LIGHT, energy, l.hero_range)
+                (l.hero_color.unwrap_or(HERO_LIGHT), energy, l.hero_range)
             };
             self.hero_light.set_color(color);
             self.hero_light.set_param(Param::ENERGY, energy);
