@@ -209,6 +209,8 @@ impl World {
     pub fn set_catalog(&mut self, catalog: &Catalog) {
         self.map.set_effect_cmaps(effect_cmaps(catalog));
         self.map.set_ways(way_cmaps(catalog));
+        self.map
+            .set_feature_cmaps(crate::terrain::feature_cmaps(catalog));
         self.helpless.set_catalog(catalog);
     }
 

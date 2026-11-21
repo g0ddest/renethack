@@ -1076,6 +1076,53 @@ pub fn lay_out_wares(world: &mut World, cat: &Catalog, dark: bool) -> Result<(i3
     Ok((cx, cy))
 }
 
+/// Who stands on an altar, for pictures (the `altar-guests` scene): a
+/// room's floor (lit, or `dark`) with a row of altars two cells apart, a
+/// jackal, a little dog (a pet), a newt and a hill orc each come onto one
+/// seen bare before, one altar bare; the hero on the floor south of them.
+/// Where she stands.
+pub fn lay_out_altar_guests(
+    world: &mut World,
+    cat: &Catalog,
+    dark: bool,
+) -> Result<(i32, i32), String> {
+    let map = &mut world.map;
+    map.clear();
+    let floor = cmap(cat, if dark { "S_darkroom" } else { "S_room" })?;
+    let lit = cmap(cat, "S_room")?;
+    let altar = cmap(cat, "S_altar")?;
+    let (cx, cy) = (40, 10);
+    for y in cy - 4..=cy + 3 {
+        for x in cx - 7..=cx + 7 {
+            map.print(x, y, &floor, None);
+        }
+    }
+    let guests = [
+        Some(("jackal", 0)),
+        Some(("little dog", mg::PET)),
+        None,
+        Some(("newt", 0)),
+        Some(("hill orc", 0)),
+    ];
+    for (i, guest) in guests.into_iter().enumerate() {
+        let x = cx - 4 + 2 * i as i32;
+        match guest {
+            // (as the engine draws one: the altar seen bare, then whoever
+            // steps on it, the background there the room's lit floor)
+            Some((name, flags)) => {
+                let who = monster(cat, name, flags, GlyphKind::Mon)?;
+                map.print(x, cy - 1, &altar, None);
+                map.print(x, cy - 1, &who, Some(&lit));
+            }
+            None => map.print(x, cy - 1, &altar, None),
+        }
+    }
+    let hero = monster(cat, "valkyrie", mg::HERO | mg::FEMALE, GlyphKind::Mon)?;
+    map.print(cx, cy + 1, &hero, Some(&floor));
+    world.view_center = Some((cx, cy));
+    Ok((cx, cy + 1))
+}
+
 /// As `lay_out_rows`, on a floor of `floor` (a dark one: "S_darkroom").
 pub fn lay_out_rows_on(
     world: &mut World,

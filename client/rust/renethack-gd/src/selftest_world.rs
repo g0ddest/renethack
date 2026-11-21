@@ -1226,6 +1226,25 @@ pub(super) fn wares() -> Vec<Step> {
     )
 }
 
+/// Monsters standing on altars, lit and dark
+/// (`gallery::lay_out_altar_guests`): `altar-guests`, `-close`,
+/// `altar-guests-dark`, `-dark-close`.
+pub(super) fn altar_guests() -> Vec<Step> {
+    fn lay(g: &mut RenethackGame, dark: bool) -> Result<(), String> {
+        let cat = g.catalog.clone().ok_or("no catalog")?;
+        crate::gallery::lay_out_altar_guests(&mut g.world, &cat, dark).map(|_| ())
+    }
+    lit_and_dark(
+        [|g| lay(g, false), |g| lay(g, true)],
+        [
+            "altar-guests",
+            "altar-guests-close",
+            "altar-guests-dark",
+            "altar-guests-dark-close",
+        ],
+    )
+}
+
 /// Rooms of a used dungeon (the art loop's fifth critique, #7: chains,
 /// cobwebs, broken furniture), for pictures before and after (not part of
 /// `make test-client`): four lit rooms, at the game's distance

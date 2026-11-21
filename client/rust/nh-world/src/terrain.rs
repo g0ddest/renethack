@@ -170,6 +170,43 @@ pub fn effect_cmaps(catalog: &Catalog) -> impl Iterator<Item = i32> + '_ {
         .map(|c| c.idx)
 }
 
+/// A feature the engine's background never tells of: under a monster or a
+/// thing it gives a floor's kind alone (display.c's
+/// `get_bkglyph_and_framecolor`: the room's floor for whatever is no rock,
+/// corridor, water, ice, lava, air or cloud), so stairs, an altar, a
+/// fountain, a doorway, a lowered bridge or a trap there comes as lit
+/// floor. A closed door is none: nothing is seen standing in one.
+pub fn is_hidden_feature(t: Terrain) -> bool {
+    use Terrain::*;
+    matches!(
+        t,
+        Doorway
+            | OpenDoor
+            | BrokenDoor
+            | StairsUp
+            | StairsDown
+            | LadderUp
+            | LadderDown
+            | Altar
+            | Grave
+            | Throne
+            | Sink
+            | Fountain
+            | DrawbridgeDown
+            | Trap
+    )
+}
+
+/// Cmap indices of the features a background hides (`is_hidden_feature`),
+/// for `MapState::set_feature_cmaps`.
+pub fn feature_cmaps(catalog: &Catalog) -> impl Iterator<Item = i32> + '_ {
+    catalog
+        .cmap
+        .iter()
+        .filter(|c| is_hidden_feature(terrain_of(&c.sym)))
+        .map(|c| c.idx)
+}
+
 /// The terrain a cell remembers, if any.
 pub fn cell_terrain(cell: &Cell, catalog: &Catalog) -> Option<Terrain> {
     let idx = cell.terrain.as_ref()?.cmap?;

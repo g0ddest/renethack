@@ -5307,6 +5307,7 @@ impl SelfTest {
             "furnish" => world_looks::furnish(),
             "ring-steps" => world_looks::ring_steps(),
             "wares" => world_looks::wares(),
+            "altar-guests" => world_looks::altar_guests(),
             "edges" => world_looks::edges(),
             "far" => world_looks::far_view(),
             "title" => world_looks::title(),

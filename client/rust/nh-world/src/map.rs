@@ -118,6 +118,9 @@ pub struct MapState {
     left: Vec<(u64, (i32, i32))>,
     /// Cmap indices that are brief effects, not terrain.
     effect_cmaps: Vec<bool>,
+    /// Cmap indices of features a background never tells of
+    /// (`set_feature_cmaps`).
+    feature_cmaps: Vec<bool>,
     /// What each cmap index lets a move through (`detect_moves_through`).
     ways: Vec<Way>,
     /// Cells where a thing was drawn over a monster (a missile flying
@@ -163,6 +166,7 @@ impl MapState {
             hero: None,
             left: Vec::new(),
             effect_cmaps: Vec::new(),
+            feature_cmaps: Vec::new(),
             ways: Vec::new(),
             flying: Vec::new(),
         }
@@ -178,6 +182,26 @@ impl MapState {
             }
             self.effect_cmaps[c] = true;
         }
+    }
+
+    /// Cmap indices of the features a monster's or a thing's background
+    /// never tells of (`terrain::is_hidden_feature`): one remembered under
+    /// them stays.
+    pub fn set_feature_cmaps(&mut self, cmaps: impl IntoIterator<Item = i32>) {
+        self.feature_cmaps.clear();
+        for c in cmaps.into_iter().filter_map(|c| usize::try_from(c).ok()) {
+            if c >= self.feature_cmaps.len() {
+                self.feature_cmaps.resize(c + 1, false);
+            }
+            self.feature_cmaps[c] = true;
+        }
+    }
+
+    fn is_feature(&self, g: &Glyph) -> bool {
+        g.kind == GlyphKind::Cmap
+            && g.cmap
+                .and_then(|c| usize::try_from(c).ok())
+                .is_some_and(|c| self.feature_cmaps.get(c).copied().unwrap_or(false))
     }
 
     /// What each cmap index lets a move through (walls, doors).
@@ -369,6 +393,18 @@ impl MapState {
         } else {
             under.or(bk).filter(|b| self.is_terrain(b))
         };
+        // under another monster or a thing the background is a floor's
+        // kind whatever is there (an altar came as lit floor): the stairs,
+        // the altar, the doorway or the trap remembered there stays
+        let terrain = terrain.filter(|t| {
+            g.kind == GlyphKind::Cmap
+                || under.is_some()
+                || self.is_feature(t)
+                || !self.cells[i]
+                    .terrain
+                    .as_ref()
+                    .is_some_and(|r| self.is_feature(r))
+        });
         self.touch(i, (x, y));
         self.flying.retain(|&at| at != (x, y));
         let hero = g.flags & mg::HERO != 0;
@@ -584,6 +620,38 @@ pub(crate) mod tests {
         // the dog leaves: the floor is the glyph again, no entity
         map.print(10, 5, &floor(), Some(&unexplored()));
         assert_eq!(map.cell(10, 5).unwrap().entity(), None);
+    }
+
+    #[test]
+    fn a_feature_stays_under_a_monster_whose_background_is_floor() {
+        let mut map = MapState::new();
+        map.set_feature_cmaps([30]);
+        let altar = Glyph {
+            cmap: Some(30),
+            ..glyph(GlyphKind::Cmap, '_')
+        };
+        let pool = Glyph {
+            cmap: Some(40),
+            ..glyph(GlyphKind::Cmap, '}')
+        };
+        // an altar seen bare; a dog steps on it, and the engine's
+        // background there is the room's floor
+        map.print(10, 5, &altar, None);
+        map.print(10, 5, &monster(16, 0), Some(&floor()));
+        assert_eq!(map.cell(10, 5).unwrap().terrain, Some(altar.clone()));
+        // a thing left on it
+        map.print(10, 5, &glyph(GlyphKind::Obj, '%'), Some(&floor()));
+        assert_eq!(map.cell(10, 5).unwrap().terrain, Some(altar.clone()));
+        // gone: the engine draws the floor itself
+        map.print(10, 5, &floor(), None);
+        assert_eq!(map.cell(10, 5).unwrap().terrain, Some(floor()));
+        // a floor's kind under a monster is told as before: water frozen
+        map.print(11, 5, &pool, None);
+        map.print(11, 5, &monster(16, 0), Some(&floor()));
+        assert_eq!(map.cell(11, 5).unwrap().terrain, Some(floor()));
+        // and a feature never seen bare comes with a background of its own
+        map.print(12, 5, &monster(16, 0), Some(&altar));
+        assert_eq!(map.cell(12, 5).unwrap().terrain, Some(altar));
     }
 
     #[test]
