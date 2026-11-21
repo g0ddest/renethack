@@ -75,6 +75,7 @@ mod sheet_view;
 mod shield_hand;
 mod skills;
 mod skills_view;
+mod skirt_guard;
 #[cfg(debug_assertions)]
 mod source_stamp;
 mod spell_bake;

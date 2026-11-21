@@ -612,6 +612,55 @@ fn slay() -> Vec<Step> {
     ]
 }
 
+/// The Valkyrie's coat in the saddle (iteration 8: the coat re-weighted
+/// off her thighs must not cut through them there): debug mode, a tame
+/// saddled pony made beside her and the mount forced, then pictures close
+/// (`coat-ride-close`) and as in play 7 m off (`coat-ride-play`).
+pub(super) fn coat_ride() -> Vec<Step> {
+    let mut steps = vec![Step::Call("debug mode, seed 1", |g| {
+        g.debug_mode = true;
+        g.seed = Some(1);
+        *seen()? = Seen {
+            hero: None,
+            kit: Vec::new(),
+            steed: "pony",
+            way: None,
+            gaits: Vec::new(),
+            couched: None,
+        };
+        Ok(())
+    })];
+    steps.extend(start_as(CharacterChoice {
+        name: "wizard".into(),
+        role: "valkyrie".into(),
+        gender: "female".into(),
+        align: "neutral".into(),
+        ..smoke_choice()
+    }));
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(map_view(g)?.hero_model().is_some_and(|m| !m.is_pending()))
+    }));
+    steps.extend(genesis("tame saddled pony"));
+    steps.extend(mount());
+    steps.extend([
+        Step::Wait("the hero in the pony's saddle", rides),
+        Step::Call("close up", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(2.8, 0.4);
+            Ok(())
+        }),
+        Step::Wait("the camera on the pair", camera_settled),
+        Step::Shot("coat-ride-close"),
+        Step::Call("as in play", |g| {
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(7.0, 0.2);
+            Ok(())
+        }),
+        Step::Wait("the camera on the pair", camera_settled),
+        Step::Shot("coat-ride-play"),
+    ]);
+    steps.extend(quit());
+    steps
+}
+
 pub(super) fn riding() -> Vec<Step> {
     let mut steps = vec![Step::Call("debug mode, seed 1", |g| {
         g.debug_mode = true;

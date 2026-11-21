@@ -13,7 +13,7 @@ use nh_world::{Key, KeyInput, Prompt};
 
 use super::{
     CharacterChoice, DialogEvent, Step, UiEvent, camera_settled, command, ctrl_key,
-    fail_on_error_screen, idle_command, key, map_view, quit, smoke_choice, start_as,
+    fail_on_error_screen, idle_command, key, map_view, quit, smoke_choice, start, start_as,
 };
 use crate::art::{GLOVES_NODE, HELD_NODE, LAMP_LIGHT, NECK_NODE, OFF_HAND, USE_NODE};
 use crate::game::RenethackGame;
@@ -790,7 +790,7 @@ fn kit_blow(g: &mut RenethackGame) -> Result<(), String> {
 
 /// The poses RENETHACK_KIT_POSES holds the hero in: at rest, mid-stride,
 /// mid-blow, on guard (the kits' shield raised) and struck.
-const KIT_POSES: [&str; 5] = ["rest", "walk", "blow", "guard", "hit"];
+const KIT_POSES: [&str; 7] = ["rest", "walk", "run", "blow", "guard", "hit", "death"];
 /// The views of each pose: its name, the hero's turn and the camera's
 /// distance (the game's own angle, 7 m off, turned three-quarters on).
 const KIT_VIEWS: [(&str, f32, f32); 4] = [
@@ -822,6 +822,9 @@ fn kit_pose(g: &mut RenethackGame) -> Result<(), String> {
             (attack, at)
         }
         "guard" => (Some("ual2/Idle_Shield".to_string()), 0.5),
+        "run" => (anims.run.clone(), 0.3),
+        // (where the fall has ended: at most its last tenth of a second)
+        "death" => (anims.death.clone(), f64::MAX),
         _ => (anims.hit.clone(), 0.2),
     };
     let clip = clip.ok_or_else(|| format!("no clip for the {pose}"))?;
@@ -830,7 +833,10 @@ fn kit_pose(g: &mut RenethackGame) -> Result<(), String> {
         return Err(format!("no clip {clip} for the {pose}"));
     }
     p.play_ex().name(clip.as_str()).custom_blend(0.0).done();
-    p.seek_ex(at).update(true).done();
+    let len = p
+        .get_animation(clip.as_str())
+        .map_or(0.0, |a| f64::from(a.get_length()));
+    p.seek_ex(at.min((len - 0.1).max(0.0))).update(true).done();
     p.pause();
     kit_turn(g, yaw)?;
     kit_distance(g, metres)
@@ -2147,5 +2153,232 @@ pub(super) fn roles() -> Vec<Step> {
         }
         Ok(())
     }));
+    steps
+}
+
+/// The coat on a step's start (the art loop's iteration 7, `c4-steps`: its
+/// front panel stood out flat for two to six frames as a step began): the
+/// Valkyrie (debug mode, seed 11), two cells clear of the walls, the camera
+/// 7 m off as in play (RENETHACK_COAT_AT=<m>: that far),
+/// steps one way and back, then across and back (east and west, north and
+/// south, whichever of each pair is open first), each from a stance settled
+/// a second, and the first `COAT_FRAMES` frames of each step shot one frame
+/// apart (`coat-step-<step>-<frame>`; the log tells each step's way). Run
+/// with Godot's `--fixed-fps 30`, as the critic's movie writer ran: a
+/// frame is a thirtieth of a second of the game, however long a picture
+/// takes to save. RENETHACK_COAT_BURST=n: n frames a step (a clip).
+pub(super) fn coat_steps() -> Vec<Step> {
+    const COAT_FRAMES: usize = 8;
+    /// The four steps' keys, chosen as the first is taken (the open way of
+    /// each pair first, then back).
+    static WAYS: Mutex<[char; 4]> = Mutex::new(['l', 'h', 'k', 'j']);
+    static FRAME: AtomicU64 = AtomicU64::new(0);
+    static SETTLED: Mutex<Option<std::time::Instant>> = Mutex::new(None);
+    fn frames() -> u64 {
+        use godot::obj::Singleton;
+        godot::classes::Engine::singleton().get_process_frames()
+    }
+    fn open(g: &RenethackGame, (dx, dy): (i32, i32)) -> bool {
+        let (Some(cat), Some((hx, hy))) = (g.catalog.as_deref(), g.world.map.hero()) else {
+            return false;
+        };
+        g.world.map.cell(hx + dx, hy + dy).is_some_and(|cell| {
+            matches!(
+                nh_world::cell_terrain(cell, cat),
+                Some(nh_world::Terrain::Floor | nh_world::Terrain::DarkFloor)
+            ) && cell.entity().is_none()
+        })
+    }
+    fn choose(g: &mut RenethackGame) -> Result<(), String> {
+        let ew = if open(g, (1, 0)) {
+            ['l', 'h']
+        } else {
+            ['h', 'l']
+        };
+        let ns = if open(g, (0, -1)) {
+            ['k', 'j']
+        } else {
+            ['j', 'k']
+        };
+        *WAYS.lock().unwrap_or_else(|e| e.into_inner()) = [ew[0], ew[1], ns[0], ns[1]];
+        Ok(())
+    }
+    let burst: usize = std::env::var("RENETHACK_COAT_BURST")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(COAT_FRAMES);
+    let mut steps = vec![Step::Call("debug mode, seed 11", |g| {
+        g.debug_mode = true;
+        g.seed = Some(11);
+        Ok(())
+    })];
+    steps.extend(start());
+    steps.push(Step::Wait("the hero on the map", |g| {
+        Ok(g.world.map.hero().is_some())
+    }));
+    /// Away from the walls first, two cells clear each way (a step north
+    /// against a wall's door drew her through it, x-rayed): a step from
+    /// the nearest wall at each command, a dozen at most.
+    fn to_open(g: &RenethackGame) -> Result<Option<KeyInput>, String> {
+        static MOVES: AtomicU64 = AtomicU64::new(0);
+        let reach =
+            |(dx, dy): (i32, i32)| (1..=3).take_while(|&n| open(g, (dx * n, dy * n))).count();
+        let away = [((-1, 0), 'l'), ((1, 0), 'h'), ((0, 1), 'k'), ((0, -1), 'j')];
+        if MOVES.fetch_add(1, Ordering::Relaxed) >= 12 {
+            return Ok(None);
+        }
+        Ok(away
+            .iter()
+            .find(|&&(wall, _)| reach(wall) < 2)
+            .map(|&(_, k)| KeyInput::plain(Key::Char(k))))
+    }
+    steps.extend([
+        Step::KeysUntil("away from the walls", to_open),
+        Step::Call("as far off as in play", |g| {
+            // RENETHACK_COAT_AT=<m>: that far instead
+            let at = std::env::var("RENETHACK_COAT_AT")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(7.0);
+            g.ui.as_mut().ok_or("no UI")?.map.set_distance(at, 0.2);
+            Ok(())
+        }),
+        Step::Wait("the camera on the hero", camera_settled),
+        Step::Call("the ways to step", choose),
+    ]);
+    for i in 0..4 {
+        steps.extend([
+            Step::Request("a command", command),
+            Step::Call("a stance", |_| {
+                *SETTLED.lock().unwrap_or_else(|e| e.into_inner()) = None;
+                Ok(())
+            }),
+            Step::Wait("her stance settled a second", |g| {
+                let map = map_view(g)?;
+                let still = !map.hero_walking() && !map.hero_striking();
+                let mut since = SETTLED.lock().unwrap_or_else(|e| e.into_inner());
+                if !still {
+                    *since = None;
+                    return Ok(false);
+                }
+                let t = *since.get_or_insert_with(std::time::Instant::now);
+                Ok(t.elapsed().as_secs_f32() > 1.0)
+            }),
+        ]);
+        steps.push(match i {
+            0 => Step::KeyFrom("a step", |_| Ok(way_key(0))),
+            1 => Step::KeyFrom("a step back", |_| Ok(way_key(1))),
+            2 => Step::KeyFrom("a step across", |_| Ok(way_key(2))),
+            _ => Step::KeyFrom("a step back across", |_| Ok(way_key(3))),
+        });
+        steps.extend([
+            Step::Wait("her step begun", |g| Ok(map_view(g)?.hero_walking())),
+            Step::Call("the burst begins", |_| {
+                FRAME.store(frames(), Ordering::Relaxed);
+                Ok(())
+            }),
+        ]);
+        for k in 0..burst {
+            let name: &'static str = Box::leak(format!("coat-step-{i}-{k:02}").into_boxed_str());
+            steps.extend([
+                Step::Shot(name),
+                Step::Wait("the next frame", |_| {
+                    Ok(frames() > FRAME.load(Ordering::Relaxed))
+                }),
+                Step::Call("this frame", |_| {
+                    FRAME.store(frames(), Ordering::Relaxed);
+                    Ok(())
+                }),
+            ]);
+        }
+    }
+    fn way_key(i: usize) -> KeyInput {
+        let k = WAYS.lock().unwrap_or_else(|e| e.into_inner())[i];
+        godot_print!("selftest: coat: step {i} by {k}");
+        KeyInput::plain(Key::Char(k))
+    }
+    // then a travel (she runs it now): the level mapped, the open floor
+    // farthest by the known way within a dozen steps, a picture every
+    // third frame of the run (`coat-travel-<nn>`; RENETHACK_COAT_TRAVEL=N
+    // pictures)
+    static GOAL: Mutex<(i32, i32)> = Mutex::new((0, 0));
+    fn far_floor(g: &RenethackGame) -> Option<(i32, i32)> {
+        let cat = g.catalog.as_deref()?;
+        let from = g.world.map.hero()?;
+        let floor = |(x, y): (i32, i32)| {
+            g.world.map.cell(x, y).is_some_and(|cell| {
+                matches!(
+                    nh_world::cell_terrain(cell, cat),
+                    Some(nh_world::Terrain::Floor | nh_world::Terrain::DarkFloor)
+                )
+            })
+        };
+        let mut dist = std::collections::HashMap::from([(from, 0)]);
+        let mut queue = std::collections::VecDeque::from([from]);
+        let mut best = (0, from);
+        while let Some(at) = queue.pop_front() {
+            let d = dist[&at];
+            if d > best.0 {
+                best = (d, at);
+            }
+            if d == 12 {
+                continue;
+            }
+            for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+                let next = (at.0 + dx, at.1 + dy);
+                if !dist.contains_key(&next) && floor(next) {
+                    dist.insert(next, d + 1);
+                    queue.push_back(next);
+                }
+            }
+        }
+        (best.0 > 3).then_some(best.1)
+    }
+    let travel: usize = std::env::var("RENETHACK_COAT_TRAVEL")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(0);
+    if travel > 0 {
+        steps.extend([
+            Step::Request("a command", command),
+            Step::Key(ctrl_key('f')),
+            Step::Request("a command after the map", command),
+            Step::Call("the travel's goal", |g| {
+                let goal = far_floor(g).ok_or("no far floor")?;
+                godot_print!(
+                    "selftest: coat: travel from {:?} to {goal:?}",
+                    g.world.map.hero()
+                );
+                *GOAL.lock().unwrap_or_else(|e| e.into_inner()) = goal;
+                Ok(())
+            }),
+            key('_'),
+            Step::Request("where to travel", command),
+            Step::Call("the goal picked", |g| {
+                let (x, y) = *GOAL.lock().unwrap_or_else(|e| e.into_inner());
+                g.push_ui(UiEvent::MapClick { x, y, button: 1 });
+                Ok(())
+            }),
+            Step::Wait("her run begun", |g| Ok(map_view(g)?.hero_walking())),
+            Step::Call("the burst begins", |_| {
+                FRAME.store(frames(), Ordering::Relaxed);
+                Ok(())
+            }),
+        ]);
+        for k in 0..travel {
+            let name: &'static str = Box::leak(format!("coat-travel-{k:02}").into_boxed_str());
+            steps.extend([
+                Step::Shot(name),
+                Step::Wait("three frames on", |_| {
+                    Ok(frames() >= FRAME.load(Ordering::Relaxed) + 3)
+                }),
+                Step::Call("this frame", |_| {
+                    FRAME.store(frames(), Ordering::Relaxed);
+                    Ok(())
+                }),
+            ]);
+        }
+    }
+    steps.extend(quit());
     steps
 }

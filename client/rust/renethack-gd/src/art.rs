@@ -5898,6 +5898,9 @@ fn simulate_skirt(m: &Model) {
         sim.set_radius(i, SKIRT_RADIUS);
         sim.set_enable_all_child_collisions(i, true);
     }
+    // after it a guard (`skirt_guard`): no joint of the hem swings past its
+    // limit (RENETHACK_NO_SKIRT_GUARD: none, to compare)
+    let guard = std::env::var_os("RENETHACK_NO_SKIRT_GUARD").is_none();
     // the legs: a capsule along each thigh and shin (UAL's bones run along
     // their own +Y), as long as the bone
     for (bone, next, radius) in [
@@ -5919,6 +5922,11 @@ fn simulate_skirt(m: &Model) {
         sim.add_child(&c);
     }
     skeleton.add_child(&sim);
+    if guard {
+        let mut limit = crate::skirt_guard::SkirtLimit::new_alloc();
+        limit.set_name("SkirtLimit");
+        skeleton.add_child(&limit);
+    }
 }
 
 /// A generated body (the owner's Meshy bodies, under `art/owner/`).
