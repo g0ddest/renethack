@@ -216,6 +216,9 @@ const RIM_SPECULAR: f32 = 0.5;
 pub const CREATURE_LAYER: u32 = 1 << 6;
 /// The pass round a living creature's outline (`Art::rim`).
 const EDGE_SHADER: &str = "res://shaders/creature_edge.gdshader";
+/// A creature's lit value capped whatever lights it, a pass after each
+/// opaque material of its (map_view's `CREATURE_LIT`).
+const LIT_SHADER: &str = "res://shaders/creature_lit.gdshader";
 /// The hero's edge: `EDGE_SHADER`'s, and where her body, what she wears or
 /// what she holds is the nearest it marks the stencil, so that her x-ray
 /// (xray.gdshader) draws nowhere they do: her own shield or cloak never
@@ -735,6 +738,9 @@ pub struct Art {
     /// The same, brighter, for a dark creature (`DARK_EDGE`), one for each
     /// colour an edge takes (`edge_colour`).
     dark_edges: HashMap<[u8; 3], Option<Gd<Material>>>,
+    /// The pass that caps a creature's lit value (`LIT_SHADER`), by the
+    /// pass that comes after it (its edge or its outline, if any).
+    lit_caps: HashMap<Option<i64>, Option<Gd<Material>>>,
     /// The outline of a detailed body (`OUTLINE_SHADER`).
     outline_edge: HashMap<(u8, [u8; 3], bool), Option<Gd<Material>>>,
     /// A thing on the floor's rim, by its share (`Edge::Ware`) and whether
@@ -870,6 +876,7 @@ impl Art {
             hero_edged_ids: HashSet::new(),
             edges_lit: true,
             dark_edges: HashMap::new(),
+            lit_caps: HashMap::new(),
             outline_edge: HashMap::new(),
             ware_edges: HashMap::new(),
             glint: None,
@@ -2330,6 +2337,23 @@ impl Art {
             .clone()
     }
 
+    /// The pass that caps a creature's lit value (`LIT_SHADER`), `next`
+    /// after it.
+    fn lit_cap_pass(&mut self, next: Option<Gd<Material>>) -> Option<Gd<Material>> {
+        self.lit_caps
+            .entry(next.as_ref().map(|n| n.instance_id().to_i64()))
+            .or_insert_with(|| {
+                let shader = godot::tools::try_load::<Shader>(LIT_SHADER).ok()?;
+                let mut m = ShaderMaterial::new_gd();
+                m.set_shader(&shader);
+                if let Some(next) = next {
+                    m.set_next_pass(&next);
+                }
+                Some(m.upcast())
+            })
+            .clone()
+    }
+
     /// A thing on the floor's dark-gold rim (`Edge::Ware`), lit as the
     /// edges are (`set_edges_lit`).
     fn ware_edge_pass(&mut self, share: u8, metal: bool) -> Option<Gd<Material>> {
@@ -2619,6 +2643,15 @@ impl Art {
                     && let Some(edge) = self.dark_edge_pass(edge_colour(own))
                 {
                     m.set_next_pass(&edge);
+                }
+                // its lit value capped (an opaque one's: the pass knows
+                // nothing of a card's cut-outs, and reads what the frame
+                // holds, where a see-through one is not yet)
+                if !matches!(edge, Edge::Ware(_))
+                    && see_through == Transparency::DISABLED
+                    && let Some(cap) = self.lit_cap_pass(m.get_next_pass())
+                {
+                    m.set_next_pass(&cap);
                 }
                 m.upcast::<Material>()
             }

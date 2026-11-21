@@ -1563,7 +1563,8 @@ fn moment() -> [Step; 2] {
 /// which pixels are its), after the hero alone in each light
 /// (`pale-<light>-alone-matte`: which of them are hers).
 /// RENETHACK_PALE=<body>,<body>: those bodies instead;
-/// RENETHACK_PALE_LIGHTS=<light>,<light> (hero, torch, dark): those lights.
+/// RENETHACK_PALE_LIGHTS=<light>,<light> (hero, torch, dark): those lights;
+/// RENETHACK_PALE_AT=<depth>: on that level, in its branch's light.
 pub(super) fn pale_coats() -> Vec<Step> {
     use crate::gallery::LitBy;
     const PALE: &[&str] = &[
@@ -1662,10 +1663,36 @@ pub(super) fn pale_coats() -> Vec<Step> {
         }
         Ok(())
     }
-    let mut steps = start();
+    let at = std::env::var("RENETHACK_PALE_AT").ok();
+    let mut steps = Vec::new();
+    if at.is_some() {
+        steps.push(Step::Call(
+            "debug mode for this game",
+            |g: &mut RenethackGame| {
+                g.debug_mode = true;
+                Ok(())
+            },
+        ));
+    }
+    steps.extend(start());
     steps.push(Step::Wait("the hero on the map", |g| {
         Ok(g.world.map.hero().is_some())
     }));
+    // RENETHACK_PALE_AT=<depth>: on that level, in its branch's light (33:
+    // Gehennom's)
+    if let Some(depth) = at {
+        let depth: &'static str = Box::leak(depth.into_boxed_str());
+        steps.extend([
+            Step::Key(ctrl_key('v')),
+            Step::Request(
+                "to what level",
+                |p| matches!(p, Prompt::Text { query, .. } if query.contains("level")),
+            ),
+            Step::Dialog(DialogEvent::TextSubmitted(depth.into())),
+            Step::AnswerUntil('n', "a command on the new level", at_command),
+            Step::Wait("the level drawn as the hero arrives", drawn_here),
+        ]);
+    }
     for &(_, light) in lights() {
         for name in std::iter::once(None).chain(bodies().iter().copied().map(Some)) {
             let shot = format!(

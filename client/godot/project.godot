@@ -57,6 +57,17 @@ eye_pos={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
 }
+; a creature's lit value capped (creature_lit.gdshader): untouched up to x,
+; never over y; and what its lit side is multiplied by, the branch's
+; torchlight colour partly taken out of it (map_view.rs)
+creature_knee={
+"type": "vec2",
+"value": Vector2(0.28, 0.55)
+}
+creature_balance={
+"type": "vec3",
+"value": Vector3(1, 1, 1)
+}
 ; how much the floors of the branch crack and glow from below (Gehennom),
 ; and in what colour (the level's fire)
 branch_cracks={

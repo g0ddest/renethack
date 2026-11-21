@@ -524,6 +524,15 @@ const CREATURE_LIGHT_ENERGY: f32 = 0.9;
 /// sconce, its head a hand from the flame, came out cream, an arch-lich's
 /// purple robe pastel pink, on a floor the torch left dark).
 const TORCH_CAP: f32 = 0.6;
+/// A creature's lit value capped whatever lights it (creature_lit.gdshader,
+/// in the frame's linear light before its tone): untouched up to the
+/// first, never over the second (under a torch a white unicorn's flank
+/// read 1.00 at 11 m, an ice troll's 0.76, coats already darkened); and
+/// how much of the branch's torchlight colour is taken out of its lit side
+/// (the unicorn orange, in Gehennom every pale coat the fire's red; more
+/// of it, and beside the hero a brown troll went grey, a white coat blue).
+const CREATURE_LIT: (f32, f32) = (0.28, 0.55);
+const CREATURE_BALANCE: f32 = 0.2;
 const TORCH_CAP_RANGE: f32 = 2.5;
 /// How a torch's light falls off with distance (Godot's attenuation).
 const TORCH_DECAY: f32 = 1.2;
@@ -6052,6 +6061,12 @@ impl MapView {
         env.set_adjustment_color_correction(&grade_curve(g.shadows, g.highlights));
         let mut rs = RenderingServer::singleton();
         rs.global_shader_parameter_set("branch_cracks", &l.cracks.to_variant());
+        // the creatures' lit value capped, the torches' colour taken out
+        // of their lit side (creature_lit.gdshader)
+        let knee = Vector2::new(CREATURE_LIT.0, CREATURE_LIT.1);
+        rs.global_shader_parameter_set("creature_knee", &knee.to_variant());
+        let balance = light_balance(l.torch, CREATURE_BALANCE);
+        rs.global_shader_parameter_set("creature_balance", &balance.to_variant());
         rs.global_shader_parameter_set("branch_crack_color", &l.crack_color.to_variant());
         let (way, color, energy) = match l.under {
             Under::Sky => SUN,
@@ -12006,6 +12021,24 @@ impl MapView {
 /// A wall cell a torch hangs on, and the way it faces into its room.
 type TorchWall = ((i32, i32), (i32, i32));
 
+/// What a creature's lit side is multiplied by to take this `share` of a
+/// light's colour out of it (`CREATURE_BALANCE`): the light's stronger
+/// channels cut down toward its weakest (in linear light), never raised.
+fn light_balance(light: Color, share: f32) -> Vector3 {
+    // (sRGB to linear by hand: the engine's is not there in a unit test)
+    let lin = |v: f32| {
+        if v <= 0.04045 {
+            v / 12.92
+        } else {
+            ((v + 0.055) / 1.055).powf(2.4)
+        }
+    };
+    let (r, g, b) = (lin(light.r), lin(light.g), lin(light.b));
+    let low = r.min(g).min(b).max(0.001);
+    let cut = |c: f32| (low / c.max(low)).powf(share);
+    Vector3::new(cut(r), cut(g), cut(b))
+}
+
 /// A light's twin that takes some of its light back from the creatures
 /// close to it (`TORCH_CAP`, `HERO_CAP`): negative, on their layer alone, as far as
 /// `range` and falling off as the light does (`decay`), its energy set as
@@ -12281,6 +12314,22 @@ mod tests {
     use nh_protocol::{EngineMsg, parse_line};
 
     use super::*;
+
+    #[test]
+    fn a_lights_colour_is_taken_out_of_a_creature_never_added() {
+        // a white light: nothing to take
+        let w = light_balance(Color::from_rgb(1.0, 1.0, 1.0), CREATURE_BALANCE);
+        assert!((w - Vector3::ONE).length() < 1e-4);
+        // a torch's: its red cut the most, its blue kept; Gehennom's
+        // redder fire cut further
+        let look = crate::branch_look::look_of;
+        let main = light_balance(look(Branch::Main).torch, CREATURE_BALANCE);
+        let deep = light_balance(look(Branch::Gehennom).torch, CREATURE_BALANCE);
+        for b in [main, deep] {
+            assert!(b.x < b.y && b.y < b.z && (b.z - 1.0).abs() < 1e-4, "{b:?}");
+        }
+        assert!(deep.x < main.x);
+    }
 
     #[test]
     fn a_thing_out_of_sight_reads_as_remembered() {

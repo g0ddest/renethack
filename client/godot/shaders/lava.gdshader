@@ -224,6 +224,10 @@ void fragment() {
 	// shores hot)
 	float vein = 1.0 - smoothstep(0.1, 0.3, land + (tl2(wpos.xz * 1.4 + vec2(5.5, 8.8)) - 0.5) * 0.14);
 	float hot = clamp(max(max(river, pool), narrow * vein) + nearshore * (1.0 - narrow), 0.0, 1.0);
+	// (a narrow flow's vein molten whatever the flow's photograph shows
+	// there: under a blot of its crust a line's end cell read as warm
+	// floor, not lava)
+	crack = max(crack, 0.06 * narrow * vein);
 	crack *= mix(0.06, 1.0, hot);
 	// (the cooled crust black-brown: the flow's photograph is a red rock)
 	rock = mix(crust.rgb * mix(0.7, 1.3, fine), rock, 0.25 + 0.75 * hot);
