@@ -19,8 +19,10 @@
 //!   under an arch, torches along it, into the dark below.
 //!
 //! A beat's set is built a few pieces a frame while the beat before is
-//! read (`prepare_prologue`), and the rehearsal draws one of each under
-//! the start-up veil (`warm_prologue`).
+//! read (`prepare_prologue`), its dust and embers then run on ahead,
+//! hidden, till they drift as they will when it shows (`roll_ahead`), and
+//! the rehearsal draws one of each under the start-up veil
+//! (`warm_prologue`).
 //!
 //! The gods and the Amulet are generated models (the owner's, their maps
 //! cut to 2K: `art/owner/prologue/`), drawn by `prologue_figure.gdshader`
@@ -42,9 +44,10 @@ use godot::classes::{
     CameraAttributesPractical, FastNoiseLite, FogMaterial, FogVolume, GpuParticles3D, Gradient,
     GradientTexture1D, GradientTexture2D, Image, ImageTexture, Material, Mesh, MeshInstance3D,
     MultiMesh, MultiMeshInstance3D, Node3D, NoiseTexture3D, OmniLight3D, PackedScene,
-    ParticleProcessMaterial, PlaneMesh, QuadMesh, Resource, Shader, ShaderMaterial, SphereMesh,
-    SpotLight3D, StandardMaterial3D, Texture2D, Texture3D,
+    ParticleProcessMaterial, PlaneMesh, QuadMesh, RenderingServer, Resource, Shader,
+    ShaderMaterial, SphereMesh, SpotLight3D, StandardMaterial3D, Texture2D, Texture3D,
 };
+use godot::obj::Singleton;
 use godot::prelude::*;
 use nh_protocol::{Catalog, Glyph, GlyphKind, LevelNotice, mg};
 use nh_world::{Pack, World};
@@ -177,6 +180,20 @@ const FOCUS_SOFT: f32 = 2.5;
 const FOCUS_BLUR: f32 = 0.05;
 /// Time a frame may spend standing the next beat's set pieces.
 const PIECES_BUDGET: Duration = Duration::from_millis(3);
+/// A set's dust and embers are met in mid-air, as long drifting as they
+/// live. Godot's own pre-process runs all of that in the one frame they
+/// are first drawn in (thirty steps a second of it on the GPU: 345 for
+/// the rebellion's, a frame of 37 ms as its beat began), so they run it
+/// here instead, a little a frame, hidden while the beat before is read:
+/// this many seconds of it a second (the fewest worth asking for: two
+/// steps; a slow frame counts for no more than `ROLL_FRAME`), and faster
+/// in a beat shown before it was through (a beat skipped to).
+const MOTES_LIFE: f32 = 7.0;
+const EMBERS_LIFE: f32 = 4.5;
+const ROLL_AHEAD: f32 = 8.0;
+const ROLL_SHOWN: f32 = 24.0;
+const ROLL_STEP: f32 = 1.0 / 30.0;
+const ROLL_FRAME: f32 = 0.05;
 /// The sets' pieces: the Sigil's Vault dungeon kit's (CC0) vaults,
 /// pillars, walls and arch; Poly Haven's (CC0) candles and boulders;
 /// Quaternius's (CC0) books and scrolls.
@@ -529,6 +546,11 @@ pub(super) struct Stage {
     /// pieces.
     gods_due: Vec<God>,
     todo: Vec<Piece>,
+    /// Its dust and embers, and the seconds each has still to run ahead
+    /// (`roll_ahead`); when they last ran, and what they are owed since.
+    drifting: Vec<(Gd<GpuParticles3D>, f32)>,
+    rolled: Option<Instant>,
+    owed: f32,
 }
 
 /// A god to stand on a stage: where, turned how far, how tall.
@@ -555,12 +577,51 @@ impl Stage {
             amulet: None,
             gods_due: Vec::new(),
             todo: Vec::new(),
+            drifting: Vec::new(),
+            rolled: None,
+            owed: 0.0,
         }
     }
 
     /// Everything of it stood.
     fn built(&self) -> bool {
         self.gods_due.is_empty() && self.todo.is_empty()
+    }
+
+    /// The seconds its dust and embers have still to run ahead, the most
+    /// of them.
+    fn to_roll(&self) -> f32 {
+        let left = self.drifting.iter().map(|(_, left)| *left);
+        left.fold(0.0, f32::max)
+    }
+
+    /// Its dust and embers run on ahead, `rate` seconds of their drifting
+    /// a second, till each has run as long as it lives: asked of the
+    /// renderer by hand, which leaves a hidden one alone (and is told
+    /// where it is: a hidden one's place is not passed on either).
+    fn roll_ahead(&mut self, rate: f32) {
+        let now = Instant::now();
+        let since = self.rolled.replace(now);
+        if self.to_roll() <= 0.0 {
+            return;
+        }
+        self.owed += since.map_or(0.0, |t| (now - t).as_secs_f32().min(ROLL_FRAME)) * rate;
+        if self.owed < 2.0 * ROLL_STEP {
+            return;
+        }
+        let secs = std::mem::take(&mut self.owed);
+        let mut server = RenderingServer::singleton();
+        for (p, left) in &mut self.drifting {
+            if *left <= 0.0 {
+                continue;
+            }
+            // (it runs a step more than it is asked for)
+            p.request_particles_process(secs.min(*left) - ROLL_STEP);
+            *left -= secs;
+            let particles = p.get_base();
+            server.particles_set_emission_transform(particles, p.get_global_transform());
+            server.particles_request_process(particles);
+        }
     }
 }
 
@@ -627,12 +688,13 @@ impl MapView {
         if self.stats_window.is_some() {
             let ms = |d: Duration| d.as_secs_f64() * 1000.0;
             godot_print!(
-                "map: the prologue's {beat:?} laid in {:.1} ms (the last one cleared {:.1}, the level {:.1}, the stage {:.1}{})",
+                "map: the prologue's {beat:?} laid in {:.1} ms (the last one cleared {:.1}, the level {:.1}, the stage {:.1}{}; {:.1} s of its dust's drifting still to run)",
                 ms(began.elapsed()),
                 ms(cleared),
                 ms(levelled - cleared),
                 ms(began.elapsed() - levelled),
-                if built_ahead { ", built ahead" } else { "" }
+                if built_ahead { ", built ahead" } else { "" },
+                self.stage.as_ref().map_or(0.0, Stage::to_roll)
             );
         }
     }
@@ -641,11 +703,12 @@ impl MapView {
     /// (`PIECES_BUDGET`): the frames of the beat before have room for it,
     /// and the change under the black has the less to do.
     pub fn prepare_prologue(&mut self, beat: Beat, _catalog: &Catalog) {
-        if self
+        if let Some(stage) = self
             .next_stage
-            .as_ref()
-            .is_some_and(|s| s.beat == beat && s.built())
+            .as_mut()
+            .filter(|s| s.beat == beat && s.built())
         {
+            stage.roll_ahead(ROLL_AHEAD);
             return;
         }
         let began = Instant::now();
@@ -660,7 +723,10 @@ impl MapView {
                 stage
             }
         };
-        self.build_pieces(&mut stage, Some(PIECES_BUDGET));
+        // (what is left of the frame's budget once its lights, haze and
+        // fires are made: a piece at the least)
+        let left = PIECES_BUDGET.saturating_sub(began.elapsed());
+        self.build_pieces(&mut stage, Some(left));
         if self.stats_window.is_some() {
             godot_print!(
                 "map: the prologue's {beat:?} built ahead for {:.1} ms, {} pieces to go",
@@ -760,6 +826,7 @@ impl MapView {
                 let mut embers = self.rising_embers(v(3.5, 0.2, 2.5), 60, 0.04);
                 embers.set_position(mid + v(0.0, 0.2, 0.6));
                 stage.root.add_child(&embers);
+                stage.drifting.push((embers, EMBERS_LIFE));
             }
             Beat::God => {
                 // the god's colossus behind its altar, dwarfing it, in the
@@ -797,6 +864,7 @@ impl MapView {
                 );
                 dust.set_position(statue + v(0.0, 2.6, 0.9));
                 stage.root.add_child(&dust);
+                stage.drifting.push((dust, MOTES_LIFE));
                 for (k, x) in [38.4, 41.6].into_iter().enumerate() {
                     self.stage_brazier(&mut stage, v(x, 0.0, 8.4), k as f64 * 1.7);
                 }
@@ -984,6 +1052,7 @@ impl MapView {
         );
         dust.set_position(at + v(0.0, 2.2, 0.0) * k);
         stage.root.add_child(&dust);
+        stage.drifting.push((dust, MOTES_LIFE));
     }
 
     /// Moloch at `at` (`tall` high, turned `yaw`): the furnace in his chest
@@ -1092,6 +1161,7 @@ impl MapView {
         let mut embers = self.rising_embers(v(2.6, 0.6, 1.8) * k, 90, 0.09 * k.sqrt());
         embers.set_position(at + turn * v(0.0, 0.8, 0.7) * k);
         stage.root.add_child(&embers);
+        stage.drifting.push((embers, EMBERS_LIFE));
     }
 
     /// Smoke `size` round `at` turned `turn` (an ellipsoid), its looks
@@ -1154,8 +1224,7 @@ impl MapView {
         let mut p = GpuParticles3D::new_alloc();
         p.set_process_material(&m);
         p.set_amount(amount);
-        p.set_lifetime(7.0);
-        p.set_pre_process_time(7.0);
+        p.set_lifetime(MOTES_LIFE as f64);
         p.set_draw_pass_mesh(0, &quad_mesh(size));
         p.set_material_override(&crate::vfx::particle_material(
             &crate::vfx::soft_texture(),
@@ -1188,8 +1257,7 @@ impl MapView {
         let mut p = GpuParticles3D::new_alloc();
         p.set_process_material(&m);
         p.set_amount(amount);
-        p.set_lifetime(4.5);
-        p.set_pre_process_time(4.5);
+        p.set_lifetime(EMBERS_LIFE as f64);
         p.set_randomness_ratio(0.5);
         p.set_draw_pass_mesh(0, &quad_mesh(size));
         p.set_material_override(&crate::vfx::particle_material(
@@ -1582,6 +1650,9 @@ impl MapView {
         let Some(stage) = self.stage.as_mut() else {
             return;
         };
+        // (dust and embers not yet as long adrift as they live: a beat
+        // skipped to)
+        stage.roll_ahead(ROLL_SHOWN);
         if let Some(c) = stage.candle.as_mut() {
             let energy = match beat {
                 Beat::Book => 1.7 * flicker(secs * 1.3),

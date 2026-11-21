@@ -178,15 +178,24 @@ impl PortraitView {
         let inner = hero.get_child(0)?.try_cast::<Node3D>().ok()?;
         let to = inner.get_global_transform();
         let id = inner.instance_id();
-        let bounds = match self.bounds {
-            Some((was, b)) if was == id => Some(b),
-            _ => {
-                let b = crate::art::posed_bounds(&inner)?;
-                self.bounds = Some((id, b));
-                Some(b)
+        let head = crate::art::bone_at(&inner, "Head");
+        // (measured only for a body framed by its bounds: measuring a
+        // skinned one reads its meshes back from the GPU, a frame of some
+        // 35 ms each time the hero's model changed, the prologue's hero
+        // beat's first among them)
+        let bounds = if form || head.is_none() {
+            match self.bounds {
+                Some((was, b)) if was == id => Some(b),
+                _ => {
+                    let b = crate::art::posed_bounds(&inner)?;
+                    self.bounds = Some((id, b));
+                    Some(b)
+                }
             }
-        }
-        .map(|b| to * b);
+            .map(|b| to * b)
+        } else {
+            None
+        };
         let height = match bounds {
             Some(b) if form => b.size.y.max(0.05),
             _ => HERO_TALL,
@@ -196,7 +205,6 @@ impl PortraitView {
         let pitch = PITCH_DEG.to_radians();
         let back = (turn * face) * pitch.cos() + Vector3::UP * pitch.sin();
         let half = (FOV.to_radians() / 2.0).tan();
-        let head = crate::art::bone_at(&inner, "Head");
         let (target, span) = match (head, bounds) {
             // the head and the shoulders under it: the head's bone is at the
             // neck, the frame's middle
