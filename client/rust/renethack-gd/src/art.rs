@@ -3898,9 +3898,38 @@ fn within(root: &Gd<Node3D>, node: &Gd<Node>) -> Transform3D {
     to_root
 }
 
+/// What carries a mesh's own space to where it is drawn at rest: a node
+/// and a transform in that node's space. A skinned mesh is drawn where its
+/// skeleton's bones carry it, whatever its own node's transform says: a
+/// generated body weighted from a Quaternius animal keeps that animal's
+/// node, scaled a hundredfold, over a mesh in the skeleton's own units,
+/// and by the node its box was a hundred times its body (it hid the hero
+/// from a cell away and was taller than a dragon).
+pub(crate) fn rest_carrier(mi: &Gd<MeshInstance3D>) -> (Gd<Node3D>, Transform3D) {
+    let skeleton = mi
+        .get_node_or_null(&mi.get_skeleton_path())
+        .and_then(|n| n.try_cast::<Skeleton3D>().ok());
+    let skinned = mi
+        .get_skin()
+        .filter(|s| s.get_bind_count() > 0)
+        .zip(skeleton);
+    let Some((skin, skeleton)) = skinned else {
+        return (mi.clone().upcast(), Transform3D::IDENTITY);
+    };
+    // (at rest every bind carries the mesh alike: the first will do)
+    let name = skin.get_bind_name(0).to_string();
+    let bone = if name.is_empty() {
+        skin.get_bind_bone(0)
+    } else {
+        skeleton.find_bone(name.as_str())
+    };
+    let rest = skeleton.get_bone_global_rest(bone.max(0)) * skin.get_bind_pose(0);
+    (skeleton.upcast(), rest)
+}
+
 /// How wide (x) and how long (z) the meshes under `inner` are in the
-/// space of `holder`, by their own bounds (a skinned one's at rest): a
-/// cheap measure, for a shadow under them.
+/// space of `holder`, by their own bounds (a skinned one's at rest,
+/// `rest_carrier`): a cheap measure, for a shadow under them.
 fn aabb_reach(holder: &Gd<Node3D>, inner: &Gd<Node3D>) -> [f32; 2] {
     let (mut lo, mut hi) = ([f32::MAX; 2], [f32::MIN; 2]);
     for node in inner
@@ -3916,7 +3945,8 @@ fn aabb_reach(holder: &Gd<Node3D>, inner: &Gd<Node3D>) -> [f32; 2] {
         if !mi.is_visible() {
             continue;
         }
-        let to = within(holder, &node);
+        let (carrier, rest) = rest_carrier(&mi);
+        let to = within(holder, &carrier.upcast()) * rest;
         let b = mi.get_aabb();
         for i in 0..8 {
             let corner = b.position

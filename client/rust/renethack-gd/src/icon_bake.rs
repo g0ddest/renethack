@@ -188,7 +188,8 @@ pub(crate) fn corners(node: &Gd<Node3D>) -> Vec<Vector3> {
         if !mi.is_visible_in_tree() {
             continue;
         }
-        let t = mi.get_global_transform();
+        let (carrier, rest) = crate::art::rest_carrier(&mi);
+        let t = carrier.get_global_transform() * rest;
         out.extend(mi.get_aabb().corners().iter().map(|c| t * *c));
     }
     out

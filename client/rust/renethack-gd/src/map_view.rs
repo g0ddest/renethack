@@ -12204,7 +12204,8 @@ fn engulfer(world: &World, catalog: &Catalog, (hx, hy): (i32, i32)) -> Option<In
     )
 }
 
-/// The box `node`'s meshes take in the world at rest (None: none shown).
+/// The box `node`'s meshes take in the world at rest (None: none shown;
+/// a skinned mesh where its skeleton carries it, `art::rest_carrier`).
 fn world_box(node: &Gd<Node3D>) -> Option<Aabb> {
     if !node.is_instance_valid() || !node.is_visible_in_tree() {
         return None;
@@ -12216,7 +12217,10 @@ fn world_box(node: &Gd<Node3D>) -> Option<Aabb> {
         .iter_shared()
         .filter_map(|n| n.try_cast::<MeshInstance3D>().ok())
         .filter(|m| m.is_visible_in_tree())
-        .map(|m| m.get_global_transform() * m.get_aabb())
+        .map(|m| {
+            let (carrier, rest) = crate::art::rest_carrier(&m);
+            carrier.get_global_transform() * rest * m.get_aabb()
+        })
         // (a mesh that failed to build has NaN bounds: no box at all)
         .filter(|b| b.position.is_finite() && b.size.is_finite())
         .reduce(|a, b| a.merge(b))
