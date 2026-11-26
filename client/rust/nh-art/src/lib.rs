@@ -2311,10 +2311,9 @@ mod tests {
     fn the_rats_the_dogs_and_the_liches_are_seen() {
         let (art, cat) = (manifest(), catalog());
         let find = |n: &str| cat.monsters.iter().find(|m| m.name == n).unwrap();
-        // a rat's coat lit up to take a tint, each kind its own
-        let rat = art.model_at(art.model_index("rat").unwrap()).1;
-        assert!(rat.albedo.is_some(), "the rats' coat is the dark one");
-        let mut tints = Vec::new();
+        // the rats and the burrowers wear the generated rat, its coat its
+        // own painting: each kind its own coat, or a size over its fellow
+        let mut seen_rats = Vec::new();
         for who in [
             "sewer rat",
             "giant rat",
@@ -2323,9 +2322,11 @@ mod tests {
             "woodchuck",
         ] {
             let r = art.monster(find(who), 0);
-            assert_eq!(art.model_at(r.model).0, "rat", "{who}");
-            assert!(!tints.contains(&r.tint), "{who} is tinted as another");
-            tints.push(r.tint);
+            let (name, spec) = art.model_at(r.model);
+            assert!(generated(spec), "{who} on {name}");
+            let look = (name.to_string(), (r.scale * 100.0).round() as i32);
+            assert!(!seen_rats.contains(&look), "{who} looks as another");
+            seen_rats.push(look);
         }
         // the domestic dogs a dirty off-white, as their glyph is white:
         // pale enough to fill their ring in a corridor, and no clean cream
@@ -2718,6 +2719,11 @@ mod tests {
         assert!(side("newt") < side("giant ant"));
         assert!(side("giant ant") + 0.02 < side("kitten"));
         assert!(side("giant ant") + 0.02 < side("soldier ant"));
+        // a sewer rat with its tail is longer than a newt and no longer
+        // than a jackal; a giant rat a size over it
+        assert!(side("newt") + 0.02 < side("sewer rat"));
+        assert!(side("sewer rat") + 0.02 < side("giant rat"));
+        assert!(side("sewer rat") < side("jackal"));
         // the bigger ones as they were
         let jackal = art.monster(find("jackal"), 0).height;
         assert_eq!(jackal, art.monsters.sizes["small"] * 0.85);

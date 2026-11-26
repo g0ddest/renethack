@@ -174,6 +174,24 @@ pub(super) const PILOT: &[(&str, Rows)] = &[
             (2, &["giant beetle", "killer bee", "queen bee"]),
         ],
     ),
+    // the generated rat on the wolf's bones (iteration 8): the rats and
+    // the burrowers on its body, and what a rat is met beside
+    (
+        "rats",
+        &[
+            (
+                2,
+                &[
+                    "sewer rat",
+                    "giant rat",
+                    "rabid rat",
+                    "rock mole",
+                    "woodchuck",
+                ],
+            ),
+            (2, &["newt", "kitten", "jackal", "giant ant"]),
+        ],
+    ),
     (
         "liches",
         &[(2, &["lich", "master lich", "demilich", "arch-lich"])],
