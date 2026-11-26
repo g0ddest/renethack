@@ -218,6 +218,7 @@ wear our kits were re-rigged to our skeleton and clips.
 | `owner/horse.glb`, `unicorn_white.jpg`, `unicorn_gray.jpg`, `unicorn_black.jpg` | A dark bay horse: the pony, the horse and the warhorse, its weights taken from Quaternius' horse (15k triangles); its coat recoloured for the three unicorns |
 | `owner/ant.glb`, `ant_fire_dye.png` | A giant ant in wet black chitin: the giant ant, the soldier ant (its head larger) and the fire ant (its joints dyed rust-red), on Quaternius' spider's bones moved onto it, the spider's two spare legs parked (15k triangles) |
 | `owner/rat.glb`, `rat_rabid.jpg`, `rat_mole.jpg`, `rat_chuck.jpg` | A mangy sewer rat in greasy grey-brown fur: the sewer rat and the giant rat, on Quaternius' wolf's bones moved onto it (its legs' chains out to its stance, the neck, head and tail's joints along its own; 15k triangles); its coat recoloured for the rabid rat, the rock mole and the woodchuck |
+| `owner/newt.glb`, `newt_gecko.jpg`, `newt_lizard.jpg`, `newt_iguana.jpg`, `newt_chameleon.jpg` | A warty newt in wet olive skin blotched with ochre: the newt, on Quaternius' wolf's bones turned out to a sprawl (each leg's chain turned out to the side and shortened to reach its foot, the spine lowered into its trunk, the tail's joints along its own; 15k triangles); its skin recoloured for the gecko, the lizard, the iguana and the chameleon |
 
 ## Fonts
 

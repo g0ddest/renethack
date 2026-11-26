@@ -192,6 +192,16 @@ pub(super) const PILOT: &[(&str, Rows)] = &[
             (2, &["newt", "kitten", "jackal", "giant ant"]),
         ],
     ),
+    // the generated newt on the wolf's bones turned out to a sprawl
+    // (iteration 8): the newt and the lizards in its coats, and what a
+    // newt is met beside
+    (
+        "newts",
+        &[
+            (2, &["newt", "gecko", "iguana", "lizard", "chameleon"]),
+            (2, &["salamander", "baby crocodile", "sewer rat", "kitten"]),
+        ],
+    ),
     (
         "liches",
         &[(2, &["lich", "master lich", "demilich", "arch-lich"])],
