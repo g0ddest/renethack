@@ -57,9 +57,14 @@ if [ "${DIST_SMOKE:-1}" != 0 ]; then
         mkdir -p "$eng"
         cp -R "$pkg/engine/data" "$eng/"
         # wine's own errors on (a crash, a missing DLL): the smoke test shows
-        # the engine's stderr when it fails
-        printf '#!/bin/sh\nWINEDEBUG=fixme-all exec wine "%s" "$@"\n' "$pkg/engine/nh-engine.exe" > "$eng/nh-engine"
-        chmod +x "$eng/nh-engine"
+        # the engine's stderr when it fails; the prefix fixed, as the test
+        # runs the engine with a HOME of its own
+        wp=${WINEPREFIX:-$HOME/.wine}
+        for x in nh-engine recover; do
+            printf '#!/bin/sh\nWINEPREFIX="%s" WINEDEBUG=fixme-all exec wine "%s" "$@"\n' \
+                "$wp" "$pkg/engine/$x.exe" > "$eng/$x"
+            chmod +x "$eng/$x"
+        done
         sh engine/tests/smoke.sh "$eng" || die "the Windows engine failed its smoke test"
 
         say "the packaged game's smoke self-test (wine)"
