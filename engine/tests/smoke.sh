@@ -9,7 +9,17 @@ build=$(cd "$1" && pwd)
 keep=${2:-}
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
-fail() { echo "smoke: $1" >&2; cat "$tmp"/*/stderr >&2 2>/dev/null || true; exit 1; }
+fail() {
+    echo "smoke: $1" >&2
+    cat "$tmp"/*/stderr >&2 2>/dev/null || true
+    # what the engine said last, and NetHack's own record of a panic
+    for f in "$tmp"/*/session.jsonl "$tmp"/*/paniclog; do
+        [ -s "$f" ] || continue
+        echo "smoke: the end of $f:" >&2
+        tail -5 "$f" | cut -c1-300 >&2
+    done
+    exit 1
+}
 
 # run_engine NAME [VAR=value ...]: a fresh playground $tmp/NAME, then one
 # session there with stdin closed; the assignments go into its environment

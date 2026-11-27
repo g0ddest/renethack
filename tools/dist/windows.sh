@@ -56,7 +56,9 @@ if [ "${DIST_SMOKE:-1}" != 0 ]; then
         rm -rf "$eng"
         mkdir -p "$eng"
         cp -R "$pkg/engine/data" "$eng/"
-        printf '#!/bin/sh\nexec wine "%s" "$@"\n' "$pkg/engine/nh-engine.exe" > "$eng/nh-engine"
+        # wine's own errors on (a crash, a missing DLL): the smoke test shows
+        # the engine's stderr when it fails
+        printf '#!/bin/sh\nWINEDEBUG=fixme-all exec wine "%s" "$@"\n' "$pkg/engine/nh-engine.exe" > "$eng/nh-engine"
         chmod +x "$eng/nh-engine"
         sh engine/tests/smoke.sh "$eng" || die "the Windows engine failed its smoke test"
 
