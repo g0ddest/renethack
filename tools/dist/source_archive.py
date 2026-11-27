@@ -42,7 +42,7 @@ def left_out(path):
     for d in ASSET_DIRS:
         if path.startswith(d):
             rest = path[len(d):]
-            return "/" in rest or not rest.endswith((".json", ".md"))
+            return "/" in rest or not rest.endswith((".json", ".md", ".txt"))
     return path.startswith(LEFT_OUT)
 
 

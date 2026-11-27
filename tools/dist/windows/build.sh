@@ -43,6 +43,9 @@ if [ -n "${STEAM:-}" ]; then
     cp "$(ls -t /build/target/x86_64-pc-windows-gnu/dist/build/steamworks-sys-*/out/steam_api64.dll | head -1)" /out/lib/
 fi
 cp -R "$(ls -d /build/engine/build/tree/lib/lua-*/ | head -1)" /out/lua
+# the host packages these as another user: the engine installs its data
+# readable by its owner alone
+chmod -R a+rX /out/engine /out/lib /out/lua
 # what the binaries import: system DLLs only (no mingw runtime DLL to ship)
 for f in /out/engine/nh-engine.exe /out/engine/recover.exe /out/lib/renethack_gd.dll; do
     printf '%s: ' "${f##*/}"
