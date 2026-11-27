@@ -126,7 +126,10 @@ grep -q '^{"t":"win","fn":"print_glyph","a":{.*"g":{[^}]*"kind":"mon"},.*"saddle
 if grep -q '"rider":' "$tmp/knight/session.jsonl"; then fail "a rider before anyone rides"; fi
 if grep -q '"peaceful":' "$tmp/knight/session.jsonl"; then fail "a tame pony told peaceful"; fi
 [ -x "$build/recover" ] || fail "recover is not built"
-ls "$tmp/base/save" | grep -q . || fail "game not saved on EOF"
+# the save: in save/ on unix; NetHack's Windows port puts it in the
+# playground itself (nh-link's saves.rs looks there on Windows)
+ls "$tmp/base/save" | grep -q . || ls "$tmp/base" | grep -q '\.NetHack-saved-game$' \
+    || fail "game not saved on EOF"
 
 # whatever the game prints by itself (terminal NetHack writes --version to
 # stdout) must stay inside the protocol
