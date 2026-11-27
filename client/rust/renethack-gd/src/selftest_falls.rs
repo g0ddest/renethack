@@ -1,8 +1,9 @@
 //! `falls`: a monster the hero sees die falls where it stood, in a
 //! debug-mode game where ^G makes each and #wizkill slays it. A lizard
-//! (always a corpse, a body built in code) topples onto its side and its
-//! corpse takes over in place; an ogre (always a corpse) plays its death
-//! clip and its corpse takes over from the clip's last frame; an acid blob
+//! (always a corpse, a generated body on a rig) and an ogre (always a
+//! corpse) play their death clips and their corpses take over from the
+//! clips' last frames; a crocodile (always a corpse, a body built in code)
+//! topples onto its side and its corpse takes over in place; an acid blob
 //! slumps; a ghost dissolves and leaves nothing; a gas spore, slain from
 //! two cells off, is gone in its blast. A monster gone from sight (the
 //! hero blinded) falls not at all. The hero first walks to the middle of
@@ -35,7 +36,7 @@ struct Victim {
 }
 
 /// The monsters slain, in order.
-const VICTIMS: [Victim; 5] = [
+const VICTIMS: [Victim; 6] = [
     Victim {
         name: "ghost",
         kind: FallKind::Dissolve,
@@ -45,10 +46,17 @@ const VICTIMS: [Victim; 5] = [
     },
     Victim {
         name: "lizard",
-        kind: FallKind::Topple,
+        kind: FallKind::Clip,
         corpse: Some(true),
         shot: "falls-lizard",
         after: "falls-lizard-after",
+    },
+    Victim {
+        name: "crocodile",
+        kind: FallKind::Topple,
+        corpse: Some(true),
+        shot: "falls-crocodile",
+        after: "falls-crocodile-after",
     },
     Victim {
         name: "ogre",
