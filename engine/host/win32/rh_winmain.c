@@ -49,9 +49,8 @@ nhmain(int argc, char *argv[])
     gh.hname = "nh-engine";
     svh.hackpid = (int) GetCurrentProcessId();
     choose_windows(DEFAULT_WINDOW_SYS);
-    /* nhdat, not windconf.h's nhdat<version>: the playground has one data
-       file name on every platform */
-    Strcpy(dlbfilename, "nhdat");
+    /* the data file is nhdat, not windconf.h's nhdat<version>: see
+       win32/include/dlb.h */
 
     initoptions();
     u.uhp = 1; /* prevent RIP on early quits */

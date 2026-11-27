@@ -20,7 +20,9 @@ LUASRC = $(firstword $(wildcard ../lib/lua-*/src))
 # the console; rh_wintime.h sends every time() to the host's test clock;
 # mingw's printf for C99's %zu
 WTIME = -include $(RH_HOST)/win32/rh_wintime.h
-WCFLAGS = -O2 -mms-bitfields -I../include -I../sys/windows -I$(SHIMS) \
+# win32/include first: its dlb.h names the data file nhdat, not nhdat500
+WCFLAGS = -O2 -mms-bitfields -I$(RH_HOST)/win32/include -I../include \
+	-I../sys/windows -I$(SHIMS) \
 	-I$(LUASRC) -I$(RH_HOST) -I$(RH_HOST)/third_party/cjson $(WTIME) \
 	-DWIN32 -DWINVER=0x0601 -D_WIN32_WINNT=0x0601 -DDLB \
 	-DSHIM_GRAPHICS -DNOTTYGRAPHICS -DLIBNH -DNOSHELL \
@@ -60,7 +62,8 @@ $(SHIMS)/.made:
 	touch $@
 
 # any header may change any object: rebuilt together
-W_HEADERS = $(wildcard ../include/*.h ../sys/windows/*.h $(RH_HOST)/*.h $(RH_HOST)/win32/*.h)
+W_HEADERS = $(wildcard ../include/*.h ../sys/windows/*.h $(RH_HOST)/*.h $(RH_HOST)/win32/*.h \
+	$(RH_HOST)/win32/include/*.h)
 
 $(O)/%.o: %.c $(SHIMS)/.made $(W_HEADERS)
 	@mkdir -p $(@D)
